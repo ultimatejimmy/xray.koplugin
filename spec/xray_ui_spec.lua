@@ -45,12 +45,14 @@ describe("xray_ui", function()
     end)
 
     describe("showCharacters", function()
-        it("should show an InfoMessage if no characters", function()
+        it("should show a Menu even if no characters, containing Fetch More", function()
             plugin.characters = {}
             plugin:showCharacters()
             local last = _G.ui_tracker.last_shown
-            assert.are.equal("InfoMessage", last.type)
-            assert.are.equal("no_character_data", last.args.text)
+            assert.are.equal("Menu", last.type)
+            assert.truthy(last.args.title:find("menu_characters"))
+            assert.are.equal(1, #last.args.item_table)
+            assert.truthy(last.args.item_table[1].text:find("menu_fetch_more_chars"))
         end)
 
         it("should show a Menu if characters exist", function()
@@ -88,6 +90,32 @@ describe("xray_ui", function()
             local last = _G.ui_tracker.last_shown
             assert.are.equal("ButtonDialog", last.type)
             assert.are.equal("merge_pick_primary", last.args.title)
+        end)
+    end)
+
+    describe("showTerms", function()
+        it("should show a Menu even if no terms, containing Fetch More", function()
+            plugin.terms = {}
+            plugin:showTerms()
+            local last = _G.ui_tracker.last_shown
+            assert.are.equal("Menu", last.type)
+            assert.truthy(last.args.title:find("menu_terms"))
+            assert.are.equal(1, #last.args.item_table)
+            assert.truthy(last.args.item_table[1].text:find("menu_fetch_more_terms"))
+        end)
+
+        it("should show a Menu if terms exist", function()
+            plugin.terms = { { name = "Muggle", definition = "Non-magical person" } }
+            plugin:showTerms()
+            local last = _G.ui_tracker.last_shown
+            assert.are.equal("Menu", last.type)
+            assert.truthy(last.args.title:find("menu_terms"))
+            -- Verify Muggle is in the menu
+            local found = false
+            for _, item in ipairs(last.args.item_table) do
+                if item.text:find("Muggle") then found = true; break end
+            end
+            assert.is_true(found)
         end)
     end)
 end)

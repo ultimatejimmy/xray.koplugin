@@ -376,6 +376,8 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     final_book_data.characters = self:sortDataByFrequency(final_book_data.characters, book_text, "name")
     final_book_data.historical_figures = self:sortDataByFrequency(final_book_data.historical_figures, book_text, "name")
     final_book_data.locations = self:sortDataByFrequency(final_book_data.locations, book_text, "name")
+    final_book_data.terms = self:deduplicateByName(final_book_data.terms or {}, "name")
+    final_book_data.terms = self:sortDataByFrequency(final_book_data.terms, book_text, "name")
 
     -- Filter non-narrative timeline entries the AI may have hallucinated
     if final_book_data.timeline then
@@ -395,8 +397,9 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     local loc_count  = #(final_book_data.locations or {})
     local tl_count   = #(final_book_data.timeline or {})
     local hist_count = #(final_book_data.historical_figures or {})
+    local term_count = #(final_book_data.terms or {})
 
-    if char_count == 0 and loc_count == 0 and tl_count == 0 and hist_count == 0 then
+    if char_count == 0 and loc_count == 0 and tl_count == 0 and hist_count == 0 and term_count == 0 then
         self:log("XRayPlugin: AI returned all-empty data — aborting cache write to protect existing data")
         if not is_silent then
             local msg = "The AI returned no data.\n\nThis usually means the book sample was too short. Try reading further into the book, then fetch again."

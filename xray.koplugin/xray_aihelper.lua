@@ -1058,6 +1058,9 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
             if context.chapter_samples then extra_context = extra_context .. "\n\nCHAPTER SAMPLES:\n" .. context.chapter_samples end
         end
         if context.annotations then extra_context = extra_context .. "\n\nUSER HIGHLIGHTS:\n" .. context.annotations end
+        if context.book_type then
+            extra_context = extra_context .. "\n\nCRITICAL: The book type is already known to be: " .. context.book_type .. ". You MUST declare \"book_type\" as \"" .. context.book_type .. "\" at the JSON root and follow the extraction rules for " .. context.book_type .. " books."
+        end
         -- Merge mode: tell AI what we already know
         local has_merge_data = false
         local _merge_char_len = (self.settings and self.settings.char_desc_len) or 200

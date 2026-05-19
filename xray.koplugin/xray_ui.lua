@@ -256,16 +256,13 @@ function M:closeAllMenus()
 end
 
 function M:showCharacters()
-    if not self.characters or #self.characters == 0 then
-        UIManager:show(InfoMessage:new{ text = self.loc:t("no_character_data"), timeout = 3 })
-        return
+    self.characters = self.characters or {}
+    local items = {}
+    if #self.characters > 0 then
+        table.insert(items, { text = "⌕ " .. self.loc:t("search_character"), callback = function() self:showCharacterSearch() end })
+        table.insert(items, { text = "⋈ " .. (self.loc:t("merge_duplicates") or "Merge Duplicates..."), callback = function() self:showMergeFlow(self.characters, "characters") end })
     end
-
-    local items = {
-        { text = "⌕ " .. self.loc:t("search_character"), callback = function() self:showCharacterSearch() end },
-        { text = "⋈ " .. (self.loc:t("merge_duplicates") or "Merge Duplicates..."), callback = function() self:showMergeFlow(self.characters, "characters") end },
-        { text = "✚ " .. (self.loc:t("menu_fetch_more_chars") or "Fetch More Characters"), keep_menu_open = true, callback = function() self:fetchMoreCharacters() end, separator = true },
-    }
+    table.insert(items, { text = "✚ " .. (self.loc:t("menu_fetch_more_chars") or "Fetch More Characters"), keep_menu_open = true, callback = function() self:fetchMoreCharacters() end, separator = #self.characters > 0 })
     for _, char in ipairs(self.characters) do
         local name = char.name or "Unknown"
         local text = "• " .. name
@@ -685,14 +682,12 @@ function M:showTermDetails(term)
 end
 
 function M:showTerms()
-    if not self.terms or #self.terms == 0 then 
-        UIManager:show(InfoMessage:new{ text = self.loc:t("no_terms_data") or "No terms found.", timeout = 3 })
-        return 
+    self.terms = self.terms or {}
+    local items = {}
+    if #self.terms > 0 then
+        table.insert(items, { text = "⌕ " .. (self.loc:t("search_term") or "Search Terms"), callback = function() self:showTermSearch() end })
     end
-    local items = {
-        { text = "⌕ " .. (self.loc:t("search_term") or "Search Terms"), callback = function() self:showTermSearch() end },
-    }
-    table.insert(items, { text = "✚ " .. (self.loc:t("menu_fetch_more_terms") or "Fetch More Terms"), callback = function() self:fetchMoreTerms() end, separator = true })
+    table.insert(items, { text = "✚ " .. (self.loc:t("menu_fetch_more_terms") or "Fetch More Terms"), callback = function() self:fetchMoreTerms() end, separator = #self.terms > 0 })
     for _, term in ipairs(self.terms) do 
         if type(term) == "table" then
             local captured_term = term
