@@ -1,0 +1,618 @@
+msgid ""
+msgstr ""
+"Language-Team: Hungarian\n"
+"Language: hu\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "about"
+msgstr "Névjegy"
+
+msgid "ai_fetch_complete"
+msgstr "Sikeresen lekérdezve innen: %s!\n\nKönyv: %s\nSzerző: %s\n\nSzereplők: %d\nHelyszínek: %d\nTémák: %d\nEsemények az idővonalon: %d\nTörténelmi alakok: %d\n\n%s\n\nÖSSZEGZÉS:\n%s"
+
+msgid "ai_fetch_complete_msg"
+msgstr "AI lekérdezés kész!"
+
+msgid "auto_update_aggressive"
+msgstr "Agresszív: minden új fejezetnél ellenőrzi"
+
+msgid "auto_update_balanced"
+msgstr "Kiegyensúlyozott: legfeljebb 5 percenként ellenőrzi"
+
+msgid "auto_update_disabled"
+msgstr "Kikapcsolva"
+
+msgid "auto_update_economical"
+msgstr "Takarékos: legfeljebb 15 percenként ellenőrzi"
+
+msgid "auto_update_freq_about"
+msgstr "Az automatikus frissítés a háttérben ellenőrzi az új fejezetadatokat olvasás közben.\n\nKORLÁTOK ÉS TELJESÍTMÉNY\nA gyakori háttérben futó kérések meríthetik az AKKUMULÁTORT, és elérhetik az AI SZOLGÁLTATÓ KORLÁTAIT (különösen a Pro modelleknél).\n\nMÓDOK\n• Kikapcsolva: Nincsenek háttérkérések\n• Agresszív: Minden alkalommal ellenőrzi, amikor új fejezetbe lép\n• Kiegyensúlyozott: Legfeljebb 5 percenként ellenőrzi (ajánlott)\n• Takarékos: Legfeljebb 15 percenként ellenőrzi\n• Ritka: Legfeljebb 30 percenként ellenőrzi\n\nMegjegyzés: Ha egy fejezet kimarad a gyakorisági korlátok miatt, az X-Ray automatikusan tartalmazni fogja azt a következő háttérbeli lekérdezésnél."
+
+msgid "auto_update_freq_label"
+msgstr "Háttérben történő lekérdezés gyakorisága:"
+
+msgid "auto_update_sparse"
+msgstr "Ritka: legfeljebb 30 percenként ellenőrzi"
+
+msgid "back_to_reading"
+msgstr "Vissza az olvasáshoz"
+
+msgid "beta_channel_desc"
+msgstr "A béta csatorna lehetővé teszi, hogy megkapja az X-Ray beépülő modul előzetes verzióit. Ezek a verziók tartalmazzák a legújabb funkciókat és hibajavításokat, de kevésbé lehetnek stabilak, mint a rendes kiadás."
+
+msgid "beta_disabled"
+msgstr "Stabil csatorna (Ajánlott)"
+
+msgid "beta_enabled"
+msgstr "Béta csatorna bekapcsolva"
+
+msgid "beta_preference_desc"
+msgstr "Válassza ki a kívánt frissítési csatornát:"
+
+msgid "cache_cleared"
+msgstr "Gyorsítótár törölve!\n\nMost már lekérdezhet új adatokat:\nMenü → X-Ray → AI adatok lekérdezése"
+
+msgid "cache_save_failed"
+msgstr "Nem sikerült menteni a gyorsítótárat"
+
+msgid "cache_save_success"
+msgstr "✓ Gyorsítótár frissítve."
+
+msgid "cache_saved"
+msgstr "Mentve a gyorsítótárba!"
+
+msgid "cancel"
+msgstr "Mégse"
+
+msgid "character_not_found"
+msgstr "Nem található a következőnek megfelelő szereplő: '%s'"
+
+msgid "close"
+msgstr "Bezárás"
+
+msgid "config_api_key_label"
+msgstr "%s API kulcs: "
+
+msgid "config_default_gemini"
+msgstr "  Alapértelmezett (Gemini)"
+
+msgid "config_model"
+msgstr "  Modell: "
+
+msgid "config_provider"
+msgstr "  Szolgáltató: "
+
+msgid "config_status_not_set"
+msgstr "NINCS BEÁLLÍTVA"
+
+msgid "config_status_set"
+msgstr "BEÁLLÍTVA"
+
+msgid "current_language"
+msgstr "hu"
+
+msgid "custom_api_endpoint_hint"
+msgstr "pl. https://openrouter.ai/api/v1/chat/completions"
+
+msgid "custom_api_endpoint_title"
+msgstr "Egyedi API %d — Végpont URL"
+
+msgid "custom_api_is_reasoning"
+msgstr "Gondolkodási modell (pl. DeepSeek-R1)"
+
+msgid "custom_api_key_title"
+msgstr "Egyedi API %d — API kulcs"
+
+msgid "custom_api_model_hint"
+msgstr "pl. google/gemini-2.5-flash vagy openai/gpt-4o"
+
+msgid "custom_api_model_title"
+msgstr "Egyedi API %d — Alapértelmezett modell"
+
+msgid "custom_api_name"
+msgstr "Egyedi API %d (OpenAI-kompatibilis)"
+
+msgid "custom_api_not_configured"
+msgstr "(nincs konfigurálva — koppintson a beállításhoz)"
+
+msgid "custom_api_saved"
+msgstr "Egyedi API %d konfiguráció elmentve."
+
+msgid "desc_len_about_chars"
+msgstr "SZEREPLŐK LEÍRÁSA\n\n• Rövid (~80 kar.): Név, szerepkör és egy rövid megjegyzés.\n• Alapértelmezett (~200 kar.): Standard elemzés.\n• Részletes (~350 kar.): Gazdag szereplőelemzés tulajdonságokkal és motivációkkal.\n• Nagyon részletes (~500 kar.): Mélyreható elemzés.\n\nKOMPROMISSZUM\nHosszabb leírások → kevesebb visszaadott szereplő az első/teljes lekérdezés során. A későbbi 'Továbbiak lekérdezése' futtatásokat ez nem befolyásolja."
+
+msgid "desc_len_about_hist"
+msgstr "TÖRTÉNELMI ALAKOK ÉLETRAZZA\n\n• Rövid (~50 kar.): Név és elsődleges szerepkör.\n• Alapértelmezett (~100 kar.): Standard életrajz.\n• Részletes (~200 kar.): Életút, jelentőség és a könyv kontextusa.\n• Nagyon részletes (~300 kar.): Átfogó életrajz.\n\nKOMPROMISSZUM\nHosszabb életrajzok → kevesebb visszaadott történelmi alak az első/teljes lekérdezés során."
+
+msgid "desc_len_about_locs"
+msgstr "HELYSZÍNEK LEÍRÁSA\n\n• Rövid (~50 kar.): Hely neve és egysoros kontextus.\n• Alapértelmezett (~100 kar.): Standard leírás.\n• Részletes (~200 kar.): Hangulat, jelentőség és események.\n• Nagyon részletes (~300 kar.): Teljes leírás.\n\nKOMPROMISSZUM\nHosszabb leírások → kevesebb visszaadott helyszín az első/teljes lekérdezés során."
+
+msgid "desc_len_about_timeline"
+msgstr "IDŐVONAL — FEJEZETENKÉNT EGY ESEMÉNY (mindig)\n\nAz idővonal mindig pontosan egy bejegyzést tartalmaz fejezetenként. Ez a beállítás csak azt befolyásolja, hogy mennyi részlet szerepeljen az egyes összefoglalókban.\n\n• Rövid (~50 kar.): Rövid, egy kifejezésből álló összefoglaló.\n• Alapértelmezett (~80 kar.): Standard összefoglaló.\n• Részletes (~150 kar.): Tartalmazza a kontextust és a következményeket.\n• Nagyon részletes (~200 kar.): Teljes elbeszélő leírás.\n\nAz idővonalnál nincs mennyiségi kompromisszum."
+
+msgid "desc_len_default"
+msgstr "Alapértelmezett"
+
+msgid "desc_len_detailed"
+msgstr "Részletes"
+
+msgid "desc_len_short"
+msgstr "Rövid"
+
+msgid "desc_len_v_detailed"
+msgstr "Nagyon részletes"
+
+msgid "dont_ask_again"
+msgstr "Ne kérdezze újra"
+
+msgid "entity_not_found"
+msgstr "'%s' nem található szereplőként vagy helyszínként."
+
+msgid "error_api_key_desc"
+msgstr "A megadott API kulcsot elutasították. Kérjük, ellenőrizze a beállításokat, és győződjön meg arról, hogy a kulcs helyes."
+
+msgid "error_api_key_title"
+msgstr "Érvénytelen API kulcs"
+
+msgid "error_extract_text"
+msgstr "Hiba: Nem sikerült kinyerni a könyv szövegét."
+
+msgid "error_model_access_desc"
+msgstr "Az API kulcsának nincs hozzáférése a kiválasztott modellhez. Lehet, hogy másik modellt vagy szolgáltatót kell használnia."
+
+msgid "error_model_access_title"
+msgstr "Hozzáférés megtagadva"
+
+msgid "error_model_not_found_desc"
+msgstr "A kiválasztott AI modell nem érhető el, vagy a végpont URL-je hibás."
+
+msgid "error_model_not_found_title"
+msgstr "A modell nem található"
+
+msgid "error_parse_desc"
+msgstr "Az AI olyan választ küldött vissza, amelyet nem lehetett feldolgozni. Ez átmeneti hiba lehet."
+
+msgid "error_parse_title"
+msgstr "Adathiba"
+
+msgid "error_quota_desc"
+msgstr "Az API kreditei elfogytak, vagy elérte a lekérdezési korlátot. Kérjük, ellenőrizze fizetési állapotát, vagy várjon egy kicsit, mielőtt újra próbálkozna."
+
+msgid "error_quota_title"
+msgstr "Kvóta túllépve"
+
+msgid "error_service_down_desc"
+msgstr "Az AI szolgáltatás átmenetileg nem érhető el vagy túlterhelt. Kérjük, próbálkozzon újra néhány perc múlva."
+
+msgid "error_service_down_title"
+msgstr "A szolgáltatás nem érhető el"
+
+msgid "error_timeout_desc"
+msgstr "A kérés túl sokáig tartott. Ez összetett könyvek vagy lassú hálózati kapcsolat esetén fordulhat elő."
+
+msgid "error_timeout_title"
+msgstr "Kapcsolati időtúllépés"
+
+msgid "error_unknown_desc"
+msgstr "Váratlan hiba történt: %s"
+
+msgid "error_unknown_title"
+msgstr "A lekérdezés sikertelen"
+
+msgid "extracting_more_characters"
+msgstr "További szereplők kinyerése..."
+
+msgid "fetch_button"
+msgstr "Lekérdezés"
+
+msgid "fetch_single_word_prompt"
+msgstr "Nem található X-Ray adat a következőhöz: '%s'. Szeretné megkeresni?"
+
+msgid "fetch_successful"
+msgstr "Sikeres lekérdezés"
+
+msgid "fetching_ai"
+msgstr "Könyv elemzése X-Ray adatok generálásához..."
+
+msgid "fetching_author"
+msgstr "Szerzői információk lekérdezése innen: %s..."
+
+msgid "fetching_wait"
+msgstr "⏳ Kérjük, várjon...\nEz a folyamat 10-50 másodpercet is igénybe vehet."
+
+msgid "find_mentions"
+msgstr "Említések keresése"
+
+msgid "full_book_option"
+msgstr "Teljes könyv mód"
+
+msgid "label_aliases"
+msgstr "ÁLNEVEK"
+
+msgid "label_description"
+msgstr "LEÍRÁS"
+
+msgid "label_gender"
+msgstr "NEM"
+
+msgid "label_name"
+msgstr "NÉV"
+
+msgid "label_occupation"
+msgstr "FOGLALKOZÁS"
+
+msgid "label_reasoning"
+msgstr "AI GONDOLKODÁS"
+
+msgid "label_role"
+msgstr "SZEREPKÖR"
+
+msgid "lang_follow_book"
+msgstr "Automatikus (Könyv nyelve)"
+
+msgid "lang_follow_system"
+msgstr "Automatikus (Rendszer nyelve)"
+
+msgid "lang_mismatch_title"
+msgstr "Nyelvi eltérés"
+
+msgid "language_changed_reopen"
+msgstr "A nyelv megváltozott. Nyissa meg újra a menüt a változások megtekintéséhez."
+
+msgid "linked_entries"
+msgstr "Kapcsolódó bejegyzések"
+
+msgid "linked_entries_disabled"
+msgstr "Kikapcsolva"
+
+msgid "linked_entries_enabled"
+msgstr "Bekapcsolva"
+
+msgid "linked_entries_setting_desc"
+msgstr "A kapcsolódó bejegyzések funkció automatikusan összekapcsolja a szereplőket, helyszíneket és történelmi alakokat, ha említik őket egymás leírásában.\n\nE funkció kikapcsolása elrejti a 'Kapcsolódó bejegyzések' gombot a részletek párbeszédpanelén."
+
+msgid "logs_cleared"
+msgstr "Naplófájlok törölve!"
+
+msgid "looking_up_msg"
+msgstr "Keresés: '%s'..."
+
+msgid "mention_dismiss_btn"
+msgstr "✕"
+
+msgid "mention_return_btn"
+msgstr "Vissza az olvasáshoz"
+
+msgid "mention_return_label"
+msgstr "← Vissza a %d. oldalra"
+
+msgid "mentions_at_location"
+msgstr "Említés: %s"
+
+msgid "mentions_disabled"
+msgstr "Kikapcsolva"
+
+msgid "mentions_enabled"
+msgstr "Bekapcsolva"
+
+msgid "mentions_none"
+msgstr "Még nincsenek említések a következőhöz: '%s'."
+
+msgid "mentions_preference_desc"
+msgstr "Válassza ki a szereplők és helyszínek említésének preferenciáját:"
+
+msgid "mentions_refresh"
+msgstr "Említések frissítése"
+
+msgid "mentions_scanning"
+msgstr "Szkennelés... %1 / %2 fejezet"
+
+msgid "mentions_setting_desc"
+msgstr "Az említések szkennelése lehetővé teszi, hogy megtalálja a szereplők vagy helyszínek összes előfordulását a könyvben. Ez automatikusan a háttérben történik, hogy az olvasó gyorsan reagáljon.\n\nE funkció kikapcsolása elrejti az 'Említések keresése' gombot."
+
+msgid "mentions_setting_title"
+msgstr "Említések beállításai"
+
+msgid "mentions_title"
+msgstr "Említések: %s"
+
+msgid "menu_about"
+msgstr "Névjegy"
+
+msgid "menu_ai_settings"
+msgstr "AI beállítások"
+
+msgid "menu_api_keys"
+msgstr "API kulcsok és szolgáltatók"
+
+msgid "menu_author_info"
+msgstr "Szerzői információk"
+
+msgid "menu_auto_update_frequency"
+msgstr "Auto X-Ray beállítások"
+
+msgid "menu_beta_channel"
+msgstr "Béta csatorna beállításai"
+
+msgid "menu_characters"
+msgstr "Szereplők"
+
+msgid "menu_clear_cache"
+msgstr "Gyorsítótár törlése"
+
+msgid "menu_clear_logs"
+msgstr "Naplófájlok törlése"
+
+msgid "menu_config_header"
+msgstr "--- Jelenlegi konfiguráció ---"
+
+msgid "menu_custom_model_title"
+msgstr "Egyedi %s modell"
+
+msgid "menu_desc_length_settings"
+msgstr "Leírás hossza"
+
+msgid "menu_enter_custom_model"
+msgstr "Egyedi modell megadása..."
+
+msgid "menu_fetch_author"
+msgstr "Szerzői infó lekérdezése (AI)"
+
+msgid "menu_fetch_more_chars"
+msgstr "További szereplők lekérdezése"
+
+msgid "menu_historical_figures"
+msgstr "Történelmi alakok"
+
+msgid "menu_language"
+msgstr "Nyelv"
+
+msgid "menu_linked_entries_settings"
+msgstr "Kapcsolódó bejegyzések beállításai"
+
+msgid "menu_locations"
+msgstr "Helyszínek"
+
+msgid "menu_maintenance"
+msgstr "Karbantartás"
+
+msgid "menu_mentions_settings"
+msgstr "Említések beállításai"
+
+msgid "menu_primary_ai_model"
+msgstr "Elsődleges AI modell"
+
+msgid "menu_reasoning_effort"
+msgstr "AI gondolkodási erőfeszítés"
+
+msgid "menu_secondary_ai_model"
+msgstr "Másodlagos AI modell"
+
+msgid "menu_settings"
+msgstr "Beállítások"
+
+msgid "menu_timeline"
+msgstr "Idővonal"
+
+msgid "menu_update_xray"
+msgstr "X-Ray adatok frissítése"
+
+msgid "menu_view_config"
+msgstr "Összes konfigurációs érték megtekintése"
+
+msgid "menu_xray"
+msgstr "X-Ray"
+
+msgid "menu_xray_mode"
+msgstr "X-Ray mód beállításai"
+
+msgid "merge_back"
+msgstr "← Vissza"
+
+msgid "merge_confirm"
+msgstr "Összevonja a következőt: %s a következőbe: %s? A másodlagos bejegyzés törlődik, és az álnevei beolvadnak."
+
+msgid "merge_duplicates"
+msgstr "Duplikátumok összevonása..."
+
+msgid "merge_failed"
+msgstr "Az összevonás sikertelen."
+
+msgid "merge_pick_primary"
+msgstr "Válassza ki a MEGTARTANDÓ bejegyzést"
+
+msgid "merge_pick_secondary"
+msgstr "Válassza ki az ELTÁVOLÍTANDÓ bejegyzést"
+
+msgid "merge_success"
+msgstr "A bejegyzések összevonása sikeres."
+
+msgid "merging_smartly"
+msgstr "Összevonás..."
+
+msgid "model_free"
+msgstr "ingyenes"
+
+msgid "model_paid"
+msgstr "fizetős"
+
+msgid "msg_added_characters"
+msgstr "%d új szereplő hozzáadva!"
+
+msgid "msg_fetch_failed"
+msgstr "AI lekérdezés sikertelen"
+
+msgid "msg_no_bio"
+msgstr "Nem áll rendelkezésre életrajz."
+
+msgid "msg_suggest_lang"
+msgstr "Ez a könyv %s nyelven van. Átváltja az X-Ray nyelvét, hogy egyezzen?"
+
+msgid "multiple_matches"
+msgstr "Több egyezés a következőre: '%s'. Melyikre gondolt?"
+
+msgid "next"
+msgstr "Következő"
+
+msgid "no"
+msgstr "Nem"
+
+msgid "no_api_key"
+msgstr "Az AI API kulcs nincs beállítva!\n\nAdja meg az API kulcsot itt:\nMenü → X-Ray → AI beállítások"
+
+msgid "no_author_data_fetch"
+msgstr "Nem áll rendelkezésre szerzői információ.\n\nSzeretné lekérdezni az AI-tól?"
+
+msgid "no_character_data"
+msgstr "Még nincsenek szereplőadatok.\n\nKérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót."
+
+msgid "no_data_prompt"
+msgstr "Nem található X-Ray adat ehhez a könyvhöz. Szeretné lekérdezni az AI-tól most?"
+
+msgid "no_historical_data"
+msgstr "Még nincsenek adatok a történelmi alakokról.\n\nKérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót.\n\nAz AI felismeri a könyvben említett valós történelmi alakokat."
+
+msgid "no_location_data"
+msgstr "Még nincsenek helyszínadatok. Kérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót."
+
+msgid "no_timeline_data"
+msgstr "Még nincsenek idővonal-adatok.\n\nKérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót.\n\nAz AI időrendi sorrendben mutatja a legfontosabb eseményeket."
+
+msgid "ok"
+msgstr "OK"
+
+msgid "path"
+msgstr "plugins/xray.koplugin"
+
+msgid "plugin_description"
+msgstr "Alakítsa át olvasási élményét AI-alapú könyvelemzéssel, pont mint az Amazon Kindle X-Ray!"
+
+msgid "quick_menu_title"
+msgstr "X-Ray gyorsmenü"
+
+msgid "reasoning_about"
+msgstr "Szabályozza a 'gondolkodási' mélységet a következtető modelleknél:\n\n• Nincs beállítva: Nincs küldve specifikus utasítás; a modell a saját alapértelmezéseit használja.\n• Alacsony: Gyors, gazdaságos kinyerés egyszerűbb könyvekhez.\n• Közepes: Kiegyensúlyozott mélység a legtöbb történethez.\n• Magas: Részletes elemzés összetett szereplői kapcsolatokhoz.\n\nÉrvényes a következőkre: GPT-5.x, DeepSeek Reasoner, Claude 4.5+ (extended thinking) és Gemini 2.5+."
+
+msgid "reasoning_high"
+msgstr "Magas"
+
+msgid "reasoning_low"
+msgstr "Alacsony"
+
+msgid "reasoning_medium"
+msgstr "Közepes"
+
+msgid "reasoning_unset"
+msgstr "Nincs beállítva (Alapértelmezett)"
+
+msgid "save"
+msgstr "Mentés"
+
+msgid "search_button"
+msgstr "Keresés"
+
+msgid "search_character"
+msgstr "Szereplők keresése..."
+
+msgid "search_character_title"
+msgstr "Szereplő keresése"
+
+msgid "search_hint"
+msgstr "Adja meg a szereplő nevét"
+
+msgid "spoiler_free_about"
+msgstr "A spoilermentes mód a könyvben már elolvasott oldalakra korlátozza az AI kinyerését (a jelenlegi oldaláig), megakadályozva a jövőbeli fejezetekből származó spoilereket.\n\nA Teljes könyv mód a teljes könyvet elemzi, ami spoilereket tartalmazhat."
+
+msgid "spoiler_free_menu_option"
+msgstr "Spoilermentes"
+
+msgid "spoiler_free_option"
+msgstr "Spoilermentes mód (%d%%-ig a könyvben)"
+
+msgid "spoiler_preference_desc"
+msgstr "Válassza ki a spoiler-preferenciát az X-Ray adatokhoz:"
+
+msgid "spoiler_preference_title"
+msgstr "Spoiler-preferencia"
+
+msgid "this_chapter"
+msgstr "Ez a fejezet"
+
+msgid "this_page"
+msgstr "Ez az oldal"
+
+msgid "updater_available_header"
+msgstr "Elérhető az X-Ray %s!\nÖnnek a(z) %s verziója van meg."
+
+msgid "updater_btn_cancel"
+msgstr "Mégse"
+
+msgid "updater_btn_download"
+msgstr "Letöltés és telepítés"
+
+msgid "updater_btn_later"
+msgstr "Később"
+
+msgid "updater_btn_open_browser"
+msgstr "Megnyitás böngészőben"
+
+msgid "updater_btn_restart"
+msgstr "Újraindítás"
+
+msgid "updater_cancelled_check"
+msgstr "Frissítés ellenőrzése megszakítva."
+
+msgid "updater_cancelled_update"
+msgstr "Frissítés megszakítva."
+
+msgid "updater_check"
+msgstr "Frissítések ellenőrzése"
+
+msgid "updater_checking"
+msgstr "Frissítések ellenőrzése..."
+
+msgid "updater_download_prompt"
+msgstr "\n\nLetölti és telepíti most?"
+
+msgid "updater_downloading"
+msgstr "X-Ray %s letöltése..."
+
+msgid "updater_err_download"
+msgstr "Letöltési hiba: %s"
+
+msgid "updater_err_extract"
+msgstr "Kicsomagolási hiba: %s"
+
+msgid "updater_error_checking"
+msgstr "Hiba a frissítések ellenőrzése közben."
+
+msgid "updater_error_checking_detail"
+msgstr "Hiba a frissítések ellenőrzése közben: %s"
+
+msgid "updater_no_asset"
+msgstr "Nem található automatikus frissítési fájl.\n\nMegnyitja a kiadások oldalt a GitHubon?"
+
+msgid "updater_success_restart"
+msgstr "Az X-Ray %s sikeresen telepítve.\n\nÚjraindítja a KOReadert a frissítés alkalmazásához?"
+
+msgid "updater_up_to_date"
+msgstr "Az X-Ray naprakész (%s)."
+
+msgid "updater_whats_new"
+msgstr "Újdonságok:"
+
+msgid "updating_ai"
+msgstr "X-Ray adatok frissítése..."
+
+msgid "xray_disabled_label"
+msgstr "Kikapcsolva"
+
+msgid "xray_enabled_label"
+msgstr "Bekapcsolva"
+
+msgid "xray_mode_desc"
+msgstr "Hozzáad egy 'X-Ray' gombot a szótár és kijelölés menükhöz az azonnali kereséshez."
+
+msgid "yes"
+msgstr "Igen"

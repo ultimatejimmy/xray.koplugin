@@ -42,17 +42,30 @@ function M:showLanguageSelection()
         {
             { text = (self.loc:t("lang_follow_system") or "Automatic (Follow System)") .. (settings_lang == "auto" and " [OK]" or ""), callback = function() changeLang("auto") end },
             { text = (self.loc:t("lang_follow_book") or "Automatic (Follow Book)") .. (settings_lang == "book" and " [OK]" or ""), callback = function() changeLang("book") end },
-        },
-        {{ text = "English" .. (settings_lang == "en" and " [OK]" or ""), callback = function() changeLang("en") end }},
-        {{ text = "Deutsch" .. (settings_lang == "de" and " [OK]" or ""), callback = function() changeLang("de") end }},
-        {{ text = "Français" .. (settings_lang == "fr" and " [OK]" or ""), callback = function() changeLang("fr") end }},
-        {{ text = "Русский" .. (settings_lang == "ru" and " [OK]" or ""), callback = function() changeLang("ru") end }},
-        {{ text = "简体中文" .. (settings_lang == "zh_CN" and " [OK]" or ""), callback = function() changeLang("zh_CN") end }},
-        {{ text = "Türkçe" .. (settings_lang == "tr" and " [OK]" or ""), callback = function() changeLang("tr") end }},
-        {{ text = "Português" .. (settings_lang == "pt_br" and " [OK]" or ""), callback = function() changeLang("pt_br") end }},
-        {{ text = "Español" .. (settings_lang == "es" and " [OK]" or ""), callback = function() changeLang("es") end }},
-        {{ text = "Українська" .. (settings_lang == "uk" and " [OK]" or ""), callback = function() changeLang("uk") end }},
+        }
     }
+    
+    local LANGUAGE_NAMES = {
+        en = "English",
+        de = "Deutsch",
+        fr = "Français",
+        ru = "Русский",
+        zh_CN = "简体中文",
+        tr = "Türkçe",
+        pt_br = "Português",
+        es = "Español",
+        uk = "Українська",
+        hu = "Magyar",
+    }
+    
+    local langs = self.loc and self.loc.available_languages or { "en", "de", "fr", "ru", "zh_CN", "tr", "pt_br", "es", "uk", "hu" }
+    for _, code in ipairs(langs) do
+        local name = LANGUAGE_NAMES[code] or code:upper()
+        table.insert(buttons, {{
+            text = name .. (settings_lang == code and " [OK]" or ""),
+            callback = function() changeLang(code) end
+        }})
+    end
     
     local dialog_title = (self.loc and self.loc:t("menu_language")) or "Language Selection"
     self.ldlg = ButtonDialog:new{title = dialog_title, buttons = buttons}
@@ -60,7 +73,14 @@ function M:showLanguageSelection()
 end
 
 function M:resolveLanguage(code)
-    local supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, tr=1, pt_br=1, es=1, uk=1 }
+    local supported = {}
+    if self.loc and self.loc.available_languages then
+        for _, c in ipairs(self.loc.available_languages) do
+            supported[c] = 1
+        end
+    else
+        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, tr=1, pt_br=1, es=1, uk=1, hu=1 }
+    end
     
     if code == "auto" or not code then
         local gettext = require("gettext")
@@ -124,11 +144,29 @@ function M:checkBookLanguageMatch()
     if book_lang:find("zh") then lang = "zh_CN"
     elseif book_lang:find("pt") then lang = "pt_br" end
     
-    local supported = {
-        en = "English", de = "Deutsch", fr = "Français",
-        ru = "Русский", zh_CN = "简体中文", tr = "Türkçe",
-        pt_br = "Português", es = "Español", uk = "Українська"
+    local LANGUAGE_NAMES = {
+        en = "English",
+        de = "Deutsch",
+        fr = "Français",
+        ru = "Русский",
+        zh_CN = "简体中文",
+        tr = "Türkçe",
+        pt_br = "Português",
+        es = "Español",
+        uk = "Українська",
+        hu = "Magyar",
     }
+    
+    local supported = {}
+    if self.loc and self.loc.available_languages then
+        for _, c in ipairs(self.loc.available_languages) do
+            supported[c] = LANGUAGE_NAMES[c] or c:upper()
+        end
+    else
+        for c, name in pairs(LANGUAGE_NAMES) do
+            supported[c] = name
+        end
+    end
     
     if not supported[lang] then return end
     
