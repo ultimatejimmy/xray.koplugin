@@ -50,6 +50,36 @@ msgstr "Beta Channel Enabled"
 msgid "beta_preference_desc"
 msgstr "Select your update channel preference:"
 
+msgid "book_mode_auto"
+msgstr "Auto"
+
+msgid "book_mode_desc"
+msgstr "Select the mode for this book."
+
+msgid "book_mode_fiction"
+msgstr "Fiction"
+
+msgid "book_mode_nonfiction"
+msgstr "Non-Fiction"
+
+msgid "book_mode_saved"
+msgstr "Book mode saved!"
+
+msgid "book_type_about"
+msgstr "The Book Type determines which AI extraction strategy is used and which features are available.\n\n- Fiction: Focuses on narrative, characters, and plot timeline.\n- Non-Fiction: Focuses on terms, concepts, and historical figures.\n\n'Auto-Detect' will let the AI decide after the first fetch."
+
+msgid "book_type_auto"
+msgstr "Auto-Detect"
+
+msgid "book_type_fiction"
+msgstr "Fiction"
+
+msgid "book_type_nonfiction"
+msgstr "Non-Fiction"
+
+msgid "book_type_saved"
+msgstr "Book Type saved!"
+
 msgid "cache_cleared"
 msgstr "Кеш очищено!\n\nТепер ви можете отримати нові дані:\nМеню → X-Ray → Отримати дані ШІ"
 
@@ -91,6 +121,9 @@ msgstr "ВСТАНОВЛЕНО"
 
 msgid "current_language"
 msgstr "uk"
+
+msgid "current_mode"
+msgstr "Current: "
 
 msgid "custom_api_endpoint_hint"
 msgstr "e.g., https://openrouter.ai/api/v1/chat/completions"
@@ -170,6 +203,9 @@ msgstr "The selected AI model is unavailable or the endpoint URL is incorrect."
 msgid "error_model_not_found_title"
 msgstr "Model Not Found"
 
+msgid "error_no_api_key"
+msgstr "error_no_api_key"
+
 msgid "error_parse_desc"
 msgstr "The AI returned a response that could not be processed. This might be a temporary glitch."
 
@@ -203,6 +239,9 @@ msgstr "Fetch Failed"
 msgid "extracting_more_characters"
 msgstr "Видобуваємо додаткових персонажів..."
 
+msgid "extracting_more_terms"
+msgstr "Extracting additional terms..."
+
 msgid "fetch_button"
 msgstr "Отримати"
 
@@ -230,8 +269,17 @@ msgstr "Режим усієї книги"
 msgid "label_aliases"
 msgstr "??????????"
 
+msgid "label_category"
+msgstr "CATEGORY"
+
+msgid "label_definition"
+msgstr "DEFINITION"
+
 msgid "label_description"
 msgstr "ОПИС"
+
+msgid "label_expanded"
+msgstr "STANDS FOR"
 
 msgid "label_gender"
 msgstr "СТАТЬ"
@@ -335,6 +383,9 @@ msgstr "Налаштування авто X-Ray"
 msgid "menu_beta_channel"
 msgstr "Beta Channel Settings"
 
+msgid "menu_book_mode"
+msgstr "Book Mode"
+
 msgid "menu_characters"
 msgstr "Персонажі"
 
@@ -361,6 +412,9 @@ msgstr "Отримати інфо про автора (ШІ)"
 
 msgid "menu_fetch_more_chars"
 msgstr "Завантажити більше персонажів"
+
+msgid "menu_fetch_more_terms"
+msgstr "Fetch More Terms"
 
 msgid "menu_historical_figures"
 msgstr "Історичні постаті"
@@ -391,6 +445,9 @@ msgstr "Запасна модель ШІ"
 
 msgid "menu_settings"
 msgstr "Налаштування"
+
+msgid "menu_terms"
+msgstr "Glossary"
 
 msgid "menu_timeline"
 msgstr "Хронологія"
@@ -440,6 +497,9 @@ msgstr "платно"
 msgid "msg_added_characters"
 msgstr "Додано %d нових персонажів!"
 
+msgid "msg_added_terms"
+msgstr "Added %d new terms!"
+
 msgid "msg_fetch_failed"
 msgstr "AI Fetch Failed"
 
@@ -475,6 +535,9 @@ msgstr "Даних про історичні постаті поки немає.
 
 msgid "no_location_data"
 msgstr "Даних про локації поки немає. Спочатку скористайтеся 'Отримати дані X-Ray'."
+
+msgid "no_terms_data"
+msgstr "No terms data yet. Please use 'Fetch X-Ray Data' first."
 
 msgid "no_timeline_data"
 msgstr "Даних хронології поки немає.\n\nСпочатку скористайтеся 'Отримати дані X-Ray'.\n\nШІ покаже ключові події у хронологічному порядку."
@@ -521,6 +584,9 @@ msgstr "Пошук персонажа"
 msgid "search_hint"
 msgstr "Введіть ім'я персонажа"
 
+msgid "search_term"
+msgstr "Search Terms"
+
 msgid "spoiler_free_about"
 msgstr "Режим без спойлерів обмежує аналіз ШІ сторінками, які ви вже прочитали (до вашої поточної сторінки), запобігаючи спойлерам із майбутніх розділів.\n\nРежим усієї книги аналізує всю книгу цілком, що може містити спойлери."
 
@@ -535,6 +601,9 @@ msgstr "Виберіть налаштування спойлерів для да
 
 msgid "spoiler_preference_title"
 msgstr "Налаштування спойлерів"
+
+msgid "term_not_found"
+msgstr "No term found matching '%s'"
 
 msgid "this_chapter"
 msgstr "Цей розділ"

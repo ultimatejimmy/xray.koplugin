@@ -5,7 +5,6 @@ return {
     -- Mensagem apenas para o autor (Para busca rápida de biografia)
     author_only = [[Identifique e forneça a biografia do autor do livro "%s". 
 Os metadatos sugerem que o autor é "%s". 
-
 CRÍTICO: Verifique o autor usando o CONTEXTO DO TEXTO DO LIVRO (se fornecido no final desta mensagem) para garantir 100% de precisão e evitar identificações incorretas.
 
 FORMATO JSON REQUERIDO:
@@ -58,6 +57,16 @@ SEM SPOILERS: Pare exatamente na marca de %d%%.
 ALGORITMO PARA LOCAIS:
 Passo 1. Extraia de {NUM_LOCS} locais significativos. SEM SPOILERS: Pare exatamente na marca de %d%%.
 
+ALGORITMO PARA TERMOS E CONCEITOS:
+Passo 0: No nó raiz do JSON, declare "book_type" como "fiction" ou "non_fiction".
+Passo 1: Se o livro for de não ficção: Extraia {NUM_TERMS} termos técnicos, acrônimos, jargões ou conceitos importantes. Use categorias apropriadas como Acronym, Technical Term, Concept ou Jargon.
+Passo 2: Se o livro for de ficção: Extraia {NUM_TERMS} elementos significativos de construção de mundo (World-building) que um novo leitor precisaria que fossem explicados – tais como facções inventadas, organizações, sistemas de magia, tecnologias, criaturas, idiomas ou lore do universo.
+   - NÃO inclua nomes de personagens ou locais (esses são rastreados separadamente).
+   - NÃO extraia palavras ou conceitos comuns do mundo real.
+   - Use categorias apropriadas: Faction, Magic System, Technology, Creature, Organization, Lore, Language.
+Passo 3: No campo "expanded", inclua a expansão completa para acrônimos/expressões. Se não for um acrônimo/expressão, repita o nome.
+Passo 4: NÃO inclua palavras comuns do dia a dia.
+
 REGRAS ESTRITAS DE SPOILER:
 - ABSOLUTAMENTE NENHUMA informação após o progresso de leitura atual. Pare exatamente na marca de %d%%.
 - As descrições devem refletir o estado dos personagens neste exato ponto do livro.
@@ -69,6 +78,7 @@ REGRAS ESTRITAS DE SEGURANÇA JSON:
 
 FORMATO JSON REQUERIDO:
 {
+  "book_type": "non_fiction",
   "characters": [
     {
       "name": "Nome Formal Completo",
@@ -90,6 +100,14 @@ FORMATO JSON REQUERIDO:
   ],
   "locations": [
     {"name": "Nome do Local", "description": "Descrição curta (MÁX {MAX_LOC_DESC} caracteres)"}
+  ],
+  "terms": [
+    {
+      "name": "Termo ou Acrônimo",
+      "expanded": "Expansão completa ou igual ao nome",
+      "category": "Acrônimo / Termo Técnico / Conceito / Jargão",
+      "definition": "Definição concisa no contexto (MÁX {MAX_TERM_DEF} caracteres)"
+    }
   ],
   "timeline": [
     {
@@ -125,20 +143,53 @@ FORMATO JSON REQUERIDO:
       "name": "Nome Formal Completo",
       "aliases": ["Alias 1", "Alias 2"],
       "role": "Papel até o progresso atual",
-      "gender": "Masculino / Femenino / Desconhecido",
+      "gender": "Masculino / Feminino / Desconhecido",
       "occupation": "Profissão/Status",
       "description": "Análise profunda com detalhes do texto até agora. SEM SPOILERS. (Máx {MAX_CHAR_DESC} caracteres)"
     }
   ]
 }]],
 
+    -- Buscar mais termos (Suporte para Glossário)
+    more_terms = [[Livro: %s
+Autor: %s
+Progresso de Leitura: %d%%
+
+TAREFA: Extraia EXATAMENTE 15 termos, acrônimos, jargões ou conceitos significativos ADICIONAIS do texto.
+- Se este livro for de não ficção: extraia termos técnicos, conceitos, acrônimos ou jargões.
+- Se este livro for de ficção: extraia elementos de construção de mundo (world-building) como facções, organizações, sistemas de magia, tecnologias, criaturas, idiomas ou lore do universo.
+Retorne APENAS um objeto JSON válido.
+
+MANDATO DE CONCISÃO (CRÍTICO):
+Para evitar o truncamento da resposta da IA, mantenha as definições dos termos com menos de {MAX_TERM_DEF} caracteres.
+
+INSTRUÇÃO CRÍTICA:
+NÃO inclua nenhum dos seguintes termos, pois eles já foram extraídos:
+%s
+
+REGRAS ESTRITAS DE SPOILER:
+- ABSOLUTAMENTE NENHUMA informação após o progresso de leitura atual. Pare exatamente na marca de %d%%.
+
+FORMATO JSON REQUERIDO:
+{
+  "terms": [
+    {
+      "name": "Termo ou Acrônimo",
+      "expanded": "Expansão completa ou igual ao nome",
+      "category": "Faction / Magic System / Technology / Creature / Organization / Lore / Language / Acrônimo / Termo Técnico / Conceito / Jargão",
+      "definition": "Definição concisa no contexto (MÁX {MAX_TERM_DEF} caracteres)"
+    }
+  ]
+}]],
+
     -- Targeted Single Word Lookup
     single_word_lookup = [[O usuário destacou a palavra "%s".
-TAREFA: Determine si esta palavra é um Personagem, Local ou Figura Histórica no livro.
+TAREFA: Determine se esta palavra é um Personagem, Local, Figura Histórica ou Termo Técnico/Acrônimo no livro.
  
 CRITICAL FOR CHARACTERS AND LOCATIONS: Use ONLY the provided "BOOK TEXT CONTEXT". Outside knowledge is strictly forbidden. Do not hallucinate.
 CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
-Se a palavra NÃO for um personagem, local ou figura histórica no texto, defina `is_valid` como false.
+CRITICAL FOR TERMS: Se o livro for de não ficção, verifique se a palavra é um termo técnico, um acrônimo ou um conceito-chave. Forneça sua definição no contexto.
+Se a palavra NÃO for um personagem, local, figura histórica ou termo técnico no texto, defina `is_valid` como false.
  
 FORMATO JSON OBRIGATÓRIO:
 {
@@ -148,20 +199,21 @@ FORMATO JSON OBRIGATÓRIO:
     "name": "Nome completo",
     "aliases": ["Alias 1", "Alias 2"],
     "role": "Papel",
-    "gender": "Masculino/Feminino/Desconocido",
+    "gender": "Masculino/Feminino/Desconhecido",
     "occupation": "Ocupação",
     "description": "Breve descrição (máx. 250 caracteres)"
   },
   "error_message": ""
 }
  
-Nota: se o tipo for "location", o item deve ter "name" and "description". Si o tipo for "historical_figure", o item deve ter "name", "biography" e "role".
+Nota: se o tipo for "location", o item deve ter "name" e "description". Se o tipo for "historical_figure", o item deve ter "name", "biography" e "role".
  
 If `is_valid` is false:
 {
   "is_valid": false,
   "error_message": "Breve explicação de por que isso não é um personagem nem um local."
-}]],
+}
+]],
 
     -- Strings de reserva (Fallback)
     fallback = {

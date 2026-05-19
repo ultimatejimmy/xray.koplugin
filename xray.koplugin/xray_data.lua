@@ -440,4 +440,22 @@ function M:mergeEntries(list, primary_name, secondary_name, ai_merged_desc)
     return true
 end
 
+function M:isNonFictionBook(props, text_sample)
+    local subject = ((props and (props.subject or props.subjects or props.categories or props.category)) or ""):lower()
+    local genres = {"history","science","biography","memoir","self-help","business",
+        "economics","technology","psychology","politics","philosophy","true crime",
+        "nature","travel","health","reference","nonfiction","non-fiction","education","textbook"}
+    for _, g in ipairs(genres) do
+        if subject:find(g, 1, true) then return true end
+    end
+    if text_sample then
+        local _, ac = text_sample:gsub("%f[%u]%u%u%u%u+%f[%U]", "")
+        local _, wc = text_sample:gsub("%S+", "")
+        if ac / math.max(1, wc) > 0.03 then return true end
+        local _, cc = text_sample:gsub("%[%d+%]", "")
+        if cc > 5 then return true end
+    end
+    return false
+end
+
 return M

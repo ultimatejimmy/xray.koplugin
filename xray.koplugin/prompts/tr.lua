@@ -5,7 +5,6 @@ return {
     -- Sadece yazar için istem (Hızlı biyografi araması için)
     author_only = [["%s" kitabının yazarını belirle ve biyografisini sun. 
 Üstveriler yazarın "%s" olduğunu gösteriyor. 
-
 KRİTİK: %100 doğruluk sağlamak ve hatalı kimlik tespitlerini önlemek için yazarı KİTAP METNİ BAĞLAMI (bu istemin sonunda verilmişse) kullanarak doğrula.
 
 GEREKLİ JSON FORMATI:
@@ -59,6 +58,16 @@ SPOILER YOK: Tam olarak %%%d noktasında dur.
 MEKANLAR İÇİN ALGORİTMA:
 Adım 1. {NUM_LOCS} önemli mekanı çıkar. SPOILER YOK: Tam olarak %%%d noktasında dur.
 
+TERİMLER VE KAVRAMLAR ALGORİTMASI:
+Adım 0: JSON kök düğümünde "book_type"ı "fiction" (kurgu) veya "non_fiction" (kurgu dışı) olarak belirtin.
+Adım 1: Kitap kurgu dışı ise: {NUM_TERMS} önemli teknik terim, kısaltma, jargon veya kavram çıkarın. Acronym, Technical Term, Concept veya Jargon gibi uygun kategorileri kullanın.
+Adım 2: Kitap kurgu ise: Yeni bir okuyucunun açıklanmasına ihtiyaç duyabileceği – uydurulmuş gruplar, organizasyonlar, büyü sistemleri, teknolojiler, yaratıklar, diller veya evren içi lore gibi – {NUM_TERMS} önemli dünya kurma (World-building) unsuru çıkarın.
+   - Karakter isimlerini veya mekan isimlerini dahil ETMEYİN (bunlar ayrı olarak takip edilir).
+   - Gerçek dünyaya ait yaygın kelimeleri veya kavramları çıkarmayın.
+   - Uygun kategorileri kullanın: Faction, Magic System, Technology, Creature, Organization, Lore, Language.
+Adım 3: "expanded" alanında, kısaltmalar/ifadeler için tam açılımı ekleyin. Kısaltma/ifade değilse, adı tekrarlayın.
+Adım 4: Günlük yaygın kelimeleri dahil ETMEYİN.
+
 KESİN SPOILER KURALLARI:
 - Mevcut okuma ilerlemesinden sonrası hakkında KESİNLİKLE hiçbir bilgi verme. Tam olarak %%%d noktasında dur.
 - Açıklamalar karakterlerin kitabın tam bu noktasındaki durumunu yansıtmalıdır.
@@ -70,6 +79,7 @@ KESİN JSON GÜVENLİK KURALLARI:
 
 GEREKLİ JSON FORMATI:
 {
+  "book_type": "non_fiction",
   "characters": [
     {
       "name": "Tam Resmi İsim",
@@ -91,6 +101,14 @@ GEREKLİ JSON FORMATI:
   ],
   "locations": [
     {"name": "Mekan Adı", "description": "Kısa açıklama (MAKS {MAX_LOC_DESC} karakter)"}
+  ],
+  "terms": [
+    {
+      "name": "Terim veya Kısaltma",
+      "expanded": "Tam açılım veya adla aynı",
+      "category": "Kısaltma / Teknik Terim / Kavram / Jargon",
+      "definition": "Bağlam içinde kısa tanım (MAKS {MAX_TERM_DEF} karakter)"
+    }
   ],
   "timeline": [
     {
@@ -133,13 +151,46 @@ GEREKLİ JSON FORMATI:
   ]
 }]],
 
+    -- Daha fazla terim getir (Sözlük Desteği)
+    more_terms = [[Kitap: %s
+Yazar: %s
+Okuma İlerlemesi: %%%d
+
+GÖREV: Metinden TAM OLARAK 15 EK önemli terim, kısaltma, jargon veya kavram çıkarın.
+- Bu kitap kurgu dışı ise: teknik terimler, kavramlar, kısaltmalar veya jargon çıkarın.
+- Bu kitap kurgu ise: gruplar, organizasyonlar, büyü sistemleri, teknolojiler, yaratıklar, diller veya evren içi lore gibi dünya kurma (world-building) unsurlarını çıkarın.
+SADECE geçerli bir JSON objesi döndür.
+
+ÖZET MANDATI (KRİTİK):
+AI yanıtının kesilmesini önlemek için terim tanımlarını {MAX_TERM_DEF} karakterin altında tutun.
+
+KRİTİK TALİMAT:
+Daha önceden çıkarıldıkları için aşağıdaki terimleri KESİNLİKLE dahil etme:
+%s
+
+KESİN SPOILER KURALLARI:
+- Mevcut okuma ilerlemesinden sonrası hakkında KESİNLİKLE hiçbir bilgi verme. Tam olarak %%%d noktasında dur.
+
+GEREKLİ JSON FORMATI:
+{
+  "terms": [
+    {
+      "name": "Terim veya Kısaltma",
+      "expanded": "Tam açılım veya adla aynı",
+      "category": "Faction / Magic System / Technology / Creature / Organization / Lore / Language / Kısaltma / Teknik Terim / Kavram / Jargon",
+      "definition": "Bağlam içinde kısa tanım (MAKS {MAX_TERM_DEF} karakter)"
+    }
+  ]
+}]],
+
     -- Targeted Single Word Lookup
     single_word_lookup = [[Kullanıcı "%s" kelimesini vurguladı.
-GÖREV: Bu kelimenin kitaptaki bir Karakter, Konum veya Tarihi Figür olup olmadığını belirleyin.
+GÖREV: Bu kelimenin kitaptaki bir Karakter, Konum, Tarihi Figür veya Teknik Terim/Kısaltma olup olmadığını belirleyin.
  
 CRITICAL FOR CHARACTERS AND LOCATIONS: Use ONLY the provided "BOOK TEXT CONTEXT". Outside knowledge is strictly forbidden. Do not hallucinate.
 CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
-Kelime metinde bir karakter, konum veya tarihi figür DEĞİLSE, `is_valid` değerini false yapın.
+CRITICAL FOR TERMS: Kitap kurgu dışı ise, kelimenin teknik bir terim, kısaltma veya anahtar kavram olup olmadığını doğrulayın. Bağlam içindeki tanımını sağlayın.
+Kelime metinde bir karakter, konum, tarihi figür veya teknik terim DEĞİLSE, `is_valid` değerini false yapın.
  
 GEREKLİ JSON FORMATI:
 {
@@ -162,7 +213,8 @@ If `is_valid` is false:
 {
   "is_valid": false,
   "error_message": "Bunun neden bir karakter veya konum olmadığına dair kısa bir açıklama."
-}]],
+}
+]],
 
     -- Yedek dizeler (Fallback)
     fallback = {

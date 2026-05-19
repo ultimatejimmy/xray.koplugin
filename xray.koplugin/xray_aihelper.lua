@@ -887,6 +887,9 @@ function AIHelper:loadSettings()
     if not settings.loc_desc_len      then settings.loc_desc_len      = 100 end
     if not settings.timeline_event_len then settings.timeline_event_len = 80  end
     if not settings.hist_fig_bio_len  then settings.hist_fig_bio_len  = 100 end
+    if not settings.term_def_len       then settings.term_def_len       = 100      end
+    if not settings.default_book_mode  then settings.default_book_mode  = "auto"   end
+    if not settings.terms_visibility   then settings.terms_visibility   = "always" end
     
     -- Migration to unified Primary and Secondary AI logic
     if type(settings.primary_ai) ~= "table" or type(settings.secondary_ai) ~= "table" then
@@ -1123,6 +1126,9 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
     elseif section_name == "more_characters" then
         local exclude = context.exclude_characters or ""
         success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, p, exclude, p)
+    elseif section_name == "more_terms" then
+        local exclude = context.exclude_terms or "None"
+        success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, p, exclude, p)
     else
         success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p)
     end
@@ -1143,6 +1149,8 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
         local num_chars = math.min(40, math.max(10, math.floor(25 * 200 / char_len)))
         local num_locs  = math.min(20, math.max(3,  math.floor(8  * 100 / loc_len)))
         local num_hist  = math.min(15, math.max(3,  math.floor(8  * 100 / hist_len)))
+        local term_len  = math.max(50, math.min(300, s.term_def_len or 100))
+        local num_terms = 15
         final_prompt = final_prompt
             :gsub("{MAX_CHAR_DESC}",    tostring(char_len))
             :gsub("{NUM_CHARS}",        tostring(num_chars))
@@ -1151,6 +1159,8 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
             :gsub("{MAX_TIMELINE_EVENT}",tostring(tl_len))
             :gsub("{MAX_HIST_BIO}",     tostring(hist_len))
             :gsub("{NUM_HIST}",         tostring(num_hist))
+            :gsub("{MAX_TERM_DEF}",     tostring(term_len))
+            :gsub("{NUM_TERMS}",        tostring(num_terms))
     end
 
     -- Strip invalid UTF-8 introduced by byte-based truncation of multi-byte
@@ -1206,6 +1216,10 @@ end
 
 function AIHelper:getMoreCharacters(title, author, provider_name, context)
     return self:getBookDataSection(title, author, provider_name, context, "more_characters")
+end
+
+function AIHelper:getMoreTerms(title, author, provider_name, context)
+    return self:getBookDataSection(title, author, provider_name, context, "more_terms")
 end
 
 function AIHelper:startAIRequest(title, author, context, section_name, targeted_word)

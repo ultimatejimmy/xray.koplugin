@@ -48,16 +48,26 @@ ALGORITMO PARA PERSONAJES Y FIGURAS HISTÓRICAS:
 Paso 1. Extrae personajes importantes usando ambos bloques de texto. ({NUM_CHARS} normal, MÁXIMO 10 si es ómnibus).
 Paso 2. DEBES usar sus nombres completos y formales (ej. "Abraham Van Helsing"). NO uses apodos informales como nombre principal.
 Paso 3. Proporciona hasta 3 nombres alternativos, títulos o apodos por los que se conozca a este personaje en una matriz `aliases`. Incluye su nombre y apellido comunes si se usan. IMPORTANTE: Si un apellido es compartido por varios personajes (ej., miembros de la familia), NO lo incluyas como alias para ninguno de ellos.
-Step 4. Actively scan for up to {NUM_HIST} NOTABLE REAL people from human history (e.g., Presidents, Authors, Generals). Add them to `historical_figures`.
-CRITICAL for Characters & Historical Figures:
-- DO NOT extract characters or historical figures mentioned ONLY in non-narrative frontmatter or backmatter (e.g., Acknowledgments, Author Bio, Dedications, Title Page, Copyright).
-- Historical Figures MUST be verified real-world people with widespread historical recognition.
-- DO NOT include purely fictional characters in the historical figures list, even if they interact with real historical events. Fictional characters MUST go in the `characters` array.
-- For Historical Figures ONLY, you may use your internal knowledge to write their general `biography` and historical `role`, but you MUST use the book context for their `context_in_book`.
+Paso 4. Busca activamente hasta {NUM_HIST} personas REALES NOTABLES de la historia humana (ej., Presidentes, Autores, Generales). Añádelos a `historical_figures`.
+CRÍTICO para Personajes y Figuras Históricas:
+- NO extraigas personajes o figuras históricas mencionadas ÚNICAMENTE en material no narrativo inicial o final (ej., Agradecimientos, Biografía del autor, Dedicatorias, Página de título, Derechos de autor).
+- Las Figuras Históricas DEBEN ser personas reales del mundo real con reconocimiento histórico generalizado.
+- NO incluyas personajes puramente ficticios en la lista de figuras históricas, incluso si interactúan con eventos históricos reales. Los personajes ficticios DEBEN ir en la matriz `characters`.
+- ÚNICAMENTE para las Figuras Históricas, puedes usar tu conocimiento interno para escribir su `biography` general y su `role` histórico, pero DEBES usar el contexto del libro para su `context_in_book`.
 SIN SPOILERS: Detente exactamente en la marca del %d%%.
 
 ALGORITMO PARA UBICACIONES:
 Paso 1. Extrae de {NUM_LOCS} ubicaciones significativas. SIN SPOILERS: Detente exactamente en la marca del %d%%.
+
+ALGORITMO PARA TÉRMINOS:
+Paso 0. Declara "book_type" como "fiction" o "non_fiction" en la raíz del JSON.
+Paso 1. Si non_fiction: extrae {NUM_TERMS} términos técnicos, acrónimos, jerga o conceptos importantes que los lectores probablemente no conocerían sin conocimientos especializados. Usa categorías apropiadas como Acronym, Technical Term, Concept, o Jargon.
+Paso 2. Si fiction: extrae {NUM_TERMS} elementos significativos de la construcción del mundo que un nuevo lector necesitaría que se le explicaran, como facciones inventadas, organizaciones, sistemas de magia, tecnologías, criaturas, idiomas o lore del universo.
+   - NO incluyas nombres de personajes ni nombres de ubicaciones (se rastrean por separado).
+   - NO extraigas palabras o conceptos comunes del mundo real.
+   - Usa categorías apropiadas: Faction, Magic System, Technology, Creature, Organization, Lore, Language.
+Paso 3. Incluye lo que significa el acrónimo/frase en "expanded". Si no es un acrónimo/frase, repite el nombre.
+Paso 4. NO incluyas palabras comunes de todos los días.
 
 REGLAS ESTRICTAS SOBRE SPOILERS:
 - ABSOLUTAMENTE NINGUNA información posterior al progreso de lectura actual. Detente exactamente en la marca del %d%%.
@@ -91,6 +101,14 @@ FORMATO JSON REQUERIDO:
   ],
   "locations": [
     {"name": "Nombre del Lugar", "description": "Descripción breve (MÁX {MAX_LOC_DESC} caracteres)"}
+  ],
+  "terms": [
+    {
+      "name": "Término o Acrónimo",
+      "expanded": "Expansión completa o igual al nombre",
+      "category": "Acrónimo / Término Técnico / Concepto / Jerga",
+      "definition": "Definición concisa en contexto (MÁX {MAX_TERM_DEF} caracteres)"
+    }
   ],
   "timeline": [
     {
@@ -133,13 +151,46 @@ FORMATO JSON REQUERIDO:
   ]
 }]],
 
+    -- Obtención de más términos (Soporte para Glosario)
+    more_terms = [[Libro: %s
+Autor: %s
+Progreso de lectura: %d%%
+
+TAREA: Extrae EXACTAMENTE 15 términos, acrónimos, jerga o conceptos significativos ADICIONALES del texto.
+- Si este libro es de no ficción: extrae términos técnicos, conceptos, acrónimos o jerga.
+- Si este libro es de ficción: extrae elementos de construcción de mundos como facciones, organizaciones, sistemas de magia, tecnologías, criaturas, idiomas o lore del universo.
+Devuelve ÚNICAMENTE un objeto JSON válido.
+
+MANDATO DE BREVEDAD (CRÍTICO):
+Para evitar el truncamiento de la respuesta de la IA, mantén las definiciones de los términos por debajo de {MAX_TERM_DEF} caracteres.
+
+INSTRUCCIÓN CRÍTICA:
+NO incluyas ninguno de los siguientes términos, ya que ya han sido extraídos:
+%s
+
+REGLAS ESTRICTAS SOBRE SPOILERS:
+- ABSOLUTAMENTE NINGUNA información posterior al progreso de lectura actual. Detente exactamente en la marca del %d%%.
+
+FORMATO JSON REQUERIDO:
+{
+  "terms": [
+    {
+      "name": "Término o Acrónimo",
+      "expanded": "Expansión completa o igual al nombre",
+      "category": "Faction / Magic System / Technology / Creature / Organization / Lore / Language / Acronym / Technical Term / Concept / Jargon",
+      "definition": "Definición concisa en contexto (MÁX {MAX_TERM_DEF} caracteres)"
+    }
+  ]
+}]],
+
     -- Targeted Single Word Lookup
     single_word_lookup = [[El usuario ha resaltado la palabra "%s".
-TAREA: Determine si esta palabra es un Personaje, Lugar o Figura Histórica en el libro.
+TAREA: Determine si esta palabra es un Personaje, Lugar, Figura Histórica o Término Técnico/Acrónimo en el libro.
  
-CRITICAL FOR CHARACTERS AND LOCATIONS: Use ONLY the provided "BOOK TEXT CONTEXT". Outside knowledge is strictly forbidden. Do not hallucinate.
-CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
-Si la palabra NO es un personaje, lugar o figura histórica en el texto, establezca `is_valid` en false.
+CRÍTICO PARA PERSONAJES Y UBICACIONES: Usa ÚNICAMENTE el "BOOK TEXT CONTEXT" proporcionado. El conocimiento externo está estrictamente prohibido. No alucines.
+CRÍTICO PARA FIGURAS HISTÓRICAS: PUEDES usar tu conocimiento interno para verificar su identidad y proporcionar su biografía/papel, SOLO si son una figura histórica real y notable. AÚN ASÍ DEBES usar el contexto del texto para su relevancia en el libro.
+CRITICAL FOR TERMS: Si el libro es de no ficción, verifica si la palabra es un término técnico, un acrónimo o un concepto clave. Proporciona su definición en el contexto.
+Si la palabra NO es un personaje, lugar, figura histórica o término técnico en el texto, establezca `is_valid` en false.
  
 FORMATO JSON REQUERIDO:
 {
@@ -156,7 +207,7 @@ FORMATO JSON REQUERIDO:
   "error_message": ""
 }
  
-Nota: si el tipo es "location", el elemento debe tener "name" and "description". Si el tipo es "historical_figure", el elemento debe tener "name", "biography" y "role".
+Nota: si el tipo es "location", el elemento debe tener "name" and "description". Si el tipo es "historical_figure", el elemento debe tener "name", "biography" y "role". Si el tipo es "term", el elemento debe tener "name", "expanded", "category" y "definition".
  
 If `is_valid` is false:
 {

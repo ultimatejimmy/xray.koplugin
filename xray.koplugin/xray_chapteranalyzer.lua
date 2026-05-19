@@ -854,7 +854,74 @@ function ChapterAnalyzer:findMentionsInChapter(ui, entity, toc_entry, next_toc_e
 
     -- Load chapter text first so we can use frequency analysis when building terms
     local ok, raw_text = pcall(function()
-        return ui.document:getTextFromXPointer(toc_entry.xpointer) or ""
+        if toc_entry.xpointer then
+            if type(toc_entry.xpointer) == "string" and toc_entry.xpointer:sub(1, 5) == "page:" then
+                local p = tonumber(toc_entry.xpointer:match("page:(%d+)"))
+                if p and ui.document.getPageText then
+                    local end_p = next_toc_entry and next_toc_entry.xpointer and tonumber(next_toc_entry.xpointer:match("page:(%d+)")) or (ui.document.getTotalPages and ui.document:getTotalPages()) or p
+                    if end_p < p then end_p = p end
+                    local txt = ""
+                    for curr_p = p, end_p do
+                        local pt = ui.document:getPageText(curr_p)
+                        if type(pt) == "table" then
+                            local parts = {}
+                            for _, block in ipairs(pt) do
+                                if type(block) == "table" then
+                                    for _, span in ipairs(block) do
+                                        if type(span) == "table" and span.word then
+                                            table.insert(parts, span.word)
+                                        end
+                                    end
+                                end
+                            end
+                            pt = table.concat(parts, " ")
+                        end
+                        txt = txt .. (pt or "") .. "\n"
+                    end
+                    return txt
+                end
+            end
+            if ui.document.getTextFromXPointers then
+                local end_xp = next_toc_entry and next_toc_entry.xpointer
+                if not end_xp and ui.document.getEndXPointer then
+                    end_xp = ui.document:getEndXPointer()
+                end
+                if end_xp then
+                    return ui.document:getTextFromXPointers(toc_entry.xpointer, end_xp) or ""
+                end
+            end
+            if ui.document.getTextFromXPointer then
+                return ui.document:getTextFromXPointer(toc_entry.xpointer) or ""
+            end
+        end
+        
+        -- Fallback for PDF/page-based documents
+        if toc_entry.page and ui.document.getPageText then
+            local start_pg = tonumber(toc_entry.page)
+            local end_pg = next_toc_entry and tonumber(next_toc_entry.page) or (ui.document.getTotalPages and ui.document:getTotalPages()) or start_pg
+            if start_pg then
+                local txt = ""
+                for p = start_pg, end_pg do
+                    local pt = ui.document:getPageText(p)
+                    if type(pt) == "table" then
+                        local parts = {}
+                        for _, block in ipairs(pt) do
+                            if type(block) == "table" then
+                                for _, span in ipairs(block) do
+                                    if type(span) == "table" and span.word then
+                                        table.insert(parts, span.word)
+                                    end
+                                end
+                            end
+                        end
+                        pt = table.concat(parts, " ")
+                    end
+                    txt = txt .. (pt or "") .. "\n"
+                end
+                return txt
+            end
+        end
+        return ""
     end)
     if not ok or not raw_text or #raw_text < 10 then return {} end
 
@@ -890,36 +957,147 @@ function ChapterAnalyzer:findMentionsInChapter(ui, entity, toc_entry, next_toc_e
         ["пан"] = true, ["пані"] = true, ["г-н"] = true, ["г-жа"] = true,
     }
 
-    -- Frequency-ratio guard: if a candidate term appears 5× more often than the
-    -- entity's full name, it is too generic to be a meaningful identifier.
-    -- This is language-agnostic — "The", "Le", "Der" all fail naturally.
-    local name_freq = math.max(1, countIn(name_lower))
+    -- 2. Type-Aware Entity Classification
+    -- Characters and Historical Figures have a 'role' but not a term 'definition'.
+    local is_person = (entity.role ~= nil) and (entity.definition == nil)
+    local is_term   = (entity.definition ~= nil)
+
+    -- 1. Calculate the maximum frequency among the full name AND all AI-provided aliases.
+    -- This provides a much more robust baseline for what constitutes "too generic".
+    local max_base_freq = countIn(name_lower)
+    if entity.aliases and type(entity.aliases) == "table" then
+        for _, alias in ipairs(entity.aliases) do
+            if type(alias) == "string" and #alias > 3 then
+                max_base_freq = math.max(max_base_freq, countIn(alias:lower()))
+            end
+        end
+    end
+    local name_freq = math.max(1, max_base_freq)
+
     local function isTooGeneric(term)
         local term_l = term:lower()
         if #term < 2 or honorifics[term_l] then return true end
-        return countIn(term_l) > name_freq * 5
+        -- Relax the multiplier for people and terms to prevent self-suppression in high-frequency fiction
+        local limit
+        if is_person then
+            limit = math.max(10, name_freq * 5)
+        elseif is_term then
+            limit = math.max(50, name_freq * 10)
+        else
+            limit = 100
+        end
+        return countIn(term_l) > limit
     end
 
     -- Always start with the full name
     local terms = { { s = name_lower, l = #name_lower } }
 
-    -- Auto-generate first and last name components
-    local first_name = name:match("^(%S+)")
-    local last_name  = name:match("(%S+)$")
-    if first_name and first_name ~= name then
-        local fl = first_name:lower()
-        if not honorifics[fl] and not isTooGeneric(fl) then
-            table.insert(terms, { s = fl, l = #fl })
+    if is_person then
+        -- Auto-generate first and last name components for people
+        local first_name = name:match("^(%S+)")
+        local last_name  = name:match("(%S+)$")
+        if first_name and first_name ~= name then
+            local fl = first_name:lower()
+            if not honorifics[fl] and not isTooGeneric(fl) then
+                table.insert(terms, { s = fl, l = #fl })
+            end
         end
-    end
-    if last_name and last_name ~= first_name and last_name ~= name then
-        local ll = last_name:lower()
-        if not honorifics[ll] and not isTooGeneric(ll) then
-            table.insert(terms, { s = ll, l = #ll })
+        if last_name and last_name ~= first_name and last_name ~= name then
+            local ll = last_name:lower()
+            if not honorifics[ll] and not isTooGeneric(ll) then
+                table.insert(terms, { s = ll, l = #ll })
+            end
         end
+    else
+        -- For non-people (Terms, Locations), handle articles and variations
+        -- a. Strip leading articles (The, A, An, Der, Die, Das, Le, La, El, etc.)
+        local stripped = name:match("^[Tt]he%s+(.+)") or 
+                         name:match("^[Aa]n?%s+(.+)") or
+                         name:match("^[Dd][ie][er]%s+(.+)") or
+                         name:match("^[Dd]as%s+(.+)") or
+                         name:match("^[Ll][ae]s?%s+(.+)") or
+                         name:match("^[Ll]'%s*(.+)") or
+                         name:match("^[Ee]l%s+(.+)") or
+                         name:match("^[Uu]n[ae]?s?%s+(.+)")
+
+        if stripped and stripped ~= name then
+            local sl = stripped:lower()
+            -- Bypassing isTooGeneric for direct article stripping; this is a high-value core variation.
+            table.insert(terms, { s = sl, l = #sl })
+        end
+        
+        if is_term then
+            -- For multi-word terms, extract significant content words as aliases (Change 2)
+            local clean_name = stripped or name
+            local words = {}
+            for w in clean_name:gmatch("[^%s%-]+") do
+                table.insert(words, w)
+            end
+            
+            if #words > 1 then
+                -- Multi-word: find significant word(s)
+                local stop_words = {
+                    ["the"] = true, ["and"] = true, ["for"] = true, ["with"] = true,
+                    ["from"] = true, ["that"] = true, ["this"] = true, ["these"] = true,
+                    ["those"] = true, ["their"] = true, ["about"] = true, ["under"] = true,
+                    ["above"] = true, ["through"] = true, ["after"] = true, ["before"] = true,
+                    ["between"] = true, ["among"] = true, ["against"] = true, ["order"] = true,
+                    ["house"] = true, ["clan"] = true, ["guild"] = true, ["system"] = true
+                }
+                local significant_words = {}
+                for _, w in ipairs(words) do
+                    local wl = w:lower():gsub("[%p%s]+", "")
+                    if #wl >= 4 and not stop_words[wl] then
+                        table.insert(significant_words, wl)
+                    end
+                end
+                
+                -- If we found distinct significant words, add them as aliases (if not too generic)
+                for _, sw in ipairs(significant_words) do
+                    if not isTooGeneric(sw) then
+                        local exists = false
+                        for _, t in ipairs(terms) do
+                            if t.s == sw then exists = true; break end
+                        end
+                        if not exists then
+                            table.insert(terms, { s = sw, l = #sw })
+                        end
+                    end
+                end
+            else
+                -- Single word term: handle plural/singular variations safely
+                if name_lower:sub(-1) == "s" then
+                    local singular = name_lower:sub(1, -2)
+                    if #singular > 3 and not isTooGeneric(singular) then
+                        table.insert(terms, { s = singular, l = #singular })
+                    end
+                else
+                    local plural = name_lower .. "s"
+                    if not isTooGeneric(plural) then
+                        table.insert(terms, { s = plural, l = #plural })
+                    end
+                end
+            end
+        else
+            -- Locations: simple plural/singular variations (existing behavior)
+            if name_lower:sub(-1) == "s" then
+                local singular = name_lower:sub(1, -2)
+                if #singular > 3 then
+                    table.insert(terms, { s = singular, l = #singular })
+                end
+            else
+                local plural = name_lower .. "s"
+                table.insert(terms, { s = plural, l = #plural })
+            end
+        end
+        
+        -- Logging the terms we are about to search for debugging
+        local log_terms = {}
+        for _, t in ipairs(terms) do table.insert(log_terms, t.s) end
+        logger.info("XRayPlugin: Searching for mentions of '" .. name .. "' using variants: " .. table.concat(log_terms, " | "))
     end
 
-    -- Add AI-provided aliases, filtered by the same rules
+    -- 3. Add AI-provided aliases, filtered by the same rules
     if entity.aliases and type(entity.aliases) == "table" then
         for _, alias in ipairs(entity.aliases) do
             if type(alias) == "string" then
@@ -1011,7 +1189,7 @@ function ChapterAnalyzer:findMentionsInChapter(ui, entity, toc_entry, next_toc_e
 end
 
 function ChapterAnalyzer:scanMentionsAsync(ui, entity, toc, min_page, max_page, on_progress, on_complete)
-    if not ui or not ui.document or not entity or not entity.name or not toc or #toc == 0 then 
+    if not ui or not ui.document or not entity or not entity.name then 
         if on_complete then
             -- Schedule the callback so it executes asynchronously, preventing 
             -- a nil reference crash in the caller's assignment logic.
@@ -1021,6 +1199,23 @@ function ChapterAnalyzer:scanMentionsAsync(ui, entity, toc, min_page, max_page, 
         return { cancel = function() end } 
     end
 
+    local scan_toc = toc
+    if not scan_toc or #scan_toc == 0 then
+        local page_count = ui.document:getPageCount() and ui.document:getPageCount() or (ui.document.getTotalPages and ui.document:getTotalPages()) or 100
+        local num_sections = math.min(20, page_count)
+        local step = math.floor(page_count / num_sections)
+        if step < 1 then step = 1 end
+        scan_toc = {}
+        for idx = 1, num_sections do
+            local p = (idx - 1) * step + 1
+            table.insert(scan_toc, {
+                title = (ui.loc and ui.loc:t("this_page") or "Section") .. " " .. idx,
+                page = p,
+                xpointer = "page:" .. p
+            })
+        end
+    end
+
     local UIManager = require("ui/uimanager")
     local cancel_handle = { _cancelled = false }
     function cancel_handle:cancel()
@@ -1028,15 +1223,15 @@ function ChapterAnalyzer:scanMentionsAsync(ui, entity, toc, min_page, max_page, 
     end
 
     local mentions = {}
-    local total_chapters = #toc
+    local total_chapters = #scan_toc
     
     -- Cooperative multitasking using Coroutines
     local scan_co = coroutine.create(function()
         for i = 1, total_chapters do
             if cancel_handle._cancelled then break end
 
-            local entry = toc[i]
-            local next_entry = toc[i + 1]
+            local entry = scan_toc[i]
+            local next_entry = scan_toc[i + 1]
             
             local start_p = tonumber(entry.page)
             local end_p = next_entry and tonumber(next_entry.page) or math.huge
@@ -1054,7 +1249,7 @@ function ChapterAnalyzer:scanMentionsAsync(ui, entity, toc, min_page, max_page, 
                 
                 -- Filter out mentions that pass max_page or are before min_page
                 for _, m in ipairs(chapter_mentions) do
-                    if not (max_page and m.page and m.page > max_page) and not (min_page and m.page and m.page <= min_page) then
+                    if not (max_page and m.page and m.page > (max_page + 5)) and not (min_page and m.page and m.page <= min_page) then
                         table.insert(mentions, m)
                     end
                 end

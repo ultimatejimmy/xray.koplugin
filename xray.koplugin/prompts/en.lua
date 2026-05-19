@@ -59,6 +59,16 @@ NO SPOILERS: Stop exactly at the %d%% mark.
 ALGORITHM FOR LOCATIONS:
 Step 1. Extract {NUM_LOCS} significant locations. NO SPOILERS: Stop exactly at the %d%% mark.
 
+ALGORITHM FOR TERMS:
+Step 0. Declare "book_type" as "fiction" or "non_fiction" at the JSON root.
+Step 1. If non_fiction: extract {NUM_TERMS} significant technical terms, acronyms, jargon, or concepts readers would not know without specialized knowledge. Use appropriate categories like Acronym, Technical Term, Concept, or Jargon.
+Step 2. If fiction: extract {NUM_TERMS} significant world-building elements that a new reader would need explained—such as invented factions, organizations, magic systems, technologies, creatures, languages, or in-universe lore.
+   - Do NOT include character names or location names (those are tracked separately).
+   - DO NOT extract real-world common words or concepts.
+   - Use appropriate categories: Faction, Magic System, Technology, Creature, Organization, Lore, Language.
+Step 3. Include what the acronym/phrase stands for in "expanded". If not an acronym/phrase, repeat the name.
+Step 4. DO NOT include common everyday words.
+
 STRICT SPOILER RULES:
 - ABSOLUTELY NO information from after the current reading progress. Stop exactly at the %d%% mark.
 - Descriptions must reflect the characters' state at this exact point in the book.
@@ -70,6 +80,7 @@ STRICT JSON SAFETY RULES:
 
 REQUIRED JSON FORMAT:
 {
+  "book_type": "fiction",
   "characters": [
     {
       "name": "Full Formal Name",
@@ -91,6 +102,14 @@ REQUIRED JSON FORMAT:
   ],
   "locations": [
     {"name": "Place Name", "description": "Short desc (MAX {MAX_LOC_DESC} chars)"}
+  ],
+  "terms": [
+    {
+      "name": "Term or Acronym",
+      "expanded": "Full expansion or same as name",
+      "category": "Acronym / Technical Term / Concept / Jargon",
+      "definition": "Concise definition in context (MAX {MAX_TERM_DEF} chars)"
+    }
   ],
   "timeline": [
     {
@@ -133,13 +152,45 @@ REQUIRED JSON FORMAT:
   ]
 }]],
 
-    -- Targeted Single Word Lookup
+    -- Fetch More Terms (Glossary Support)
+    more_terms = [[Book: %s
+Author: %s
+Reading Progress: %d%%
+
+TASK: Extract EXACTLY 15 ADDITIONAL significant terms, acronyms, jargon, or concepts from the text.
+- If this book is non-fiction: extract technical terms, concepts, acronyms, or jargon.
+- If this book is fiction: extract world-building elements like factions, organizations, magic systems, technologies, creatures, languages, or in-universe lore.
+Return ONLY a valid JSON object.
+
+CONCISENESS MANDATE (CRITICAL):
+To avoid AI response truncation, keep term definitions under {MAX_TERM_DEF} characters.
+
+CRITICAL INSTRUCTION:
+Do NOT include any of the following terms, as they have already been extracted:
+%s
+
+STRICT SPOILER RULES:
+- ABSOLUTELY NO information from after the current reading progress. Stop exactly at the %d%% mark.
+
+REQUIRED JSON FORMAT:
+{
+  "terms": [
+    {
+      "name": "Term or Acronym",
+      "expanded": "Full expansion or same as name",
+      "category": "Faction / Magic System / Technology / Creature / Organization / Lore / Language / Acronym / Technical Term / Concept / Jargon",
+      "definition": "Concise definition in context (MAX {MAX_TERM_DEF} chars)"
+    }
+  ]
+}]],
+
     single_word_lookup = [[The user highlighted the word "%s".
-TASK: Determine if this word represents a Character, Location, or Historical Figure in the book.
+TASK: Determine if this word represents a Character, Location, Historical Figure, or Technical Term/Acronym in the book.
 
 CRITICAL FOR CHARACTERS AND LOCATIONS: Use the provided "BOOK TEXT CONTEXT" to identify the entity. If the word is provided in a "SEARCH TARGET" or "DIRECT REFERENCE" hint, it IS present in the book at the current position. Do not reject it just because it isn't found exactly in the sub-sampled narrative text. Short names (as short as 2 letters, e.g. "Oz", "Al", "Jo") are valid and should be analyzed.
 CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
-If the word is NOT a character, location, or historical figure, set `is_valid` to false.
+CRITICAL FOR TERMS: If the book is non-fiction, check if the word is a technical term, acronym, or key concept. Provide its definition in context.
+If the word is NOT a character, location, historical figure, or technical term, set `is_valid` to false.
 
 REQUIRED JSON FORMAT:
 {
@@ -156,7 +207,7 @@ REQUIRED JSON FORMAT:
   "error_message": ""
 }
 
-Note: If type is "location", the item should have "name" and "description". If type is "historical_figure", the item should have "name", "biography", and "role".
+Note: If type is "location", the item should have "name" and "description". If type is "historical_figure", the item should have "name", "biography", and "role". If type is "term", the item should have "name", "expanded", "category", and "definition".
 
 If `is_valid` is false:
 {

@@ -48,16 +48,26 @@ ALGORITHMUS FÜR CHARAKTERE & HISTORISCHE PERSONEN:
 Schritt 1. Extrahieren Sie wichtige Charaktere aus beiden Textblöcken. ({NUM_CHARS} normale, MAX. 10 bei Sammelausgaben).
 Schritt 2. Sie MÜSSEN deren VOLLSTÄNDIGEN, formellen Namen verwenden (z. B. "Abraham Van Helsing"). Verwenden Sie KEINE lockeren Spitznamen als Hauptnamen.
 Schritt 3. Geben Sie bis zu 3 alternative Namen, Titel oder Spitznamen an, unter denen dieser Charakter bekannt ist, in einem Array `aliases`. Schließen Sie den üblichen Vornamen und Nachnamen ein, falls sie verwendet werden. WICHTIG: Wenn ein Nachname von mehreren Charakteren (z. B. Familienmitgliedern) geteilt wird, schließen Sie ihn für keinen der Charaktere als Alias ein.
-Step 4. Actively scan for up to {NUM_HIST} NOTABLE REAL people from human history (e.g., Presidents, Authors, Generals). Add them to `historical_figures`.
-CRITICAL for Characters & Historical Figures:
-- DO NOT extract characters or historical figures mentioned ONLY in non-narrative frontmatter or backmatter (e.g., Acknowledgments, Author Bio, Dedications, Title Page, Copyright).
-- Historical Figures MUST be verified real-world people with widespread historical recognition.
-- DO NOT include purely fictional characters in the historical figures list, even if they interact with real historical events. Fictional characters MUST go in the `characters` array.
-- For Historical Figures ONLY, you may use your internal knowledge to write their general `biography` and historical `role`, but you MUST use the book context for their `context_in_book`.
+Schritt 4. Suchen Sie aktiv nach bis zu {NUM_HIST} BEDEUTENDEN REALEN Personen der Menschheitsgeschichte (z. B. Präsidenten, Autoren, Generäle). Fügen Sie diese zu `historical_figures` hinzu.
+WICHTIG für Charaktere & historische Personen:
+- Extrahieren Sie KEINE Charaktere oder historischen Personen, die NUR in nicht-erzählerischen Vorspann- oder Nachspann-Elementen erwähnt werden (z. B. Danksagungen, Autorenbiografie, Widmungen, Titelseite, Copyright).
+- Historische Personen MÜSSEN verifizierte reale Personen mit weitverbreiteter historischer Anerkennung sein.
+- Schließen Sie KEINE rein fiktiven Charaktere in die Liste der historischen Personen ein, selbst wenn sie mit realen historischen Ereignissen interagieren. Fiktive Charaktere MÜSSEN in das `characters`-Array aufgenommen werden.
+- NUR für historische Personen dürfen Sie Ihr internes Wissen verwenden, um deren allgemeine `biography` und historische `role` zu schreiben, aber Sie MÜSSEN den Buchkontext für deren `context_in_book` verwenden.
 KEINE SPOILER: Hören Sie genau bei der %d%%-Marke auf.
 
 ALGORITHMUS FÜR ORTE:
 Schritt 1. Extrahieren Sie {NUM_LOCS} bedeutende Orte. KEINE SPOILER: Hören Sie genau bei der %d%%-Marke auf.
+
+ALGORITHMUS FÜR BEGRIFFE:
+Schritt 0. Deklarieren Sie "book_type" als "fiction" oder "non_fiction" im JSON-Stammverzeichnis.
+Schritt 1. Falls non_fiction: Extrahieren Sie {NUM_TERMS} wichtige Fachbegriffe, Akronyme, Jargon oder Konzepte, die Leser ohne Fachwissen wahrscheinlich nicht kennen würden. Verwenden Sie passende Kategorien wie Acronym, Technical Term, Concept oder Jargon.
+Schritt 2. Falls fiction: Extrahieren Sie {NUM_TERMS} bedeutende Elemente des Weltenbaus (World-building), die ein neuer Leser erklärt bekommen müsste – wie erfundene Fraktionen, Organisationen, Magiesysteme, Technologien, Kreaturen, Sprachen oder in-universe Lore.
+   - Schließen Sie KEINE Charakter- oder Ortsnamen ein (diese werden separat erfasst).
+   - Extrahieren Sie KEINE alltäglichen Wörter oder Konzepte der realen Welt.
+   - Verwenden Sie passende Kategorien: Faction, Magic System, Technology, Creature, Organization, Lore, Language.
+Schritt 3. Geben Sie in "expanded" an, wofür das Akronym/die Phrase steht. Wenn es kein Akronym/keine Phrase ist, wiederholen Sie den Namen.
+Schritt 4. Schließen Sie KEINE alltäglichen Wörter ein.
 
 STRIKTE SPOILER-REGELN:
 - ABSOLUT KEINE Informationen nach dem aktuellen Lesefortschritt. Hören Sie genau bei der %d%%-Marke auf.
@@ -91,6 +101,14 @@ ERFORDERLICHES JSON-FORMAT:
   ],
   "locations": [
     {"name": "Name des Ortes", "description": "Kurzbeschreibung (MAX. {MAX_LOC_DESC} Zeichen)"}
+  ],
+  "terms": [
+    {
+      "name": "Fachbegriff oder Akronym",
+      "expanded": "Vollständige Form oder identisch mit Name",
+      "category": "Akronym / Fachbegriff / Konzept / Jargon",
+      "definition": "Präzise Definition im Kontext (MAX. {MAX_TERM_DEF} Zeichen)"
+    }
   ],
   "timeline": [
     {
@@ -133,13 +151,46 @@ ERFORDERLICHES JSON-FORMAT:
   ]
 }]],
 
+    -- Fetch More Terms (Glossary Support)
+    more_terms = [[Buch: %s
+Autor: %s
+Lesefortschritt: %d%%
+
+AUFGABE: Extrahieren Sie GENAU 15 ZUSÄTZLICHE bedeutende Begriffe, Akronyme, Jargon oder Konzepte aus dem Text.
+- Wenn dieses Buch Sachliteratur (Non-fiction) ist: Extrahieren Sie Fachbegriffe, Konzepte, Akronyme oder Jargon.
+- Wenn dieses Buch Belletristik (Fiction) ist: Extrahieren Sie Elemente des Weltenbaus (World-building) wie Fraktionen, Organisationen, Magiesysteme, Technologien, Kreaturen, Sprachen oder in-universe Lore.
+Geben Sie NUR ein gültiges JSON-Objekt aus.
+
+PRÄZISIONS-MANDAT (WICHTIG):
+Um eine Kürzung der AI-Antwort zu vermeiden, halten Sie die Begriffsdefinitionen unter {MAX_TERM_DEF} Zeichen.
+
+KRITISCHE ANWEISUNG:
+Schließen Sie KEINEN der folgenden Begriffe ein, da diese bereits extrahiert wurden:
+%s
+
+STRIKTE SPOILER-REGELN:
+- ABSOLUT KEINE Informationen nach dem aktuellen Lesefortschritt. Hören Sie genau bei der %d%%-Marke auf.
+
+ERFORDERLICHES JSON-FORMAT:
+{
+  "terms": [
+    {
+      "name": "Fachbegriff oder Akronym",
+      "expanded": "Vollständige Form oder identisch mit Name",
+      "category": "Faction / Magic System / Technology / Creature / Organization / Lore / Language / Acronym / Fachbegriff / Konzept / Jargon",
+      "definition": "Präzise Definition im Kontext (MAX. {MAX_TERM_DEF} Zeichen)"
+    }
+  ]
+}]],
+
     -- Targeted Single Word Lookup
     single_word_lookup = [[Der Benutzer hat das Wort "%s" hervorgehoben.
-AUFGABE: Bestimmen Sie, ob es sich bei diesem Wort um einen Charakter, einen Ort oder eine historische Figur im Buch handelt.
+AUFGABE: Bestimmen Sie, ob es sich bei diesem Wort um einen Charakter, einen Ort, eine historische Figur oder einen Fachbegriff/Akronym im Buch handelt.
  
-CRITICAL FOR CHARACTERS AND LOCATIONS: Use ONLY the provided "BOOK TEXT CONTEXT". Outside knowledge is strictly forbidden. Do not hallucinate.
-CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
-Wenn das Wort im Text KEIN Charakter, Ort oder historische Figur ist, setzen Sie `is_valid` auf false.
+WICHTIG FÜR CHARAKTERE UND ORTE: Verwenden Sie AUSSCHLIESSLICH den bereitgestellten "BOOK TEXT CONTEXT". Externes Wissen ist streng verboten. Keine Halluzinationen.
+WICHTIG FÜR HISTORISCHE PERSONEN: Sie DÜRFEN Ihr internes Wissen verwenden, um deren Identität zu verifizieren und deren Biografie/Rolle anzugeben, ABER NUR, wenn es sich um eine reale, bedeutende historische Person handelt. Sie MÜSSEN dennoch den Textkontext für deren Relevanz im Buch verwenden.
+CRITICAL FOR TERMS: Wenn das Buch ein Sachbuch ist, prüfen Sie, ob das Wort ein Fachbegriff, Akronym oder Schlüsselkonzept ist. Geben Sie die Definition im Kontext an.
+Wenn das Wort im Text KEIN Charakter, Ort, historische Figur oder Fachbegriff ist, setzen Sie `is_valid` auf false.
  
 ERFORDERLICHES JSON-FORMAT:
 {
@@ -156,7 +207,7 @@ ERFORDERLICHES JSON-FORMAT:
   "error_message": ""
 }
  
-Hinweis: Wenn der Typ "location" ist, muss das Element "name" und "description" enthalten. Wenn der Typ "historical_figure" ist, muss das Element "name", "biography" und "role" enthalten.
+Hinweis: Wenn der Typ "location" ist, muss das Element "name" und "description" enthalten. Wenn der Typ "historical_figure" ist, muss das Element "name", "biography" und "role" enthalten. Wenn der Typ "term" ist, muss das Element "name", "expanded", "category" und "definition" enthalten.
  
 If `is_valid` is false:
 {

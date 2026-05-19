@@ -74,9 +74,10 @@ package.loaded["ui/uimanager"] = {
         local w = b or a
         table.insert(_G.ui_tracker.closed, w)
     end,
-    scheduleIn = function(a, b)
+    scheduleIn = function(a, b, c)
         if type(a) == "function" then a()
-        elseif type(b) == "function" then b() end
+        elseif type(b) == "function" then b()
+        elseif type(c) == "function" then c() end
     end,
     nextTick = function(a, b)
         local f = b or a

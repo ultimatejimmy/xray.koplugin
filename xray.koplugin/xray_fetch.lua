@@ -122,6 +122,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                 self.characters = self.characters or {}
                 self.locations = self.locations or {}
                 self.historical_figures = self.historical_figures or {}
+                self.terms = self.terms or {}
 
                 -- Merge into our tables
                 local target_list
@@ -131,6 +132,8 @@ function M:fetchSingleWord(text, pos0, pos1)
                     target_list = self.locations
                 elseif item_type == "historical_figure" then
                     target_list = self.historical_figures
+                elseif item_type == "term" then
+                    target_list = self.terms
                 end
 
                 if target_list then
@@ -150,16 +153,17 @@ function M:fetchSingleWord(text, pos0, pos1)
                     self:sortDataByFrequency(target_list, book_text, "name")
                     if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
                     
-                    -- Prepare data for cache save
-                    local book_data = {
-                        characters = self.characters,
-                        locations = self.locations,
-                        historical_figures = self.historical_figures,
-                        timeline = self.timeline,
-                        author_info = self.author_info,
-                        last_fetch_page = self.book_data and self.book_data.last_fetch_page
-                    }
-                    self.cache_manager:saveCache(self.ui.document.file, book_data)
+                    local updated = self.cache_manager:loadCache(self.ui.document.file) or {}
+                    updated.characters = self.characters
+                    updated.locations = self.locations
+                    updated.historical_figures = self.historical_figures
+                    updated.terms = self.terms
+                    updated.timeline = self.timeline
+                    updated.book_type = self.book_type or updated.book_type
+                    updated.author_info = self.author_info or updated.author_info
+                    updated.last_fetch_page = (self.book_data and self.book_data.last_fetch_page) or updated.last_fetch_page
+                    
+                    self.cache_manager:saveCache(self.ui.document.file, updated)
                 end
                 
                 -- Always show result if it's valid, even if it didn't merge into a target_list
@@ -279,6 +283,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 existing_characters = is_update and self.characters or nil,
                 existing_locations = is_update and self.locations or nil,
                 existing_historical_figures = is_update and self.historical_figures or nil,
+                book_type = self.book_type,
             }
 
             local req_params, err_code, err_msg = self.ai_helper:buildComprehensiveRequest(title, author, context)
@@ -460,6 +465,29 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
             if not found then table.insert(self.locations, new_loc) end
         end
         self.locations = self:deduplicateByName(self.locations, "name")
+        -- Merge terms
+        self.terms = self.terms or {}
+        for _, new_term in ipairs(final_book_data.terms or {}) do
+            local found = false
+            for _, existing in ipairs(self.terms) do
+                if existing.name:lower() == new_term.name:lower() then
+                    if new_term.definition and new_term.definition ~= "" then
+                        existing.definition = new_term.definition
+                    end
+                    existing.expanded = new_term.expanded
+                    found = true; break
+                end
+            end
+            if not found then table.insert(self.terms, new_term) end
+        end
+        self.terms = self:deduplicateByName(self.terms, "name")
+        if book_text and #book_text > 0 then
+            self:sortDataByFrequency(self.terms, book_text, "name")
+        end
+        -- Merge book_type
+        if final_book_data.book_type then
+            self.book_type = final_book_data.book_type
+        end
         -- Merge timeline: duplicate = same chapter name AND same page.
         local toc = self.ui.document:getToc()
         -- Assign TOC pages to incoming events before dedup check.
@@ -486,6 +514,8 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         self.characters = final_book_data.characters
         self.historical_figures = final_book_data.historical_figures
         self.locations = final_book_data.locations
+        self.terms = final_book_data.terms or {}
+        self.book_type = final_book_data.book_type
         self.timeline = final_book_data.timeline
         -- Assign TOC pages and sort
         local toc = self.ui.document:getToc()
@@ -502,16 +532,17 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         end
     end
 
-    local updated_data = {
-        book_title = title,
-        author = author,
-        characters = self.characters,
-        historical_figures = self.historical_figures,
-        locations = self.locations,
-        timeline = self.timeline,
-        author_info = self.author_info,
-        last_fetch_page = current_page
-    }
+    local updated_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+    updated_data.book_title = title
+    updated_data.author = author
+    updated_data.characters = self.characters
+    updated_data.historical_figures = self.historical_figures
+    updated_data.locations = self.locations
+    updated_data.terms = self.terms
+    updated_data.book_type = self.book_type or updated_data.book_type
+    updated_data.timeline = self.timeline
+    updated_data.author_info = self.author_info or updated_data.author_info
+    updated_data.last_fetch_page = current_page
     
     self.book_data = updated_data
 
@@ -674,16 +705,17 @@ function M:fetchMoreCharacters()
             
             -- Save to cache
             if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-            local existing_cache = self.cache_manager:loadCache(self.ui.document.file) or {}
-            local updated_data = {
-                book_title = title,
-                author = author,
-                characters = self.characters,
-                historical_figures = self.historical_figures,
-                locations = self.locations,
-                timeline = self.timeline,
-                author_info = self.author_info or existing_cache.author_info
-            }
+            local updated_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            updated_data.book_title = title
+            updated_data.author = author
+            updated_data.characters = self.characters
+            updated_data.historical_figures = self.historical_figures
+            updated_data.locations = self.locations
+            updated_data.terms = self.terms or updated_data.terms
+            updated_data.book_type = self.book_type or updated_data.book_type
+            updated_data.timeline = self.timeline or updated_data.timeline
+            updated_data.author_info = self.author_info or updated_data.author_info
+            
             self.cache_manager:saveCache(self.ui.document.file, updated_data)
             
             local added_msg = string.format(self.loc:t("msg_added_characters") or "Added %d new characters!", new_count)
@@ -693,6 +725,144 @@ function M:fetchMoreCharacters()
                 UIManager:close(menu_to_close)
             end
             self:showCharacters()
+        end)
+    end)
+end
+
+function M:fetchMoreTerms()
+    require("ui/network/manager"):runWhenOnline(function()
+        if not self.ai_helper then
+            local AIHelper = require(plugin_path .. "xray_aihelper")
+            self.ai_helper = AIHelper
+            self.ai_helper:init(self.path)
+        end
+        if not self.ai_helper:hasApiKey() then
+            UIManager:show(InfoMessage:new{ text = self.loc:t("error_no_api_key"), timeout = 5 })
+            return
+        end
+
+        local props = self.ui.document:getProps() or {}
+        local title = sanitizeMetadata(props.title)
+        local author = sanitizeMetadata(props.authors)
+        local current_page = self.ui:getCurrentPage()
+        local reading_percent = math.floor((current_page / self.ui.document:getPageCount()) * 100)
+        local menu_to_close = self.terms_menu
+        self.terms_menu = nil
+        local is_cancelled = false
+        local ButtonDialog = require("ui/widget/buttondialog")
+
+        local wait_msg = ButtonDialog:new{
+            title = self.loc:t("fetching_ai") or "Fetching AI...",
+            text = (self.loc:t("extracting_more_terms") or "Extracting additional terms...") .. "\n\n" .. title,
+            buttons = {{{
+                text = self.loc:t("cancel") or "Cancel",
+                callback = function()
+                    is_cancelled = true
+                    if wait_msg then UIManager:close(wait_msg) end
+                end
+            }}}
+        }
+        UIManager:show(wait_msg)
+        
+        UIManager:scheduleIn(0.5, function()
+            if is_cancelled then return end
+            if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
+            
+            local pages_per_sample = 20
+            local chars_per_sample = 10000
+            local num_samples = 6
+            
+            self.more_terms_call_count = (self.more_terms_call_count or 0) + 1
+            local call_num = self.more_terms_call_count
+            local offset = (call_num - 1) * pages_per_sample
+            
+            local readable_pages = math.max(1, current_page)
+            local segment_size = math.floor(readable_pages / num_samples)
+            if segment_size < pages_per_sample then segment_size = pages_per_sample end
+            
+            local text_parts = {}
+            for i = 0, num_samples - 1 do
+                local segment_start = i * segment_size
+                local sample_start = math.min(segment_start + offset, readable_pages - pages_per_sample)
+                sample_start = math.max(1, sample_start)
+                if sample_start <= current_page then
+                    local end_page = math.min(sample_start + pages_per_sample, current_page)
+                    local sample = self.chapter_analyzer:getTextFromPageRange(self.ui, sample_start, end_page, chars_per_sample)
+                    if sample and #sample > 100 then
+                        table.insert(text_parts, "[SECTION " .. (i + 1) .. "]\n" .. sample)
+                    end
+                end
+            end
+            local book_text = table.concat(text_parts, "\n\n")
+
+            self.terms = self.terms or {}
+            local exclude_list = {}
+            for _, term in ipairs(self.terms) do
+                table.insert(exclude_list, term.name)
+            end
+            local exclude_str = #exclude_list > 0 and table.concat(exclude_list, ", ") or "None"
+
+            local context = {
+                exclude_terms = exclude_str,
+                reading_percent = reading_percent,
+                book_text = book_text
+            }
+
+            self.ai_helper:setTrapWidget(wait_msg)
+            local more_data, error_code, error_msg = self.ai_helper:getMoreTerms(title, author, nil, context)
+            self.ai_helper:resetTrapWidget()
+
+            if wait_msg then UIManager:close(wait_msg) end
+            if is_cancelled or error_code == "USER_CANCELLED" then return end
+            
+            if not more_data or not more_data.terms then
+                local err_title, err_text = utils:getFriendlyError(error_code, error_msg, self.loc)
+                UIManager:show(ConfirmBox:new{
+                    text = err_title .. "\n\n" .. err_text,
+                    ok_text = self.loc:t("ok") or "OK",
+                    cancel_text = nil
+                })
+                return
+            end
+            
+            local new_count = 0
+            for _, new_term in ipairs(more_data.terms) do
+                local found = false
+                for _, existing in ipairs(self.terms) do
+                    if existing.name:lower() == new_term.name:lower() then
+                        found = true; break
+                    end
+                end
+                if not found then
+                    table.insert(self.terms, new_term)
+                    new_count = new_count + 1
+                end
+            end
+            
+            self.terms = self:deduplicateByName(self.terms, "name")
+            if book_text and #book_text > 0 then
+                self:sortDataByFrequency(self.terms, book_text, "name")
+            end
+            
+            if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
+            local updated_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            updated_data.book_title = title
+            updated_data.author = author
+            updated_data.characters = self.characters
+            updated_data.historical_figures = self.historical_figures
+            updated_data.locations = self.locations
+            updated_data.terms = self.terms
+            updated_data.book_type = self.book_type or updated_data.book_type
+            updated_data.timeline = self.timeline or updated_data.timeline
+            updated_data.author_info = self.author_info or updated_data.author_info
+            
+            self.cache_manager:saveCache(self.ui.document.file, updated_data)
+            
+            local added_msg = string.format(self.loc:t("msg_added_terms") or "Added %d new terms!", new_count)
+            UIManager:show(InfoMessage:new{ text = added_msg, timeout = 3 })
+
+            if menu_to_close then UIManager:close(menu_to_close) end
+            self:showTerms()
         end)
     end)
 end
@@ -756,7 +926,17 @@ function M:fetchAuthorInfo()
         if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
         local cache = self.cache_manager:loadCache(self.ui.document.file) or {}
         cache.author_info = self.author_info
-        cache.author = self.author_info.name; cache.author_bio = self.author_info.description; cache.author_birth = self.author_info.birthDate; cache.author_death = self.author_info.deathDate
+        cache.author = self.author_info.name
+        cache.author_bio = self.author_info.description
+        cache.author_birth = self.author_info.birthDate
+        cache.author_death = self.author_info.deathDate
+        
+        -- Store book_type if AI detected it during author fetch
+        if author_data.book_type then
+            cache.book_type = author_data.book_type
+            self.book_type = author_data.book_type
+        end
+        
         self.cache_manager:saveCache(self.ui.document.file, cache)
         self:showAuthorInfo()
     end)

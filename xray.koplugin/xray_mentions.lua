@@ -32,16 +32,26 @@ function M:saveMentionsToCache()
     if not self.cache_manager then
         self.cache_manager = require(plugin_path .. "xray_cachemanager"):new()
     end
-    local updated = {
-        book_title         = self.book_data and self.book_data.book_title,
-        author             = self.book_data and self.book_data.author,
-        characters         = self.characters,
-        historical_figures = self.historical_figures,
-        locations          = self.locations,
-        timeline           = self.timeline,
-        author_info        = self.author_info,
-        last_fetch_page    = self.book_data and self.book_data.last_fetch_page,
-    }
+    
+    local updated = self.cache_manager:loadCache(self.ui.document.file) or {}
+    
+    -- Update only the entity lists that contain the new mentions
+    updated.characters         = self.characters
+    updated.historical_figures = self.historical_figures
+    updated.locations          = self.locations
+    updated.terms              = self.terms
+    updated.timeline           = self.timeline
+    
+    if self.book_data then
+        updated.book_title      = self.book_data.book_title or updated.book_title
+        updated.author          = self.book_data.author or updated.author
+        updated.last_fetch_page = self.book_data.last_fetch_page or updated.last_fetch_page
+    end
+    
+    if self.author_info then
+        updated.author_info = self.author_info
+    end
+
     self.cache_manager:saveCache(self.ui.document.file, updated)
 end
 
@@ -50,6 +60,12 @@ function M:showMentionsForEntity(entity)
     local name = entity.name or "???"
     if (self.active_mention_scan and self.active_mention_scan.entity_name == name) then
         self:showMentionsMenu(entity); return
+    end
+    
+    -- If there's a running scan for a DIFFERENT entity, cancel it to avoid resource conflicts
+    if self.active_mention_scan and self.active_mention_scan.cancel_handle then
+        self.active_mention_scan.cancel_handle:cancel()
+        self.active_mention_scan = nil
     end
     if not self.ui or not self.ui.document then return end
     if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
@@ -109,7 +125,9 @@ function M:buildMentionsMenuItems(entity)
     local is_scanning = self.active_mention_scan and self.active_mention_scan.entity_name == name
     
     if is_scanning then
-        local scan_text = (self.loc:t("mentions_scanning") or "Scanning... %1 of %2 chapters"):gsub("%%1", tostring(self.active_mention_scan.chapter_idx)):gsub("%%2", tostring(self.active_mention_scan.total_chapters))
+        local scan_tmpl = self.loc:t("mentions_scanning")
+        if scan_tmpl == "mentions_scanning" then scan_tmpl = "Scanning... %1 of %2 chapters" end
+        local scan_text = scan_tmpl:gsub("%%1", tostring(self.active_mention_scan.chapter_idx)):gsub("%%2", tostring(self.active_mention_scan.total_chapters))
         table.insert(items, { text = "\xE2\x8F\xB3 " .. scan_text, keep_menu_open = true, callback = function() end })
         table.insert(items, { text = "\xE2\x9C\x96 " .. (self.loc:t("close") or "Close"), keep_menu_open = true, callback = function() if self.mentions_menu then UIManager:close(self.mentions_menu); self.mentions_menu = nil end end, separator = true })
     else
@@ -118,6 +136,7 @@ function M:buildMentionsMenuItems(entity)
             if self.active_mention_scan and self.active_mention_scan.cancel_handle then 
                 self.active_mention_scan.cancel_handle:cancel() 
             end
+            self.active_mention_scan = nil
             -- Clear data
             entity.mentions = {}; entity.last_mention_page = nil; 
             -- Re-trigger logic (it will see needs_scan = true and min_page = nil)
@@ -126,7 +145,9 @@ function M:buildMentionsMenuItems(entity)
     end
 
     if not is_scanning and (#mentions == 0) then
-        table.insert(items, { text = (self.loc:t("mentions_none") or "No mentions found for '%s' yet."):format(name), keep_menu_open = true, callback = function() end })
+        local none_tmpl = self.loc:t("mentions_none")
+        if none_tmpl == "mentions_none" then none_tmpl = "No mentions found for '%s' yet." end
+        table.insert(items, { text = none_tmpl:format(name), keep_menu_open = true, callback = function() end })
         return items
     end
 
@@ -169,12 +190,17 @@ end
 
 function M:showMentionsMenu(entity)
     if not entity then return end
+    
+    -- Unconditionally clear any existing menu to prevent stale states
     if self.mentions_menu then
-        self:updateMentionsMenuInPlace(entity)
-        return
+        pcall(function() UIManager:close(self.mentions_menu) end)
+        self.mentions_menu = nil
     end
+    local title_tmpl = self.loc:t("mentions_title")
+    if title_tmpl == "mentions_title" then title_tmpl = "Mentions: %s" end
+    
     self.mentions_menu = Menu:new{
-        title = (self.loc:t("mentions_title") or "mentions_title"):format(entity.name or "???"),
+        title = title_tmpl:format(entity.name or "???"),
         item_table = self:buildMentionsMenuItems(entity),
         is_borderless = true,
         width = Screen:getWidth(),

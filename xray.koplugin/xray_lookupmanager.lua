@@ -54,6 +54,7 @@ function LookupManager:lookupAll(text)
         { list = self.plugin.characters,        type = "character"  },
         { list = self.plugin.historical_figures, type = "historical" },
         { list = self.plugin.locations,         type = "location"   },
+        { list = self.plugin.terms,             type = "term"       },
     }
 
     local seen = {}  -- tracks already-added names across passes
@@ -148,6 +149,8 @@ function LookupManager:showResult(item, item_type)
         self.plugin:showHistoricalFigureDetails(item)
     elseif item_type == "location" then
         self.plugin:showLocationDetails(item)
+    elseif item_type == "term" then
+        self.plugin:showTermDetails(item)
     end
 end
 

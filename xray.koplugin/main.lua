@@ -108,6 +108,8 @@ function XRayPlugin:init()
     self.locations = {}
     self.timeline = {}
     self.historical_figures = {}
+    self.terms = {}
+    self.book_type = nil
     
     -- Mentions Feature Gating
     self.mentions_enabled = true
@@ -496,6 +498,20 @@ function XRayPlugin:autoLoadCache()
         self.locations = cached_data.locations or {}
         self.timeline = cached_data.timeline or {}
         self.historical_figures = cached_data.historical_figures or {}
+        self.terms = cached_data.terms or {}
+        
+        -- Explicitly mark terms as fetched if they exist in cache
+        if #self.terms > 0 then
+            self.terms_fetched = true
+        end
+
+        -- Set book_type: priority is user override (if not "auto"), then detected book_type
+        local mode_override = cached_data.book_mode_override or "auto"
+        if mode_override ~= "auto" then
+            self.book_type = mode_override
+        else
+            self.book_type = cached_data.book_type or nil
+        end
         if cached_data.author_info then
             self.author_info = cached_data.author_info
         else
@@ -545,6 +561,8 @@ function XRayPlugin:autoLoadCache()
                 self.historical_figures = self:deduplicateByName(self.historical_figures, "name")
                 self.locations = self:sortDataByFrequency(self.locations, full_text, "name")
                 self.locations = self:deduplicateByName(self.locations, "name")
+                self.terms = self:sortDataByFrequency(self.terms, full_text, "name")
+                self.terms = self:deduplicateByName(self.terms, "name")
 
                 self:log("XRayPlugin: Chunked post-load complete")
             end)
@@ -572,12 +590,13 @@ function XRayPlugin:getMenuCounts()
         locations = self.locations and #self.locations or 0,
         timeline = self.timeline and #self.timeline or 0,
         historical_figures = self.historical_figures and #self.historical_figures or 0,
+        terms = self.terms and #self.terms or 0,
     }
 end
 
 
 function XRayPlugin:getSubMenuItems()
-    self.current_xray_menu_table = {
+    local items = {
         {
             text = self.loc:t("menu_characters") or "Characters",
             keep_menu_open = true,
@@ -598,132 +617,148 @@ function XRayPlugin:getSubMenuItems()
             keep_menu_open = true,
             callback = function() self:showLocations() end,
         },
-        {
-            text = self.loc:t("menu_author_info"),
-            keep_menu_open = true,
-            callback = function() self:showAuthorInfo() end,
-            separator = true,
-        },
+    }
 
-        {
-            text = self.loc:t("menu_update_xray") or "Update X-Ray Data (Merge)",
-            keep_menu_open = true,
-            callback = function() self:updateFromAI() end,
-            separator = true,
-        },
-        {
-            text = self.loc:t("menu_settings") or "Settings",
-            keep_menu_open = true,
-            sub_item_table = {
-                {
-                    text = self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings",
-                    keep_menu_open = true,
-                    callback = function() self:showAutoUpdateSettings() end,
-                },
-                {
-                    text = self.loc:t("menu_desc_length_settings") or "Description Length Settings",
-                    keep_menu_open = true,
-                    callback = function() self:showDescriptionLengthSettings() end,
-                },
-                {
-                    text = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
-                    keep_menu_open = true,
-                    callback = function() self:showLinkedEntriesSettings() end,
-                },
-                {
-                    text = self.loc:t("mentions_setting_title") or "Mentions Settings",
-                    keep_menu_open = true,
-                    callback = function() self:showMentionsSettings() end,
-                },
-                {
-                    text = self.loc:t("spoiler_preference_title") or "Spoiler Settings",
-                    keep_menu_open = true,
-                    callback = function() self:showSpoilerSettings() end,
-                },
-                {
-                    text = self.loc:t("menu_xray_mode"),
-                    keep_menu_open = true,
-                    callback = function() self:toggleXRayMode() end,
-                    separator = true,
-                },
-                {
-                    text = self.loc:t("menu_language") or "Language",
-                    keep_menu_open = true,
-                    callback = function() self:showLanguageSelection() end,
-                },
-                {
-                    text = self.loc:t("menu_ai_settings"),
-                    keep_menu_open = true,
-                    sub_item_table = {
-                        {
-                            text = self.loc:t("menu_primary_ai_model") or "Primary AI Model",
-                            keep_menu_open = true,
-                            sub_item_table_func = function() return self:getAIModelSelectionMenu("primary") end
-                        },
-                        {
-                            text = self.loc:t("menu_secondary_ai_model") or "Secondary AI Model",
-                            keep_menu_open = true,
-                            sub_item_table_func = function() return self:getAIModelSelectionMenu("secondary") end,
-                        },
-                        {
-                            text = self.loc:t("menu_reasoning_effort") or "AI Reasoning Effort",
-                            keep_menu_open = true,
-                            callback = function() self:showReasoningEffortSettings() end,
-                            separator = true,
-                        },
-                        {
-                            text = self.loc:t("menu_api_keys") or "API Keys & Providers", 
-                            keep_menu_open = true,
-                            sub_item_table_func = function() return self:getAPIKeysMenu() end,
-                            separator = true,
-                        },
-                        {
-                            text = self.loc:t("menu_view_config") or "View All Config Values", 
-                            keep_menu_open = true,
-                            callback = function() self:showConfigSummary() end,
-                        },
-                    }
+    table.insert(items, {
+        text = self.loc:t("menu_terms") or "Glossary",
+        keep_menu_open = true,
+        callback = function() self:showTerms() end,
+    })
+
+    table.insert(items, {
+        text = self.loc:t("menu_author_info"),
+        keep_menu_open = true,
+        callback = function() self:showAuthorInfo() end,
+        separator = true,
+    })
+
+    table.insert(items, {
+        text = self.loc:t("menu_update_xray") or "Update X-Ray Data (Merge)",
+        keep_menu_open = true,
+        callback = function() self:updateFromAI() end,
+        separator = true,
+    })
+
+    self.current_xray_menu_table = items
+    table.insert(items, {
+        text = self.loc:t("menu_settings") or "Settings",
+        keep_menu_open = true,
+        sub_item_table = {
+            {
+                text = self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings",
+                keep_menu_open = true,
+                callback = function() self:showAutoUpdateSettings() end,
+            },
+            {
+                text = self.loc:t("menu_book_mode") or "Book Type",
+                keep_menu_open = true,
+                callback = function() self:showBookTypeSettings() end,
+            },
+            {
+                text = self.loc:t("menu_desc_length_settings") or "Description Length Settings",
+                keep_menu_open = true,
+                callback = function() self:showDescriptionLengthSettings() end,
+            },
+            {
+                text = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
+                keep_menu_open = true,
+                callback = function() self:showLinkedEntriesSettings() end,
+            },
+            {
+                text = self.loc:t("mentions_setting_title") or "Mentions Settings",
+                keep_menu_open = true,
+                callback = function() self:showMentionsSettings() end,
+            },
+            {
+                text = self.loc:t("spoiler_preference_title") or "Spoiler Settings",
+                keep_menu_open = true,
+                callback = function() self:showSpoilerSettings() end,
+            },
+            {
+                text = self.loc:t("menu_xray_mode"),
+                keep_menu_open = true,
+                callback = function() self:toggleXRayMode() end,
+                separator = true,
+            },
+            {
+                text = self.loc:t("menu_language") or "Language",
+                keep_menu_open = true,
+                callback = function() self:showLanguageSelection() end,
+            },
+            {
+                text = self.loc:t("menu_ai_settings"),
+                keep_menu_open = true,
+                sub_item_table = {
+                    {
+                        text = self.loc:t("menu_primary_ai_model") or "Primary AI Model",
+                        keep_menu_open = true,
+                        sub_item_table_func = function() return self:getAIModelSelectionMenu("primary") end
+                    },
+                    {
+                        text = self.loc:t("menu_secondary_ai_model") or "Secondary AI Model",
+                        keep_menu_open = true,
+                        sub_item_table_func = function() return self:getAIModelSelectionMenu("secondary") end,
+                    },
+                    {
+                        text = self.loc:t("menu_reasoning_effort") or "AI Reasoning Effort",
+                        keep_menu_open = true,
+                        callback = function() self:showReasoningEffortSettings() end,
+                        separator = true,
+                    },
+                    {
+                        text = self.loc:t("menu_api_keys") or "API Keys & Providers", 
+                        keep_menu_open = true,
+                        sub_item_table_func = function() return self:getAPIKeysMenu() end,
+                        separator = true,
+                    },
+                    {
+                        text = self.loc:t("menu_view_config") or "View All Config Values", 
+                        keep_menu_open = true,
+                        callback = function() self:showConfigSummary() end,
+                    },
                 }
             }
-        },
-        {
-            text = self.loc:t("menu_maintenance") or "Maintenance",
-            keep_menu_open = true,
-            sub_item_table = {
-                {
-                    text = self.loc:t("menu_clear_cache"),
-                    keep_menu_open = true,
-                    callback = function() self:clearCache() end,
-                },
-                {
-                    text = self.loc:t("menu_clear_logs") or "Clear Logs",
-                    keep_menu_open = true,
-                    callback = function() self:clearLogs() end,
-                },
-                {
-                    text = self.loc:t("menu_beta_channel") or "Beta Channel Settings",
-                    keep_menu_open = true,
-                    callback = function() self:showBetaChannelSettings() end,
-                },
-                {
-                    text = self.loc:t("updater_check") or "Check for Updates",
-                    keep_menu_open = true,
-                    callback = function()
-                        local updater = require(plugin_path .. "xray_updater")
-                        updater.checkForUpdates(self.loc, self.ai_helper.settings.beta_channel_enabled)
-                    end,
-                },
-            }
-        },
-        {
-            text = _t(self, "menu_about", "About X-Ray"),
-            keep_menu_open = true,
-            callback = function() self:showAbout() end,
-        },
+        }
+    })
 
-    }
-    
-    return self.current_xray_menu_table
+    table.insert(items, {
+        text = self.loc:t("menu_maintenance") or "Maintenance",
+        keep_menu_open = true,
+        sub_item_table = {
+            {
+                text = self.loc:t("menu_clear_cache"),
+                keep_menu_open = true,
+                callback = function() self:clearCache() end,
+            },
+            {
+                text = self.loc:t("menu_clear_logs") or "Clear Logs",
+                keep_menu_open = true,
+                callback = function() self:clearLogs() end,
+            },
+            {
+                text = self.loc:t("menu_beta_channel") or "Beta Channel Settings",
+                keep_menu_open = true,
+                callback = function() self:showBetaChannelSettings() end,
+            },
+            {
+                text = self.loc:t("updater_check") or "Check for Updates",
+                keep_menu_open = true,
+                callback = function()
+                    local updater = require(plugin_path .. "xray_updater")
+                    updater.checkForUpdates(self.loc, self.ai_helper.settings.beta_channel_enabled)
+                end,
+            },
+        }
+    })
+
+    table.insert(items, {
+        text = _t(self, "menu_about", "About X-Ray"),
+        keep_menu_open = true,
+        callback = function() self:showAbout() end,
+    })
+
+    self.current_xray_menu_table = items
+    return items
 end
 
 
