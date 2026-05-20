@@ -255,6 +255,10 @@ function M:closeAllMenus()
         self.active_mention_scan = nil
     end
 
+    if self.clearHighlightOverlay then
+        pcall(function() self:clearHighlightOverlay() end)
+    end
+
     -- 1. Close all custom plugin modals instantly
     local menus = {
         self.mentions_menu, self.char_menu, self.loc_menu,

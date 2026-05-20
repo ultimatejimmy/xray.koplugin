@@ -324,9 +324,13 @@ function XRayPlugin:onPageUpdate(pageno)
     if self.pending_return_banner then
         local p = self.pending_return_banner
         self.pending_return_banner = nil
-        UIManager:scheduleIn(0.5, function()
-            self:showReturnBanner(p.return_page, p.entity_name, p.mentions, pageno)
+        UIManager:scheduleIn(0.3, function()
+            self:showReturnBanner(p.return_page, p.entity, p.mentions, self.last_pageno)
         end)
+    elseif not self.is_programmatic_navigation then
+        if self.return_banner then
+            self:closeAllMenus()
+        end
     end
     if not self.auto_fetch_enabled then return end
     

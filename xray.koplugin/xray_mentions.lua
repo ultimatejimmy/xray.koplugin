@@ -10,8 +10,123 @@ local Event = require("ui/event")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local XRayConfig = require(plugin_path .. "xray_config")
 
-
 local M = {}
+
+function M:showHighlightOverlay(boxes)
+    self:clearHighlightOverlay()
+    if not boxes or #boxes == 0 then return end
+    self.scroll_highlight_boxes = boxes
+    self:_applyScrollHighlights()
+end
+
+function M:clearHighlightOverlay()
+    self.scroll_highlight_boxes = nil
+end
+
+function M:_applyScrollHighlights()
+    if not self.scroll_highlight_boxes or #self.scroll_highlight_boxes == 0 then return end
+    local Screen = require("device").screen
+    if Screen and Screen.bb then
+        local screen_w = Screen:getWidth()
+        local screen_h = Screen:getHeight()
+        
+        -- The banner is always at the bottom via recenter override. Compute clip boundary.
+        local clip_bottom = screen_h
+        local banner_h = self._banner_natural_h or (self.return_banner and self.return_banner.dimen and self.return_banner.dimen.h) or 0
+        if banner_h > 0 then
+            clip_bottom = screen_h - banner_h
+        end
+        
+        for _, box in ipairs(self.scroll_highlight_boxes) do
+            if box.x and box.y and box.w and box.h then
+                if box.y < clip_bottom then
+                    local draw_h = math.min(box.h, clip_bottom - box.y)
+                    if draw_h > 0 then
+                        Screen.bb:darkenRect(box.x, box.y, box.w, draw_h, 0.3)
+                    end
+                end
+            end
+        end
+        Screen:refreshFast(0, 0, screen_w, screen_h)
+    end
+end
+
+
+-- Safe helper to merge overlapping bounding boxes (prevents double darkening of matching aliases)
+local function _mergeBoxes(boxes)
+    if not boxes or #boxes == 0 then return {} end
+    local merged = {}
+    for _, box in ipairs(boxes) do
+        if box.x and box.y and box.w and box.h then
+            local placed = false
+            for _, m in ipairs(merged) do
+                -- Check if they overlap vertically (on the same line or extremely close)
+                local y_overlap = math.max(0, math.min(box.y + box.h, m.y + m.h) - math.max(box.y, m.y))
+                if y_overlap > 0 or math.abs(box.y - m.y) < 5 then
+                    -- Check if they overlap horizontally
+                    local x_overlap = math.max(0, math.min(box.x + box.w, m.x + m.w) - math.max(box.x, m.x))
+                    if x_overlap > 0 or (box.x <= m.x + m.w and m.x <= box.x + box.w) then
+                        -- Merge them
+                        local min_x = math.min(box.x, m.x)
+                        local min_y = math.min(box.y, m.y)
+                        local max_x = math.max(box.x + box.w, m.x + m.w)
+                        local max_y = math.max(box.y + box.h, m.y + m.h)
+                        m.x = min_x
+                        m.y = min_y
+                        m.w = max_x - min_x
+                        m.h = max_y - min_y
+                        placed = true
+                        break
+                    end
+                end
+            end
+            if not placed then
+                table.insert(merged, {
+                    x = box.x,
+                    y = box.y,
+                    w = box.w,
+                    h = box.h,
+                })
+            end
+        end
+    end
+    
+    -- Recursively merge until no more changes happen (transitive overlaps)
+    local final_merged = {}
+    local changed = false
+    for _, box in ipairs(merged) do
+        local placed = false
+        for _, m in ipairs(final_merged) do
+            local y_overlap = math.max(0, math.min(box.y + box.h, m.y + m.h) - math.max(box.y, m.y))
+            if y_overlap > 0 or math.abs(box.y - m.y) < 5 then
+                local x_overlap = math.max(0, math.min(box.x + box.w, m.x + m.w) - math.max(box.x, m.x))
+                if x_overlap > 0 or (box.x <= m.x + m.w and m.x <= box.x + box.w) then
+                    local min_x = math.min(box.x, m.x)
+                    local min_y = math.min(box.y, m.y)
+                    local max_x = math.max(box.x + box.w, m.x + m.w)
+                    local max_y = math.max(box.y + box.h, m.y + m.h)
+                    m.x = min_x
+                    m.y = min_y
+                    m.w = max_x - min_x
+                    m.h = max_y - min_y
+                    placed = true
+                    changed = true
+                    break
+                end
+            end
+        end
+        if not placed then
+            table.insert(final_merged, box)
+        end
+    end
+    
+    if changed then
+        return _mergeBoxes(final_merged)
+    else
+        return final_merged
+    end
+end
+
 
 -- Safe helper for current page
 local function _getCurrentPage(plugin)
@@ -165,7 +280,7 @@ function M:buildMentionsMenuItems(entity)
                 
                 self.pending_return_banner = {
                     return_page = return_pg,
-                    entity_name = name,
+                    entity = entity,
                     mentions = mentions
                 }
                 
@@ -209,10 +324,162 @@ function M:showMentionsMenu(entity)
     UIManager:show(self.mentions_menu)
 end
 
-function M:showReturnBanner(return_page, entity_name, mentions, current_page)
+function M:highlightMentionsOnPage(page, entity)
+    if not self.ui or not self.ui.document or not self.ui.view or not entity then return end
+    
+    local ok, err = pcall(function()
+        local names_to_search = {}
+        if type(entity) == "table" then
+            table.insert(names_to_search, entity.name)
+            
+            local honorifics = { ["mr"]=true, ["mrs"]=true, ["ms"]=true, ["miss"]=true, ["dr"]=true, ["sir"]=true, ["lord"]=true, ["lady"]=true, ["professor"]=true, ["the"]=true, ["and"]=true }
+            
+            -- Dynamically extract significant word parts (like first/last name) for highlighting
+            if entity.name:match("%s") then
+                for w in entity.name:gmatch("%S+") do
+                    local clean_w = w:gsub("[%p%s]+", "")
+                    if #clean_w > 3 and not honorifics[clean_w:lower()] then
+                        table.insert(names_to_search, clean_w)
+                    end
+                end
+            end
+            
+            if entity.aliases and type(entity.aliases) == "table" then
+                for _, alias in ipairs(entity.aliases) do
+                    if type(alias) == "string" and alias ~= "" then
+                        table.insert(names_to_search, alias)
+                        -- Also split multi-word aliases
+                        if alias:match("%s") then
+                            for w in alias:gmatch("%S+") do
+                                local clean_w = w:gsub("[%p%s]+", "")
+                                if #clean_w > 3 and not honorifics[clean_w:lower()] then
+                                    table.insert(names_to_search, clean_w)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            
+            -- Deduplicate
+            local unique_names = {}
+            local final_names = {}
+            for _, n in ipairs(names_to_search) do
+                local nl = n:lower()
+                if not unique_names[nl] then
+                    unique_names[nl] = true
+                    table.insert(final_names, n)
+                end
+            end
+            names_to_search = final_names
+        else
+            table.insert(names_to_search, entity)
+        end
+
+        local combined_res = {}
+        for _, name in ipairs(names_to_search) do
+            if self.log then self:log("XRayPlugin: highlightMentionsOnPage searching for name/alias: " .. tostring(name)) end
+            local res = self.ui.document:findAllText(name, true, 0, 500, false)
+            if res and #res > 0 then
+                for _, r in ipairs(res) do
+                    table.insert(combined_res, r)
+                end
+            end
+        end
+        
+        if self.log then self:log("XRayPlugin: findAllText combined matches: " .. tostring(#combined_res)) end
+        
+        if #combined_res > 0 then
+            local merged_boxes = {}
+            local scroll_highlighted = false
+            
+            if self.ui.rolling then
+                if self.log then self:log("XRayPlugin: Processing matches in SCROLL mode") end
+                -- Scroll mode (XPointers)
+                local Screen = require("device").screen
+                local screen_h = Screen and Screen:getHeight() or 1000
+                local has_screen_boxes = false
+                
+                for _, r in ipairs(combined_res) do
+                    if self.ui.document.getScreenBoxesFromPositions then
+                        local boxes = self.ui.document:getScreenBoxesFromPositions(r.start, r["end"], true)
+                        if boxes then
+                            for _, box in ipairs(boxes) do
+                                if box.y and box.y >= 0 and box.y < screen_h then
+                                    table.insert(merged_boxes, box)
+                                    has_screen_boxes = true
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                -- Fallback to native single selection highlight if no boxes were generated
+                if not has_screen_boxes then
+                    for _, r in ipairs(combined_res) do
+                        if not scroll_highlighted then
+                            if self.ui.document.getTextFromXPointers then
+                                self.ui.document:getTextFromXPointers(r.start, r["end"], true)
+                            end
+                            scroll_highlighted = true
+                        end
+                    end
+                end
+            else
+                if self.log then self:log("XRayPlugin: Processing matches in PAGINATED mode") end
+                -- Paginated mode
+                for _, r in ipairs(combined_res) do
+                    -- In paginated mode, r.start is the 1-based page number
+                    if r.start == page then
+                        if r.boxes then
+                            for _, box in ipairs(r.boxes) do
+                                local page_box = self.ui.document:nativeToPageRectTransform(page, box)
+                                if page_box then
+                                    table.insert(merged_boxes, page_box)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            
+            merged_boxes = _mergeBoxes(merged_boxes)
+            if self.log then self:log("XRayPlugin: Generated " .. #merged_boxes .. " highlight boxes") end
+            
+            if #merged_boxes > 0 then
+                if self.ui.rolling then
+                    self:showHighlightOverlay(merged_boxes)
+                else
+                    self.ui.view.highlight.temp[page] = merged_boxes
+                end
+            end
+
+            
+            if not self.ui.rolling and (#merged_boxes > 0 or scroll_highlighted) then
+                if self.log then self:log("XRayPlugin: Triggering UI repaint...") end
+                -- Attempt multiple ways to trigger a repaint safely
+                if UIManager then
+                    if self.ui.view.dialog then UIManager:setDirty(self.ui.view.dialog, "ui") end
+                    if self.ui then UIManager:setDirty(self.ui, "ui") end
+                    UIManager:forceRePaint()
+                end
+                if self.ui.handleEvent then
+                    self.ui:handleEvent(Event:new("Redraw"))
+                end
+            end
+        end
+    end)
+    if not ok then
+        if self.log then self:log("XRayPlugin: ERROR inside highlightMentionsOnPage: " .. tostring(err)) end
+    end
+end
+
+function M:showReturnBanner(return_page, entity, mentions, current_page)
     if self.return_banner then UIManager:close(self.return_banner); self.return_banner = nil end
 
     local plugin = self
+    local entity_name = type(entity) == "table" and entity.name or tostring(entity)
     local title = (self.loc:t("mentions_at_location") or "Mention: %s"):format(entity_name)
     
     local unique_pages = {}
@@ -236,7 +503,7 @@ function M:showReturnBanner(return_page, entity_name, mentions, current_page)
             callback = function()
                 if not prev_enabled then return end
                 local prev_pg = unique_pages[current_pg_idx - 1]
-                plugin.pending_return_banner = { return_page = return_page, entity_name = entity_name, mentions = mentions }
+                plugin.pending_return_banner = { return_page = return_page, entity = entity, mentions = mentions }
                 plugin:_doReturnJump(prev_pg)
             end,
         },
@@ -247,7 +514,9 @@ function M:showReturnBanner(return_page, entity_name, mentions, current_page)
         {
             text = "\xE2\x9C\x95", -- Close icon
             callback = function()
-                if plugin.return_banner then UIManager:close(plugin.return_banner); plugin.return_banner = nil; plugin.return_page_origin = nil end
+                UIManager:nextTick(function()
+                    if plugin.return_banner then UIManager:close(plugin.return_banner) end
+                end)
             end,
         },
         {
@@ -255,7 +524,7 @@ function M:showReturnBanner(return_page, entity_name, mentions, current_page)
             callback = function()
                 if not next_enabled then return end
                 local next_pg = unique_pages[current_pg_idx + 1]
-                plugin.pending_return_banner = { return_page = return_page, entity_name = entity_name, mentions = mentions }
+                plugin.pending_return_banner = { return_page = return_page, entity = entity, mentions = mentions }
                 plugin:_doReturnJump(next_pg)
             end,
         },
@@ -267,20 +536,81 @@ function M:showReturnBanner(return_page, entity_name, mentions, current_page)
         is_borderless = true,
         width = Screen:getWidth(),
         show_close_button = false,
-        on_close_callback = function() plugin.return_banner = nil end,
     }
     
-    -- STABILITY SECRET: Override recenter to force it to the bottom
-    self.return_banner.recenter = function(this)
-        this:moveTo(0, Screen:getHeight() - this:getHeight())
+    -- STABILITY SECRET: Override onCloseWidget to ensure highlights/references clear when closed by tap-off or button click
+    self.return_banner.onCloseWidget = function(this)
+        UIManager:setDirty(nil, function()
+            return "flashui", this.movable.dimen
+        end)
+        plugin.return_banner = nil
+        plugin.return_page_origin = nil
+        pcall(function()
+            if plugin.clearHighlightOverlay then
+                plugin:clearHighlightOverlay()
+            end
+            if plugin.ui.view and plugin.ui.view.highlight then
+                plugin.ui.view.highlight.temp = {}
+            end
+            if plugin.ui.rolling and plugin.ui.document and plugin.ui.document.clearSelection then
+                plugin.ui.document:clearSelection()
+            end
+            if UIManager and type(UIManager.forceRePaint) == "function" then
+                UIManager:forceRePaint()
+            end
+        end)
     end
     
+    -- STABILITY SECRET: Override recenter to force it to the bottom (shifted up slightly for progress bar)
+    local bottom_offset = 32
+    self.return_banner.recenter = function(this)
+        if this.movable and this.movable.dimen then
+            this.movable.dimen.x = 0
+            this.movable.dimen.y = Screen:getHeight() - this.movable.dimen.h - bottom_offset
+        end
+        this.dimen = this.movable and this.movable.dimen
+    end
+
+    -- Force the CenterContainer wrapper to position content at the bottom with bottom_offset
+    if self.return_banner[1] then
+        self.return_banner[1].paintTo = function(this, bb, x, y)
+            local content_size = this[1]:getSize()
+            local x_pos = x + math.floor((this.dimen.w - content_size.w) / 2)
+            local y_pos = y + this.dimen.h - content_size.h - bottom_offset
+            this[1]:paintTo(bb, x_pos, y_pos)
+        end
+    end
+    
+    -- Save natural height for highlight clipping (including the offset shift)
+    self._banner_natural_h = ((self.return_banner.movable and self.return_banner.movable.dimen and self.return_banner.movable.dimen.h) or 100) + bottom_offset
+    
     UIManager:show(self.return_banner)
+    if UIManager and type(UIManager.forceRePaint) == "function" then
+        UIManager:forceRePaint()
+    end
+    
+    plugin:highlightMentionsOnPage(current_page, entity)
+    
+    self.is_programmatic_navigation = true
+    if UIManager and type(UIManager.scheduleIn) == "function" then
+        UIManager:scheduleIn(0.5, function()
+            self.is_programmatic_navigation = nil
+        end)
+    else
+        self.is_programmatic_navigation = nil
+    end
 end
 
 function M:_doReturnJump(return_page)
     if not return_page then return end
+    self.is_programmatic_navigation = true
     if self.return_banner then UIManager:close(self.return_banner); self.return_banner = nil; self.return_page_origin = nil end
+    self:clearHighlightOverlay()
+    
+    -- Sync repaint to clear screen boxes before transitioning page
+    if UIManager and type(UIManager.forceRePaint) == "function" then
+        UIManager:forceRePaint()
+    end
     self.ui:handleEvent(Event:new("GotoPage", return_page))
 end
 
