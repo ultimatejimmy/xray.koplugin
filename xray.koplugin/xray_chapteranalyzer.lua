@@ -507,12 +507,17 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
                     ui.document:gotoXPointer(current_xp)
                 end
             else
-                -- Beginning of book
-                start_xp = "main.0" -- Common start XPointer for creengine, or just jump to 0
-                if ui.document.gotoPos then
-                    ui.document:gotoPos(0)
+                -- Limit window: at most 60 pages back to avoid blocking extraction
+                local current_p = current_page or (ui.getCurrentPage and ui:getCurrentPage()) or 1
+                local window_start = math.max(1, current_p - 60)
+                if ui.document.getPageXPointer then
+                    start_xp = ui.document:getPageXPointer(window_start)
+                elseif ui.document.gotoPos then
+                    -- Legacy fallback: jump to a nearby page instead of position 0
+                    local saved_xp = ui.document:getXPointer()
+                    ui.document:gotoPage(window_start)
                     start_xp = ui.document:getXPointer()
-                    ui.document:gotoXPointer(current_xp)
+                    if saved_xp then ui.document:gotoXPointer(saved_xp) end
                 end
             end
             

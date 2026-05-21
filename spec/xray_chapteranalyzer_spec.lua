@@ -51,4 +51,65 @@ describe("xray_chapteranalyzer", function()
             assert.are.equal("Alice Liddell", found[1].character.name)
         end)
     end)
+
+    describe("getTextForAnalysis", function()
+        local mock_ui
+        local getPageXPointer_calls
+        local getTextFromXPointers_calls
+
+        before_each(function()
+            getPageXPointer_calls = {}
+            getTextFromXPointers_calls = {}
+
+            mock_ui = {
+                rolling = {}, -- reflowable
+                document = {
+                    getPageCount = function() return 100 end,
+                    getXPointer = function() return "mock_current_xp" end,
+                    getPageXPointer = function(self, page)
+                        table.insert(getPageXPointer_calls, page)
+                        return "xp_page_" .. page
+                    end,
+                    getTextFromXPointers = function(self, start_xp, end_xp)
+                        table.insert(getTextFromXPointers_calls, { start_xp = start_xp, end_xp = end_xp })
+                        return "some mock text extracted"
+                    end,
+                    gotoXPointer = function() end,
+                    gotoPage = function() end
+                },
+                getCurrentPage = function() return 80 end
+            }
+        end)
+
+        it("uses a window of 60 pages when start_page is not provided", function()
+            local text = analyzer:getTextForAnalysis(mock_ui, 50000, nil, 80)
+
+            -- Should resolve window_start = math.max(1, 80 - 60) = 20
+            -- Should call getPageXPointer(20) and getPageXPointer(80)
+            assert.are.equal(2, #getPageXPointer_calls)
+            assert.are.equal(80, getPageXPointer_calls[1])
+            assert.are.equal(20, getPageXPointer_calls[2])
+
+            -- Should extract text using the resolved XPointers
+            assert.are.equal(1, #getTextFromXPointers_calls)
+            assert.are.equal("xp_page_20", getTextFromXPointers_calls[1].start_xp)
+            assert.are.equal("xp_page_80", getTextFromXPointers_calls[1].end_xp)
+            assert.are.equal("some mock text extracted", text)
+        end)
+
+        it("respects start_page when provided", function()
+            local text = analyzer:getTextForAnalysis(mock_ui, 50000, nil, 80, 10)
+
+            -- Should call getPageXPointer(10) instead of window fallback
+            assert.are.equal(2, #getPageXPointer_calls)
+            assert.are.equal(80, getPageXPointer_calls[1])
+            assert.are.equal(10, getPageXPointer_calls[2])
+
+            -- Should extract text using the resolved XPointers
+            assert.are.equal(1, #getTextFromXPointers_calls)
+            assert.are.equal("xp_page_10", getTextFromXPointers_calls[1].start_xp)
+            assert.are.equal("xp_page_80", getTextFromXPointers_calls[1].end_xp)
+            assert.are.equal("some mock text extracted", text)
+        end)
+    end)
 end)

@@ -566,24 +566,13 @@ function XRayPlugin:autoLoadCache()
                 self:assignTimelinePages(self.timeline, toc, false)
                 self:sortTimelineByTOC(self.timeline)
 
-                local full_text = ""
-                local ok_ca, result_text = pcall(function()
-                    if not self.chapter_analyzer then
-                        self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new()
-                    end
-                    return self.chapter_analyzer:getTextForAnalysis(self.ui, 50000, nil, self.ui:getCurrentPage()) or ""
-                end)
-                if ok_ca and type(result_text) == "string" then
-                    full_text = result_text
-                end
-
-                self.characters = self:sortDataByFrequency(self.characters, full_text, "name")
+                -- Stage 3: Only deduplicate — do NOT re-extract document text here.
+                -- getTextFromXPointers is a blocking synchronous call that can freeze
+                -- the UI for many minutes on large books. The sort_order is already
+                -- persisted in the cache and restored by Stage 2.
                 self.characters = self:deduplicateByName(self.characters, "name")
-                self.historical_figures = self:sortDataByFrequency(self.historical_figures, full_text, "name")
                 self.historical_figures = self:deduplicateByName(self.historical_figures, "name")
-                self.locations = self:sortDataByFrequency(self.locations, full_text, "name")
                 self.locations = self:deduplicateByName(self.locations, "name")
-                self.terms = self:sortDataByFrequency(self.terms, full_text, "name")
                 self.terms = self:deduplicateByName(self.terms, "name")
 
                 self:log("XRayPlugin: Chunked post-load complete")
