@@ -14,14 +14,41 @@ local M = {}
 
 function M:showHighlightOverlay(boxes)
     self.scroll_highlight_boxes = boxes
-    if UIManager and type(UIManager.forceRePaint) == "function" then
-        UIManager:forceRePaint()
+    if self.ui and self.ui.view then
+        local plugin = self
+        local banner_h = self._banner_natural_h or 100
+        local screen_h = Screen:getHeight()
+        local clip_bottom = screen_h - banner_h
+
+        self.ui.view:registerViewModule("xray_highlights", {
+            paintTo = function(this, bb, x, y)
+                if not plugin.scroll_highlight_boxes then return end
+                for _, box in ipairs(plugin.scroll_highlight_boxes) do
+                    if box.x and box.y and box.w and box.h and box.y < clip_bottom then
+                        local draw_h = math.min(box.h, clip_bottom - box.y)
+                        if draw_h > 0 then
+                            -- Use invertRect for guaranteed E-ink contrast (matches native temp_drawer)
+                            bb:invertRect(box.x, box.y, box.w, draw_h)
+                        end
+                    end
+                end
+            end
+        })
+        UIManager:setDirty(self.ui.view.dialog, "ui")
+        if UIManager and type(UIManager.forceRePaint) == "function" then
+            UIManager:forceRePaint()
+        end
     end
 end
 
 function M:clearHighlightOverlay()
     self.scroll_highlight_boxes = nil
+    if self.ui and self.ui.view and self.ui.view.view_modules then
+        self.ui.view.view_modules["xray_highlights"] = nil
+        UIManager:setDirty(self.ui.view.dialog, "ui")
+    end
 end
+
 
 
 
@@ -547,20 +574,6 @@ function M:showReturnBanner(return_page, entity, mentions, current_page)
     -- Force the CenterContainer wrapper to position content at the bottom with bottom_offset
     if self.return_banner[1] then
         self.return_banner[1].paintTo = function(this, bb, x, y)
-            -- Draw all highlights directly to the absolute framebuffer
-            if plugin.scroll_highlight_boxes then
-                local screen_h = Screen:getHeight()
-                local clip_bottom = screen_h - (plugin._banner_natural_h or 100)
-                for _, box in ipairs(plugin.scroll_highlight_boxes) do
-                    if box.x and box.y and box.w and box.h and box.y < clip_bottom then
-                        local draw_h = math.min(box.h, clip_bottom - box.y)
-                        if draw_h > 0 then
-                            bb:darkenRect(box.x, box.y, box.w, draw_h, 0.3)
-                        end
-                    end
-                end
-            end
-
             local content_size = this[1]:getSize()
             local x_pos = x + math.floor((this.dimen.w - content_size.w) / 2)
             local y_pos = y + this.dimen.h - content_size.h - bottom_offset

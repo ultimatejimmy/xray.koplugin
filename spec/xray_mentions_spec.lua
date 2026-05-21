@@ -23,7 +23,57 @@ describe("xray_mentions", function()
             assert.are.equal("ButtonDialog", last.type)
         end)
 
-        it("should paint scroll highlights when paintTo is called on the banner's wrapper", function()
+        it("should register xray_highlights view module when showHighlightOverlay is called", function()
+            local registered_modules = {}
+            plugin.ui.view = {
+                dialog = {},
+                view_modules = registered_modules,
+                registerViewModule = function(self, name, module)
+                    registered_modules[name] = module
+                end
+            }
+
+            local mock_boxes = {
+                { x = 10, y = 20, w = 100, h = 15 }
+            }
+            plugin._banner_natural_h = 100
+
+            plugin:showHighlightOverlay(mock_boxes)
+
+            assert.is_not_nil(registered_modules["xray_highlights"])
+            assert.is_not_nil(registered_modules["xray_highlights"].paintTo)
+
+            local inverted_rects = {}
+            local mock_bb = {
+                invertRect = function(self, x, y, w, h)
+                    table.insert(inverted_rects, {x = x, y = y, w = w, h = h})
+                end
+            }
+
+            registered_modules["xray_highlights"]:paintTo(mock_bb, 0, 0)
+
+            assert.are.equal(1, #inverted_rects)
+            assert.are.equal(10, inverted_rects[1].x)
+            assert.are.equal(20, inverted_rects[1].y)
+            assert.are.equal(100, inverted_rects[1].w)
+            assert.are.equal(15, inverted_rects[1].h)
+        end)
+
+        it("should unregister xray_highlights view module when clearHighlightOverlay is called", function()
+            local registered_modules = {
+                xray_highlights = { paintTo = function() end }
+            }
+            plugin.ui.view = {
+                dialog = {},
+                view_modules = registered_modules
+            }
+
+            plugin:clearHighlightOverlay()
+
+            assert.is_nil(registered_modules["xray_highlights"])
+        end)
+
+        it("should only paint child content and not highlights in banner's wrapper paintTo", function()
             local mock_child = {
                 getSize = function() return { w = 100, h = 50 } end,
                 paintTo = function() end
@@ -37,15 +87,10 @@ describe("xray_mentions", function()
                 return dialog
             end
 
-            plugin.scroll_highlight_boxes = {
-                { x = 10, y = 20, w = 100, h = 15 }
-            }
-            plugin._banner_natural_h = 100
-
-            local darkened_rects = {}
+            local inverted_rects = {}
             local mock_bb = {
-                darkenRect = function(self, x, y, w, h, opacity)
-                    table.insert(darkened_rects, {x = x, y = y, w = w, h = h, opacity = opacity})
+                invertRect = function(self, x, y, w, h)
+                    table.insert(inverted_rects, {x = x, y = y, w = w, h = h})
                 end
             }
 
@@ -64,12 +109,7 @@ describe("xray_mentions", function()
             last[1].paintTo(last[1], mock_bb, 0, 700)
 
             assert.is_true(child_painted)
-            assert.are.equal(1, #darkened_rects)
-            assert.are.equal(10, darkened_rects[1].x)
-            assert.are.equal(20, darkened_rects[1].y)
-            assert.are.equal(100, darkened_rects[1].w)
-            assert.are.equal(15, darkened_rects[1].h)
-            assert.are.equal(0.3, darkened_rects[1].opacity)
+            assert.are.equal(0, #inverted_rects)
 
             package.loaded["ui/widget/buttondialog"].new = button_dialog_new
         end)
