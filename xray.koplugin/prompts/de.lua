@@ -73,6 +73,11 @@ STRIKTE SPOILER-REGELN:
 - ABSOLUT KEINE Informationen nach dem aktuellen Lesefortschritt. Hören Sie genau bei der %d%%-Marke auf.
 - Beschreibungen müssen den Zustand der Charaktere genau an diesem Punkt im Buch widerspiegeln.
 
+STRIKTE REGELN ZUR WISSENSQUELLE (WICHTIG):
+- FÜR FIKTIVE CHARAKTERE: Ihre Beschreibungen MÜSSEN AUSSCHLIESSLICH auf dem basieren, was im bereitgestellten Text explizit angegeben oder eindeutig impliziert ist. Ergänzen Sie dies NICHT durch Wissen aus früherem Training, externen Quellen oder allgemeiner Kenntnis des Buches/der Serie/des Autors.
+- Wenn ein Charakter im bisherigen Text nur kurz erwähnt wurde, darf Ihre Beschreibung nur diese begrenzte Information widerspiegeln. Ziehen Sie KEINE Schlussfolgerungen, machen Sie keine Annahmen und fügen Sie keine Details hinzu, die nicht im bereitgestellten Kontext begründet sind.
+- Die EINZIGE Ausnahme gilt für REALE HISTORISCHE PERSONEN (unter `historical_figures`): Sie dürfen internes Wissen für deren allgemeine Biografie/Rolle verwenden, müssen sich jedoch für deren `context_in_book` weiterhin auf den Buchtext verlassen.
+
 STRIKTE JSON-SICHERHEITSREGELN:
 - Sie MÜSSEN alle doppelten Anführungszeichen (\") innerhalb von Strings ordnungsgemäß escapen.
 - Verwenden Sie KEINE unescaped Zeilenumbrüche innerhalb von Strings.
@@ -87,7 +92,7 @@ ERFORDERLICHES JSON-FORMAT:
       "role": "Rolle bis zum aktuellen Fortschritt",
       "gender": "Männlich / Weiblich / Unbekannt",
       "occupation": "Beruf/Status",
-      "description": "Tiefgehende Analyse mit Details aus dem bisherigen Text. KEINE SPOILER. (Max {MAX_CHAR_DESC} Zeichen)"
+      "description": "Beschreibung basiert STRIKT auf dem bereitgestellten Text. Keine Schlussfolgerungen oder externes Wissen hinzufügen. KEINE SPOILER. (Max {MAX_CHAR_DESC} Zeichen)"
     }
   ],
   "historical_figures": [
@@ -146,7 +151,7 @@ ERFORDERLICHES JSON-FORMAT:
       "role": "Rolle bis zum aktuellen Fortschritt",
       "gender": "Männlich / Weiblich / Unbekannt",
       "occupation": "Beruf/Status",
-      "description": "Tiefgehende Analyse mit Details aus dem bisherigen Text. KEINE SPOILER. (Max {MAX_CHAR_DESC} Zeichen)"
+      "description": "Beschreibung basiert STRIKT auf dem bereitgestellten Text. Keine Schlussfolgerungen oder externes Wissen hinzufügen. KEINE SPOILER. (Max {MAX_CHAR_DESC} Zeichen)"
     }
   ]
 }]],
@@ -188,6 +193,7 @@ ERFORDERLICHES JSON-FORMAT:
 AUFGABE: Bestimmen Sie, ob es sich bei diesem Wort um einen Charakter, einen Ort, eine historische Figur oder einen Fachbegriff/Akronym im Buch handelt.
  
 WICHTIG FÜR CHARAKTERE UND ORTE: Verwenden Sie AUSSCHLIESSLICH den bereitgestellten "BOOK TEXT CONTEXT". Externes Wissen ist streng verboten. Keine Halluzinationen.
+WICHTIG FÜR FIKTIVE CHARAKTERE: Beschreiben Sie NUR das, was der bereitgestellte Buchtext offenbart. Verwenden Sie KEIN Vorwissen aus Ihrem Training über diesen Charakter, selbst wenn Sie ihn aus einer bekannten Serie wiedererkennen. Wenn der Text diesen Charakter nur kurz erwähnt, muss Ihre Beschreibung diese begrenzte Information widerspiegeln.
 WICHTIG FÜR HISTORISCHE PERSONEN: Sie DÜRFEN Ihr internes Wissen verwenden, um deren Identität zu verifizieren und deren Biografie/Rolle anzugeben, ABER NUR, wenn es sich um eine reale, bedeutende historische Person handelt. Sie MÜSSEN dennoch den Textkontext für deren Relevanz im Buch verwenden.
 CRITICAL FOR TERMS: Wenn das Buch ein Sachbuch ist, prüfen Sie, ob das Wort ein Fachbegriff, Akronym oder Schlüsselkonzept ist. Geben Sie die Definition im Kontext an.
 Wenn das Wort im Text KEIN Charakter, Ort, historische Figur oder Fachbegriff ist, setzen Sie `is_valid` auf false.

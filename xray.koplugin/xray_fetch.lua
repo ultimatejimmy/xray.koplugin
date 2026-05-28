@@ -82,7 +82,11 @@ function M:fetchSingleWord(text, pos0, pos1)
             local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(self.ui, 100, 60000, limit_percent == 100)
             
             -- 2. Immediate book text (Previous, Current, and Next page for maximum context relevance)
-            local book_text = self.chapter_analyzer:getTextFromPageRange(self.ui, math.max(1, current_page - 1), current_page + 1, 25000)
+            local end_page = current_page
+            if limit_percent == 100 then
+                end_page = current_page + 1
+            end
+            local book_text = self.chapter_analyzer:getTextFromPageRange(self.ui, math.max(1, current_page - 1), end_page, 25000)
             
             -- Ensure the word is always present and prioritized in the context for the AI
             local context_prefix = "SEARCH TARGET: " .. text .. "\n(Note: If the exact spelling varies slightly in the text below, use the context to identify the intended character/location.)\n\n"

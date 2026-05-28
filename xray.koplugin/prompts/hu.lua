@@ -63,6 +63,11 @@ SZIGORÚ SPOILERSZABÁLYOK:
 - ABSZOLÚT SEMMILYEN információ a jelenlegi olvasási haladás utáni részekből. Álljon meg pontosan a(z) %d%%-os jelnél.
 - A leírásoknak a szereplők pontosan ezen ponton lévő állapotát kell tükrözniük a könyvben.
 
+SZIGORÚ TUDÁSFORRÁS-SZABÁLYOK (KRITIKUS):
+- KITALÁLT SZEREPLŐK ESETÉBEN: A leírásoknak KIZÁRÓLAG a megadott szövegben kifejezetten leírt vagy egyértelműen utalt tényeken kell alapulniuk. NE egészítse ki a korábbi tréningekből származó ismeretekkel, külső forrásokkal vagy a könyv/sorozat/szerző általános ismeretével.
+- Ha egy szereplőt eddig csak röviden említettek a szövegben, a leírásnak csak ezt a korlátozott információt szabad tükröznie. NE vonjon le következtetéseket, ne feltételezzen és ne adjon hozzá olyan részletet, amely nem a megadott kontextuson alapul.
+- Az EGYETLEN kivétel a VALÓS TÖRTÉNELMI ALAKOK esetében van (a `historical_figures` tömbben): használhatja a belső tudását az általános életrajzukhoz/szerepkörükhöz, de továbbra is a könyv szövegére kell támaszkodnia a `context_in_book` mezőben.
+
 SZIGORÚ JSON BIZTONSÁGI SZABÁLYOK:
 - Minden idézőjelet (\") megfelelően escape-elnie KELL a karakterláncokon binnen.
 - NE használjon escape-elés nélküli soremeléseket a karakterláncokon belül.
@@ -77,7 +82,7 @@ ELVÁRT JSON FORMÁTUM:
       "role": "Rövid archetípus címke (3-5 szó, pl. 'Antagonista', 'Protagonista', 'Áldozat')",
       "gender": "Férfi / Nő / Ismeretlen",
       "occupation": "Foglalkozás/Státusz",
-      "description": "Mélyreható elemzés az eddigi szövegből származó részletekkel. SEMMI SPOILER. (Max {MAX_CHAR_DESC} karakter)"
+      "description": "A leírás SZIGORÚAN a megadott szövegen alapul. Ne következtessen és ne adjon hozzá külső tudást. SEMMI SPOILER. (Max {MAX_CHAR_DESC} karakter)"
     }
   ],
   "historical_figures": [
@@ -128,7 +133,7 @@ ELVÁRT JSON FORMÁTUM:
       "role": "Rövid archetípus címke (3-5 szó, pl. 'Antagonista', 'Protagonista', 'Áldozat')",
       "gender": "Férfi / Nő / Ismeretlen",
       "occupation": "Foglalkozás/Státusz",
-      "description": "Mélyreható elemzés az eddigi szövegből származó részletekkel. SEMMI SPOILER. (Max {MAX_CHAR_DESC} karakter)"
+      "description": "A leírás SZIGORÚAN a megadott szövegen alapul. Ne következtessen és ne adjon hozzá külső tudást. SEMMI SPOILER. (Max {MAX_CHAR_DESC} karakter)"
     }
   ]
 }]],
@@ -138,6 +143,7 @@ ELVÁRT JSON FORMÁTUM:
 FELADAT: Határozza meg, hogy ez a szó Szereplőt, Helyszínt vagy Történelmi alakot jelöl-e a könyvben.
 
 CRITICAL FOR CHARACTERS AND LOCATIONS: Use ONLY the provided "BOOK TEXT CONTEXT". Outside knowledge is strictly forbidden. Do not hallucinate.
+KRITIKUS KITALÁLT SZEREPLŐK ESETÉBEN: KIZÁRÓLAG azt írja le, amit a megadott könyvszöveg feltár. NE használjon korábbi tréningekből származó ismereteket erről a szereplőről, még akkor sem, ha felismeri őt egy ismert sorozatból. Ha a szöveg csak röviden említi ezt a szereplőt, a leírásnak ezt a korlátozott információt kell tükröznie.
 CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
 Ha a szó a szövegben NEM szereplő, helyszín vagy történelmi alak, állítsa az `is_valid` mezőt false-ra.
 

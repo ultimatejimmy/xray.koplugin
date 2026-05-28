@@ -72,6 +72,11 @@ KESİN SPOILER KURALLARI:
 - Mevcut okuma ilerlemesinden sonrası hakkında KESİNLİKLE hiçbir bilgi verme. Tam olarak %%%d noktasında dur.
 - Açıklamalar karakterlerin kitabın tam bu noktasındaki durumunu yansıtmalıdır.
 
+KESİN BİLGİ KAYNAĞI KURALLARI (KRİTİK):
+- KURGU KARAKTERLER İÇİN: Açıklamalarınız KESİNLİKLE yalnızca sağlanan metinde açıkça belirtilen veya net bir şekilde ima edilen bilgilere dayanmalıdır. Önceki eğitimlerden, harici kaynaklardan veya kitap/seri/yazar hakkındaki genel bilgilerinize dayanarak ekleme yapmayın.
+- Bir karakterden şu ana kadar metinde yalnızca kısaca bahsedildiyse, açıklamanız yalnızca bu sınırlı bilgiyi yansıtmalıdır. Sağlanan bağlama dayanmayan hiçbir ayrıntıyı tahmin etmeyin, varsaymayın veya eklemeyin.
+- TEK istisna GERÇEK TARİHİ KİŞİLER içindir (`historical_figures` dizisinde yer alan): genel biyografileri/rolleri için dahili bilginizi kullanabilirsiniz, ancak kitaptaki rollerini (`context_in_book`) açıklamak için yine kitap metnine dayanmalısınız.
+
 KESİN JSON GÜVENLİK KURALLARI:
 - Dizeler içindeki tüm çift tırnakları (\") düzgün şekilde kaçırmalısın.
 - Dizeler içinde kaçırılmamış satır sonları KULLANMAYIN.
@@ -87,7 +92,7 @@ GEREKLİ JSON FORMATI:
       "role": "Mevcut ilerlemeye kadar olan rolü",
       "gender": "Erkek / Kadın / Bilinmiyor",
       "occupation": "Meslek/Durum",
-      "description": "Şu ana kadarki metinden detaylarla derin analiz. SPOILER YOK. (Maks {MAX_CHAR_DESC} karakter)"
+      "description": "Açıklama KESİNLİKLE sağlanan metne dayanmalıdır. Çıkarım yapmayın veya harici bilgi eklemeyin. SPOILER YOK. (Maks {MAX_CHAR_DESC} karakter)"
     }
   ],
   "historical_figures": [
@@ -146,7 +151,7 @@ GEREKLİ JSON FORMATI:
       "role": "Mevcut ilerlemeye kadar olan rolü",
       "gender": "Erkek / Kadın / Bilinmiyor",
       "occupation": "Meslek/Durum",
-      "description": "Şu ana kadarki metinden detaylarla derin analiz. SPOILER YOK. (Maks {MAX_CHAR_DESC} karakter)"
+      "description": "Açıklama KESİNLİKLE sağlanan metne dayanmalıdır. Çıkarım yapmayın veya harici bilgi eklemeyin. SPOILER YOK. (Maks {MAX_CHAR_DESC} karakter)"
     }
   ]
 }]],
@@ -188,6 +193,7 @@ GEREKLİ JSON FORMATI:
 GÖREV: Bu kelimenin kitaptaki bir Karakter, Konum, Tarihi Figür veya Teknik Terim/Kısaltma olup olmadığını belirleyin.
  
 CRITICAL FOR CHARACTERS AND LOCATIONS: Use ONLY the provided "BOOK TEXT CONTEXT". Outside knowledge is strictly forbidden. Do not hallucinate.
+KURGU KARAKTERLER İÇİN KRİTİK: YALNIZCA sağlanan kitap metninin ortaya koyduğu şeyleri açıklayın. Tanınmış bir seriden tanısanız bile, bu karakter hakkında eğitiminizden gelen ön bilgileri kullanmayın. Metin bu karakterden yalnızca kısaca bahsediyorsa, açıklamanız bu sınırlı bilgiyi yansıtmalıdır.
 CRITICAL FOR HISTORICAL FIGURES: You MAY use your internal knowledge to verify their identity and provide their biography/role, ONLY if they are a real, notable historical figure. You MUST still use the text context for their relevance in the book.
 CRITICAL FOR TERMS: Kitap kurgu dışı ise, kelimenin teknik bir terim, kısaltma veya anahtar kavram olup olmadığını doğrulayın. Bağlam içindeki tanımını sağlayın.
 Kelime metinde bir karakter, konum, tarihi figür veya teknik terim DEĞİLSE, `is_valid` değerini false yapın.

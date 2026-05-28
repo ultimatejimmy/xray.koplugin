@@ -73,6 +73,11 @@ RÈGLES STRICTES CONTRE LES SPOILERS :
 - ABSOLUMENT AUCUNE information provenant d'après la progression actuelle de la lecture. Arrêtez-vous exactement à la marque de %d%%.
 - Les descriptions doivent refléter l'état des personnages à ce point exact du livre.
 
+RÈGLES STRICTES SUR LES SOURCES DE CONNAISSANCES (CRITIQUE) :
+- POUR LES PERSONNAGES DE FICTION : Vos descriptions DOIVENT être basées UNIQUEMENT sur ce qui est explicitement indiqué ou clairement implicite dans le texte fourni. Ne complétez PAS avec des connaissances provenant de vos entraînements antérieurs, de sources externes ou d'une connaissance générale du livre/série/auteur.
+- Si un personnage n'a été que brièvement mentionné dans le texte jusqu'à présent, votre description doit refléter uniquement ces informations limitées. N'inférez pas, n'assumez pas et n'ajoutez aucun détail non fondé sur le contexte fourni.
+- La SEULE exception concerne les FIGURES HISTORIQUES RÉELLES (placées dans `historical_figures`) : vous pouvez utiliser vos connaissances internes pour leur biographie/rôle général, mais vous devez toujours vous fier au texte du livre pour leur `context_in_book`.
+
 RÈGLES STRICTES DE SÉCURITÉ JSON :
 - Vous DEVEZ échapper correctement tous les guillemets doubles (\") à l'intérieur des chaînes.
 - N'utilisez PAS de sauts de ligne non échappés à l'intérieur des chaînes.
@@ -87,7 +92,7 @@ FORMAT JSON REQUIS :
       "role": "Rôle jusqu'à la progression actuelle",
       "gender": "Masculin / Féminin / Inconnu",
       "occupation": "Métier/Statut",
-      "description": "Analyse approfondie avec des détails du texte jusqu'à présent. PAS DE SPOILERS. (Max {MAX_CHAR_DESC} caractères)"
+      "description": "Description basée STRICTEMENT sur le texte fourni. N'inférez pas et n'ajoutez pas de connaissances externes. PAS DE SPOILERS. (Max {MAX_CHAR_DESC} caractères)"
     }
   ],
   "historical_figures": [
@@ -146,7 +151,7 @@ FORMAT JSON REQUIS :
       "role": "Rôle jusqu'à la progression actuelle",
       "gender": "Masculin / Féminin / Inconnu",
       "occupation": "Métier/Statut",
-      "description": "Analyse approfondie avec des détails du texte jusqu'à présent. PAS DE SPOILERS. (Max {MAX_CHAR_DESC} caractères)"
+      "description": "Description basée STRICTEMENT sur le texte fourni. N'inférez pas et n'ajoutez pas de connaissances externes. PAS DE SPOILERS. (Max {MAX_CHAR_DESC} caractères)"
     }
   ]
 }]],
@@ -188,6 +193,7 @@ FORMAT JSON REQUIS :
 TÂCHE : Déterminez si ce mot est un Personnage, un Lieu, une Figure Historique ou un Terme Technique/Acronyme dans le livre.
  
 CRITIQUE POUR LES PERSONNAGES ET LES LIEUX : Utilisez UNIQUEMENT le "BOOK TEXT CONTEXT" fourni. Les connaissances externes sont strictement interdites. Ne pas halluciner.
+CRITIQUE POUR LES PERSONNAGES DE FICTION : Décrivez UNIQUEMENT ce que révèle le texte du livre fourni. N'utilisez PAS de connaissances préalables issues de votre entraînement sur ce personnage, même si vous le reconnaissez dans une série connue. Si le texte ne mentionne que brièvement ce personnage, votre description doit refléter ces informations limitées.
 CRITIQUE POUR LES FIGURES HISTORIQUES : Vous POUVEZ utiliser vos connaissances internes pour vérifier leur identité et fournir leur biographie/rôle, UNIQUEMENT s'il s'agit d'une figure historique réelle et notable. Vous DEVEZ toujours utiliser le contexte du texte pour leur pertinence dans le livre.
 CRITICAL FOR TERMS : Si le livre est une œuvre de non-fiction, vérifiez si le mot est un terme technique, un acronyme ou un concept clé. Fournissez sa définition dans son contexte.
 Si le mot n'est PAS un personnage, un lieu, une figure historique ou un terme technique dans le texte, définissez `is_valid` sur false.

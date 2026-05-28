@@ -688,6 +688,7 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
                 
                 if not skip then
                     if #active_chapters >= max_chapters then break end
+                    chapter.toc_index = i
                     table.insert(active_chapters, chapter)
                     table.insert(chapter_titles, chapter.title or tostring(i))
                 else
@@ -735,8 +736,18 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
         AIHelper:log("ChapterAnalyzer: Sampling " .. #active_chapters .. " chapters with " .. per_chapter_budget .. " chars each.")
         
         for i, chapter in ipairs(active_chapters) do
+            local is_current_chapter = false
+            if not is_full_book and current_page and chapter.page and chapter.page <= current_page then
+                local next_chapter = toc[chapter.toc_index + 1]
+                if not next_chapter or (next_chapter.page and next_chapter.page > current_page) then
+                    is_current_chapter = true
+                end
+            end
+
             local success, chapter_text = pcall(function()
-                if ui.document.getTextFromXPointer and chapter.xpointer then
+                if is_current_chapter then
+                    return self:getTextFromPageRange(ui, chapter.page, current_page, total_limit)
+                elseif ui.document.getTextFromXPointer and chapter.xpointer then
                     -- EPUB: Usually returns the full text of the chapter file
                     return ui.document:getTextFromXPointer(chapter.xpointer)
                 end
@@ -758,10 +769,10 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
         end
     else
         -- NO TOC FALLBACK: Even sampling across the book
-        local page_count = ui.document:getPageCount()
-        if page_count and page_count > 0 then
-            local num_sections = math.min(20, page_count)
-            local step = math.floor(page_count / num_sections)
+        local max_range = (is_full_book or not current_page) and ui.document:getPageCount() or current_page
+        if max_range and max_range > 0 then
+            local num_sections = math.min(20, max_range)
+            local step = math.floor(max_range / num_sections)
             AIHelper:log("ChapterAnalyzer: No TOC found. Using even sampling across " .. num_sections .. " sections.")
             
             for i = 1, num_sections do
