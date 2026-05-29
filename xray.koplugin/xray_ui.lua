@@ -60,6 +60,7 @@ function M:showLanguageSelection()
         es = "Español",
         uk = "Українська",
         hu = "Magyar",
+        nl = "Nederlands",
     }
     
     local langs = self.loc and self.loc.available_languages or { "en", "de", "fr", "ru", "zh_CN", "tr", "pt_br", "es", "uk", "hu" }
@@ -168,6 +169,7 @@ function M:checkBookLanguageMatch()
         es = "Español",
         uk = "Українська",
         hu = "Magyar",
+        nl = "Nederlands",
     }
     
     local supported = {}
