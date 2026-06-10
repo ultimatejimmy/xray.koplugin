@@ -356,6 +356,27 @@ function M:showCharacters()
         end,
     }
     UIManager:show(self.char_menu)
+
+    UIManager:scheduleIn(0.3, function()
+        if self.pending_duplicate_review and self.pending_duplicate_review.characters then
+            local pairs = self.pending_duplicate_review.characters
+            self.pending_duplicate_review.characters = nil
+            local ConfirmBox = require("ui/widget/confirmbox")
+            UIManager:show(ConfirmBox:new{
+                text = string.format(
+                    self.loc:t("pending_duplicates_prompt") or
+                    "AI found %d possible duplicate character(s) from the last fetch. Review now?",
+                    #pairs
+                ),
+                ok_text     = self.loc:t("review") or "Review",
+                cancel_text = self.loc:t("later")  or "Later",
+                ok_callback = function()
+                    self:showAIFindDuplicatesFlow(self.characters, "characters",
+                        self.loc:t("entity_label_characters") or "characters")
+                end,
+            })
+        end
+    end)
 end
 
 function M:findRelatedEntities(text, exclude_name)
@@ -1108,6 +1129,159 @@ function M:showLinkedEntriesSettings()
     showSettings()
 end
 
+function M:showAIFindDuplicatesFlow(list, list_name, entity_label)
+    local InfoMessage = require("ui/widget/infomessage")
+    local ButtonDialog = require("ui/widget/buttondialog")
+
+    if not self.ai_helper or not self.ai_helper:hasApiKey() then
+        UIManager:show(InfoMessage:new{
+            text = self.loc:t("ai_key_required") or "An AI API key is required.",
+            timeout = 4
+        })
+        return
+    end
+
+    local props = self.ui.document:getProps() or {}
+    local title  = props.title  or (self.book_data and self.book_data.book_title) or "Unknown"
+    local author = props.authors or (self.book_data and self.book_data.author)     or "Unknown"
+    local current_page = self.ui:getCurrentPage()
+    local reading_percent = math.floor((current_page / self.ui.document:getPageCount()) * 100)
+    local spoiler_setting = self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+    if spoiler_setting == "full_book" then reading_percent = 100 end
+
+    local wait_msg = InfoMessage:new{
+        text = self.loc:t("ai_scanning_duplicates") or "AI is scanning for duplicates...",
+        timeout = 120
+    }
+    UIManager:show(wait_msg)
+
+    UIManager:scheduleIn(0.1, function()
+        local pairs_found, err_code, err_msg = self.ai_helper:findDuplicates(
+            title, author, list, entity_label, reading_percent
+        )
+        UIManager:close(wait_msg)
+
+        if not pairs_found then
+            UIManager:show(InfoMessage:new{
+                text = (self.loc:t("ai_error") or "AI Error: ") .. tostring(err_msg),
+                timeout = 4
+            })
+            return
+        end
+
+        if #pairs_found == 0 then
+            UIManager:show(InfoMessage:new{
+                text = self.loc:t("no_duplicates_found") or "No duplicates found.",
+                timeout = 3
+            })
+            return
+        end
+
+        -- Walk through pairs one at a time
+        local pair_idx = 1
+        local merge_count = 0
+
+        local function saveAndRefresh()
+            if merge_count == 0 then return end
+            if not self.cache_manager then
+                self.cache_manager = require(plugin_path .. "xray_cachemanager"):new()
+            end
+            local cache = self.cache_manager:loadCache(self.ui.document.file) or {}
+            if list_name == "characters" then
+                cache.characters = list
+            elseif list_name == "locations" then
+                cache.locations = list
+            end
+            self.cache_manager:saveCache(self.ui.document.file, cache)
+            -- Clear normalized lookup caches
+            for _, it in ipairs(list) do
+                it._norm_name = nil
+                it._norm_aliases = nil
+            end
+        end
+
+        local function processNextPair()
+            if pair_idx > #pairs_found then
+                saveAndRefresh()
+                local msg = merge_count > 0
+                    and string.format(self.loc:t("ai_merged_n") or "Merged %d pair(s).", merge_count)
+                    or  (self.loc:t("no_merges_performed") or "No merges performed.")
+                UIManager:show(InfoMessage:new{ text = msg, timeout = 3 })
+                if list_name == "characters" then self:showCharacters()
+                elseif list_name == "locations" then self:showLocations() end
+                return
+            end
+
+            local pair = pairs_found[pair_idx]
+            pair_idx = pair_idx + 1
+
+            -- Validate both entries still exist (earlier merge may have removed one)
+            local primary_item, secondary_item
+            for _, it in ipairs(list) do
+                if it.name and it.name:lower() == (pair.primary or ""):lower() then
+                    primary_item = it
+                end
+                if it.name and it.name:lower() == (pair.secondary or ""):lower() then
+                    secondary_item = it
+                end
+            end
+
+            if not primary_item or not secondary_item then
+                processNextPair()  -- skip silently
+                return
+            end
+
+            local confirm_text = string.format(
+                "%s\n\nKEEP:   %s\nREMOVE: %s\n\n%s: %s",
+                self.loc:t("ai_merge_confirm_title") or "AI Duplicate Detected",
+                pair.primary, pair.secondary,
+                self.loc:t("reason") or "Reason",
+                pair.reason or "Similar entries"
+            )
+
+            local confirm_dialog
+            confirm_dialog = ButtonDialog:new{
+                title = confirm_text,
+                buttons = {{
+                    {
+                        text = self.loc:t("merge_button") or "Merge",
+                        callback = function()
+                            UIManager:close(confirm_dialog)
+                            local ai_desc = nil
+                            local p_desc = primary_item.description or primary_item.biography
+                            local s_desc = secondary_item.description or secondary_item.biography
+                            if p_desc and s_desc then
+                                ai_desc = self.ai_helper:mergeDescriptionsWithAI(p_desc, s_desc)
+                            end
+                            self:mergeEntries(list, pair.primary, pair.secondary, ai_desc)
+                            merge_count = merge_count + 1
+                            processNextPair()
+                        end
+                    },
+                    {
+                        text = self.loc:t("skip") or "Skip",
+                        callback = function()
+                            UIManager:close(confirm_dialog)
+                            processNextPair()
+                        end
+                    },
+                    {
+                        text = self.loc:t("stop") or "Stop",
+                        callback = function()
+                            UIManager:close(confirm_dialog)
+                            pair_idx = #pairs_found + 1
+                            processNextPair()
+                        end
+                    }
+                }}
+            }
+            UIManager:show(confirm_dialog)
+        end
+
+        processNextPair()
+    end)
+end
+
 function M:showMergeFlow(list, list_name)
     local ButtonDialog = require("ui/widget/buttondialog")
     local ConfirmBox = require("ui/widget/confirmbox")
@@ -1558,6 +1732,27 @@ function M:showLocations()
         end,
     }
     UIManager:show(self.loc_menu)
+
+    UIManager:scheduleIn(0.3, function()
+        if self.pending_duplicate_review and self.pending_duplicate_review.locations then
+            local pairs = self.pending_duplicate_review.locations
+            self.pending_duplicate_review.locations = nil
+            local ConfirmBox = require("ui/widget/confirmbox")
+            UIManager:show(ConfirmBox:new{
+                text = string.format(
+                    self.loc:t("pending_duplicates_prompt") or
+                    "AI found %d possible duplicate location(s) from the last fetch. Review now?",
+                    #pairs
+                ),
+                ok_text     = self.loc:t("review") or "Review",
+                cancel_text = self.loc:t("later")  or "Later",
+                ok_callback = function()
+                    self:showAIFindDuplicatesFlow(self.locations, "locations",
+                        self.loc:t("entity_label_locations") or "locations")
+                end,
+            })
+        end
+    end)
 end
 
 function M:showAbout()

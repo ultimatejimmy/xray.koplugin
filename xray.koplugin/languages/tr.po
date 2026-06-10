@@ -8,11 +8,26 @@ msgstr ""
 msgid "about"
 msgstr "Hakkında"
 
+msgid "ai_error"
+msgstr "AI Error: "
+
 msgid "ai_fetch_complete"
 msgstr "%s üzerinden başarıyla çekildi!\n\nKitap: %s\nYazar: %s\n\nKarakterler: %d\nMekanlar: %d\nTemalar: %d\nZaman Çizelgesi Olayları: %d\nTarihi Kişiler: %d\n\n%s\n\nÖZET:\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "YZ Veri Çekme Tamamlandı!"
+
+msgid "ai_key_required"
+msgstr "An AI API key is required."
+
+msgid "ai_merge_confirm_title"
+msgstr "AI Duplicate Detected"
+
+msgid "ai_merged_n"
+msgstr "Merged %d pair(s) successfully."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI is scanning for duplicates..."
 
 msgid "auto_update_aggressive"
 msgstr "Agresif: her yeni bölümde kontrol eder"
@@ -178,6 +193,12 @@ msgstr "Çok Detaylı"
 
 msgid "dont_ask_again"
 msgstr "Bu kitap için bir daha sorma"
+
+msgid "entity_label_characters"
+msgstr "characters"
+
+msgid "entity_label_locations"
+msgstr "locations"
 
 msgid "entity_not_found"
 msgstr "'%s' bir karakter veya konum olarak bulunamadı."
@@ -485,6 +506,9 @@ msgstr "X-Ray Modu Ayarları"
 msgid "merge_back"
 msgstr "← Back"
 
+msgid "merge_button"
+msgstr "Merge"
+
 msgid "merge_confirm"
 msgstr "%s, %s içine birleştirilsin mi? İkincil giriş silinecek ve takma adları absorbe edilecektir."
 
@@ -548,11 +572,17 @@ msgstr "Henüz karakter verisi yok.\n\nLütfen önce 'X-Ray Verilerini Çek' se�
 msgid "no_data_prompt"
 msgstr "Bu kitap için X-Ray verisi bulunamadı. Şimdi AI'dan çekmek ister misiniz?"
 
+msgid "no_duplicates_found"
+msgstr "No duplicates found."
+
 msgid "no_historical_data"
 msgstr "Henüz tarihi kişi verisi yok.\n\nLütfen önce 'X-Ray Verilerini Çek' seçeneğini kullanın.\n\nAI, kitapta geçen gerçek tarihi kişileri tespit edecektir."
 
 msgid "no_location_data"
 msgstr "Henüz mekan verisi yok. Lütfen önce 'X-Ray Verilerini Çek' seçeneğini kullanın."
+
+msgid "no_merges_performed"
+msgstr "No merges were performed."
 
 msgid "no_terms_data"
 msgstr "Henüz terim verisi yok. Lütfen önce 'X-Ray Verilerini Getir' seçeneğini kullanın."
@@ -566,11 +596,17 @@ msgstr "Tamam"
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+msgid "pending_duplicates_prompt"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+
 msgid "plugin_description"
 msgstr "Amazon Kindle X-Ray gibi, YZ destekli kitap analizi ile okuma deneyiminizi dönüştürün!"
 
 msgid "quick_menu_title"
 msgstr "X-Ray Hızlı Menü"
+
+msgid "reason"
+msgstr "Reason"
 
 msgid "reasoning_about"
 msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x, DeepSeek Reasoner, Claude 4.5+ (extended thinking), and Gemini 2.5+."
@@ -589,6 +625,9 @@ msgstr "Ayarlanmamış (Varsayılan)"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "review"
+msgstr "Review"
 
 msgid "save"
 msgstr "Kaydet"
@@ -635,6 +674,9 @@ msgstr "── Prior Books ──"
 msgid "series_prior_label"
 msgstr "[Önceki]"
 
+msgid "skip"
+msgstr "Skip"
+
 msgid "spoiler_free_about"
 msgstr "Spoilersiz mod, AI çıkarımını zaten okuduğunuz sayfalarla (mevcut sayfanıza kadar) sınırlayarak gelecek bölümlerden spoiler yemenizi önler.\n\nTam Kitap Modu tüm kitabı analiz eder ve spoiler içerebilir."
 
@@ -649,6 +691,9 @@ msgstr "X-Ray verileri için spoiler tercihinizi seçin:"
 
 msgid "spoiler_preference_title"
 msgstr "Spoiler Tercihi"
+
+msgid "stop"
+msgstr "Stop"
 
 msgid "term_not_found"
 msgstr "'%s' ile eşleşen terim bulunamadı"

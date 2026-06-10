@@ -8,11 +8,26 @@ msgstr ""
 msgid "about"
 msgstr "关于"
 
+msgid "ai_error"
+msgstr "AI Error: "
+
 msgid "ai_fetch_complete"
 msgstr "已成功从 %s 获取！\n\n书名：%s\n作者：%s\n\n角色数：%d\n地点数：%d\n主题数：%d\n时间线事件：%d\n历史人物：%d\n\n%s\n\n摘要：\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "AI 获取完成！"
+
+msgid "ai_key_required"
+msgstr "An AI API key is required."
+
+msgid "ai_merge_confirm_title"
+msgstr "AI Duplicate Detected"
+
+msgid "ai_merged_n"
+msgstr "Merged %d pair(s) successfully."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI is scanning for duplicates..."
 
 msgid "auto_update_aggressive"
 msgstr "激进：每章都检查"
@@ -178,6 +193,12 @@ msgstr "非常详细"
 
 msgid "dont_ask_again"
 msgstr "不再询问此书"
+
+msgid "entity_label_characters"
+msgstr "characters"
+
+msgid "entity_label_locations"
+msgstr "locations"
 
 msgid "entity_not_found"
 msgstr "未发现 '%s' 为角色或地点。"
@@ -485,6 +506,9 @@ msgstr "X-Ray 模式设置"
 msgid "merge_back"
 msgstr "← Back"
 
+msgid "merge_button"
+msgstr "Merge"
+
 msgid "merge_confirm"
 msgstr "确定将 %s 合并至 %s 吗？次要条目将被删除，其别名将被吸收。"
 
@@ -548,11 +572,17 @@ msgstr "暂无角色数据。\n\n请先使用“获取 X-Ray 数据”。"
 msgid "no_data_prompt"
 msgstr "未找到此书的 X-Ray 数据。是否现在通过 AI 获取？"
 
+msgid "no_duplicates_found"
+msgstr "No duplicates found."
+
 msgid "no_historical_data"
 msgstr "暂无历史人物数据。\n\n请先使用“获取 X-Ray 数据”。\n\nAI 将自动检测书中提及的真实历史人物。"
 
 msgid "no_location_data"
 msgstr "暂无地点数据。请先使用“获取 X-Ray 数据”。"
+
+msgid "no_merges_performed"
+msgstr "No merges were performed."
 
 msgid "no_terms_data"
 msgstr "尚无术语数据。请先使用“Fetch X-Ray Data”。"
@@ -566,11 +596,17 @@ msgstr "确定"
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+msgid "pending_duplicates_prompt"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+
 msgid "plugin_description"
 msgstr "使用 AI 驱动的书籍分析提升您的阅读体验，就像 Kindle X-Ray 一样！"
 
 msgid "quick_menu_title"
 msgstr "X-Ray 快捷菜单"
+
+msgid "reason"
+msgstr "Reason"
 
 msgid "reasoning_about"
 msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x, DeepSeek Reasoner, Claude 4.5+ (extended thinking), and Gemini 2.5+."
@@ -589,6 +625,9 @@ msgstr "未设置（默认）"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "review"
+msgstr "Review"
 
 msgid "save"
 msgstr "保存"
@@ -635,6 +674,9 @@ msgstr "── Prior Books ──"
 msgid "series_prior_label"
 msgstr "[前序]"
 
+msgid "skip"
+msgstr "Skip"
+
 msgid "spoiler_free_about"
 msgstr "无剧透模式将 AI 提取范围限制在您已阅读的页面（截止到当前页），防止剧透后续章节。\n\n整本书模式将分析整本书，可能包含剧透。"
 
@@ -649,6 +691,9 @@ msgstr "选择 X-Ray 数据的剧透偏好："
 
 msgid "spoiler_preference_title"
 msgstr "剧透偏好"
+
+msgid "stop"
+msgstr "Stop"
 
 msgid "term_not_found"
 msgstr "未找到匹配“%s”的术语"

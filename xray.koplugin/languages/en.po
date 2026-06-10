@@ -8,11 +8,26 @@ msgstr ""
 msgid "about"
 msgstr "About"
 
+msgid "ai_error"
+msgstr "AI Error: "
+
 msgid "ai_fetch_complete"
 msgstr "Successfully fetched from %s!\n\nBook: %s\nAuthor: %s\n\nCharacters: %d\nLocations: %d\nThemes: %d\nTimeline Events: %d\nHistorical Figures: %d\n\n%s\n\nSUMMARY:\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "AI Fetch Complete!"
+
+msgid "ai_key_required"
+msgstr "An AI API key is required."
+
+msgid "ai_merge_confirm_title"
+msgstr "AI Duplicate Detected"
+
+msgid "ai_merged_n"
+msgstr "Merged %d pair(s) successfully."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI is scanning for duplicates..."
 
 msgid "auto_update_aggressive"
 msgstr "Aggressive: checks every new chapter"
@@ -178,6 +193,12 @@ msgstr "Very Detailed"
 
 msgid "dont_ask_again"
 msgstr "Don't ask again"
+
+msgid "entity_label_characters"
+msgstr "characters"
+
+msgid "entity_label_locations"
+msgstr "locations"
 
 msgid "entity_not_found"
 msgstr "'%s' was not found as a character or location."
@@ -485,6 +506,9 @@ msgstr "X-Ray Mode Settings"
 msgid "merge_back"
 msgstr "← Back"
 
+msgid "merge_button"
+msgstr "Merge"
+
 msgid "merge_confirm"
 msgstr "Merge %s into %s? The secondary entry will be deleted and its aliases absorbed."
 
@@ -548,11 +572,17 @@ msgstr "No character data yet.\n\nPlease use 'Fetch X-Ray Data' first."
 msgid "no_data_prompt"
 msgstr "No X-Ray data found for this book. Would you like to fetch it from AI now?"
 
+msgid "no_duplicates_found"
+msgstr "No duplicates found."
+
 msgid "no_historical_data"
 msgstr "No historical figure data yet.\n\nPlease use 'Fetch X-Ray Data' first.\n\nAI will detect real historical\nfigures mentioned in the book."
 
 msgid "no_location_data"
 msgstr "No location data yet. Please use 'Fetch X-Ray Data' first."
+
+msgid "no_merges_performed"
+msgstr "No merges were performed."
 
 msgid "no_terms_data"
 msgstr "No terms data yet. Please use 'Fetch X-Ray Data' first."
@@ -566,11 +596,17 @@ msgstr "OK"
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+msgid "pending_duplicates_prompt"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+
 msgid "plugin_description"
 msgstr "Transform your reading experience with AI-powered book analysis, just like Amazon Kindle X-Ray!"
 
 msgid "quick_menu_title"
 msgstr "X-Ray Quick Menu"
+
+msgid "reason"
+msgstr "Reason"
 
 msgid "reasoning_about"
 msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), and Gemini 2.5+.\n\nNote: DeepSeek V4 reasons inherently — this setting has no effect on it."
@@ -589,6 +625,9 @@ msgstr "Unset (Default)"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "review"
+msgstr "Review"
 
 msgid "save"
 msgstr "Save"
@@ -635,6 +674,9 @@ msgstr "── Prior Books ──"
 msgid "series_prior_label"
 msgstr "[Prior]"
 
+msgid "skip"
+msgstr "Skip"
+
 msgid "spoiler_free_about"
 msgstr "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\nFull Book Mode analyzes the entire book, which may contain spoilers."
 
@@ -649,6 +691,9 @@ msgstr "Select your spoiler preference for X-Ray data:"
 
 msgid "spoiler_preference_title"
 msgstr "Spoiler Preference"
+
+msgid "stop"
+msgstr "Stop"
 
 msgid "term_not_found"
 msgstr "No term found matching '%s'"

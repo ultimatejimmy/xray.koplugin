@@ -213,6 +213,8 @@ function Localization:t(key, ...)
             menu_update_xray = "Update X-Ray Data (Merge)",
             menu_fetch_more_chars = "Fetch More Characters",
             no_api_key = "No API key set!",
+            ai_key_required = "An AI API key is required.",
+            ai_error = "AI Error: ",
             no_author_data_fetch = "No author info available. Fetch from AI?",
             xray_mode_desc = "Adds an 'X-Ray' button to dictionary and selection menus for instant lookups.",
             no_data_prompt = "No X-Ray data found for this book. Would you like to fetch it from AI now?",
@@ -366,6 +368,19 @@ function Localization:t(key, ...)
             series_disabled_msg = "Auto-prompt disabled for this book. You can manually fetch recap from X-Ray menu.",
             relookup_button = "Re-lookup '%s'",
             low_conf_match = "Partial match — showing '%s' for your query. Tap below to fetch the exact term.",
+            ai_scanning_duplicates = "AI is scanning for duplicates...",
+            no_duplicates_found = "No duplicates found.",
+            ai_merged_n = "Merged %d pair(s) successfully.",
+            ai_merge_confirm_title = "AI Duplicate Detected",
+            no_merges_performed = "No merges were performed.",
+            merge_button = "Merge",
+            skip = "Skip",
+            stop = "Stop",
+            reason = "Reason",
+            entity_label_characters = "characters",
+            entity_label_locations = "locations",
+            pending_duplicates_prompt = "AI found %d possible duplicate(s) from the last fetch. Review now?",
+            review = "Review",
         }
         translation = fallbacks[key] or key
     end
