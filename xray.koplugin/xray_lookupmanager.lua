@@ -136,6 +136,18 @@ function LookupManager:lookupAll(text)
     
     if #final_results > 0 then
         table.sort(final_results, function(a, b) return a.score > b.score end)
+        
+        -- If we have direct match(es) (exact or alias exact), filter out partial/fuzzy matches
+        local best_score = final_results[1].score
+        if best_score >= 95 then
+            local filtered = {}
+            for _, candidate in ipairs(final_results) do
+                if candidate.score >= 95 then
+                    table.insert(filtered, candidate)
+                end
+            end
+            final_results = filtered
+        end
     end
 
     return final_results

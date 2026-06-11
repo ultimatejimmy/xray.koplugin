@@ -72,5 +72,18 @@ describe("xray_lookupmanager", function()
             assert.are.equal(100, results[1].score)
             assert.are.equal("Sherlock Holmes", results[1].item.name)
         end)
+
+        it("should filter out partial matches when an exact match is present", function()
+            -- Add "Coherence" which is a substring/partial match
+            plugin.terms = {
+                { name = "associative coherence", _norm_name = "associative coherence" },
+                { name = "Coherence", _norm_name = "coherence" }
+            }
+            local results = lm:lookupAll("associative coherence")
+            -- Should only return "associative coherence" (score 100), not "Coherence" (score 30)
+            assert.are.equal(1, #results)
+            assert.are.equal("associative coherence", results[1].item.name)
+            assert.are.equal(100, results[1].score)
+        end)
     end)
 end)

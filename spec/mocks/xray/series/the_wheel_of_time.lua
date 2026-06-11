@@ -1,21 +1,21 @@
 -- X-Ray Series Cache v6.0
 return {
-  cache_version = "6.0",
   books = {
     [1] = {
-      characters = {
-        [1] = {
-          name = "Kelsier",
-          description = "Survivor of Hathsin",
-        },
-      },
       locations = {
         [1] = {
-          name = "Luthadel",
           description = "Capital city",
+          name = "Luthadel",
+        },
+      },
+      characters = {
+        [1] = {
+          description = "Survivor of Hathsin",
+          name = "Kelsier",
         },
       },
     },
   },
-  cached_at = 1781101117,
+  cached_at = 1781180664,
+  cache_version = "6.0",
 }
