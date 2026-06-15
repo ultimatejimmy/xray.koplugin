@@ -576,6 +576,19 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
     local cache_saved = self.cache_manager:saveCache(self.ui.document.file, updated_data)
 
+    UIManager:scheduleIn(1, function()
+        local reading_percent = 100
+        if self.ui and self.ui.document and self.ui.document.getPageCount and current_page then
+            local page_count = self.ui.document:getPageCount()
+            if page_count and page_count > 0 then
+                reading_percent = math.floor((current_page / page_count) * 100)
+            end
+        end
+        local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+        if spoiler_setting == "full_book" then reading_percent = 100 end
+        self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
+    end)
+
     if is_silent then
         self:log(string.format("XRayPlugin: Silent merge complete - Chars: %d, Locs: %d, Events: %d, Cache: %s",
             #self.characters, #self.locations, #self.timeline,
@@ -596,6 +609,61 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         UIManager:show(success_dialog)
     end
 
+end
+
+function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
+    if not self.ai_helper or not self.ai_helper.hasApiKey or not self.ai_helper:hasApiKey() then return end
+    if self.ai_helper.settings and self.ai_helper.settings.auto_dupe_check_enabled == false then return end
+
+    -- Run checks for characters and locations in sequence
+    local function checkList(list, list_name, entity_label, on_done)
+        if not list or #list < 2 then on_done(nil); return end
+        UIManager:scheduleIn(0.1, function()
+            local pairs_found, err_code, err_msg = self.ai_helper:findDuplicates(
+                title, author, list, entity_label, reading_percent
+            )
+            if pairs_found then
+                self:log("XRayPlugin: Duplicate check found " .. tostring(#pairs_found) .. " potential duplicate " .. list_name)
+            else
+                self:log("XRayPlugin: Duplicate check error for " .. list_name .. ": " .. tostring(err_msg))
+            end
+            on_done(pairs_found and #pairs_found > 0 and pairs_found or nil)
+        end)
+    end
+
+    checkList(self.characters, "characters",
+        self.loc:t("entity_label_characters") or "characters",
+        function(char_pairs)
+            checkList(self.locations, "locations",
+                self.loc:t("entity_label_locations") or "locations",
+                function(loc_pairs)
+                    local has_chars = char_pairs and #char_pairs > 0
+                    local has_locs  = loc_pairs  and #loc_pairs  > 0
+
+                    if not has_chars and not has_locs then return end
+
+                    if is_silent then
+                        -- Store for later notification
+                        self.pending_duplicate_review = {
+                            characters = char_pairs,
+                            locations  = loc_pairs,
+                        }
+                    else
+                        -- Show immediately after fetch success dialog
+                        UIManager:scheduleIn(0.5, function()
+                            if has_chars then
+                                self:showAIFindDuplicatesFlow(self.characters, "characters",
+                                    self.loc:t("entity_label_characters") or "characters")
+                            elseif has_locs then
+                                self:showAIFindDuplicatesFlow(self.locations, "locations",
+                                    self.loc:t("entity_label_locations") or "locations")
+                            end
+                        end)
+                    end
+                end
+            )
+        end
+    )
 end
 
 function M:fetchMoreCharacters()
@@ -743,6 +811,16 @@ function M:fetchMoreCharacters()
             updated_data.author_info = self.author_info or updated_data.author_info
             
             self.cache_manager:saveCache(self.ui.document.file, updated_data)
+
+            local current_page = self.ui and self.ui.getCurrentPage and self.ui:getCurrentPage() or 1
+            local total_pages = self.ui and self.ui.document and self.ui.document.getPageCount and self.ui.document:getPageCount() or 1
+            local reading_percent = total_pages and total_pages > 0 and math.floor((current_page / total_pages) * 100) or 100
+            local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+            if spoiler_setting == "full_book" then reading_percent = 100 end
+
+            UIManager:scheduleIn(0.5, function()
+                self:runPostFetchDuplicateCheck(title, author, reading_percent, false)
+            end)
             
             local added_msg = string.format(self.loc:t("msg_added_characters") or "Added %d new characters!", new_count)
             UIManager:show(InfoMessage:new{ text = added_msg, timeout = 3 })

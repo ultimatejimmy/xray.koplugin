@@ -1648,4 +1648,40 @@ function AIHelper:setUnifiedModel(type, provider, model)
     return true
 end
 
+function AIHelper:findDuplicates(title, author, entities, entity_type_label, reading_percent)
+    if not self.prompts then self:loadLanguage() end
+    local template = self.prompts.find_duplicates
+    if not template then return nil, "no_prompt", "find_duplicates prompt missing" end
+
+    -- Build compact list string
+    local lines = {}
+    for _, e in ipairs(entities) do
+        local line = "- " .. (e.name or "?")
+        -- Include aliases if present (characters)
+        if e.aliases and type(e.aliases) == "table" and #e.aliases > 0 then
+            line = line .. " (aka: " .. table.concat(e.aliases, ", ") .. ")"
+        end
+        -- Include a truncated description for context
+        local desc = e.description or e.biography or ""
+        if #desc > 0 then
+            line = line .. ": " .. desc:sub(1, 100)
+        end
+        table.insert(lines, line)
+    end
+
+    local p = reading_percent or 100
+    local prompt = string.format(template,
+        title or "Unknown", author or "Unknown",
+        p, entity_type_label or "entities",
+        table.concat(lines, "\n"), p
+    )
+    prompt = self:sanitize_utf8(prompt)
+
+    local result, err_code, err_msg = self:executeUnifiedRequest(prompt)
+    if result and type(result.duplicate_pairs) == "table" then
+        return result.duplicate_pairs
+    end
+    return nil, err_code or "error_parse", err_msg or "No duplicate_pairs in response"
+end
+
 return AIHelper

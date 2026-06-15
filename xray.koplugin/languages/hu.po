@@ -8,11 +8,41 @@ msgstr ""
 msgid "about"
 msgstr "Névjegy"
 
+msgid "ai_error"
+msgstr "AI Error: "
+
 msgid "ai_fetch_complete"
 msgstr "Sikeresen lekérdezve innen: %s!\n\nKönyv: %s\nSzerző: %s\n\nSzereplők: %d\nHelyszínek: %d\nTémák: %d\nEsemények az idővonalon: %d\nTörténelmi alakok: %d\n\n%s\n\nÖSSZEGZÉS:\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "AI lekérdezés kész!"
+
+msgid "ai_key_required"
+msgstr "An AI API key is required."
+
+msgid "ai_merge_confirm_title"
+msgstr "AI Duplicate Detected"
+
+msgid "ai_merged_n"
+msgstr "Merged %d pair(s) successfully."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI is scanning for duplicates..."
+
+msgid "auto_dupe_check_disabled"
+msgstr "Letiltva"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Engedélyezve"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Válassza ki az automatikus AI duplikátum észlelés beállításait:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Ha engedélyezve van, az X-Ray minden adatletöltés után automatikusan megkéri az AI-t, hogy ellenőrizze a duplikált karaktereket és helyszíneket. Duplikátumok észlelése esetén a rendszer felkéri azok áttekintésére és összevonására.\n\nEnnek letiltása leállítja a háttérben történő duplikátum-keresést. A duplikátumokat továbbra is manuálisan vonhatja össze a Karakterek vagy Helyszínek menüben.\n\nMegjegyzés: minden ellenőrzés egy AI API hívást használ. A szabad-szintű vagy korlátozott kvótával rendelkező felhasználók számára ajánlott lehet a letiltása."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Duplikátum ellenőrzés"
 
 msgid "auto_update_aggressive"
 msgstr "Agresszív: minden új fejezetnél ellenőrzi"
@@ -178,6 +208,12 @@ msgstr "Nagyon részletes"
 
 msgid "dont_ask_again"
 msgstr "Ne kérdezze újra"
+
+msgid "entity_label_characters"
+msgstr "characters"
+
+msgid "entity_label_locations"
+msgstr "locations"
 
 msgid "entity_not_found"
 msgstr "'%s' nem található szereplőként vagy helyszínként."
@@ -431,6 +467,9 @@ msgstr "További kifejezések lekérése"
 msgid "menu_fetch_series_context"
 msgstr "Sorozatkontextus lekérése / frissítése"
 
+msgid "menu_frequency"
+msgstr "Gyakoriság"
+
 msgid "menu_historical_figures"
 msgstr "Történelmi alakok"
 
@@ -484,6 +523,9 @@ msgstr "X-Ray mód beállításai"
 
 msgid "merge_back"
 msgstr "← Vissza"
+
+msgid "merge_button"
+msgstr "Merge"
 
 msgid "merge_confirm"
 msgstr "Összevonja a következőt: %s a következőbe: %s? A másodlagos bejegyzés törlődik, és az álnevei beolvadnak."
@@ -548,11 +590,17 @@ msgstr "Még nincsenek szereplőadatok.\n\nKérjük, használja előbb az 'X-Ray
 msgid "no_data_prompt"
 msgstr "Nem található X-Ray adat ehhez a könyvhöz. Szeretné lekérdezni az AI-tól most?"
 
+msgid "no_duplicates_found"
+msgstr "No duplicates found."
+
 msgid "no_historical_data"
 msgstr "Még nincsenek adatok a történelmi alakokról.\n\nKérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót.\n\nAz AI felismeri a könyvben említett valós történelmi alakokat."
 
 msgid "no_location_data"
 msgstr "Még nincsenek helyszínadatok. Kérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót."
+
+msgid "no_merges_performed"
+msgstr "No merges were performed."
 
 msgid "no_terms_data"
 msgstr "Még nincsenek kifejezésadatok. Kérjük, először használja az 'X-Ray adatok lekérése' opciót."
@@ -566,11 +614,17 @@ msgstr "OK"
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+msgid "pending_duplicates_prompt"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+
 msgid "plugin_description"
 msgstr "Alakítsa át olvasási élményét AI-alapú könyvelemzéssel, pont mint az Amazon Kindle X-Ray!"
 
 msgid "quick_menu_title"
 msgstr "X-Ray gyorsmenü"
+
+msgid "reason"
+msgstr "Reason"
 
 msgid "reasoning_about"
 msgstr "Szabályozza a 'gondolkodási' mélységet a következtető modelleknél:\n\n• Nincs beállítva: Nincs küldve specifikus utasítás; a modell a saját alapértelmezéseit használja.\n• Alacsony: Gyors, gazdaságos kinyerés egyszerűbb könyvekhez.\n• Közepes: Kiegyensúlyozott mélység a legtöbb történethez.\n• Magas: Részletes elemzés összetett szereplői kapcsolatokhoz.\n\nÉrvényes a következőkre: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku) és Gemini 2.5+.\n\nMegjegyzés: A DeepSeek V4 eleve következtetést végez — ez a beállítás nincs hatással rá."
@@ -589,6 +643,9 @@ msgstr "Nincs beállítva (Alapértelmezett)"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "review"
+msgstr "Review"
 
 msgid "save"
 msgstr "Mentés"
@@ -635,6 +692,9 @@ msgstr "── Prior Books ──"
 msgid "series_prior_label"
 msgstr "[Előzmény]"
 
+msgid "skip"
+msgstr "Skip"
+
 msgid "spoiler_free_about"
 msgstr "A spoilermentes mód a könyvben már elolvasott oldalakra korlátozza az AI kinyerését (a jelenlegi oldaláig), megakadályozva a jövőbeli fejezetekből származó spoilereket.\n\nA Teljes könyv mód a teljes könyvet elemzi, ami spoilereket tartalmazhat."
 
@@ -649,6 +709,9 @@ msgstr "Válassza ki a spoiler-preferenciát az X-Ray adatokhoz:"
 
 msgid "spoiler_preference_title"
 msgstr "Spoiler-preferencia"
+
+msgid "stop"
+msgstr "Stop"
 
 msgid "term_not_found"
 msgstr "Nem található kifejezés a következőre: '%s'"

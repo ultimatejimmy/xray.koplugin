@@ -8,11 +8,41 @@ msgstr ""
 msgid "about"
 msgstr "Acerca de"
 
+msgid "ai_error"
+msgstr "AI Error: "
+
 msgid "ai_fetch_complete"
 msgstr "¡Datos obtenidos exitosamente desde %s!\n\nLibro: %s\nAutor: %s\n\nPersonajes: %d\nLugares: %d\nTemas: %d\nEventos: %d\nPersonajes Históricos: %d\n\n%s\n\nRESUMEN:\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "¡Obtención de IA completada!"
+
+msgid "ai_key_required"
+msgstr "An AI API key is required."
+
+msgid "ai_merge_confirm_title"
+msgstr "AI Duplicate Detected"
+
+msgid "ai_merged_n"
+msgstr "Merged %d pair(s) successfully."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI is scanning for duplicates..."
+
+msgid "auto_dupe_check_disabled"
+msgstr "Desactivado"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Activado"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Seleccione su preferencia para la detección automática de duplicados por IA:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Cuando está activado, X-Ray solicita automáticamente a la IA que verifique si hay personajes y ubicaciones duplicados después de cada descarga de datos. Si se detectan duplicados, se le pedirá que los revise y fusione.\n\nDesactivar esto detendrá todo el escaneo de duplicados en segundo plano. Aún puede fusionar duplicados manualmente a través del menú de Personajes o Ubicaciones.\n\nNota: cada verificación realiza una llamada a la API de IA. Los usuarios con planes gratuitos o con cuotas limitadas pueden preferir desactivar esta opción."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Verificación de duplicados"
 
 msgid "auto_update_aggressive"
 msgstr "Agresivo: comprueba cada nuevo capítulo"
@@ -178,6 +208,12 @@ msgstr "Muy detallado"
 
 msgid "dont_ask_again"
 msgstr "No volver a preguntar"
+
+msgid "entity_label_characters"
+msgstr "characters"
+
+msgid "entity_label_locations"
+msgstr "locations"
 
 msgid "entity_not_found"
 msgstr "No se encontró '%s' como personaje o lugar."
@@ -431,6 +467,9 @@ msgstr "Obtener más términos"
 msgid "menu_fetch_series_context"
 msgstr "Obtener / Actualizar contexto de la serie"
 
+msgid "menu_frequency"
+msgstr "Frecuencia"
+
 msgid "menu_historical_figures"
 msgstr "Personajes históricos"
 
@@ -484,6 +523,9 @@ msgstr "Ajustes del Modo X-Ray"
 
 msgid "merge_back"
 msgstr "← Back"
+
+msgid "merge_button"
+msgstr "Merge"
 
 msgid "merge_confirm"
 msgstr "¿Fusionar %s en %s? La entrada secundaria será eliminada y sus alias absorbidos."
@@ -548,11 +590,17 @@ msgstr "Aún no hay datos de personajes.\n\nUsa primero 'Obtener datos de X-Ray'
 msgid "no_data_prompt"
 msgstr "No se encontraron datos de X-Ray para este libro. ¿Desea obtenerlos de la IA ahora?"
 
+msgid "no_duplicates_found"
+msgstr "No duplicates found."
+
 msgid "no_historical_data"
 msgstr "Aún no hay datos de personajes históricos.\n\nUsa primero 'Obtener datos de X-Ray'.\n\nLa IA detectará personajes históricos reales mencionados en el libro."
 
 msgid "no_location_data"
 msgstr "Aún no hay datos de lugares. Usa primero 'Obtener datos de X-Ray'."
+
+msgid "no_merges_performed"
+msgstr "No merges were performed."
 
 msgid "no_terms_data"
 msgstr "No hay datos de términos todavía. Por favor, usa 'Fetch X-Ray Data' primero."
@@ -566,11 +614,17 @@ msgstr "OK"
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+msgid "pending_duplicates_prompt"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+
 msgid "plugin_description"
 msgstr "¡Transforma tu experiencia de lectura con el análisis de libros por IA, igual que Amazon Kindle X-Ray!"
 
 msgid "quick_menu_title"
 msgstr "Menú rápido de X-Ray"
+
+msgid "reason"
+msgstr "Reason"
 
 msgid "reasoning_about"
 msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x, DeepSeek Reasoner, Claude 4.5+ (extended thinking), and Gemini 2.5+."
@@ -589,6 +643,9 @@ msgstr "Sin establecer (Predeterminado)"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "review"
+msgstr "Review"
 
 msgid "save"
 msgstr "Guardar"
@@ -635,6 +692,9 @@ msgstr "── Prior Books ──"
 msgid "series_prior_label"
 msgstr "[Anterior]"
 
+msgid "skip"
+msgstr "Skip"
+
 msgid "spoiler_free_about"
 msgstr "El modo sin spoilers limita la extracción de IA a las páginas que ya ha leído (hasta su página actual), evitando spoilers de futuros capítulos.\n\nEl modo de libro completo analiza todo el libro, lo que puede contener spoilers."
 
@@ -649,6 +709,9 @@ msgstr "Seleccione su preferencia de spoilers para los datos de X-Ray:"
 
 msgid "spoiler_preference_title"
 msgstr "Preferencia de spoilers"
+
+msgid "stop"
+msgstr "Stop"
 
 msgid "term_not_found"
 msgstr "No se encontró ningún término que coincida con '%s'"

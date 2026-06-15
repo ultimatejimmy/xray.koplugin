@@ -90,6 +90,19 @@ function LookupManager:lookupAll(text)
             return
         end
         
+        -- Lazily build _norm_aliases if not yet cached
+        if item.aliases and not item._norm_aliases then
+            item._norm_aliases = {}
+            for _, alias in ipairs(item.aliases) do
+                if type(alias) == "string" and alias ~= "" then
+                    local anorm = self:normalize(alias)
+                    if anorm ~= "" then
+                        table.insert(item._norm_aliases, anorm)
+                    end
+                end
+            end
+        end
+
         -- Aliases Exact
         if item._norm_aliases then
             for _, anorm in ipairs(item._norm_aliases) do

@@ -8,11 +8,41 @@ msgstr ""
 msgid "about"
 msgstr "O wtyczce"
 
+msgid "ai_error"
+msgstr "AI Error: "
+
 msgid "ai_fetch_complete"
 msgstr "Pomyślnie pobrano z %s!\n\nKsiążka: %s\nAutor: %s\n\nPostacie: %d\nMiejsca: %d\nTematy: %d\nWydarzenia na osi czasu: %d\nPostacie historyczne: %d\n\n%s\n\nPODSUMOWANIE:\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "Pobieranie AI zakończone!"
+
+msgid "ai_key_required"
+msgstr "An AI API key is required."
+
+msgid "ai_merge_confirm_title"
+msgstr "AI Duplicate Detected"
+
+msgid "ai_merged_n"
+msgstr "Merged %d pair(s) successfully."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI is scanning for duplicates..."
+
+msgid "auto_dupe_check_disabled"
+msgstr "Wyłączone"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Włączone"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Wybierz preferencje dotyczące automatycznego wykrywania duplikatów przez AI:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Gdy ta opcja jest włączona, X-Ray automatycznie prosi AI o sprawdzenie zduplikowanych postaci i lokalizacji po każdym pobraniu danych. W przypadku wykrycia duplikatów zostaniesz poproszony o ich przejrzenie i scalenie.\n\nWyłączenie tej opcji zatrzyma skanowanie w tle. Nadal możesz scalać duplikaty ręcznie za pomocą menu Postacie lub Lokalizacje.\n\nUwaga: każde sprawdzenie zużywa jedno zapytanie API AI. Użytkownicy korzystający z darmowych planów lub z ograniczonym limitem zapytań mogą woleć wyłączyć tę opcję."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Sprawdzanie duplikatów"
 
 msgid "auto_update_aggressive"
 msgstr "Agresywny: sprawdza każdy nowy rozdział"
@@ -178,6 +208,12 @@ msgstr "Bardzo szczegółowe"
 
 msgid "dont_ask_again"
 msgstr "Nie pytaj ponownie"
+
+msgid "entity_label_characters"
+msgstr "characters"
+
+msgid "entity_label_locations"
+msgstr "locations"
 
 msgid "entity_not_found"
 msgstr "'%s' nie został znaleziony jako postać ani miejsce."
@@ -431,6 +467,9 @@ msgstr "Pobierz więcej pojęć"
 msgid "menu_fetch_series_context"
 msgstr "Pobierz / odśwież kontekst serii"
 
+msgid "menu_frequency"
+msgstr "Częstotliwość"
+
 msgid "menu_historical_figures"
 msgstr "Postacie historyczne"
 
@@ -484,6 +523,9 @@ msgstr "Ustawienia trybu X-Ray"
 
 msgid "merge_back"
 msgstr "← Wstecz"
+
+msgid "merge_button"
+msgstr "Merge"
 
 msgid "merge_confirm"
 msgstr "Połączyć %s z %s? Drugi wpis zostanie usunięty, a jego aliasy wchłonięte."
@@ -548,11 +590,17 @@ msgstr "Brak danych o postaciach.\n\nNajpierw użyj 'Pobierz dane X-Ray'."
 msgid "no_data_prompt"
 msgstr "Nie znaleziono danych X-Ray dla tej książki. Czy chcesz pobrać je z AI teraz?"
 
+msgid "no_duplicates_found"
+msgstr "No duplicates found."
+
 msgid "no_historical_data"
 msgstr "Brak danych o postaciach historycznych.\n\nNajpierw użyj 'Pobierz dane X-Ray'.\n\nAI wykryje rzeczywiste postacie\nhistoryczne wspomniane w książce."
 
 msgid "no_location_data"
 msgstr "Brak danych o miejscach. Najpierw użyj 'Pobierz dane X-Ray'."
+
+msgid "no_merges_performed"
+msgstr "No merges were performed."
 
 msgid "no_terms_data"
 msgstr "Brak danych o pojęciach. Najpierw użyj 'Pobierz dane X-Ray'."
@@ -566,11 +614,17 @@ msgstr "OK"
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+msgid "pending_duplicates_prompt"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+
 msgid "plugin_description"
 msgstr "Odmień swoje wrażenia z czytania dzięki analizie książek opartej na sztucznej inteligencji, zupełnie jak Amazon Kindle X-Ray!"
 
 msgid "quick_menu_title"
 msgstr "Szybkie menu X-Ray"
+
+msgid "reason"
+msgstr "Reason"
 
 msgid "reasoning_about"
 msgstr "Kontroluje głębokość 'myślenia' dla modeli rozumowania:\n\n• Nieustawione: Nie wysłano żadnej konkretnej instrukcji; model używa swoich wewnętrznych ustawień domyślnych.\n• Niski: Szybka, ekonomiczna ekstrakcja dla prostych książek.\n• Średni: Zrównoważona głębokość dla większości narracji.\n• Wysoki: Szczegółowa analiza dla złożonych sieci postaci.\n\nDotyczy: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku) oraz Gemini 2.5+.\n\nUwaga: DeepSeek V4 rozumuje sam z siebie — to ustawienie nie ma na niego wpływu."
@@ -589,6 +643,9 @@ msgstr "Nieustawione (domyślny)"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "review"
+msgstr "Review"
 
 msgid "save"
 msgstr "Zapisz"
@@ -635,6 +692,9 @@ msgstr "── Poprzednie tomy ──"
 msgid "series_prior_label"
 msgstr "[Poprzednie]"
 
+msgid "skip"
+msgstr "Skip"
+
 msgid "spoiler_free_about"
 msgstr "Tryb bez spojlerów ogranicza ekstrakcję AI do stron, które zostały już przeczytane (do bieżącej strony), zapobiegając spojlerom z przyszłych rozdziałów.\n\nTryb pełnej książki analizuje całą książkę, co może zawierać spojlery."
 
@@ -649,6 +709,9 @@ msgstr "Wybierz swoje preferencje dotyczące spojlerów w danych X-Ray:"
 
 msgid "spoiler_preference_title"
 msgstr "Preferencje dotyczące spojlerów"
+
+msgid "stop"
+msgstr "Stop"
 
 msgid "term_not_found"
 msgstr "Nie znaleziono pojęcia pasującego do '%s'"

@@ -16,6 +16,35 @@ REQUIRED JSON FORMAT:
   "author_death": "Death Date, formatted based on local date format"
 }]],
 
+    -- Find Duplicates (for AI-Assisted Merge)
+    find_duplicates = [[Book: %s
+Author: %s
+Reading Progress: %d%%
+
+You are reviewing the following list of %s extracted from this book.
+Your task is to identify any entries that appear to be the SAME entity listed under different names.
+
+LIST:
+%s
+
+RULES:
+- A duplicate exists when two entries clearly refer to the same entity (e.g., "The Grand Library" and "Grand Library", or "John" and "John Doe").
+- Do NOT flag entries that are merely related or similar but distinct.
+- Do NOT flag entries unless you are highly confident they are the same entity.
+- If no duplicates exist, return an empty array.
+- SPOILER RULE: Do not use knowledge from beyond %d%% reading progress.
+
+REQUIRED JSON FORMAT:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "Name of the entry to KEEP (the more complete or formal name)",
+      "secondary": "Name of the entry to REMOVE",
+      "reason": "Brief reason (max 100 chars)"
+    }
+  ]
+}]],
+
     -- Single Comprehensive Fetch (Combined Characters, Locations, Timeline)
     comprehensive_xray = [[Book: %s
 Author: %s
