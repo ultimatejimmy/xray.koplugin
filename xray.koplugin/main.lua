@@ -673,7 +673,18 @@ function XRayPlugin:getSubMenuItems()
             {
                 text = self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings",
                 keep_menu_open = true,
-                callback = function() self:showAutoUpdateSettings() end,
+                sub_item_table = {
+                    {
+                        text = self.loc:t("menu_frequency") or "Frequency",
+                        keep_menu_open = true,
+                        callback = function() self:showAutoUpdateSettings() end,
+                    },
+                    {
+                        text = self.loc:t("auto_dupe_check_setting_title") or "Duplicate Check",
+                        keep_menu_open = true,
+                        callback = function() self:showAutoDupeCheckSettings() end,
+                    },
+                }
             },
             {
                 text = self.loc:t("menu_book_mode") or "Book Type",

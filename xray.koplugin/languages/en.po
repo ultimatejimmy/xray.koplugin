@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Disabled"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Enabled"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Select your preference for automatic AI duplicate detection:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "When enabled, X-Ray automatically asks the AI to check for duplicate characters and locations after every data fetch. If duplicates are detected, you will be prompted to review and merge them.\n\nDisabling this will stop all background duplicate scanning. You can still merge duplicates manually via the Characters or Locations menu.\n\nNote: each check uses one AI API call. Users on free-tier or quota-limited plans may prefer to disable this."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Duplicate Check"
+
 msgid "auto_update_aggressive"
 msgstr "Aggressive: checks every new chapter"
 
@@ -451,6 +466,9 @@ msgstr "Fetch More Terms"
 
 msgid "menu_fetch_series_context"
 msgstr "Fetch / Refresh Series Context"
+
+msgid "menu_frequency"
+msgstr "Frequency"
 
 msgid "menu_historical_figures"
 msgstr "Historical Figures"

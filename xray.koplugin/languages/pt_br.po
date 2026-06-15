@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Desativado"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Ativado"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Selecione sua preferência para detecção automática de duplicatas por IA:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Quando ativado, o X-Ray solicita automaticamente que a IA verifique se há personagens e locais duplicados após cada busca de dados. Se duplicatas forem detectadas, você será solicitado a revisá-las e mesclá-las.\n\nDesativar isso interromperá toda a varredura de duplicatas em segundo plano. Você ainda pode mesclar duplicatas manualmente através do menu de Personagens ou Locais.\n\nNota: cada verificação usa uma chamada de API da IA. Usuários em planos gratuitos ou com limites de cota podem preferir desativar esta opção."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Verificação de Duplicatas"
+
 msgid "auto_update_aggressive"
 msgstr "Agressivo: verifica a cada novo capítulo"
 
@@ -451,6 +466,9 @@ msgstr "Buscar Mais Termos"
 
 msgid "menu_fetch_series_context"
 msgstr "Buscar / Atualizar Series Context"
+
+msgid "menu_frequency"
+msgstr "Frequência"
 
 msgid "menu_historical_figures"
 msgstr "Figuras Históricas"

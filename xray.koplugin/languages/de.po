@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Deaktiviert"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Aktiviert"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Wählen Sie Ihre Einstellung für die automatische KI-Duplikatserkennung:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Wenn aktiviert, fordert X-Ray die KI nach jedem Datenabruf automatisch auf, nach doppelten Charakteren und Orten zu suchen. Wenn Duplikate erkannt werden, werden Sie gefragt, ob Sie diese überprüfen und zusammenführen möchten.\n\nDas Deaktivieren stoppt alle Hintergrund-Duplikatsprüfungen. Sie können Duplikate weiterhin manuell über das Menü 'Charaktere' oder 'Orte' zusammenführen.\n\nHinweis: Jede Prüfung verbraucht einen KI-API-Aufruf. Benutzer mit kostenlosen Kontingenten oder begrenzten Plänen möchten dies möglicherweise deaktivieren."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Duplikatsprüfung"
+
 msgid "auto_update_aggressive"
 msgstr "Aggressiv: prüft jedes neue Kapitel"
 
@@ -451,6 +466,9 @@ msgstr "Weitere Begriffe abrufen"
 
 msgid "menu_fetch_series_context"
 msgstr "Series Context abrufen / aktualisieren"
+
+msgid "menu_frequency"
+msgstr "Frequenz"
 
 msgid "menu_historical_figures"
 msgstr "Historische Personen"

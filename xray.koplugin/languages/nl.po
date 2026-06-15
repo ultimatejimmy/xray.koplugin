@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Uitgeschakeld"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Ingeschakeld"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Selecteer uw voorkeur voor automatische IA-duplicaatdetectie:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Indien ingeschakeld, vraagt X-Ray de IA automatisch om te controleren op dubbele personages en locaties na elke gegevensophaling. Als er duplicaten worden gedetecteerd, wordt u gevraagd deze te controleren en samen te voegen.\n\nAls u dit uitschakelt, stopt het scannen op duplicaten in de achtergrond. U kunt duplicaten nog steeds handmatig samenvoegen via het menu Personages of Locaties.\n\nOpmerking: elke controle maakt gebruik van één IA-API-aanroep. Gebruikers met een gratis abonnement of een beperkt quotum willen dit mogelijk uitschakelen."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Duplicaatcontrole"
+
 msgid "auto_update_aggressive"
 msgstr "Agressief: controleert elk nieuw hoofdstuk"
 
@@ -451,6 +466,9 @@ msgstr "Meer termen ophalen"
 
 msgid "menu_fetch_series_context"
 msgstr "Seriecontext ophalen / vernieuwen"
+
+msgid "menu_frequency"
+msgstr "Frequentie"
 
 msgid "menu_historical_figures"
 msgstr "Historische figuren"

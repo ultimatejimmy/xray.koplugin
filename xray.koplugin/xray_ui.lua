@@ -1033,6 +1033,67 @@ function M:showMentionsSettings()
     showSettings()
 end
 
+function M:showAutoDupeCheckSettings()
+    local ButtonDialog = require("ui/widget/buttondialog")
+    local InfoMessage = require("ui/widget/infomessage")
+    local info_dialog
+    
+    local function showSettings()
+        if info_dialog then UIManager:close(info_dialog) end
+        
+        local current_setting = self.ai_helper.settings.auto_dupe_check_enabled ~= false -- default is true
+        local enabled_text = self.loc:t("auto_dupe_check_enabled") or "Enabled"
+        local disabled_text = self.loc:t("auto_dupe_check_disabled") or "Disabled"
+        
+        local buttons = {
+            {
+                {
+                    text = (current_setting and "[✓] " or "[  ] ") .. enabled_text,
+                    callback = function()
+                        self.ai_helper:saveSettings({ auto_dupe_check_enabled = true })
+                        UIManager:setDirty(nil, "ui")
+                        UIManager:nextTick(function() showSettings() end)
+                    end
+                },
+                {
+                    text = ((not current_setting) and "[✓] " or "[  ] ") .. disabled_text,
+                    callback = function()
+                        self.ai_helper:saveSettings({ auto_dupe_check_enabled = false })
+                        UIManager:setDirty(nil, "ui")
+                        UIManager:nextTick(function() showSettings() end)
+                    end
+                }
+            },
+            {
+                {
+                    text = self.loc:t("menu_about") or "About",
+                    callback = function()
+                        UIManager:show(InfoMessage:new{
+                            text = self.loc:t("auto_dupe_check_setting_desc") or "When enabled, X-Ray automatically asks the AI to check for duplicate characters and locations after every data fetch. If duplicates are detected, you will be prompted to review and merge them.\n\nDisabling this will stop all background duplicate scanning. You can still merge duplicates manually via the Characters or Locations menu.\n\nNote: each check uses one AI API call. Users on free-tier or quota-limited plans may prefer to disable this.",
+                            timeout = 30
+                        })
+                    end
+                },
+                {
+                    text = self.loc:t("close") or "Close",
+                    callback = function()
+                        UIManager:close(info_dialog)
+                    end
+                }
+            }
+        }
+        
+        info_dialog = ButtonDialog:new{
+            title = self.loc:t("auto_dupe_check_setting_title") or "AI Duplicate Check",
+            text = self.loc:t("auto_dupe_check_preference_desc") or "Select your preference for automatic AI duplicate detection:",
+            buttons = buttons,
+        }
+        UIManager:show(info_dialog)
+    end
+    
+    showSettings()
+end
+
 function M:showLinkedEntriesSettings()
     local ButtonDialog = require("ui/widget/buttondialog")
     local InfoMessage = require("ui/widget/infomessage")

@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Letiltva"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Engedélyezve"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Válassza ki az automatikus AI duplikátum észlelés beállításait:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Ha engedélyezve van, az X-Ray minden adatletöltés után automatikusan megkéri az AI-t, hogy ellenőrizze a duplikált karaktereket és helyszíneket. Duplikátumok észlelése esetén a rendszer felkéri azok áttekintésére és összevonására.\n\nEnnek letiltása leállítja a háttérben történő duplikátum-keresést. A duplikátumokat továbbra is manuálisan vonhatja össze a Karakterek vagy Helyszínek menüben.\n\nMegjegyzés: minden ellenőrzés egy AI API hívást használ. A szabad-szintű vagy korlátozott kvótával rendelkező felhasználók számára ajánlott lehet a letiltása."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Duplikátum ellenőrzés"
+
 msgid "auto_update_aggressive"
 msgstr "Agresszív: minden új fejezetnél ellenőrzi"
 
@@ -451,6 +466,9 @@ msgstr "További kifejezések lekérése"
 
 msgid "menu_fetch_series_context"
 msgstr "Sorozatkontextus lekérése / frissítése"
+
+msgid "menu_frequency"
+msgstr "Gyakoriság"
 
 msgid "menu_historical_figures"
 msgstr "Történelmi alakok"

@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Вимкнено"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Увімкнено"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Виберіть налаштування для автоматичного виявлення дублікатів ШІ:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Якщо увімкнено, X-Ray автоматично просить ШІ перевірити наявність дублікатів персонажів та локацій після кожного отримання даних. Якщо дублікати будуть виявлені, вам буде запропоновано переглянути та об'єднати їх.\n\nВимкнення цієї опції зупинить фонове сканування дублікатів. Ви все ще можете об'єднувати дублікати вручную через меню Персонажів або Локацій.\n\nПримітка: кожна перевірка використовує один запит до API ШІ. Користувачі безкоштовних тарифних планів або з лімітом запитів можуть віддати перевагу вимкненню цієї опції."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Перевірка дублікатів"
+
 msgid "auto_update_aggressive"
 msgstr "Агресивний: перевірка в кожному розділі"
 
@@ -451,6 +466,9 @@ msgstr "Отримати більше термінів"
 
 msgid "menu_fetch_series_context"
 msgstr "Отримати / Оновити контекст серії"
+
+msgid "menu_frequency"
+msgstr "Частота"
 
 msgid "menu_historical_figures"
 msgstr "Історичні постаті"

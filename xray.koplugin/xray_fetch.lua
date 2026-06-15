@@ -613,6 +613,7 @@ end
 
 function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
     if not self.ai_helper or not self.ai_helper.hasApiKey or not self.ai_helper:hasApiKey() then return end
+    if self.ai_helper.settings and self.ai_helper.settings.auto_dupe_check_enabled == false then return end
 
     -- Run checks for characters and locations in sequence
     local function checkList(list, list_name, entity_label, on_done)

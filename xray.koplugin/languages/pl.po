@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Wyłączone"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Włączone"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Wybierz preferencje dotyczące automatycznego wykrywania duplikatów przez AI:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Gdy ta opcja jest włączona, X-Ray automatycznie prosi AI o sprawdzenie zduplikowanych postaci i lokalizacji po każdym pobraniu danych. W przypadku wykrycia duplikatów zostaniesz poproszony o ich przejrzenie i scalenie.\n\nWyłączenie tej opcji zatrzyma skanowanie w tle. Nadal możesz scalać duplikaty ręcznie za pomocą menu Postacie lub Lokalizacje.\n\nUwaga: każde sprawdzenie zużywa jedno zapytanie API AI. Użytkownicy korzystający z darmowych planów lub z ograniczonym limitem zapytań mogą woleć wyłączyć tę opcję."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Sprawdzanie duplikatów"
+
 msgid "auto_update_aggressive"
 msgstr "Agresywny: sprawdza każdy nowy rozdział"
 
@@ -451,6 +466,9 @@ msgstr "Pobierz więcej pojęć"
 
 msgid "menu_fetch_series_context"
 msgstr "Pobierz / odśwież kontekst serii"
+
+msgid "menu_frequency"
+msgstr "Częstotliwość"
 
 msgid "menu_historical_figures"
 msgstr "Postacie historyczne"

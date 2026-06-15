@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Désactivé"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Activé"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Sélectionnez votre préférence pour la détection automatique des doublons par IA :"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Lorsqu'il est activé, X-Ray demande automatiquement à l'IA de vérifier les doublons de personnages et de lieux après chaque récupération de données. Si des doublons sont détectés, vous serez invité à les examiner et à les fusionner.\n\nDésactiver cette option arrêtera toute recherche de doublons en arrière-plan. Vous pouvez toujours fusionner les doublons manuellement via le menu Personnages ou Lieux.\n\nRemarque : chaque vérification utilise un appel à l'API IA. Les utilisateurs disposant d'un forfait gratuit ou limité en quota préféreront peut-être désactiver cette option."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Vérification des doublons"
+
 msgid "auto_update_aggressive"
 msgstr "Agressif : vérifie chaque nouveau chapitre"
 
@@ -451,6 +466,9 @@ msgstr "Récupérer plus de termes"
 
 msgid "menu_fetch_series_context"
 msgstr "Récupérer / Rafraîchir Series Context"
+
+msgid "menu_frequency"
+msgstr "Fréquence"
 
 msgid "menu_historical_figures"
 msgstr "Figures Historiques"

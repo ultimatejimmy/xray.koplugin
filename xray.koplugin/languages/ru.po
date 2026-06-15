@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Выключено"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Включено"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Выберите предпочтение для автоматического обнаружения дубликатов ИИ:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Если включено, X-Ray автоматически запрашивает у ИИ проверку на наличие повторяющихся персонажей и локаций после каждого получения данных. В случае обнаружения дубликатов вам будет предложено просмотреть и объединить их.\n\nОтключение остановит фоновое сканирование дубликатов. Вы по-прежнему можете объединять дубликаты вручную через меню персонажей или локаций.\n\nПримечание: каждая проверка использует один запрос к API ИИ. Пользователи бесплатных или ограниченных тарифных планов могут предпочесть отключить эту функцию."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Проверка дубликатов"
+
 msgid "auto_update_aggressive"
 msgstr "Агрессивный: проверка в каждой главе"
 
@@ -451,6 +466,9 @@ msgstr "Получить больше терминов"
 
 msgid "menu_fetch_series_context"
 msgstr "Получить / обновить контекст серии"
+
+msgid "menu_frequency"
+msgstr "Частота"
 
 msgid "menu_historical_figures"
 msgstr "Исторические личности"

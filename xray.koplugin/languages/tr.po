@@ -29,6 +29,21 @@ msgstr "Merged %d pair(s) successfully."
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "auto_dupe_check_disabled"
+msgstr "Devre Dışı"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Etkin"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Otomatik yapay zeka yinelenen algılama tercihinizi seçin:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Etkinleştirildiğinde, X-Ray her veri getirmeden sonra yapay zekadan yinelenen karakterleri ve konumları kontrol etmesini otomatik olarak ister. Yinelenenler algılanırsa, bunları incelemeniz ve birleştirmeniz istenir.\n\nBunu devre dışı bırakmak arka plandaki tüm yinelenen taramalarını durduracaktır. Yinelenenleri yine de Karakterler veya Konumlar menüsünden manuel olarak birleştirebilirsiniz.\n\nNot: Her kontrol bir yapay zeka API çağrısı kullanır. Ücretsiz veya kota sınırlı planlardaki kullanıcılar bunu devre dışı bırakmayı tercih edebilir."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Yinelenen Kontrolü"
+
 msgid "auto_update_aggressive"
 msgstr "Agresif: her yeni bölümde kontrol eder"
 
@@ -451,6 +466,9 @@ msgstr "Daha Fazla Terim Getir"
 
 msgid "menu_fetch_series_context"
 msgstr "Seri Bağlamını Getir / Yenile"
+
+msgid "menu_frequency"
+msgstr "Sıklık"
 
 msgid "menu_historical_figures"
 msgstr "Tarihi Kişiler"
