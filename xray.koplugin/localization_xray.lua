@@ -275,6 +275,8 @@ function Localization:t(key, ...)
             find_mentions = "Find Mentions",
             menu_about = "About",
             menu_frequency = "Frequency",
+            auto_update_ultra = "Ultra: checks every %d pages",
+            auto_fetch_page_interval_prompt = "Page Interval",
             menu_reasoning_effort = "AI Reasoning Effort",
             reasoning_low = "Low",
             reasoning_medium = "Medium",

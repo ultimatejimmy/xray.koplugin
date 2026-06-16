@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Ekonomiczny: sprawdza maksymalnie co 15 min"
 
 msgid "auto_update_freq_about"
-msgstr "Automatyczna aktualizacja sprawdza w tle dane o nowych rozdziałach podczas czytania.\n\nLIMITU I WYDAJNOŚĆ\nCzęste zapytania w tle mogą rozładowywać BATERIĘ i przekroczyć LIMITY ZAPYTAŃ DOSTAWCY AI (szczególnie w modelach Pro).\n\nTRYBY\n• Wyłączone: Brak zapytań w tle\n• Agresywny: Sprawdza przy każdym wejściu do nowego rozdziału\n• Zrównoważony: Sprawdza maksymalnie co 5 minut (zalecane)\n• Ekonomiczny: Sprawdza maksymalnie co 15 minut\n• Rzadki: Sprawdza maksymalnie co 30 minut\n\nUwaga: Jeśli rozdział zostanie pominięty ze względu na limity częstotliwości, X-Ray automatycznie uwzględni go przy następnym pobieraniu w tle."
+msgstr "Automatyczna aktualizacja sprawdza w tle dane o nowych rozdziałach podczas czytania.\n\nLIMITU I WYDAJNOŚĆ\nCzęste zapytania w tle mogą rozładowywać BATERIĘ i przekroczyć LIMITY ZAPYTAŃ DOSTAWCY AI (szczególnie w modelach Pro).\n\nTRYBY\n• Ultra: Sprawdza co skonfigurowane N stron (w środku rozdziału)\n• Agresywny: Sprawdza przy każdym wejściu do nowego rozdziału\n• Zrównoważony: Sprawdza maksymalnie co 5 minut (zalecane)\n• Ekonomiczny: Sprawdza maksymalnie co 15 minut\n• Rzadki: Sprawdza maksymalnie co 30 minut\n• Wyłączone: Brak zapytań w tle\n\nUwaga: Jeśli rozdział zostanie pominięty ze względu na limity częstotliwości, X-Ray automatycznie uwzględni go przy następnym pobieraniu w tle."
 
 msgid "auto_update_freq_label"
 msgstr "Częstotliwość pobierania w tle:"
@@ -797,3 +797,9 @@ msgstr "Dodaje przycisk 'X-Ray' do menu słownika i wyboru w celu natychmiastowe
 msgid "yes"
 msgstr "Tak"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: sprawdza co %d stron"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Przedział stron"

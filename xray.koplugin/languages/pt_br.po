@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Econômico: verifica a cada 15 min no máximo"
 
 msgid "auto_update_freq_about"
-msgstr "A atualização automática verifica novos dados de capítulos em segundo plano enquanto você lê.\n\nLIMITES E DESEMPENHO\nSolicitações frequentes em segundo plano podem esgotar a BATERIA e atingir os LIMITES de taxa do provedor de IA (especialmente em modelos Pro).\n\nMODOS\n• Desativado: Sem solicitações em segundo plano\n• Agressivo: Verifica toda vez que você entra em um novo capítulo\n• Equilibrado: Verifica no máximo a cada 5 minutos (recomendado)\n• Econômico: Verifica no máximo a cada 15 minutos\n• Esparso: Verifica no máximo a cada 30 minutos\n\nNota: Se um capítulo for pulado devido a limites de frequência, o X-Ray o incluirá automaticamente na próxima busca em segundo plano."
+msgstr "A atualização automática verifica novos dados de capítulos em segundo plano enquanto você lê.\n\nLIMITES E DESEMPENHO\nSolicitações frequentes em segundo plano podem esgotar a BATERIA e atingir os LIMITES de taxa do provedor de IA (especialmente em modelos Pro).\n\nMODOS\n• Ultra: Verifica a cada N páginas que você configurar (meio do capítulo)\n• Agressivo: Verifica toda vez que você entra em um novo capítulo\n• Equilibrado: Verifica no máximo a cada 5 minutos (recomendado)\n• Econômico: Verifica no máximo a cada 15 minutos\n• Esparso: Verifica no máximo a cada 30 minutos\n• Desativado: Sem solicitações em segundo plano\n\nNota: Se um capítulo for pulado devido a limites de frequência, o X-Ray o incluirá automaticamente na próxima busca em segundo plano."
 
 msgid "auto_update_freq_label"
 msgstr "Frequência de busca em segundo plano:"
@@ -797,3 +797,9 @@ msgstr "Adiciona um botão 'X-Ray' aos menus de dicionário e seleção para con
 msgid "yes"
 msgstr "Sim"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: verifica a cada %d páginas"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Intervalo de páginas"

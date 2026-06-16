@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Zuinig: controleert maximaal elke 15 min"
 
 msgid "auto_update_freq_about"
-msgstr "Automatisch bijwerken controleert op de achtergrond naar nieuwe hoofdstukinformatie terwijl u leest.\n\nLIMIETEN & PRESTATIES\nFrequente achtergrondaanzeken kunnen de BATTERIJSDUUR verkorten en kunnen AI-PROVIDER RATE-LIMIETEN overschrijden (vooral bij Pro-modellen).\n\nMODI\n• Uitgeschakeld: Geen achtergrondaanzeken\n• Agressief: Controleert elke keer als u een nieuw hoofdstuk binnengaat\n• Gebalanceerd: Controleert maximaal elke 5 minuten (aanbevolen)\n• Zuinig: Controleert maximaal elke 15 minuten\n• Sparing: Controleert maximaal elke 30 minuten\n\nOpmerking: Als een hoofdstuk wordt overgeslagen vanwege frequentielimieten, zal X-Ray dit automatisch opnemen in de volgende achtergrondaanzek."
+msgstr "Automatisch bijwerken controleert op de achtergrond naar nieuwe hoofdstukinformatie terwijl u leest.\n\nLIMIETEN & PRESTATIES\nFrequente achtergrondaanzeken kunnen de BATTERIJSDUUR verkorten en kunnen AI-PROVIDER RATE-LIMIETEN overschrijden (vooral bij Pro-modellen).\n\nMODI\n• Ultra: Controleert elke door u ingestelde N pagina's (midden in het hoofdstuk)\n• Agressief: Controleert elke keer als u een nieuw hoofdstuk binnengaat\n• Gebalanceerd: Controleert maximaal elke 5 minuten (aanbevolen)\n• Zuinig: Controleert maximaal elke 15 minuten\n• Sparing: Controleert maximaal elke 30 minuten\n• Uitgeschakeld: Geen achtergrondaanzeken\n\nOpmerking: Als een hoofdstuk wordt overgeslagen vanwege frequentielimieten, zal X-Ray dit automatisch opnemen in de volgende achtergrondaanzek."
 
 msgid "auto_update_freq_label"
 msgstr "Frequentie ophalen achtergrond:"
@@ -797,3 +797,9 @@ msgstr "Voegt een 'X-Ray'-knop toe aan woordenboek- en selectiemenu's voor direc
 msgid "yes"
 msgstr "Ja"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: controleert elke %d pagina's"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Pagina-interval"

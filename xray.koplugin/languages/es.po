@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Económico: comprueba cada 15 min máximo"
 
 msgid "auto_update_freq_about"
-msgstr "La actualización automática busca nuevos datos de capítulos en segundo plano mientras lees.\n\nLÍMITES Y RENDIMIENTO\nLas solicitudes frecuentes en segundo plano pueden agotar la BATERÍA y alcanzar los LÍMITES DE TASA del proveedor de IA (especialmente en modelos Pro).\n\nMODOS\n• Desactivado: Sin solicitudes en segundo plano\n• Agresivo: Comprueba cada vez que entras en un nuevo capítulo\n• Equilibrado: Comprueba cada 5 minutos máximo (recomendado)\n• Económico: Comprueba cada 15 minutos máximo\n• Escaso: Comprueba cada 30 minutos máximo\n\nNota: Si se salta un capítulo debido a los límites de frecuencia, X-Ray lo incluirá automáticamente en la siguiente búsqueda en segundo plano."
+msgstr "La actualización automática busca nuevos datos de capítulos en segundo plano mientras lees.\n\nLÍMITES Y RENDIMIENTO\nLas solicitudes frecuentes en segundo plano pueden agotar la BATERÍA y alcanzar los LÍMITES DE TASA del proveedor de IA (especialmente en modelos Pro).\n\nMODOS\n• Ultra: Comprueba cada N páginas configuradas (mitad del capítulo)\n• Agresivo: Comprueba cada vez que entras en un nuevo capítulo\n• Equilibrado: Comprueba cada 5 minutos máximo (recomendado)\n• Económico: Comprueba cada 15 minutos máximo\n• Escaso: Comprueba cada 30 minutos máximo\n• Desactivado: Sin solicitudes en segundo plano\n\nNota: Si se salta un capítulo debido a los límites de frecuencia, X-Ray lo incluirá automáticamente en la siguiente búsqueda en segundo plano."
 
 msgid "auto_update_freq_label"
 msgstr "Frecuencia de obtención en segundo plano:"
@@ -797,3 +797,9 @@ msgstr "Añade un botón 'X-Ray' a los menús de diccionario y selección para c
 msgid "yes"
 msgstr "Sí"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: comprueba cada %d páginas"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Intervalo de páginas"

@@ -116,6 +116,7 @@ function XRayPlugin:init()
 
     -- Auto-fetch on chapter change (session state)
     self.last_auto_chapter = nil
+    self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
     self.auto_fetch_enabled = not (self.ai_helper.settings and
@@ -286,6 +287,7 @@ function XRayPlugin:onReaderReady()
     self:autoLoadCache()
     -- Reset per-session chapter fetch tracking
     self.last_auto_chapter = nil
+    self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
 
@@ -381,6 +383,24 @@ function XRayPlugin:onPageUpdate(pageno)
             self.chapters_fetched[unique_id] = true
         end
         return 
+    end
+
+    -- Ultra mode: bypass chapter-boundary and is_populated guards; fire on page interval alone
+    local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
+    if page_interval and page_interval > 0 then
+        local last = self.last_bg_fetch_page or 0
+        if (pageno - last) < page_interval then
+            return
+        end
+        self.last_bg_fetch_page = pageno
+        -- Debounce: ignore if a fetch is already scheduled
+        if self.bg_fetch_pending or self.bg_fetch_active then return end
+        self.bg_fetch_pending = true
+        UIManager:scheduleIn(2, function()
+            self.bg_fetch_pending = false
+            self:triggerBackgroundMergeFetch(chapter_title)
+        end)
+        return
     end
 
     -- Check if it's already populated in the timeline data

@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Économique : vérifie max toutes les 15 min"
 
 msgid "auto_update_freq_about"
-msgstr "La mise à jour automatique vérifie les nouvelles données de chapitre en arrière-plan pendant que vous lisez.\n\nLIMITES ET PERFORMANCE\nLes requêtes fréquentes en arrière-plan peuvent vider la BATTERIE et atteindre les LIMITES DE TAUX du fournisseur IA.\n\nMODES\n• Désactivé : Pas de requêtes en arrière-plan\n• Agressif : Vérifie chaque fois que vous entrez dans un nouveau chapitre\n• Équilibré : Vérifie au plus toutes les 5 minutes (recommandé)\n• Économique : Vérifie au plus toutes les 15 minutes\n• Clairsemé : Vérifie au plus toutes les 30 minutes\n\nNote : Si un chapitre est sauté en raison des limites de fréquence, X-Ray l'inclura automatiquement dans la prochaine récupération en arrière-plan."
+msgstr "La mise à jour automatique vérifie les nouvelles données de chapitre en arrière-plan pendant que vous lisez.\n\nLIMITES ET PERFORMANCE\nLes requêtes fréquentes en arrière-plan peuvent vider la BATTERIE et atteindre les LIMITES DE TAUX du fournisseur IA.\n\nMODES\n• Ultra : Vérifie toutes les N pages configurées (au milieu du chapitre)\n• Agressif : Vérifie chaque fois que vous entrez dans un nouveau chapitre\n• Équilibré : Vérifie au plus toutes les 5 minutes (recommandé)\n• Économique : Vérifie au plus toutes les 15 minutes\n• Clairsemé : Vérifie au plus toutes les 30 minutes\n• Désactivé : Pas de requêtes en arrière-plan\n\nNote : Si un chapitre est sauté en raison des limites de fréquence, X-Ray l'inclura automatiquement dans la prochaine récupération en arrière-plan."
 
 msgid "auto_update_freq_label"
 msgstr "Fréquence de récupération en arrière-plan :"
@@ -797,3 +797,9 @@ msgstr "Ajoute un bouton 'X-Ray' aux menus de dictionnaire et de sélection pour
 msgid "yes"
 msgstr "Oui"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra : vérifie toutes les %d pages"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Intervalle de pages"

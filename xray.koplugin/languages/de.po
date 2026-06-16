@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Sparsam: prüft max. alle 15 Min."
 
 msgid "auto_update_freq_about"
-msgstr "Auto-Update prüft im Hintergrund auf neue Kapiteldaten, während Sie lesen.\n\nLIMITS & PERFORMANCE\nHäufige Hintergrundanfragen können den AKKU belasten und API-LIMITS erreichen (besonders bei Pro-Modellen).\n\nMODI\n• Deaktiviert: Keine Hintergrundanfragen\n• Aggressiv: Prüft bei jedem neuen Kapitel\n• Ausgewogen: Prüft höchstens alle 5 Minuten (empfohlen)\n• Sparsam: Prüft höchstens alle 15 Minuten\n• Selten: Prüft höchstens alle 30 Minuten\n\nHinweis: Wenn ein Kapitel aufgrund von Limits übersprungen wird, wird X-Ray es automatisch beim nächsten Hintergrundabruf einbeziehen."
+msgstr "Auto-Update prüft im Hintergrund auf neue Kapiteldaten, während Sie lesen.\n\nLIMITS & PERFORMANCE\nHäufige Hintergrundanfragen können den AKKU belasten und API-LIMITS erreichen (besonders bei Pro-Modellen).\n\nMODI\n• Ultra: Prüft alle N Seiten, die Sie konfigurieren (mitten im Kapitel)\n• Aggressiv: Prüft bei jedem neuen Kapitel\n• Ausgewogen: Prüft höchstens alle 5 Minuten (empfohlen)\n• Sparsam: Prüft höchstens alle 15 Minuten\n• Selten: Prüft höchstens alle 30 Minuten\n• Deaktiviert: Keine Hintergrundanfragen\n\nHinweis: Wenn ein Kapitel aufgrund von Limits übersprungen wird, wird X-Ray es automatisch beim nächsten Hintergrundabruf einbeziehen."
 
 msgid "auto_update_freq_label"
 msgstr "Hintergrund-Abrufhäufigkeit:"
@@ -797,3 +797,9 @@ msgstr "Fügt eine 'X-Ray'-Schaltfläche zu Wörterbuch- und Auswahlmenüs für 
 msgid "yes"
 msgstr "Yes"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: prüft alle %d Seiten"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Seitenintervall"

@@ -127,77 +127,145 @@ function CacheManager:saveCache(book_path, data)
     return success
 end
 
--- Save book data to cache asynchronously using a background process
+-- Save book data to cache asynchronously using a cooperative coroutine-based recursive serializer.
+-- Writing is executed in the background by yielding to KOReader's UIManager loop every 15 entries,
+-- ensuring that all database tables (characters, terms, locations, etc.) are saved incrementally
+-- without blocking the UI thread.
 function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
     if not book_path or not data then
         logger.warn("CacheManager: Cannot save cache async - invalid parameters")
         if on_done_cb then on_done_cb(false) end
         return false
     end
-    
+
     local cache_file = self:getCachePath(book_path)
     if not cache_file then
         logger.warn("CacheManager: Cannot determine cache path for async save")
         if on_done_cb then on_done_cb(false) end
         return false
     end
-    
-    -- Ensure directory exists
+
     if not self:ensureDirectory(cache_file) then
         logger.warn("CacheManager: Cannot create cache directory for async save")
         if on_done_cb then on_done_cb(false) end
         return false
     end
-    
-    -- Add timestamp
+
     data.cached_at = os.time()
     data.cache_version = "6.0"
 
-    -- Attempt to serialize in parent process memory first (fast, CPU only)
-    local serialized_str
-    local serialize_ok, serialize_err = pcall(function()
-        -- Use the synchronous serialize function to generate full table text in memory.
-        -- We write a prefix header, followed by return, then serialize.
-        local header = "-- X-Ray Cache v6.0\n-- Generated: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\nreturn "
-        return header .. self:serialize(data, "") .. "\n"
-    end)
+    -- ── UIManager cooperative coroutine path (primary) ──────────────────────
+    local ok_ui, UIManager = pcall(require, "ui/uimanager")
+    if ok_ui and UIManager then
+        local f, open_err = io.open(cache_file, "w")
+        if not f then
+            logger.warn("CacheManager: Cannot open cache file for async write:", open_err or "unknown")
+            if on_done_cb then on_done_cb(false) end
+            return false
+        end
 
-    if not serialize_ok then
-        logger.warn("CacheManager: Async serialization failed:", serialize_err or "unknown")
-        AIHelper:log("CacheManager: Async serialization failed: " .. tostring(serialize_err or "unknown"))
-        if on_done_cb then on_done_cb(false) end
-        return false
+        f:write("-- X-Ray Cache v6.0\n")
+        f:write("-- Generated: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
+        f:write("return ")
+
+        local write_count = 0
+        local serializeCo
+        serializeCo = function(obj, indent, seen)
+            seen = seen or {}
+            local t = type(obj)
+
+            if t == "table" then
+                if seen[obj] then
+                    f:write("{--[[circular reference]]}")
+                    return
+                end
+                seen[obj] = true
+
+                f:write("{\n")
+                local child_indent = indent .. "  "
+                for k, v in pairs(obj) do
+                    if type(v) ~= "function" and type(v) ~= "userdata" and type(v) ~= "thread" then
+                        f:write(child_indent)
+                        if type(k) == "number" then
+                            f:write("[" .. k .. "] = ")
+                        elseif type(k) == "string" and k:match("^[%a_][%w_]*$") then
+                            f:write(k .. " = ")
+                        else
+                            f:write("[" .. string.format("%q", tostring(k)) .. "] = ")
+                        end
+                        serializeCo(v, child_indent, seen)
+                        f:write(",\n")
+
+                        -- Yield control back to UIManager loop periodically
+                        write_count = write_count + 1
+                        if write_count >= 100 then
+                            write_count = 0
+                            coroutine.yield()
+                        end
+                    end
+                end
+                f:write(indent .. "}")
+            elseif t == "string" then
+                f:write(string.format("%q", obj))
+            elseif t == "number" or t == "boolean" then
+                f:write(tostring(obj))
+            else
+                f:write("nil")
+            end
+        end
+
+        local co = coroutine.create(function()
+            serializeCo(data, "")
+            f:write("\n")
+        end)
+
+        local function resumeCoroutine()
+            local ok, err = coroutine.resume(co)
+            if not ok then
+                logger.warn("CacheManager: Error during async serialization:", err or "unknown")
+                f:close()
+                if on_done_cb then on_done_cb(false) end
+                return
+            end
+
+            if coroutine.status(co) == "dead" then
+                f:close()
+                logger.info("CacheManager: Saved cache asynchronously (cooperative) to:", cache_file)
+                AIHelper:log("CacheManager: Saved cache asynchronously (cooperative) to: " .. tostring(cache_file))
+                if on_done_cb then on_done_cb(true) end
+            else
+                UIManager:scheduleIn(0.02, resumeCoroutine)
+            end
+        end
+
+        UIManager:scheduleIn(0.02, resumeCoroutine)
+        logger.info("CacheManager: Started cooperative async save to:", cache_file)
+        return true
     end
-    serialized_str = serialize_err
 
-    -- Check if we can fork
+    -- ── Fork-based fallback (rarely reached in practice) ─────────────────────
     local ok_ffi, ffiutil = pcall(require, "ffi/util")
     if not ok_ffi then
         ok_ffi, ffiutil = pcall(require, "ffiutil")
     end
 
     local function child_logic(pid, write_fd)
-        local child_ok, child_err = pcall(function()
+        local header = "-- X-Ray Cache v6.0\n-- Generated: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\nreturn "
+        local serialized_str = header .. self:serialize(data, "") .. "\n"
+        pcall(function()
             local f = io.open(cache_file, "w")
             if f then
                 f:write(serialized_str)
                 f:close()
-                return true
-            else
-                return false
             end
         end)
-
-        -- Close write_fd if provided by runInSubProcess
         if write_fd and write_fd > 0 then
-            pcall(function() 
+            pcall(function()
                 local ffi = require("ffi")
                 ffi.cdef[[ int close(int fd); ]]
-                ffi.C.close(write_fd) 
+                ffi.C.close(write_fd)
             end)
         end
-
-        -- Exit child cleanly
         local posix_ok, posix = pcall(require, "posix.unistd")
         if posix_ok and posix and posix._exit then
             posix._exit(0)
@@ -206,61 +274,29 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
         end
     end
 
-    -- Try runInSubProcess first
     if ok_ffi and ffiutil and ffiutil.runInSubProcess then
         local pid, read_fd = ffiutil.runInSubProcess(child_logic, true)
         if pid and pid > 0 then
             if read_fd and read_fd > 0 then
-                pcall(function() 
+                pcall(function()
                     local ffi = require("ffi")
                     ffi.cdef[[ int close(int fd); ]]
-                    ffi.C.close(read_fd) 
+                    ffi.C.close(read_fd)
                 end)
             end
-            logger.info("CacheManager: Saved cache asynchronously (runInSubProcess PID " .. tostring(pid) .. ") to:", cache_file)
-            if on_done_cb then on_done_cb(true) end
-            return true
-        end
-    end
-
-    -- Try manual fork
-    local fork = nil
-    if ok_ffi and ffiutil and ffiutil.fork then
-        fork = ffiutil.fork
-    else
-        local ok_posix, posix = pcall(require, "posix.unistd")
-        if not ok_posix then ok_posix, posix = pcall(require, "posix") end
-        if ok_posix and posix and posix.fork then
-            fork = posix.fork
-        else
-            local ok_f, ffi = pcall(require, "ffi")
-            if ok_f then
-                pcall(function()
-                    ffi.cdef[[ int fork(void); ]]
-                    fork = ffi.C.fork
-                end)
-            end
-        end
-    end
-
-    if fork then
-        local pid = fork()
-        if pid == 0 then
-            child_logic(0, nil)
-            return true
-        elseif pid and pid > 0 then
             logger.info("CacheManager: Saved cache asynchronously (fork PID " .. tostring(pid) .. ") to:", cache_file)
             if on_done_cb then on_done_cb(true) end
             return true
         end
     end
 
-    -- Fallback to synchronous saveCache if backgrounding is not possible
+    -- ── Final fallback: synchronous ───────────────────────────────────────────
     logger.info("CacheManager: Async save unavailable, using synchronous save")
     local success = self:saveCache(book_path, data)
     if on_done_cb then on_done_cb(success) end
     return success
 end
+
 
 -- Load book data from cache
 function CacheManager:loadCache(book_path)

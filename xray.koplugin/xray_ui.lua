@@ -1487,28 +1487,50 @@ function M:showAutoUpdateSettings()
         if info_dialog then UIManager:close(info_dialog) end
         local is_enabled = self.auto_fetch_enabled
         local current_cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
+        local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
         
         info_dialog = ButtonDialog:new{
             title = (self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings") .. "\n\n" .. (self.loc:t("auto_update_freq_label") or "Background fetching frequency:"),
             buttons = {
                 {
                     {
-                        text = (not is_enabled and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_disabled") or "Disabled"),
+                        text = (is_enabled and page_interval ~= nil and page_interval > 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_ultra", page_interval or 25) or ("Ultra: checks every " .. (page_interval or 25) .. " pages")),
                         align = "left",
                         callback = function()
-                            self.auto_fetch_enabled = false
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = false })
-                            UIManager:nextTick(function() showSettings() end)
+                            local SpinWidget = require("ui/widget/spinwidget")
+                            local spin_dialog
+                            spin_dialog = SpinWidget:new{
+                                title_text = self.loc:t("auto_fetch_page_interval_prompt") or "Page Interval",
+                                value = page_interval or 25,
+                                value_min = 5,
+                                value_max = 200,
+                                value_step = 5,
+                                callback = function(spin)
+                                    local chosen = spin.value
+                                    self.auto_fetch_enabled = true
+                                    self.ai_helper:saveSettings({
+                                        auto_fetch_on_chapter = true,
+                                        auto_fetch_cooldown = 0,
+                                        auto_fetch_page_interval = chosen
+                                    })
+                                    UIManager:close(spin_dialog)
+                                    UIManager:nextTick(function() showSettings() end)
+                                end,
+                                cancel_callback = function()
+                                    UIManager:close(spin_dialog)
+                                end
+                            }
+                            UIManager:show(spin_dialog)
                         end
                     }
                 },
                 {
                     {
-                        text = (is_enabled and current_cooldown == 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_aggressive") or "Aggressive: checks every new chapter"),
+                        text = (is_enabled and page_interval == nil and current_cooldown == 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_aggressive") or "Aggressive: checks every new chapter"),
                         align = "left",
                         callback = function()
                             self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 0 })
+                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 0, auto_fetch_page_interval = nil })
                             UIManager:nextTick(function() showSettings() end)
                         end
                     }
@@ -1519,7 +1541,7 @@ function M:showAutoUpdateSettings()
                         align = "left",
                         callback = function()
                             self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 300 })
+                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 300, auto_fetch_page_interval = nil })
                             UIManager:nextTick(function() showSettings() end)
                         end
                     }
@@ -1530,7 +1552,7 @@ function M:showAutoUpdateSettings()
                         align = "left",
                         callback = function()
                             self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 900 })
+                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 900, auto_fetch_page_interval = nil })
                             UIManager:nextTick(function() showSettings() end)
                         end
                     }
@@ -1541,7 +1563,18 @@ function M:showAutoUpdateSettings()
                         align = "left",
                         callback = function()
                             self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 1800 })
+                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 1800, auto_fetch_page_interval = nil })
+                            UIManager:nextTick(function() showSettings() end)
+                        end
+                    }
+                },
+                {
+                    {
+                        text = (not is_enabled and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_disabled") or "Disabled"),
+                        align = "left",
+                        callback = function()
+                            self.auto_fetch_enabled = false
+                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = false, auto_fetch_page_interval = nil })
                             UIManager:nextTick(function() showSettings() end)
                         end
                     }
@@ -1551,7 +1584,7 @@ function M:showAutoUpdateSettings()
                         text = self.loc:t("menu_about") or "About",
                         callback = function()
                             UIManager:show(InfoMessage:new{
-                                text = self.loc:t("auto_update_freq_about") or "Auto-update checks for new chapter data in the background as you read.\n\nLIMITS & PERFORMANCE\nFrequent background requests can drain BATTERY LIFE and may hit AI PROVIDER RATE LIMITS.\n\nMODES\n• Disabled: No background requests\n• Aggressive: Checks every time you enter a new chapter\n• Balanced: Checks at most every 5 minutes (recommended)\n• Economical: Checks at most every 15 minutes\n• Sparse: Checks at most every 30 minutes\n\nNote: skipped chapters will be included in the next update.",
+                                text = self.loc:t("auto_update_freq_about") or "Auto-update checks for new chapter data in the background as you read.\n\nLIMITS & PERFORMANCE\nFrequent background requests can drain BATTERY LIFE and may hit AI PROVIDER RATE LIMITS.\n\nMODES\n• Ultra: Checks every N pages you configure (mid-chapter)\n• Aggressive: Checks every time you enter a new chapter\n• Balanced: Checks at most every 5 minutes (recommended)\n• Economical: Checks at most every 15 minutes\n• Sparse: Checks at most every 30 minutes\n• Disabled: No background requests\n\nNote: skipped chapters will be included in the next update.",
                                 timeout = 120
                             })
                         end

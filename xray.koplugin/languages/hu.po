@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Takarékos: legfeljebb 15 percenként ellenőrzi"
 
 msgid "auto_update_freq_about"
-msgstr "Az automatikus frissítés a háttérben ellenőrzi az új fejezetadatokat olvasás közben.\n\nKORLÁTOK ÉS TELJESÍTMÉNY\nA gyakori háttérben futó kérések meríthetik az AKKUMULÁTORT, és elérhetik az AI SZOLGÁLTATÓ KORLÁTAIT (különösen a Pro modelleknél).\n\nMÓDOK\n• Kikapcsolva: Nincsenek háttérkérések\n• Agresszív: Minden alkalommal ellenőrzi, amikor új fejezetbe lép\n• Kiegyensúlyozott: Legfeljebb 5 percenként ellenőrzi (ajánlott)\n• Takarékos: Legfeljebb 15 percenként ellenőrzi\n• Ritka: Legfeljebb 30 percenként ellenőrzi\n\nMegjegyzés: Ha egy fejezet kimarad a gyakorisági korlátok miatt, az X-Ray automatikusan tartalmazni fogja azt a következő háttérbeli lekérdezésnél."
+msgstr "Az automatikus frissítés a háttérben ellenőrzi az új fejezetadatokat olvasás közben.\n\nKORLÁTOK ÉS TELJESÍTMÉNY\nA gyakori háttérben futó kérések meríthetik az AKKUMULÁTORT, és elérhetik az AI SZOLGÁLTATÓ KORLÁTAIT (különösen a Pro modelleknél).\n\nMÓDOK\n• Ultra: Az Ön által beállított N oldalanként ellenőriz (fejezet közben)\n• Agresszív: Minden alkalommal ellenőrzi, amikor új fejezetbe lép\n• Kiegyensúlyozott: Legfeljebb 5 percenként ellenőrzi (ajánlott)\n• Takarékos: Legfeljebb 15 percenként ellenőrzi\n• Ritka: Legfeljebb 30 percenként ellenőrzi\n• Kikapcsolva: Nincsenek háttérkérések\n\nMegjegyzés: Ha egy fejezet kimarad a gyakorisági korlátok miatt, az X-Ray automatikusan tartalmazni fogja azt a következő háttérbeli lekérdezésnél."
 
 msgid "auto_update_freq_label"
 msgstr "Háttérben történő lekérdezés gyakorisága:"
@@ -797,3 +797,9 @@ msgstr "Hozzáad egy 'X-Ray' gombot a szótár és kijelölés menükhöz az azo
 msgid "yes"
 msgstr "Igen"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: ellenőrzi minden %d oldalnál"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Oldalintervallum"

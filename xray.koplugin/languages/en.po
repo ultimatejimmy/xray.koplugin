@@ -57,7 +57,7 @@ msgid "auto_update_economical"
 msgstr "Economical: checks at most every 15 mins"
 
 msgid "auto_update_freq_about"
-msgstr "Auto-update checks for new chapter data in the background as you read.\n\nLIMITS & PERFORMANCE\nFrequent background requests can drain BATTERY LIFE and may hit AI PROVIDER RATE LIMITS (especially on Pro models).\n\nMODES\n• Disabled: No background requests\n• Aggressive: Checks every time you enter a new chapter\n• Balanced: Checks at most every 5 minutes (recommended)\n• Economical: Checks at most every 15 minutes\n• Sparse: Checks at most every 30 minutes\n\nNote: If a chapter is skipped due to frequency limits, X-Ray will automatically include it in the next background fetch."
+msgstr "Auto-update checks for new chapter data in the background as you read.\n\nLIMITS & PERFORMANCE\nFrequent background requests can drain BATTERY LIFE and may hit AI PROVIDER RATE LIMITS (especially on Pro models).\n\nMODES\n• Ultra: Checks every N pages you configure (mid-chapter)\n• Aggressive: Checks every time you enter a new chapter\n• Balanced: Checks at most every 5 minutes (recommended)\n• Economical: Checks at most every 15 minutes\n• Sparse: Checks at most every 30 minutes\n• Disabled: No background requests\n\nNote: If a chapter is skipped due to frequency limits, X-Ray will automatically include it in the next background fetch."
 
 msgid "auto_update_freq_label"
 msgstr "Background fetching frequency:"
@@ -797,3 +797,9 @@ msgstr "Adds an 'X-Ray' button to dictionary and selection menus for instant loo
 msgid "yes"
 msgstr "Yes"
 
+
+msgid "auto_update_ultra"
+msgstr "Ultra: checks every %d pages"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Page Interval"
