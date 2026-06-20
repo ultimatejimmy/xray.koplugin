@@ -224,6 +224,21 @@ msgstr "locations"
 msgid "entity_not_found"
 msgstr "'%s' is niet gevonden als personage of locatie."
 
+msgid "entity_ui_style_both"
+msgstr "Modern Popup (Both)"
+
+msgid "entity_ui_style_classic"
+msgstr "Classic Dialog"
+
+msgid "entity_ui_style_desc"
+msgstr "Select when to use the new Modern Popup UI instead of the Classic Dialog for entity descriptions."
+
+msgid "entity_ui_style_in_text"
+msgstr "Modern Popup (In-text only)"
+
+msgid "entity_ui_style_menu"
+msgstr "Modern Popup (Menu only)"
+
 msgid "error_api_key_desc"
 msgstr "De opgegeven API-sleutel is geweigerd. Controleer uw instellingen en zorg ervoor dat de sleutel correct is."
 
@@ -452,14 +467,23 @@ msgstr "Logs wissen"
 msgid "menu_config_header"
 msgstr "--- Huidige configuratie ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Content & Fetch Settings"
+
 msgid "menu_custom_model_title"
 msgstr "Aangepast %s model"
 
 msgid "menu_desc_length_settings"
 msgstr "Beschrijvingslengte"
 
+msgid "menu_display_ui_settings"
+msgstr "Display & UI Settings"
+
 msgid "menu_enter_custom_model"
 msgstr "Voer aangepast model in..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Entity Description Style"
 
 msgid "menu_fetch_author"
 msgstr "Auteursinformatie ophalen (AI)"
@@ -514,6 +538,12 @@ msgstr "Woordenlijst"
 
 msgid "menu_timeline"
 msgstr "Tijdlijn"
+
+msgid "menu_ui_popup_intext"
+msgstr "Use Footnote Style for In-text Lookups"
+
+msgid "menu_ui_popup_menu"
+msgstr "Use Footnote Style for Menu Lookups"
 
 msgid "menu_update_xray"
 msgstr "X-Ray-gegevens bijwerken"

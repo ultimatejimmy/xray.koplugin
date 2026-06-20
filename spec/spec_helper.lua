@@ -114,10 +114,59 @@ package.loaded["ui/widget/widgetcontainer"] = {
     new = function(a, b) return { type = "WidgetContainer", args = b or a } end
 }
 package.loaded["ui/widget/container/framecontainer"] = {
-    new = function(a, b) return { type = "FrameContainer", args = b or a } end
+    new = function(a, b) 
+        local fc = { type = "FrameContainer", args = b or a }
+        fc.getSize = function() return { w = 800, h = 300 } end
+        return fc
+    end
 }
-package.loaded["ui/widget/container/inputcontainer"] = {
-    new = function(a, b) return { type = "InputContainer", args = b or a } end
+package.loaded["ui/widget/container/inputcontainer"] = (function()
+    local klass = {}
+    klass.extend = function(self, prototype)
+        prototype = prototype or {}
+        prototype.new = function(cls, args)
+            args = args or {}
+            local instance = {}
+            for k, v in pairs(prototype) do instance[k] = v end
+            for k, v in pairs(args) do instance[k] = v end
+            instance.type = "InputContainer"
+            if instance.init then instance:init() end
+            return instance
+        end
+        return prototype
+    end
+    klass.new = function(self, args)
+        return klass:extend(args):new()
+    end
+    return klass
+end)()
+package.loaded["ui/widget/container/leftcontainer"] = {
+    new = function(a, b) return { type = "LeftContainer", args = b or a } end
+}
+package.loaded["ui/widget/container/rightcontainer"] = {
+    new = function(a, b) return { type = "RightContainer", args = b or a } end
+}
+package.loaded["ui/widget/container/bottomcontainer"] = {
+    new = function(a, b) return { type = "BottomContainer", args = b or a } end
+}
+package.loaded["ui/widget/textboxwidget"] = {
+    new = function(a, b) return { type = "TextBoxWidget", args = b or a } end
+}
+package.loaded["ui/widget/linewidget"] = {
+    new = function(a, b) return { type = "LineWidget", args = b or a } end
+}
+package.loaded["ui/widget/verticalspan"] = {
+    new = function(a, b) return { type = "VerticalSpan", args = b or a } end
+}
+package.loaded["ui/widget/horizontalgroup"] = {
+    new = function(a, b) return { type = "HorizontalGroup", args = b or a } end
+}
+package.loaded["ui/widget/horizontalspan"] = {
+    new = function(a, b) return { type = "HorizontalSpan", args = b or a } end
+}
+package.loaded["ui/size"] = {
+    line = { thick = 2 },
+    padding = { small = 4 }
 }
 package.loaded["ui/geometry"] = {
     new = function(a, b) return b or a end
@@ -138,13 +187,16 @@ package.loaded["ui/widget/textwidget"] = {
 package.loaded["ui/widget/button"] = {
     new = function(a, b) 
         local btn = { type = "Button", args = b or a }
-        btn.getSize = function() return nil end
+        btn.getSize = function() return { w = 100, h = 50 } end
         return btn
     end
 }
 package.loaded["ffi/blitbuffer"] = {
     COLOR_BLACK = 0,
-    COLOR_WHITE = 1
+    COLOR_WHITE = 1,
+    COLOR_GRAY = 2,
+    COLOR_LIGHT_GRAY = 3,
+    COLOR_DARK_GRAY = 4
 }
 package.loaded["ui/font"] = {
     getFace = function() return {} end

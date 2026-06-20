@@ -11,6 +11,389 @@ local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 
 local M = {}
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Bottom-panel popup widget and imports for new UI
+-- ─────────────────────────────────────────────────────────────────────────────
+local Blitbuffer      = require("ffi/blitbuffer")
+local Font            = require("ui/font")
+local Geom            = require("ui/geometry")
+local GestureRange    = require("ui/gesturerange")
+local InputContainer  = require("ui/widget/container/inputcontainer")
+local FrameContainer  = require("ui/widget/container/framecontainer")
+local LeftContainer   = require("ui/widget/container/leftcontainer")
+local RightContainer  = require("ui/widget/container/rightcontainer")
+local VerticalGroup   = require("ui/widget/verticalgroup")
+local VerticalSpan    = require("ui/widget/verticalspan")
+local TextBoxWidget   = require("ui/widget/textboxwidget")
+local LineWidget      = require("ui/widget/linewidget")
+local Button          = require("ui/widget/button")
+local Size            = require("ui/size")
+
+local DEFAULT_POPUP_FONT_SIZE = 18
+
+local function _getPopupFontSize()
+    local size
+    if G_reader_settings then
+        size = G_reader_settings:readSetting("cre_font_size") or G_reader_settings:readSetting("kopt_font_size")
+    end
+    if size then
+        size = math.floor(size * 1.20)
+    else
+        size = 22
+    end
+    if Screen.scaleBySize then
+        size = Screen:scaleBySize(size)
+    end
+    return size
+end
+
+local XRayBottomPopup = InputContainer:extend{
+    entity      = nil,
+    plugin      = nil,
+    font_size   = DEFAULT_POPUP_FONT_SIZE,
+    margin_size = 28,   -- default symmetric horizontal margin (px)
+}
+
+function XRayBottomPopup:init()
+    local sw = Screen:getWidth()
+    local sh = Screen:getHeight()
+    local fs  = self.font_size
+    local pad = self.margin_size  -- symmetric left/right/top/bottom
+
+    -- Uniform gap between every block
+    local gap = math.max(1, math.floor(fs * 0.08))
+
+    local inner_w = sw - pad * 2
+
+    local e = self.entity or {}
+
+    -- Fonts
+    local face_bold   = Font:getFace("cfont", fs)
+    local face_italic = Font:getFace("cfont", fs)
+    pcall(function() face_bold   = Font:getFace("NotoSans-Bold",   fs) end)
+    pcall(function() face_italic = Font:getFace("NotoSans-Italic", fs) end)
+    local face_normal = Font:getFace("cfont", fs)
+    local face_btn    = Font:getFace("cfont", math.max(12, fs - 2))
+
+    local fs_small    = math.max(12, fs - 3)
+    local face_small_normal = Font:getFace("cfont", fs_small)
+    local face_small_italic = Font:getFace("cfont", fs_small)
+    pcall(function() face_small_italic = Font:getFace("NotoSans-Italic", fs_small) end)
+
+    -- TextBoxWidget — wrap multilínea, justificado con guionado
+    local function make_text(text, face, align)
+        return TextBoxWidget:new{
+            text       = text,
+            face       = face,
+            width      = inner_w,
+            alignment  = align or "justify",
+            justified  = true,
+        }
+    end
+
+    local HorizontalGroup = require("ui/widget/horizontalgroup")
+    local HorizontalSpan  = require("ui/widget/horizontalspan")
+    local btn_padding_h   = (Size.padding and Size.padding.large) or 14
+    local btn_padding_v   = (Size.padding and Size.padding.small) or 6
+
+    local function make_btn(label, cb)
+        local btn = Button:new{
+            text       = label,
+            face       = face_btn,
+            padding_h  = btn_padding_h,
+            padding_v  = btn_padding_v,
+            margin     = 0,
+            radius     = (Size.radius and Size.radius.btn) or 4,
+            bordersize = (Size.border and Size.border.btn) or 1,
+            callback   = cb,
+        }
+        if btn.frame then
+            btn.frame.background = Blitbuffer.COLOR_LIGHT_GRAY
+        end
+        return btn
+    end
+
+    local function get_loc_t(key, default)
+        return (self.plugin and self.plugin.loc and self.plugin.loc:t(key)) or default
+    end
+
+    -- ── content ──────────────────────────────────────────────────────────────
+    local vg = VerticalGroup:new{ align = "left" }
+
+    -- 1. Name (bold, justified)
+    vg[#vg+1] = make_text(tostring(e.name or "?"), face_bold, "justify")
+
+    local has_metadata = false
+
+    -- 2. Aliases (italic)
+    local aliases_str
+    if e.aliases then
+        local kept = {}
+        local name_lower = (e.name or ""):lower()
+        local src = (type(e.aliases) == "table") and e.aliases
+                 or (type(e.aliases) == "string") and { e.aliases } or {}
+        for _, a in ipairs(src) do
+            local al = tostring(a):match("^%s*(.-)%s*$")
+            if #al > 1 and not name_lower:find(al:lower(), 1, true) then
+                table.insert(kept, al)
+            end
+        end
+        if #kept > 0 then aliases_str = table.concat(kept, ", ") end
+    end
+    if aliases_str then
+        vg[#vg+1] = VerticalSpan:new{ width = gap }
+        vg[#vg+1] = make_text(get_loc_t("label_aliases", "ALIASES") .. ": " .. aliases_str, face_small_italic, "justify")
+        has_metadata = true
+    end
+
+    -- 3. Role
+    if e.role and e.role ~= "" and e.role ~= "---" then
+        vg[#vg+1] = VerticalSpan:new{ width = gap }
+        vg[#vg+1] = make_text(get_loc_t("label_role", "ROLE") .. ": " .. e.role, face_small_normal, "justify")
+        has_metadata = true
+    end
+
+    -- 4. Gender
+    if e.gender and e.gender ~= "" and e.gender ~= "---" then
+        vg[#vg+1] = VerticalSpan:new{ width = gap }
+        vg[#vg+1] = make_text(get_loc_t("label_gender", "GENDER") .. ": " .. e.gender, face_small_normal, "justify")
+        has_metadata = true
+    end
+
+    -- 5. Occupation
+    if e.occupation and e.occupation ~= "" and e.occupation ~= "---" then
+        vg[#vg+1] = VerticalSpan:new{ width = gap }
+        vg[#vg+1] = make_text(get_loc_t("label_occupation", "OCCUPATION") .. ": " .. e.occupation, face_small_normal, "justify")
+        has_metadata = true
+    end
+
+    -- 6. AI Reasoning
+    if e.ai_reasoning and e.ai_reasoning ~= "" then
+        vg[#vg+1] = VerticalSpan:new{ width = gap }
+        vg[#vg+1] = make_text("[" .. get_loc_t("label_reasoning", "AI REASONING") .. "]\n" .. e.ai_reasoning, face_small_italic, "justify")
+        has_metadata = true
+    end
+
+    -- 7. Description
+    local desc_str = tostring(e.description or e.biography or e.definition or e.desc or "")
+    desc_str = desc_str:match("^%s*(.-)%s*$")
+    if desc_str ~= "" then
+        local desc_gap = has_metadata and math.max(12, gap * 3) or gap
+        vg[#vg+1] = VerticalSpan:new{ width = desc_gap }
+        vg[#vg+1] = make_text(desc_str, face_normal, "justify")
+    end
+
+    -- ── buttons ──────────────────────────────────────────────────────────────
+    local plugin = self.plugin
+    local linked_enabled = plugin and plugin.ai_helper and plugin.ai_helper.settings and plugin.ai_helper.settings.linked_entries_enabled ~= false
+    local related = {}
+    if linked_enabled and plugin and plugin.findRelatedEntities then
+        related = plugin:findRelatedEntities(desc_str or "", e.name) or {}
+    end
+    local mentions_enabled = plugin and plugin.ai_helper and plugin.ai_helper.settings and plugin.ai_helper.settings.mentions_enabled ~= false
+
+    local left_btn
+    if #related > 0 then
+        left_btn = make_btn(get_loc_t("linked_entries", "Linked Entries"), function()
+            UIManager:close(self)
+            if plugin and plugin.showRelatedEntities then
+                plugin:showRelatedEntities(related)
+            end
+        end)
+    end
+
+    local right_btn
+    if mentions_enabled then
+        right_btn = make_btn(get_loc_t("find_mentions", "Find Mentions"), function()
+            UIManager:close(self)
+            if plugin then
+                if     plugin.showMentionsForEntity then plugin:showMentionsForEntity(e)
+                elseif plugin.findMentions          then plugin:findMentions(e)
+                elseif plugin.showMentions          then plugin:showMentions(e)
+                end
+            end
+        end)
+    end
+
+    -- Layout buttons row
+    local btn_row
+    if left_btn or right_btn then
+        local row_h = math.max(
+            left_btn and left_btn:getSize().h or 0,
+            right_btn and right_btn:getSize().h or 0
+        )
+        btn_row = HorizontalGroup:new{ align = "center" }
+        if left_btn and right_btn then
+            btn_row[1] = LeftContainer:new{
+                dimen = Geom:new{ w = math.floor(inner_w * 0.48), h = row_h },
+                left_btn,
+            }
+            btn_row[2] = RightContainer:new{
+                dimen = Geom:new{ w = math.ceil(inner_w * 0.48), h = row_h },
+                right_btn,
+            }
+        elseif left_btn then
+            btn_row[1] = LeftContainer:new{
+                dimen = Geom:new{ w = inner_w, h = row_h },
+                left_btn,
+            }
+        elseif right_btn then
+            btn_row[1] = LeftContainer:new{
+                dimen = Geom:new{ w = inner_w, h = row_h },
+                right_btn,
+            }
+        end
+    end
+
+    if btn_row then
+        vg[#vg+1] = VerticalSpan:new{ width = math.max(28, gap * 6) }
+        vg[#vg+1] = btn_row
+    end
+
+    -- ── frame: line flush on top, then padded content ─────────────────────
+    local line_h    = (Size.line and Size.line.thick) or 2
+    local separator = LineWidget:new{
+        dimen      = Geom:new{ w = sw, h = line_h },
+        background = Blitbuffer.COLOR_DARK_GRAY,
+    }
+
+    local pad_top_px    = math.floor(fs * 0.55)
+    local pad_bottom_px = math.floor(fs * 0.35)
+
+    local outer_vg = VerticalGroup:new{ align = "left" }
+    outer_vg[1] = separator
+    outer_vg[2] = FrameContainer:new{
+        background     = Blitbuffer.COLOR_WHITE,
+        bordersize     = 0,
+        radius         = 0,
+        padding_top    = pad_top_px,
+        padding_bottom = pad_bottom_px,
+        padding_left   = pad,
+        padding_right  = pad,
+        width          = sw,
+        vg,
+    }
+
+    self.popup_frame = FrameContainer:new{
+        background = Blitbuffer.COLOR_WHITE,
+        bordersize = 0,
+        radius     = 0,
+        padding    = 0,
+        width      = sw,
+        outer_vg,
+    }
+
+    -- ── positioning ───────────────────────────────────────────────────────
+    local popup_h = self.popup_frame:getSize().h
+    local popup_y = sh - popup_h
+
+    self.dimen = Geom:new{ x = 0, y = 0, w = sw, h = sh }
+
+    self.ges_events = {
+        TapOutside = {
+            GestureRange:new{
+                ges   = "tap",
+                range = Geom:new{ x = 0, y = 0, w = sw, h = popup_y },
+            },
+        },
+    }
+
+    local BottomContainer = require("ui/widget/container/bottomcontainer")
+    self[1] = BottomContainer:new{
+        dimen = Geom:new{ x = 0, y = 0, w = sw, h = sh },
+        self.popup_frame,
+    }
+end
+
+function XRayBottomPopup:onTapOutside()
+    UIManager:close(self)
+    return true
+end
+
+function XRayBottomPopup:onShow()
+    UIManager:setDirty(self, "ui")
+    return true
+end
+
+function XRayBottomPopup:onCloseWidget()
+    if self.plugin then
+        self.plugin.active_details_dialog = nil
+    end
+    UIManager:setDirty(nil, "ui")
+end
+
+local function showBottomPopup(plugin, entity)
+    if not entity then return end
+    if plugin.active_details_dialog then
+        UIManager:close(plugin.active_details_dialog)
+        plugin.active_details_dialog = nil
+    end
+
+    local normalized = {}
+    for k, v in pairs(entity) do normalized[k] = v end
+
+    if plugin.resolveDescriptionForPage then
+        local resolved = plugin:resolveDescriptionForPage(entity)
+        if resolved and resolved ~= "---" then
+            normalized.description = resolved
+        end
+    end
+    if not normalized.description and normalized.biography then
+        normalized.description = normalized.biography
+    end
+    if not normalized.description and normalized.definition then
+        normalized.description = normalized.definition
+    end
+    if not normalized.role and normalized.category and normalized.category ~= "" then
+        normalized.role = normalized.category
+    end
+
+    local fs  = _getPopupFontSize()
+    local pad = 28  -- default
+    if G_reader_settings then
+        pad = G_reader_settings:readSetting("xray_popup_margin") or pad
+    end
+    local popup = XRayBottomPopup:new{
+        entity      = normalized,
+        plugin      = plugin,
+        font_size   = fs,
+        margin_size = pad,
+    }
+    plugin.active_details_dialog = popup
+    UIManager:show(popup)
+end
+
+local function shouldUseBottomPopup(plugin, opts)
+    local settings = plugin.ai_helper and plugin.ai_helper.settings
+    if not settings then return false end
+
+    -- Migrate old settings if they exist and booleans are not set yet
+    if settings.entity_ui_mode and settings.ui_popup_intext == nil and settings.ui_popup_menu == nil then
+        local mode = settings.entity_ui_mode
+        local intext = (mode == "both" or mode == "in_text_only")
+        local menu = (mode == "both" or mode == "menu_only")
+        settings.ui_popup_intext = intext
+        settings.ui_popup_menu = menu
+        settings.entity_ui_mode = nil
+        pcall(function() plugin.ai_helper:saveSettings({
+            ui_popup_intext = intext,
+            ui_popup_menu = menu
+        }) end)
+    end
+
+    local ui_popup_intext = settings.ui_popup_intext
+    if ui_popup_intext == nil then ui_popup_intext = true end
+    local ui_popup_menu = settings.ui_popup_menu
+    if ui_popup_menu == nil then ui_popup_menu = true end
+
+    if opts and opts.source == "in_text" then
+        return ui_popup_intext
+    elseif opts and opts.source == "menu" then
+        return ui_popup_menu
+    end
+    return ui_popup_intext
+end
+
 function M:showLanguageSelection()
     local Menu = require("ui/widget/menu")
     local settings_lang = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.language or "auto"
@@ -336,7 +719,8 @@ function M:showCharacters()
         table.insert(items, { 
             text = text, 
             keep_menu_open = true,
-            callback = function() self:showCharacterDetails(char) end 
+            separator = true,
+            callback = function() self:showCharacterDetails(char, { source = "menu" }) end 
         })
     end
 
@@ -478,7 +862,7 @@ function M:findRelatedEntities(text, exclude_name)
     return related
 end
 
-function M:showRelatedEntities(related)
+function M:showRelatedEntities(related, opts)
     local items = {}
     if self.active_related_menu then
         UIManager:close(self.active_related_menu)
@@ -503,13 +887,13 @@ function M:showRelatedEntities(related)
                     self.active_details_dialog = nil
                 end
                 if item_type == "character" then
-                    self:showCharacterDetails(item)
+                    self:showCharacterDetails(item, opts)
                 elseif item_type == "location" then
-                    self:showLocationDetails(item)
+                    self:showLocationDetails(item, opts)
                 elseif item_type == "historical" then
-                    self:showHistoricalFigureDetails(item)
+                    self:showHistoricalFigureDetails(item, opts)
                 elseif item_type == "term" then
-                    self:showTermDetails(item)
+                    self:showTermDetails(item, opts)
                 end
             end
         })
@@ -525,7 +909,11 @@ function M:showRelatedEntities(related)
     UIManager:show(self.active_related_menu)
 end
 
-function M:showCharacterDetails(character)
+function M:showCharacterDetails(character, opts)
+    if shouldUseBottomPopup(self, opts) then
+        showBottomPopup(self, character)
+        return
+    end
     local lines = {
         (self.loc:t("label_name") or "NAME") .. ": " .. (character.name or "???")
     }
@@ -567,7 +955,7 @@ function M:showCharacterDetails(character)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related)
+                        self:showRelatedEntities(related, opts)
                     end,
                 }
             },
@@ -625,7 +1013,11 @@ function M:showCharacterDetails(character)
     UIManager:show(self.active_details_dialog)
 end
 
-function M:showLocationDetails(loc_item)
+function M:showLocationDetails(loc_item, opts)
+    if shouldUseBottomPopup(self, opts) then
+        showBottomPopup(self, loc_item)
+        return
+    end
     local name = loc_item.name or "???"
     local desc = self:resolveDescriptionForPage(loc_item)
     if desc == "---" then desc = "" end
@@ -640,7 +1032,7 @@ function M:showLocationDetails(loc_item)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related)
+                        self:showRelatedEntities(related, opts)
                     end,
                 }
             },
@@ -699,6 +1091,10 @@ function M:showLocationDetails(loc_item)
 end
 
 function M:showTermDetails(term, opts)
+    if shouldUseBottomPopup(self, opts) then
+        showBottomPopup(self, term)
+        return
+    end
     local name = term.name or "???"
     local lines = { (self.loc:t("label_name") or "NAME") .. ": " .. name }
     if term.aliases and type(term.aliases) == "table" and #term.aliases > 0 then
@@ -755,7 +1151,7 @@ function M:showTermDetails(term, opts)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related)
+                        self:showRelatedEntities(related, opts)
                     end,
                 }
             },
@@ -851,8 +1247,9 @@ function M:showTerms()
                 text = "• " .. name,
                 subtext = term.definition and term.definition:sub(1, 80) .. "...",
                 keep_menu_open = true,
+                separator = true,
                 callback = function()
-                    self:showTermDetails(captured_term)
+                    self:showTermDetails(captured_term, { source = "menu" })
                 end
             })
         end
@@ -905,7 +1302,7 @@ function M:showTermSearch()
                    UIManager:close(input_dialog)
                    if search_text and #search_text > 0 then 
                        local found = self:findTermByName(search_text)
-                       if found then self:showTermDetails(found) 
+                        if found then self:showTermDetails(found, { source = "menu" }) 
                        else UIManager:show(InfoMessage:new{ text = self.loc:t("term_not_found", search_text) or "Term not found.", timeout = 3 }) end 
                    end 
                end 
@@ -1663,6 +2060,7 @@ function M:showSpoilerSettings()
     showSettings()
 end
 
+
 function M:showDescriptionLengthSettings()
     local menu_items = {
         {
@@ -1809,8 +2207,9 @@ function M:showLocations()
             table.insert(items, {
                 text = name,
                 keep_menu_open = true,
+                separator = true,
                 callback = function()
-                    self:showLocationDetails(captured_loc)
+                    self:showLocationDetails(captured_loc, { source = "menu" })
                 end
             })
         end
@@ -2029,7 +2428,11 @@ function M:showTimeline()
     UIManager:show(self.timeline_menu)
 end
 
-function M:showHistoricalFigureDetails(fig)
+function M:showHistoricalFigureDetails(fig, opts)
+    if shouldUseBottomPopup(self, opts) then
+        showBottomPopup(self, fig)
+        return
+    end
     local name = fig.name or "???"
     local bio = self:resolveDescriptionForPage(fig)
     if bio == "---" then bio = self.loc:t("msg_no_bio") or "No biography available." end
@@ -2044,7 +2447,7 @@ function M:showHistoricalFigureDetails(fig)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related)
+                        self:showRelatedEntities(related, opts)
                     end,
                 }
             },
@@ -2112,8 +2515,9 @@ function M:showHistoricalFigures()
         table.insert(items, {
             text = (fig.name or "???"),
             keep_menu_open = true,
+            separator = true,
             callback = function()
-                self:showHistoricalFigureDetails(fig)
+                self:showHistoricalFigureDetails(fig, { source = "menu" })
             end,
         })
     end
@@ -2520,7 +2924,7 @@ function M:showCharacterSearch()
     if not self.characters or #self.characters == 0 then UIManager:show(InfoMessage:new{ text = self.loc:t("no_character_data"), timeout = 3 }); return end
     local InputDialog = require("ui/widget/inputdialog")
     local input_dialog
-    input_dialog = InputDialog:new{ title = self.loc:t("search_character_title"), input = "", input_hint = self.loc:t("search_hint"), buttons = {{{ text = self.loc:t("cancel"), callback = function() UIManager:close(input_dialog) end }, { text = self.loc:t("search_button"), is_enter_default = true, callback = function() local search_text = input_dialog:getInputText(); UIManager:close(input_dialog); if search_text and #search_text > 0 then local found_char = self:findCharacterByName(search_text); if found_char then self:showCharacterDetails(found_char) else UIManager:show(InfoMessage:new{ text = self.loc:t("character_not_found", search_text), timeout = 3 }) end end end }}} }
+    input_dialog = InputDialog:new{ title = self.loc:t("search_character_title"), input = "", input_hint = self.loc:t("search_hint"), buttons = {{{ text = self.loc:t("cancel"), callback = function() UIManager:close(input_dialog) end }, { text = self.loc:t("search_button"), is_enter_default = true, callback = function() local search_text = input_dialog:getInputText(); UIManager:close(input_dialog); if search_text and #search_text > 0 then local found_char = self:findCharacterByName(search_text); if found_char then self:showCharacterDetails(found_char, { source = "menu" }) else UIManager:show(InfoMessage:new{ text = self.loc:t("character_not_found", search_text), timeout = 3 }) end end end }}} }
     UIManager:show(input_dialog); input_dialog:onShowKeyboard()
 end
 
