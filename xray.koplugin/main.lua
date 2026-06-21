@@ -746,13 +746,13 @@ function XRayPlugin:getSubMenuItems()
                         text = self.loc:t("menu_ui_popup_menu") or "Use Footnote Style for Menu Lookups",
                         checked_func = function()
                             local val = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.ui_popup_menu
-                            if val == nil then return true end
+                            if val == nil then return false end
                             return val
                         end,
                         callback = function()
                             if self.ai_helper and self.ai_helper.settings then
                                 local current = self.ai_helper.settings.ui_popup_menu
-                                if current == nil then current = true end
+                                if current == nil then current = false end
                                 self.ai_helper:saveSettings({ ui_popup_menu = not current })
                             end
                         end,

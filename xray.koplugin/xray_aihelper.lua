@@ -958,6 +958,14 @@ function AIHelper:loadSettings()
     migrate_deepseek_model("primary_ai")
     migrate_deepseek_model("secondary_ai")
 
+    -- One-time migration to set the new UI defaults: footnote style for in-text, classic style for menu
+    if settings.ui_defaults_migrated_v2 == nil then
+        settings.ui_popup_intext = true
+        settings.ui_popup_menu = false
+        settings.ui_defaults_migrated_v2 = true
+        migrated = true
+    end
+
     if migrated then
         self.settings = settings
         self:saveSettings()

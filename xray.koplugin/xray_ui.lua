@@ -498,7 +498,7 @@ local function shouldUseBottomPopup(plugin, opts)
     local ui_popup_intext = settings.ui_popup_intext
     if ui_popup_intext == nil then ui_popup_intext = true end
     local ui_popup_menu = settings.ui_popup_menu
-    if ui_popup_menu == nil then ui_popup_menu = true end
+    if ui_popup_menu == nil then ui_popup_menu = false end
 
     if opts and opts.source == "in_text" then
         return ui_popup_intext

@@ -115,4 +115,37 @@ describe("AIHelper", function()
             -- (actually it returns a new table)
         end)
     end)
+
+    describe("loadSettings migration", function()
+        it("should apply ui_defaults_migrated_v2 defaults", function()
+            local old_open = io.open
+            io.open = function(path, mode)
+                if path:find("settings.json") then
+                    return {
+                        read = function(self, fmt)
+                            return '{"primary_ai": {"provider": "gemini", "model": "gemini-2.5-flash"}}'
+                        end,
+                        close = function() end
+                    }
+                end
+                return old_open(path, mode)
+            end
+
+            local saved = false
+            local old_save = AIHelper.saveSettings
+            AIHelper.saveSettings = function(self)
+                saved = true
+            end
+
+            AIHelper:loadSettings()
+
+            io.open = old_open
+            AIHelper.saveSettings = old_save
+
+            assert.is_true(AIHelper.settings.ui_popup_intext)
+            assert.is_false(AIHelper.settings.ui_popup_menu)
+            assert.is_true(AIHelper.settings.ui_defaults_migrated_v2)
+            assert.is_true(saved)
+        end)
+    end)
 end)
