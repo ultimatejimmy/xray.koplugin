@@ -43,6 +43,11 @@ local function _getPopupFontSize()
         -- Default fallback size (22 pt unscaled)
         size = 22
     end
+    local Device = require("device")
+    if Device:isAndroid() then
+        -- Android high-DPI screens need a moderate size boost to match WSL visual scale
+        size = math.floor(size * 1.20)
+    end
     return size
 end
 
