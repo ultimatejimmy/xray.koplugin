@@ -173,14 +173,15 @@ function LookupManager:lookup(text)
     return all[1].item, all[1].item_type
 end
 
--- Dispatch a single result to the appropriate UI handler
 function LookupManager:showResult(item, item_type, opts)
+    opts = opts or {}
+    opts.source = "in_text"
     if item_type == "character" then
-        self.plugin:showCharacterDetails(item)
+        self.plugin:showCharacterDetails(item, opts)
     elseif item_type == "historical" or item_type == "historical_figure" then
-        self.plugin:showHistoricalFigureDetails(item)
+        self.plugin:showHistoricalFigureDetails(item, opts)
     elseif item_type == "location" then
-        self.plugin:showLocationDetails(item)
+        self.plugin:showLocationDetails(item, opts)
     elseif item_type == "term" then
         self.plugin:showTermDetails(item, opts)
     end

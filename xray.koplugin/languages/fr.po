@@ -9,7 +9,7 @@ msgid "about"
 msgstr "À propos"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "Error IA : "
 
 msgid "ai_fetch_complete"
 msgstr "Récupéré avec succès de %s !\n\nLivre : %s\nAuteur : %s\n\nPersonnages : %d\nLieux : %d\nThèmes : %d\nÉvénements : %d\nPersonnes historiques : %d\n\n%s\n\nRÉSUMÉ :\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "Récupération IA terminée !"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "Une clé API IA est requise."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "Doublon détecté par l'IA"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "%d paire(s) fusionnée(s) avec succès."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "L'IA recherche des doublons..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Désactivé"
@@ -87,7 +87,7 @@ msgid "beta_preference_desc"
 msgstr "Sélectionnez votre préférence de canal de mise à jour :"
 
 msgid "book_mode_auto"
-msgstr "Auto"
+msgstr "Automatique"
 
 msgid "book_mode_desc"
 msgstr "Sélectionnez le mode pour ce livre."
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Mode de livre enregistré !"
 
 msgid "book_type_about"
-msgstr "Le type de livre détermine quelle stratégie d'extraction AI est utilisée et quelles fonctionnalités sont disponibles.\n\n- Fiction : Se concentre sur la narration, les personnages et la chronologie de l'intrigue.\n- Non-fiction : Se concentre sur les termes, les concepts et les personnages historiques.\n\n'Détection automatique' laissera l'AI décider après la première récupération."
+msgstr "Le type de livre détermine la stratégie d'extraction d'IA utilisée et les fonctionnalités disponibles.\n\n- Fiction : Se concentre sur le récit, les personnages et la chronologie de l'intrigue.\n- Non-fiction : Se concentre sur les termes, les concepts et les personnages historiques.\n\nLa 'Détection automatique' laissera l'IA décider après la première recherche."
 
 msgid "book_type_auto"
 msgstr "Détection automatique"
@@ -144,7 +144,7 @@ msgid "config_default_gemini"
 msgstr "  Par défaut (Gemini)"
 
 msgid "config_model"
-msgstr "  Modèle : "
+msgstr "  Modèle: "
 
 msgid "config_provider"
 msgstr "  Fournisseur : "
@@ -156,7 +156,7 @@ msgid "config_status_set"
 msgstr "CONFIGURÉ"
 
 msgid "current_language"
-msgstr "en"
+msgstr "fr"
 
 msgid "current_mode"
 msgstr "Actuel : "
@@ -165,22 +165,22 @@ msgid "custom_api_endpoint_hint"
 msgstr "ex: https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Custom API %d — URL de point de terminaison"
+msgstr "API personnalisée %d — URL du point de terminaison"
 
 msgid "custom_api_is_reasoning"
-msgstr "Est un modèle de raisonnement (ex: DeepSeek-R1)"
+msgstr "Est un modèle de raisonnement (ex. DeepSeek-R1)"
 
 msgid "custom_api_key_title"
-msgstr "Custom API %d — Clé API"
+msgstr "API personnalisée %d — Clé API"
 
 msgid "custom_api_model_hint"
 msgstr "ex: google/gemini-2.5-flash ou openai/gpt-4o"
 
 msgid "custom_api_model_title"
-msgstr "Custom API %d — Modèle par défaut"
+msgstr "API personnalisée %d — Modèle par défaut"
 
 msgid "custom_api_name"
-msgstr "Custom API %d (compatible OpenAI)"
+msgstr "API personnalisée %d (compatible OpenAI)"
 
 msgid "custom_api_not_configured"
 msgstr "(non configuré — appuyez pour configurer)"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Configuration Custom API %d enregistrée."
 
 msgid "desc_len_about_chars"
-msgstr "DESCRIPTIONS DES PERSONNAGES\n\n• Court (~80 car.) : Nom, rôle et une brève note.\n• Par défaut (~200 car.) : Analyse standard.\n• Détaillé (~350 car.) : Étude de personnage riche avec traits et motivations.\n• Très détaillé (~500 car.) : Analyse approfondie.\n\nCOMPROMIS\nDes descriptions plus longues → moins de personnages renvoyés lors des récupérations initiales/complètes. Les exécutions ultérieures de 'Récupérer plus' ne sont pas affectées."
+msgstr "DESCRIPTIONS DES PERSONNAGES\n\n• Court (~80 caractères) : Nom, rôle et brève note.\n• Par défaut (~200 caractères) : Analyse standard.\n• Détaillé (~350 caractères) : Étude approfondie du personnage avec traits et motivations.\n• Très détaillé (~500 caractères) : Analyse détaillée.\n\nCOMPROMIS\nDescriptions plus longues → moins de personnages renvoyés lors des recherches initiales/complètes. Les recherches ultérieures ('Obtenir plus') ne sont pas affectées."
 
 msgid "desc_len_about_hist"
-msgstr "BIOGRAPHIES DES PERSONNAGES HISTORIQUES\n\n• Court (~50 car.) : Nom et rôle principal.\n• Par défaut (~100 car.) : Biographie standard.\n• Détaillé (~200 car.) : Vie, importance et contexte du livre.\n• Très détaillé (~300 car.) : Biographie complète.\n\nCOMPROMIS\nDes biographies plus longues → moins de personnages historiques renvoyés lors des récupérations initiales/complètes."
+msgstr "BIOGRAPHIES DE PERSONNAGES HISTORIQUES\n\n• Court (~50 caractères) : Nom et rôle principal.\n• Par défaut (~100 caractères) : Biographie standard.\n• Détaillé (~200 caractères) : Vie, importance et contexte du livre.\n• Très détaillé (~300 caractères) : Biographie complète.\n\nCOMPROMIS\nBiographies plus longues → moins de personnages historiques renvoyés lors des recherches initiales/complètes."
 
 msgid "desc_len_about_locs"
-msgstr "DESCRIPTIONS DES LIEUX\n\n• Court (~50 car.) : Nom du lieu et contexte en une ligne.\n• Par défaut (~100 car.) : Description standard.\n• Détaillé (~200 car.) : Atmosphère, importance et événements.\n• Très détaillé (~300 car.) : Description complète.\n\nCOMPROMIS\nDes descriptions plus longues → moins de lieux renvoyés lors des récupérations initiales/complètes."
+msgstr "DESCRIPTIONS DES LIEUX\n\n• Court (~50 caractères) : Nom du lieu et contexte sur une ligne.\n• Par défaut (~100 caractères) : Description standard.\n• Détaillé (~200 caractères) : Atmosphère, importance et événements.\n• Très détaillé (~300 caractères) : Description complète.\n\nCOMPROMIS\nDescriptions plus longues → moins de lieux renvoyés lors des recherches initiales/complètes."
 
 msgid "desc_len_about_timeline"
-msgstr "CHRONOLOGIE — UN ÉVÉNEMENT PAR CHAPITRE (toujours)\n\nLa chronologie contient toujours exactement une entrée par chapitre. Ce paramètre n'affecte que la quantité de détails inclus dans chaque résumé.\n\n• Court (~50 car.) : Résumé bref en une phrase.\n• Par défaut (~80 car.) : Résumé standard.\n• Détaillé (~150 car.) : Inclut le contexte et les conséquences.\n• Très détaillé (~200 car.) : Description narrative complète.\n\nIl n'y a pas de compromis de nombre pour la chronologie."
+msgstr "CHRONOLOGIE — UN ÉVÉNEMENT PAR CHAPITRE (toujours)\n\nLa chronologie comporte toujours exactement une entrée par chapitre. Ce paramètre affecte uniquement le niveau de détail inclus dans chaque résumé.\n\n• Court (~50 caractères) : Bref résumé d'une phrase.\n• Par défaut (~80 caractères) : Résumé standard.\n• Détaillé (~150 caractères) : Inclut le contexte et les conséquences.\n• Très détaillé (~200 caractères) : Description narrative complète.\n\nIl n'y a pas de réduction de quantité pour la chronologie."
 
 msgid "desc_len_default"
 msgstr "Par défaut"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Ne plus demander pour ce livre"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "personnages"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "lieux"
 
 msgid "entity_not_found"
 msgstr "'%s' n'a pas été trouvé comme personnage ou lieu."
+
+msgid "entity_ui_style_both"
+msgstr "Popup moderne (les deux)"
+
+msgid "entity_ui_style_classic"
+msgstr "Dialogue classique"
+
+msgid "entity_ui_style_desc"
+msgstr "Choisissez quand utiliser l'interface moderne de popup au lieu du dialogue classique pour les descriptions d'entités."
+
+msgid "entity_ui_style_in_text"
+msgstr "Popup moderne (en texte uniquement)"
+
+msgid "entity_ui_style_menu"
+msgstr "Popup moderne (menu uniquement)"
 
 msgid "error_api_key_desc"
 msgstr "La clé API fournie a été rejetée. Veuillez vérifier vos paramètres et vous assurer que la clé est correcte."
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "Recherche de '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Correspondance partielle – affichage de '%s' pour votre requête. Appuyez ci-dessous pour rechercher le terme exact."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -426,7 +441,7 @@ msgid "menu_ai_settings"
 msgstr "Paramètres IA"
 
 msgid "menu_api_keys"
-msgstr "API Keys & Providers"
+msgstr "Clés API et fournisseurs"
 
 msgid "menu_author_info"
 msgstr "Infos Auteur"
@@ -452,14 +467,23 @@ msgstr "Effacer les logs"
 msgid "menu_config_header"
 msgstr "--- Configuration actuelle ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Paramètres de contenu et de récupération"
+
 msgid "menu_custom_model_title"
 msgstr "Modèle %s personnalisé"
 
 msgid "menu_desc_length_settings"
 msgstr "Longueur de la description"
 
+msgid "menu_display_ui_settings"
+msgstr "Paramètres d'affichage et d'interface"
+
 msgid "menu_enter_custom_model"
 msgstr "Entrer un modèle personnalisé..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Style de description d'entité"
 
 msgid "menu_fetch_author"
 msgstr "Récupérer Infos Auteur (IA)"
@@ -498,13 +522,13 @@ msgid "menu_primary_ai_model"
 msgstr "Modèle IA principal"
 
 msgid "menu_reasoning_effort"
-msgstr "Effort de raisonnement AI"
+msgstr "Effort de raisonnement IA"
 
 msgid "menu_secondary_ai_model"
 msgstr "Modèle IA secondaire"
 
 msgid "menu_series_context"
-msgstr "Series Context"
+msgstr "Contexte de la série"
 
 msgid "menu_settings"
 msgstr "Paramètres"
@@ -514,6 +538,12 @@ msgstr "Glossaire"
 
 msgid "menu_timeline"
 msgstr "Chronologie"
+
+msgid "menu_ui_popup_intext"
+msgstr "Style note de bas de page pour recherche en texte"
+
+msgid "menu_ui_popup_menu"
+msgstr "Style note de bas de page pour recherche de menu"
 
 msgid "menu_update_xray"
 msgstr "Mettre à jour les données X-Ray (Fusion)"
@@ -528,7 +558,7 @@ msgid "menu_xray_mode"
 msgstr "Paramètres du mode X-Ray"
 
 msgid "merge_back"
-msgstr "← Back"
+msgstr "← Retour"
 
 msgid "merge_button"
 msgstr "Merge"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Aucune donnée X-Ray trouvée pour ce livre. Souhaitez-vous les récupérer via l'IA maintenant ?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Aucun doublon trouvé."
 
 msgid "no_historical_data"
 msgstr "Pas encore de données sur les figures historiques.\n\nVeuillez d'abord 'Récupérer les données X-Ray'.\n\nL'IA détectera les personnages historiques réels mentionnés dans le livre."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Pas encore de données sur les lieux. Veuillez d'abord 'Récupérer les données X-Ray'."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Aucune fusion effectuée."
 
 msgid "no_terms_data"
 msgstr "Aucune donnée de termes pour le moment. Veuillez d'abord utiliser « Fetch X-Ray Data »."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "L'IA a trouvé %d doublon(s) potentiel(s) lors de la dernière analyse. Examiner maintenant ?"
 
 msgid "plugin_description"
 msgstr "Transformez votre expérience de lecture avec l'analyse de livre assistée par l'IA, tout comme Amazon Kindle X-Ray !"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Non défini (Par défaut)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "Nouvelle recherche pour '%s'"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Series context chargé (%d livres précédents)."
 
 msgid "series_context_prompt_text"
-msgstr "This appears to be Book %d of '%s'. Load a recap of the previous %d book(s)?\n\n(You can disable this in Settings → Series Context)"
+msgstr "Il semble s'agir du Livre %d de '%s'. Charger un résumé des %d livre(s) précédent(s) ?\n\n(Vous pouvez désactiver cela dans Paramètres → Contexte de la série)"
 
 msgid "series_context_prompt_title"
 msgstr "Série détectée"
@@ -693,7 +723,7 @@ msgid "series_no_prior_detected"
 msgstr "Aucun livre précédent détecté pour cette série."
 
 msgid "series_prior_books_header"
-msgstr "── Prior Books ──"
+msgstr "── Livres précédents ──"
 
 msgid "series_prior_label"
 msgstr "[Précédent]"

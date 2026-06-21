@@ -9,7 +9,7 @@ msgid "about"
 msgstr "O wtyczce"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "Błąd AI: "
 
 msgid "ai_fetch_complete"
 msgstr "Pomyślnie pobrano z %s!\n\nKsiążka: %s\nAutor: %s\n\nPostacie: %d\nMiejsca: %d\nTematy: %d\nWydarzenia na osi czasu: %d\nPostacie historyczne: %d\n\n%s\n\nPODSUMOWANIE:\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "Pobieranie AI zakończone!"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "Wymagany jest klucz API AI."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "Zidentyfikowano duplikat AI"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "Pomyślnie scalono %d par(y)."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "AI szuka duplikatów..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Wyłączone"
@@ -87,7 +87,7 @@ msgid "beta_preference_desc"
 msgstr "Wybierz preferowany kanał aktualizacji:"
 
 msgid "book_mode_auto"
-msgstr "Automatyczny"
+msgstr "Automatycznie"
 
 msgid "book_mode_desc"
 msgstr "Wybierz tryb dla tej książki."
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Zapisano tryb książki!"
 
 msgid "book_type_about"
-msgstr "Typ książki określa, która strategia ekstrakcji AI zostanie użyta oraz jakie funkcje będą dostępne.\n\n- Fikcja: Skupia się na narracji, postaciach i osi czasu fabuły.\n- Literatura faktu: Skupia się na pojęciach, koncepcjach i postaciach historycznych.\n\n'Automatyczne wykrywanie' pozwoli AI zdecydować po pierwszym pobraniu."
+msgstr "Typ książki określa strategię ekstrakcji AI oraz dostępne funkcje.\n\n- Fikcja: Skupia się na narracji, postaciach i osi czasu.\n- Literatura faktu: Skupia się na terminach, pojęciach i postaciach historycznych.\n\n'Automatyczne wykrywanie' pozwoli AI zdecydować po pierwszym pobraniu."
 
 msgid "book_type_auto"
 msgstr "Automatyczne wykrywanie"
@@ -165,10 +165,10 @@ msgid "custom_api_endpoint_hint"
 msgstr "np. https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Niestandardowe API %d — Adres URL punktu końcowego"
+msgstr "Niestandardowe API %d — URL punktu końcowego"
 
 msgid "custom_api_is_reasoning"
-msgstr "Jest modelem rozumowania (np. DeepSeek-V4-Pro, DeepSeek-R1)"
+msgstr "Jest to model rozumujący (np. DeepSeek-R1)"
 
 msgid "custom_api_key_title"
 msgstr "Niestandardowe API %d — Klucz API"
@@ -177,7 +177,7 @@ msgid "custom_api_model_hint"
 msgstr "np. google/gemini-2.5-flash lub openai/gpt-4o"
 
 msgid "custom_api_model_title"
-msgstr "Niestandardowe API %d — Domyślny model"
+msgstr "Niestandardowe API %d — Model domyślny"
 
 msgid "custom_api_name"
 msgstr "Niestandardowe API %d (zgodne z OpenAI)"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Zapisano konfigurację niestandardowego API %d."
 
 msgid "desc_len_about_chars"
-msgstr "OPISY POSTACI\n\n• Krótkie (~80 znaków): Imię, rola i krótka notatka.\n• Domyślne (~200 znaków): Standardowa analiza.\n• Szczegółowe (~350 znaków): Bogate studium postaci z cechami i motywacjami.\n• Bardzo szczegółowe (~500 znaków): Głęboka analiza.\n\nKOMPROMIS\nDłuższe opisy → mniej postaci zwróconych podczas początkowego/pełnego pobierania. Kolejne uruchomienia 'Pobierz więcej' nie mają na to wpływu."
+msgstr "OPISY POSTACI\n\n• Krótki (~80 znaków): Imię, rola i krótka notatka.\n• Domyślny (~200 znaków): Standardowa analiza.\n• Szczegółowy (~350 znaków): Bogaty opis postaci z cechami i motywacjami.\n• Bardzo szczegółowy (~500 znaków): Głęboka analiza.\n\nKOMPROMIS\nDłuższe opisy → mniej postaci zwracanych podczas początkowych/pełnych pobrań. Kolejne pobrania ('Pobierz więcej') nie są modyfikowane."
 
 msgid "desc_len_about_hist"
-msgstr "BIOGRAFIE POSTACI HISTORYCZNYCH\n\n• Krótkie (~50 znaków): Nazwisko i główna rola.\n• Domyślne (~100 znaków): Standardowa biografia.\n• Szczegółowe (~200 znaków): Życie, znaczenie i kontekst książki.\n• Bardzo szczegółowe (~300 znaków): Kompleksowa biografia.\n\nKOMPROMIS\nDłuższe biografie → mniej postaci historycznych zwróconych podczas początkowego/pełnego pobierania."
+msgstr "BIOGRAFIE POSTACI HISTORYCZNYCH\n\n• Krótki (~50 znaków): Nazwisko i główna rola.\n• Domyślny (~100 znaków): Standardowa biografia.\n• Szczegółowy (~200 znaków): Życiorys, znaczenie i kontekst książki.\n• Bardzo szczegółowy (~300 znaków): Pełna biografia.\n\nKOMPROMIS\nDłuższe biografie → mniej postaci historycznych zwracanych podczas początkowych/pełnych pobrań."
 
 msgid "desc_len_about_locs"
-msgstr "OPISY MIEJSC\n\n• Krótkie (~50 znaków): Nazwa miejsca i jednozdaniowy kontekst.\n• Domyślne (~100 znaków): Standardowy opis.\n• Szczegółowe (~200 znaków): Atmosfera, znaczenie i wydarzenia.\n• Bardzo szczegółowe (~300 znaków): Pełny opis.\n\nKOMPROMIS\nDłuższe opisy → mniej miejsc zwróconych podczas początkowego/pełnego pobierania."
+msgstr "OPISY LOKALIZACJI\n\n• Krótki (~50 znaków): Nazwa miejsca i jednozdaniowy kontekst.\n• Domyślny (~100 znaków): Standardowy opis.\n• Szczegółowy (~200 znaków): Atmosfera, znaczenie i wydarzenia.\n• Bardzo szczegółowy (~300 znaków): Pełny opis.\n\nKOMPROMIS\nDłuższe opisy → mniej lokalizacji zwracanych podczas początkowych/pełnych pobrań."
 
 msgid "desc_len_about_timeline"
-msgstr "OŚ CZASU — ZAWSZE JEDNO WYDARZENIE NA ROZDZIAŁ\n\nOś czasu zawiera zawsze dokładnie jeden wpis na rozdział. To ustawienie wpływa jedynie na ilość szczegółów zawartych w każdym podsumowaniu.\n\n• Krótkie (~50 znaków): Krótkie podsumowanie w jednym zdaniu.\n• Domyślne (~80 znaków): Standardowe podsumowanie.\n• Szczegółowe (~150 znaków): Zawera kontekst i konsekwencje.\n• Bardzo szczegółowe (~200 znaków): Pełny opis narracyjny.\n\nBrak wpływu na liczbę wpisów osi czasu."
+msgstr "OŚ CZASU — ZAWSZE JEDNO WYDARZENIE NA ROZDZIAŁ\n\nOś czasu zawiera zawsze dokładnie jeden wpis na rozdział. To ustawienie wpływa jedynie na ilość szczegółów w każdym podsumowaniu.\n\n• Krótki (~50 znaków): Krótkie podsumowanie w jednym zdaniu.\n• Domyślny (~80 znaków): Standardowe podsumowanie.\n• Szczegółowy (~150 znaków): Zawiera kontekst i konsekwencje.\n• Bardzo szczegółowy (~200 znaków): Pełny opis fabularny.\n\nBrak ograniczenia liczby wpisów dla osi czasu."
 
 msgid "desc_len_default"
 msgstr "Domyślne"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Nie pytaj ponownie"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "postacie"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "lokalizacje"
 
 msgid "entity_not_found"
 msgstr "'%s' nie został znaleziony jako postać ani miejsce."
+
+msgid "entity_ui_style_both"
+msgstr "Nowoczesne okienko (oba)"
+
+msgid "entity_ui_style_classic"
+msgstr "Klasyczne okno dialogowe"
+
+msgid "entity_ui_style_desc"
+msgstr "Wybierz, kiedy używać nowego nowoczesnego interfejsu okienka zamiast klasycznego okna dialogowego dla opisów obiektów."
+
+msgid "entity_ui_style_in_text"
+msgstr "Nowoczesne okienko (tylko w tekście)"
+
+msgid "entity_ui_style_menu"
+msgstr "Nowoczesne okienko (tylko menu)"
 
 msgid "error_api_key_desc"
 msgstr "Podany klucz API został odrzucony. Sprawdź ustawienia i upewnij się, że klucz jest poprawny."
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "Wyszukiwanie '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Częściowe dopasowanie – wyświetlam '%s' dla zapytania. Dotknij poniżej, aby pobrać dokładny termin."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -452,14 +467,23 @@ msgstr "Wyczyść dzienniki"
 msgid "menu_config_header"
 msgstr "--- Bieżąca konfiguracja ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Ustawienia zawartości i pobierania"
+
 msgid "menu_custom_model_title"
 msgstr "Niestandardowy model %s"
 
 msgid "menu_desc_length_settings"
 msgstr "Długość opisu"
 
+msgid "menu_display_ui_settings"
+msgstr "Ustawienia wyświetlania i interfejsu"
+
 msgid "menu_enter_custom_model"
 msgstr "Wprowadź niestandardowy model..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Styl opisu obiektu"
 
 msgid "menu_fetch_author"
 msgstr "Pobierz informacje o autorze (AI)"
@@ -515,6 +539,12 @@ msgstr "Słowniczek"
 msgid "menu_timeline"
 msgstr "Oś czasu"
 
+msgid "menu_ui_popup_intext"
+msgstr "Styl przypisu dla wyszukiwania w tekście"
+
+msgid "menu_ui_popup_menu"
+msgstr "Styl przypisu dla wyszukiwania w menu"
+
 msgid "menu_update_xray"
 msgstr "Aktualizuj dane X-Ray"
 
@@ -528,7 +558,7 @@ msgid "menu_xray_mode"
 msgstr "Ustawienia trybu X-Ray"
 
 msgid "merge_back"
-msgstr "← Wstecz"
+msgstr "← Wróć"
 
 msgid "merge_button"
 msgstr "Merge"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Nie znaleziono danych X-Ray dla tej książki. Czy chcesz pobrać je z AI teraz?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Nie znaleziono duplikatów."
 
 msgid "no_historical_data"
 msgstr "Brak danych o postaciach historycznych.\n\nNajpierw użyj 'Pobierz dane X-Ray'.\n\nAI wykryje rzeczywiste postacie\nhistoryczne wspomniane w książce."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Brak danych o miejscach. Najpierw użyj 'Pobierz dane X-Ray'."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Nie wykonano żadnych scaleń."
 
 msgid "no_terms_data"
 msgstr "Brak danych o pojęciach. Najpierw użyj 'Pobierz dane X-Ray'."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "AI znalazła %d potencjalnych duplikatów z ostatniego pobierania. Zweryfikować teraz?"
 
 msgid "plugin_description"
 msgstr "Odmień swoje wrażenia z czytania dzięki analizie książek opartej na sztucznej inteligencji, zupełnie jak Amazon Kindle X-Ray!"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Nieustawione (domyślny)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "Wyszukaj ponownie '%s'"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Załadowano kontekst serii (%d poprzednich tomów)."
 
 msgid "series_context_prompt_text"
-msgstr "Wygląda na to, że to Tom %d z '%s'. Załadować streszczenie poprzednich %d tomów?\n\n(Możesz to wyłączyć w Ustawienia → Kontekst serii)"
+msgstr "Wygląda na to, że to Tom %d serii '%s'. Załadować streszczenie poprzednich %d tomów?\n\n(Możesz to wyłączyć w Ustawieniach → Kontekst serii)"
 
 msgid "series_context_prompt_title"
 msgstr "Wykryto serię"

@@ -9,7 +9,7 @@ msgid "about"
 msgstr "О программе"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "Ошибка ИИ: "
 
 msgid "ai_fetch_complete"
 msgstr "Успешно получено от %s!\n\nКнига: %s\nАвтор: %s\n\nПерсонажи: %d\nЛокации: %d\nТемы: %d\nСобытия: %d\nИст. личности: %d\n\n%s\n\nОБЗОР:\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "Получение данных ИИ завершено!"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "Требуется API-ключ ИИ."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "ИИ обнаружил дубликат"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "Успешно объединено %d пар(ы)."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "ИИ сканирует дубликаты..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Выключено"
@@ -87,7 +87,7 @@ msgid "beta_preference_desc"
 msgstr "Выберите предпочтительный канал обновлений:"
 
 msgid "book_mode_auto"
-msgstr "Авто"
+msgstr "Автоматически"
 
 msgid "book_mode_desc"
 msgstr "Выберите режим для этой книги."
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Режим книги сохранен!"
 
 msgid "book_type_about"
-msgstr "The Book Type determines which AI extraction strategy is used and which features are available.\n\n- Fiction: Focuses on narrative, characters, and plot timeline.\n- Non-Fiction: Focuses on terms, concepts, and historical figures.\n\n'Auto-Detect' will let the AI decide after the first fetch."
+msgstr "Тип книги определяет стратегию извлечения информации с помощью ИИ и доступные функции.\n\n- Художественная: Фокус на сюжете, персонажах и хронологии.\n- Научно-популярная: Фокус на терминах, концепциях и исторических личностях.\n\n'Автоопределение' позволит ИИ принять решение после первой загрузки."
 
 msgid "book_type_auto"
 msgstr "Автоопределение"
@@ -165,22 +165,22 @@ msgid "custom_api_endpoint_hint"
 msgstr "например, https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Custom API %d — Endpoint URL"
+msgstr "Кастомный API %d — URL эндпоинта"
 
 msgid "custom_api_is_reasoning"
-msgstr "Модель с рассуждением (например, DeepSeek-R1)"
+msgstr "Модель рассуждения (например, DeepSeek-R1)"
 
 msgid "custom_api_key_title"
-msgstr "Custom API %d — API Key"
+msgstr "Кастомный API %d — API-ключ"
 
 msgid "custom_api_model_hint"
 msgstr "например, google/gemini-2.5-flash или openai/gpt-4o"
 
 msgid "custom_api_model_title"
-msgstr "Custom API %d — Default Model"
+msgstr "Кастомный API %d — Модель по умолчанию"
 
 msgid "custom_api_name"
-msgstr "Custom API %d (OpenAI-compatible)"
+msgstr "Кастомный API %d (совместимый с OpenAI)"
 
 msgid "custom_api_not_configured"
 msgstr "(не настроено — нажмите для настройки)"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Конфигурация Custom API %d сохранена."
 
 msgid "desc_len_about_chars"
-msgstr "CHARACTER DESCRIPTIONS\n\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Deep analysis.\n\nTRADE-OFF\nLonger descriptions → fewer characters returned during initial/full fetches. Subsequent 'Fetch More' runs are unaffected."
+msgstr "ОПИСАНИЯ ПЕРСОНАЖЕЙ\n\n• Коротко (~80 символов): Имя, роль и короткая заметка.\n• По умолчанию (~200 символов): Стандартный анализ.\n• Подробно (~350 символов): Детальный портрет персонажа, его черты и мотивация.\n• Очень подробно (~500 символов): Глубокий анализ.\n\nКОМПРОМИСС\nБолее длинные описания → меньше персонажей будет возвращено при первоначальном/полном сканировании. Последующие дозагрузки ('Получить еще') не затрагиваются."
 
 msgid "desc_len_about_hist"
-msgstr "HISTORICAL FIGURE BIOGRAPHIES\n\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\nTRADE-OFF\nLonger biographies → fewer historical figures returned during initial/full fetches."
+msgstr "БИОГРАФИИ ИСТОРИЧЕСКИХ ЛИЧНОСТЕЙ\n\n• Коротко (~50 символов): Имя и основная роль.\n• По умолчанию (~100 символов): Стандартная биография.\n• Подробно (~200 символов): Жизнь, историческая значимость и контекст книги.\n• Очень подробно (~300 символов): Подробная биография.\n\nКОМПРОМИСС\nБолее длинные биографии → меньше личностей будет возвращено при первоначальном/полном сканировании."
 
 msgid "desc_len_about_locs"
-msgstr "LOCATION DESCRIPTIONS\n\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Full description.\n\nTRADE-OFF\nLonger descriptions → fewer locations returned during initial/full fetches."
+msgstr "ОПИСАНИЯ ГЕОГРАФИЧЕСКИХ МЕСТ\n\n• Коротко (~50 символов): Название места и краткий контекст.\n• По умолчанию (~100 символов): Стандартное описание.\n• Подробно (~200 символов): Атмосфера, значимость и происходящие события.\n• Очень подробно (~300 символов): Полное описание.\n\nКОМПРОМИСС\nБолее длинные описания → меньше мест будет возвращено при первоначальном/полном сканировании."
 
 msgid "desc_len_about_timeline"
-msgstr "TIMELINE — ONE EVENT PER CHAPTER (always)\n\nTimeline always has exactly one entry per chapter. This setting only affects how much detail is included in each summary.\n\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n• Very Detailed (~200 chars): Full narrative description.\n\nThere is no count trade-off for the timeline."
+msgstr "ХРОНОЛОГИЯ — ВСЕГДА ОДНО СОБЫТИЕ НА ГЛАВУ\n\nХронология всегда содержит ровно одну запись на главу. Эта настройка влияет только на степень детализации каждого резюме.\n\n• Коротко (~50 символов): Краткое описание в одно предложение.\n• По умолчанию (~80 символов): Стандартное описание.\n• Подробно (~150 символов): Включает контекст и последствия.\n• Очень подробно (~200 символов): Полное повествовательное описание.\n\nКоличество событий на хронологию не уменьшается."
 
 msgid "desc_len_default"
 msgstr "Стандартно"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Больше не спрашивать для этой книги"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "персонажи"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "места"
 
 msgid "entity_not_found"
 msgstr "'%s' не найден как персонаж или место."
+
+msgid "entity_ui_style_both"
+msgstr "Современное всплывающее окно (везде)"
+
+msgid "entity_ui_style_classic"
+msgstr "Классический диалог"
+
+msgid "entity_ui_style_desc"
+msgstr "Выберите, когда использовать новые современные всплывающие окна вместо классического диалога для описания объектов."
+
+msgid "entity_ui_style_in_text"
+msgstr "Современное всплывающее окно (только в тексте)"
+
+msgid "entity_ui_style_menu"
+msgstr "Современное всплывающее окно (только меню)"
 
 msgid "error_api_key_desc"
 msgstr "Предоставленный API Key был отклонен. Пожалуйста, проверьте настройки и убедитесь, что ключ верный."
@@ -360,7 +375,7 @@ msgid "later"
 msgstr "Later"
 
 msgid "linked_entries"
-msgstr "Linked Entries"
+msgstr "Связанные записи"
 
 msgid "linked_entries_disabled"
 msgstr "Отключено"
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "Поиск '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Частичное совпадение — показано '%s' для вашего запроса. Нажмите ниже, чтобы найти точный термин."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -426,7 +441,7 @@ msgid "menu_ai_settings"
 msgstr "Настройки ИИ"
 
 msgid "menu_api_keys"
-msgstr "API Keys и провайдеры"
+msgstr "API-ключи и провайдеры"
 
 msgid "menu_author_info"
 msgstr "Информация об авторе"
@@ -452,14 +467,23 @@ msgstr "Очистить логи"
 msgid "menu_config_header"
 msgstr "--- Текущая конфигурация ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Настройки контента и загрузки"
+
 msgid "menu_custom_model_title"
 msgstr "Пользовательская модель %s"
 
 msgid "menu_desc_length_settings"
 msgstr "Длина описания"
 
+msgid "menu_display_ui_settings"
+msgstr "Настройки отображения и интерфейса"
+
 msgid "menu_enter_custom_model"
 msgstr "Введите свою модель..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Стиль описания объектов"
 
 msgid "menu_fetch_author"
 msgstr "Получить инфо об авторе (ИИ)"
@@ -498,7 +522,7 @@ msgid "menu_primary_ai_model"
 msgstr "Основная модель ИИ"
 
 msgid "menu_reasoning_effort"
-msgstr "Уровень рассуждений AI"
+msgstr "Глубина рассуждения ИИ"
 
 msgid "menu_secondary_ai_model"
 msgstr "Вторичная модель ИИ"
@@ -515,6 +539,12 @@ msgstr "Глоссарий"
 msgid "menu_timeline"
 msgstr "Хронология"
 
+msgid "menu_ui_popup_intext"
+msgstr "Сноски вместо всплывающих окон в тексте"
+
+msgid "menu_ui_popup_menu"
+msgstr "Сноски вместо всплывающих окон в меню"
+
 msgid "menu_update_xray"
 msgstr "Обновить данные X-Ray (Слияние)"
 
@@ -528,7 +558,7 @@ msgid "menu_xray_mode"
 msgstr "Настройки режима X-Ray"
 
 msgid "merge_back"
-msgstr "← Back"
+msgstr "← Назад"
 
 msgid "merge_button"
 msgstr "Merge"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Данные X-Ray для этой книги не найдены. Хотите получить их через ИИ сейчас?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Дубликатов не найдено."
 
 msgid "no_historical_data"
 msgstr "Данных об исторических личностях пока нет.\n\nПожалуйста, сначала используйте 'Получить данные X-Ray'.\n\nИИ обнаружит реальных исторических личностей, упомянутых в книге."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Данных о местах пока нет. Пожалуйста, сначала используйте 'Получить данные X-Ray'."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Объединение не производилось."
 
 msgid "no_terms_data"
 msgstr "Данные терминов еще отсутствуют. Пожалуйста, сначала используйте 'Fetch X-Ray Data'."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "ИИ обнаружил %d потенциальных дубликатов с момента последнего сканирования. Проверить сейчас?"
 
 msgid "plugin_description"
 msgstr "Улучшите чтение с помощью анализа книг на базе ИИ, как в Kindle X-Ray!"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Не задано (по умолчанию)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "Повторить поиск '%s'"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Контекст серии загружен (%d предыдущих книг)."
 
 msgid "series_context_prompt_text"
-msgstr "This appears to be Book %d of '%s'. Load a recap of the previous %d book(s)?\n\n(You can disable this in Settings → Series Context)"
+msgstr "Похоже, это Книга %d из '%s'. Загрузить краткое содержание предыдущих %d книг(и)?\n\n(Вы можете отключить это в Настройках → Контекст серии)"
 
 msgid "series_context_prompt_title"
 msgstr "Серия обнаружена"
@@ -693,7 +723,7 @@ msgid "series_no_prior_detected"
 msgstr "Предыдущие книги для этой серии не обнаружены."
 
 msgid "series_prior_books_header"
-msgstr "── Prior Books ──"
+msgstr "── Предыдущие книги ──"
 
 msgid "series_prior_label"
 msgstr "[Предыдущие]"

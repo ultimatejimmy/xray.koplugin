@@ -724,60 +724,102 @@ function XRayPlugin:getSubMenuItems()
         keep_menu_open = true,
         sub_item_table = {
             {
-                text = self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings",
+                text = self.loc:t("menu_display_ui_settings") or "Display & UI Settings",
                 keep_menu_open = true,
                 sub_item_table = {
                     {
-                        text = self.loc:t("menu_frequency") or "Frequency",
-                        keep_menu_open = true,
-                        callback = function() self:showAutoUpdateSettings() end,
+                        text = self.loc:t("menu_ui_popup_intext") or "Use Footnote Style for In-text Lookups",
+                        checked_func = function()
+                            local val = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.ui_popup_intext
+                            if val == nil then return true end
+                            return val
+                        end,
+                        callback = function()
+                            if self.ai_helper and self.ai_helper.settings then
+                                local current = self.ai_helper.settings.ui_popup_intext
+                                if current == nil then current = true end
+                                self.ai_helper:saveSettings({ ui_popup_intext = not current })
+                            end
+                        end,
                     },
                     {
-                        text = self.loc:t("auto_dupe_check_setting_title") or "Duplicate Check",
+                        text = self.loc:t("menu_ui_popup_menu") or "Use Footnote Style for Menu Lookups",
+                        checked_func = function()
+                            local val = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.ui_popup_menu
+                            if val == nil then return false end
+                            return val
+                        end,
+                        callback = function()
+                            if self.ai_helper and self.ai_helper.settings then
+                                local current = self.ai_helper.settings.ui_popup_menu
+                                if current == nil then current = false end
+                                self.ai_helper:saveSettings({ ui_popup_menu = not current })
+                            end
+                        end,
+                    },
+                    {
+                        text = self.loc:t("menu_desc_length_settings") or "Description Length Settings",
                         keep_menu_open = true,
-                        callback = function() self:showAutoDupeCheckSettings() end,
+                        callback = function() self:showDescriptionLengthSettings() end,
+                    },
+                    {
+                        text = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
+                        keep_menu_open = true,
+                        callback = function() self:showLinkedEntriesSettings() end,
+                    },
+                    {
+                        text = self.loc:t("mentions_setting_title") or "Mentions Settings",
+                        keep_menu_open = true,
+                        callback = function() self:showMentionsSettings() end,
                     },
                 }
             },
             {
-                text = self.loc:t("menu_book_mode") or "Book Type",
-                keep_menu_open = true,
-                callback = function() self:showBookTypeSettings() end,
-            },
-            {
-                text = self.loc:t("menu_desc_length_settings") or "Description Length Settings",
-                keep_menu_open = true,
-                callback = function() self:showDescriptionLengthSettings() end,
-            },
-            {
-                text = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
-                keep_menu_open = true,
-                callback = function() self:showLinkedEntriesSettings() end,
-            },
-            {
-                text = self.loc:t("mentions_setting_title") or "Mentions Settings",
-                keep_menu_open = true,
-                callback = function() self:showMentionsSettings() end,
-            },
-            {
-                text = self.loc:t("spoiler_preference_title") or "Spoiler Settings",
-                keep_menu_open = true,
-                callback = function() self:showSpoilerSettings() end,
-            },
-            {
-                text = self.loc:t("menu_series_context") or "Series Context",
+                text = self.loc:t("menu_content_fetch_settings") or "Content & Fetch Settings",
                 keep_menu_open = true,
                 sub_item_table = {
                     {
-                        text = self.loc:t("series_context_enabled_toggle") or "Enable Series Context",
-                        checked_func = function() return self.ai_helper.settings.series_context_enabled end,
-                        callback = function() self:toggleSeriesContextEnabled() end,
+                        text = self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings",
+                        keep_menu_open = true,
+                        sub_item_table = {
+                            {
+                                text = self.loc:t("menu_frequency") or "Frequency",
+                                keep_menu_open = true,
+                                callback = function() self:showAutoUpdateSettings() end,
+                            },
+                            {
+                                text = self.loc:t("auto_dupe_check_setting_title") or "Duplicate Check",
+                                keep_menu_open = true,
+                                callback = function() self:showAutoDupeCheckSettings() end,
+                            },
+                        }
                     },
                     {
-                        text = self.loc:t("menu_fetch_series_context") or "Fetch / Refresh Series Context",
+                        text = self.loc:t("menu_book_mode") or "Book Type",
                         keep_menu_open = true,
-                        callback = function() self:manualFetchSeriesContext() end,
-                    }
+                        callback = function() self:showBookTypeSettings() end,
+                    },
+                    {
+                        text = self.loc:t("spoiler_preference_title") or "Spoiler Settings",
+                        keep_menu_open = true,
+                        callback = function() self:showSpoilerSettings() end,
+                    },
+                    {
+                        text = self.loc:t("menu_series_context") or "Series Context",
+                        keep_menu_open = true,
+                        sub_item_table = {
+                            {
+                                text = self.loc:t("series_context_enabled_toggle") or "Enable Series Context",
+                                checked_func = function() return self.ai_helper.settings.series_context_enabled end,
+                                callback = function() self:toggleSeriesContextEnabled() end,
+                            },
+                            {
+                                text = self.loc:t("menu_fetch_series_context") or "Fetch / Refresh Series Context",
+                                keep_menu_open = true,
+                                callback = function() self:manualFetchSeriesContext() end,
+                            }
+                        }
+                    },
                 }
             },
             {
@@ -785,11 +827,6 @@ function XRayPlugin:getSubMenuItems()
                 keep_menu_open = true,
                 callback = function() self:toggleXRayMode() end,
                 separator = true,
-            },
-            {
-                text = self.loc:t("menu_language") or "Language",
-                keep_menu_open = true,
-                callback = function() self:showLanguageSelection() end,
             },
             {
                 text = self.loc:t("menu_ai_settings"),
@@ -823,6 +860,11 @@ function XRayPlugin:getSubMenuItems()
                         callback = function() self:showConfigSummary() end,
                     },
                 }
+            },
+            {
+                text = self.loc:t("menu_language") or "Language",
+                keep_menu_open = true,
+                callback = function() self:showLanguageSelection() end,
             }
         }
     })

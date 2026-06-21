@@ -9,7 +9,7 @@ msgid "about"
 msgstr "Hakkında"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "Yapay Zeka Hatası: "
 
 msgid "ai_fetch_complete"
 msgstr "%s üzerinden başarıyla çekildi!\n\nKitap: %s\nYazar: %s\n\nKarakterler: %d\nMekanlar: %d\nTemalar: %d\nZaman Çizelgesi Olayları: %d\nTarihi Kişiler: %d\n\n%s\n\nÖZET:\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "YZ Veri Çekme Tamamlandı!"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "Yapay zeka API anahtarı gereklidir."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "Yapay Zeka Kopyası Algılandı"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "%d çift başarıyla birleştirildi."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "Yapay zeka kopyaları tarıyor..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Devre Dışı"
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Kitap modu kaydedildi!"
 
 msgid "book_type_about"
-msgstr "The Book Type determines which AI extraction strategy is used and which features are available.\n\n- Fiction: Focuses on narrative, characters, and plot timeline.\n- Non-Fiction: Focuses on terms, concepts, and historical figures.\n\n'Auto-Detect' will let the AI decide after the first fetch."
+msgstr "Kitap Türü, hangi yapay zeka çıkarma stratejisinin kullanılacağını ve hangi özelliklerin mevcut olacağını belirler.\n\n- Kurgu: Anlatıya, karakterlere ve olay zaman çizelgesine odaklanır.\n- Kurgu Dışı: Terimlere, kavramlara ve tarihi kişilere odaklanır.\n\n'Otomatik Algıla', ilk getirmeden sonra yapay zekanın karar vermesini sağlar."
 
 msgid "book_type_auto"
 msgstr "Otomatik Algıla"
@@ -156,7 +156,7 @@ msgid "config_status_set"
 msgstr "AYARLANMIŞ"
 
 msgid "current_language"
-msgstr "en"
+msgstr "tr"
 
 msgid "current_mode"
 msgstr "Mevcut: "
@@ -165,22 +165,22 @@ msgid "custom_api_endpoint_hint"
 msgstr "örn., https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Custom API %d — Endpoint URL"
+msgstr "Özel API %d — Uç Nokta URL'si"
 
 msgid "custom_api_is_reasoning"
-msgstr "Akıl Yürüten Model mi (örn. DeepSeek-R1)"
+msgstr "Muhakeme Modelidir (örn. DeepSeek-R1)"
 
 msgid "custom_api_key_title"
-msgstr "Custom API %d — API Key"
+msgstr "Özel API %d — API Anahtarı"
 
 msgid "custom_api_model_hint"
 msgstr "örn., google/gemini-2.5-flash veya openai/gpt-4o"
 
 msgid "custom_api_model_title"
-msgstr "Custom API %d — Varsayılan Model"
+msgstr "Özel API %d — Varsayılan Model"
 
 msgid "custom_api_name"
-msgstr "Custom API %d (OpenAI-compatible)"
+msgstr "Özel API %d (OpenAI uyumlu)"
 
 msgid "custom_api_not_configured"
 msgstr "(yapılandırılmadı — ayarlamak için dokunun)"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Custom API %d yapılandırması kaydedildi."
 
 msgid "desc_len_about_chars"
-msgstr "CHARACTER DESCRIPTIONS\n\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Deep analysis.\n\nTRADE-OFF\nLonger descriptions → fewer characters returned during initial/full fetches. Subsequent 'Fetch More' runs are unaffected."
+msgstr "KARAKTER AÇIKLAMALARI\n\n• Kısa (~80 karakter): İsim, rol ve kısa bir not.\n• Varsayılan (~200 karakter): Standart analiz.\n• Ayrıntılı (~350 karakter): Özellikler ve motivasyonlar içeren zengin karakter analizi.\n• Çok Ayrıntılı (~500 karakter): Derinlemesine analiz.\n\nDENGE\nDaha uzun açıklamalar → ilk/tam getirmeler sırasında daha az karakter döndürülür. Sonraki 'Daha Fazla Getir' işlemleri etkilenmez."
 
 msgid "desc_len_about_hist"
-msgstr "HISTORICAL FIGURE BIOGRAPHIES\n\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\nTRADE-OFF\nLonger biographies → fewer historical figures returned during initial/full fetches."
+msgstr "TARİHİ KİŞİ BİYOGRAFİLERİ\n\n• Kısa (~50 karakter): İsim ve birincil rol.\n• Varsayılan (~100 karakter): Standart biyografi.\n• Ayrıntılı (~200 karakter): Yaşamı, önemi ve kitap bağlamı.\n• Çok Ayrıntılı (~300 karakter): Kapsamlı biyografi.\n\nDENGE\nDaha uzun biyografiler → ilk/tam getirmeler sırasında daha az tarihi kişi döndürülür."
 
 msgid "desc_len_about_locs"
-msgstr "LOCATION DESCRIPTIONS\n\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Full description.\n\nTRADE-OFF\nLonger descriptions → fewer locations returned during initial/full fetches."
+msgstr "KONUM AÇIKLAMALARI\n\n• Kısa (~50 karakter): Konum adı ve tek satırlık bağlam.\n• Varsayılan (~100 karakter): Standart açıklama.\n• Ayrıntılı (~200 karakter): Atmosfer, önem ve olaylar.\n• Çok Ayrıntılı (~300 karakter): Tam açıklama.\n\nDENGE\nDaha uzun açıklamalar → ilk/tam getirmeler sırasında daha az konum döndürülür."
 
 msgid "desc_len_about_timeline"
-msgstr "TIMELINE — ONE EVENT PER CHAPTER (always)\n\nTimeline always has exactly one entry per chapter. This setting only affects how much detail is included in each summary.\n\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n• Very Detailed (~200 chars): Full narrative description.\n\nThere is no count trade-off for the timeline."
+msgstr "ZAMAN ÇİZGELGESİ — HER BÖLÜM İÇİN HER ZAMAN BİR OLAY\n\nZaman çizelgesi her zaman bölüm başına tam olarak bir öge içerir. Bu ayar sadece her özetin ayrıntı düzeyini etkiler.\n\n• Kısa (~50 karakter): Tek cümlelik kısa özet.\n• Varsayılan (~80 karakter): Standart özet.\n• Ayrıntılı (~150 karakter): Bağlamı ve sonuçları içerir.\n• Çok Ayrıntılı (~200 karakter): Tam anlatı açıklaması.\n\nZaman çizelgesi için sayı sınırı yoktur."
 
 msgid "desc_len_default"
 msgstr "Varsayılan"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Bu kitap için bir daha sorma"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "karakterler"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "konumlar"
 
 msgid "entity_not_found"
 msgstr "'%s' bir karakter veya konum olarak bulunamadı."
+
+msgid "entity_ui_style_both"
+msgstr "Modern Popup (Her ikisi)"
+
+msgid "entity_ui_style_classic"
+msgstr "Klasik İletişim Kutusu"
+
+msgid "entity_ui_style_desc"
+msgstr "Varlık açıklamaları için Klasik İletişim Kutusu yerine ne zaman yeni Modern Popup arayüzünün kullanılacağını seçin."
+
+msgid "entity_ui_style_in_text"
+msgstr "Modern Popup (Sadece metin içi)"
+
+msgid "entity_ui_style_menu"
+msgstr "Modern Popup (Sadece menü)"
 
 msgid "error_api_key_desc"
 msgstr "Sağlanan API anahtarı reddedildi. Lütfen ayarlarınızı kontrol edin ve anahtarın doğru olduğundan emin olun."
@@ -360,7 +375,7 @@ msgid "later"
 msgstr "Later"
 
 msgid "linked_entries"
-msgstr "Bağlantılı Girdiler"
+msgstr "Bağlantılı Ögeler"
 
 msgid "linked_entries_disabled"
 msgstr "Devre Dışı"
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "'%s' aranıyor..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Kısmi eşleşme – sorgunuz için '%s' gösteriliyor. Tam terimi getirmek için aşağıya dokunun."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -426,7 +441,7 @@ msgid "menu_ai_settings"
 msgstr "AI Ayarları"
 
 msgid "menu_api_keys"
-msgstr "API Keys ve Sağlayıcılar"
+msgstr "API Anahtarları ve Sağlayıcılar"
 
 msgid "menu_author_info"
 msgstr "Yazar Bilgisi"
@@ -452,14 +467,23 @@ msgstr "Günlükleri Temizle"
 msgid "menu_config_header"
 msgstr "--- Mevcut Yapılandırma ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "İçerik & Getirme Ayarları"
+
 msgid "menu_custom_model_title"
 msgstr "Özel %s Modeli"
 
 msgid "menu_desc_length_settings"
 msgstr "Açıklama Uzunluğu"
 
+msgid "menu_display_ui_settings"
+msgstr "Ekran & Arayüz Ayarları"
+
 msgid "menu_enter_custom_model"
 msgstr "Özel model girin..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Varlık Açıklama Stili"
 
 msgid "menu_fetch_author"
 msgstr "Yazar Bilgisini Çek (AI)"
@@ -498,7 +522,7 @@ msgid "menu_primary_ai_model"
 msgstr "Birincil YZ Modeli"
 
 msgid "menu_reasoning_effort"
-msgstr "AI Akıl Yürütme Çabası"
+msgstr "Yapay Zeka Muhakeme Çabası"
 
 msgid "menu_secondary_ai_model"
 msgstr "İkincil YZ Modeli"
@@ -515,6 +539,12 @@ msgstr "Sözlük"
 msgid "menu_timeline"
 msgstr "Zaman Çizelgesi"
 
+msgid "menu_ui_popup_intext"
+msgstr "Metin içi aramalar için Dipnot Stilini kullan"
+
+msgid "menu_ui_popup_menu"
+msgstr "Menü aramaları için Dipnot Stilini kullan"
+
 msgid "menu_update_xray"
 msgstr "X-Ray Verilerini Güncelle (Birleştir)"
 
@@ -528,7 +558,7 @@ msgid "menu_xray_mode"
 msgstr "X-Ray Modu Ayarları"
 
 msgid "merge_back"
-msgstr "← Back"
+msgstr "← Geri"
 
 msgid "merge_button"
 msgstr "Merge"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Bu kitap için X-Ray verisi bulunamadı. Şimdi AI'dan çekmek ister misiniz?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Kopya bulunamadı."
 
 msgid "no_historical_data"
 msgstr "Henüz tarihi kişi verisi yok.\n\nLütfen önce 'X-Ray Verilerini Çek' seçeneğini kullanın.\n\nAI, kitapta geçen gerçek tarihi kişileri tespit edecektir."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Henüz mekan verisi yok. Lütfen önce 'X-Ray Verilerini Çek' seçeneğini kullanın."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Hiçbir birleştirme işlemi yapılmadı."
 
 msgid "no_terms_data"
 msgstr "Henüz terim verisi yok. Lütfen önce 'X-Ray Verilerini Getir' seçeneğini kullanın."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "Yapay zeka, son getirmeden %d olası kopya buldu. Şimdi incelemek ister misiniz?"
 
 msgid "plugin_description"
 msgstr "Amazon Kindle X-Ray gibi, YZ destekli kitap analizi ile okuma deneyiminizi dönüştürün!"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Ayarlanmamış (Varsayılan)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "'%s' için tekrar ara"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Seri bağlamı yüklendi (%d önceki kitap)."
 
 msgid "series_context_prompt_text"
-msgstr "Bu, '%s' serisinin %d. Kitabı gibi görünüyor. Önceki %d kitabın özetini yüklemek ister misiniz?\n\n(Bunu Ayarlar → Seri Bağlamı menüsünden devre dışı bırakabilirsiniz)"
+msgstr "Bu, '%2$s' serisinin %1$d. Kitabı gibi görünüyor. Önceki %3$d kitabın özetini yüklemek ister misiniz?\n\n(Bunu Ayarlar → Seri Bağlamı altından kapatabilirsiniz)"
 
 msgid "series_context_prompt_title"
 msgstr "Seri Algılandı"
@@ -693,7 +723,7 @@ msgid "series_no_prior_detected"
 msgstr "Bu seri için daha önce yayınlanmış kitap algılanmadı."
 
 msgid "series_prior_books_header"
-msgstr "── Prior Books ──"
+msgstr "── Önceki Kitaplar ──"
 
 msgid "series_prior_label"
 msgstr "[Önceki]"

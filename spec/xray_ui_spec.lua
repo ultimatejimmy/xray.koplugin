@@ -80,7 +80,10 @@ describe("xray_ui", function()
     end)
 
     describe("showCharacterDetails", function()
-        it("should show details dialog", function()
+        it("should show details dialog when popup toggles are false", function()
+            plugin.ai_helper.settings.ui_popup_intext = false
+            plugin.ai_helper.settings.ui_popup_menu = false
+            plugin.ai_helper.settings.entity_ui_mode = nil
             local char = { name = "Bob", description = "A builder" }
             plugin:showCharacterDetails(char)
             local last = _G.ui_tracker.last_shown
@@ -89,6 +92,43 @@ describe("xray_ui", function()
             assert.are.equal("ConfirmBox", last.type)
             assert.truthy(last.args.text:find("Bob"))
             assert.truthy(last.args.text:find("A builder"))
+        end)
+
+        it("should show bottom popup when ui_popup toggles are true", function()
+            plugin.ai_helper.settings.ui_popup_intext = true
+            plugin.ai_helper.settings.ui_popup_menu = true
+            plugin.ai_helper.settings.entity_ui_mode = nil
+            local char = { name = "Bob", description = "A builder" }
+            plugin:showCharacterDetails(char)
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("InputContainer", last.type)
+        end)
+
+        it("should show bottom popup and buttons when both linked_entries and mentions are enabled", function()
+            plugin.ai_helper.settings.ui_popup_intext = true
+            plugin.ai_helper.settings.ui_popup_menu = true
+            plugin.ai_helper.settings.linked_entries_enabled = true
+            plugin.ai_helper.settings.mentions_enabled = true
+            plugin.findRelatedEntities = function() return { { name = "Related" } } end
+            
+            local char = { name = "Bob", description = "A builder" }
+            -- This should not crash (RightContainer bug)
+            plugin:showCharacterDetails(char)
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("InputContainer", last.type)
+        end)
+
+        it("should migrate legacy entity_ui_mode setting properly", function()
+            plugin.ai_helper.settings.ui_popup_intext = nil
+            plugin.ai_helper.settings.ui_popup_menu = nil
+            plugin.ai_helper.settings.entity_ui_mode = "both"
+            local char = { name = "Bob", description = "A builder" }
+            plugin:showCharacterDetails(char)
+            assert.is_true(plugin.ai_helper.settings.ui_popup_intext)
+            assert.is_true(plugin.ai_helper.settings.ui_popup_menu)
+            assert.is_nil(plugin.ai_helper.settings.entity_ui_mode)
         end)
     end)
 

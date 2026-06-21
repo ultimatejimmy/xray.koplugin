@@ -2,6 +2,23 @@ param (
     [switch]$Watch
 )
 
+# Ensure WSL passes software rendering and X11 driver flags to fix graphics crashes & black screen issues in Copy Mode
+$env:LIBGL_ALWAYS_SOFTWARE = "1"
+$env:SDL_VIDEO_DRIVER = "x11"
+$env:SDL_VIDEODRIVER = "x11"
+
+$EnvList = @("LIBGL_ALWAYS_SOFTWARE/u", "SDL_VIDEO_DRIVER/u", "SDL_VIDEODRIVER/u")
+foreach ($item in $EnvList) {
+    $varName = $item.Split('/')[0]
+    if ($env:WSLENV) {
+        if ($env:WSLENV -notlike "*$varName*") {
+            $env:WSLENV = "$env:WSLENV:$item"
+        }
+    } else {
+        $env:WSLENV = $item
+    }
+}
+
 $PluginDir = "xray.koplugin"
 $WSLDest = "~/.config/koreader/plugins/xray.koplugin"
 $SyntaxScript = "tools/check_syntax.py"

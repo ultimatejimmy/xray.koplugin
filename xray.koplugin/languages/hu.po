@@ -9,7 +9,7 @@ msgid "about"
 msgstr "Névjegy"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "MI hiba: "
 
 msgid "ai_fetch_complete"
 msgstr "Sikeresen lekérdezve innen: %s!\n\nKönyv: %s\nSzerző: %s\n\nSzereplők: %d\nHelyszínek: %d\nTémák: %d\nEsemények az idővonalon: %d\nTörténelmi alakok: %d\n\n%s\n\nÖSSZEGZÉS:\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "AI lekérdezés kész!"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "MI API kulcs szükséges."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "MI másolat észlelve"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "%d pár sikeresen összevonva."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "A MI másolatokat keres..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Letiltva"
@@ -87,7 +87,7 @@ msgid "beta_preference_desc"
 msgstr "Válassza ki a kívánt frissítési csatornát:"
 
 msgid "book_mode_auto"
-msgstr "Auto"
+msgstr "Automatikus"
 
 msgid "book_mode_desc"
 msgstr "Válassza ki a könyv módját."
@@ -102,10 +102,10 @@ msgid "book_mode_saved"
 msgstr "Könyvmód mentve!"
 
 msgid "book_type_about"
-msgstr "A Könyvtípus határozza meg, hogy melyik AI kinyerési stratégia kerül alkalmazásra, és mely funkciók érhetőek el.\n\n- Szépirodalom: A történetre, karakterekre és a cselekmény idővonalára fókuszál.\n- Ismeretterjesztő: A kifejezésekre, fogalmakra és történelmi személyekre fókuszál.\n\nAz 'Auto-Detect' lehetővé teszi, hogy az AI döntsön az első lekérés után."
+msgstr "A könyv típusa határozza meg, hogy a MI milyen kinyerési stratégiát használ, és mely funkciók érhetők el.\n\n- Szépirodalom: A történetre, a szereplőkre és a cselekmény idővonalára összpontosít.\n- Ismeretterjesztő: Kifejezésekre, fogalmakra és történelmi személyekre összpontosít.\n\nAz 'Automatikus felismerés' lehetővé teszi, hogy a MI döntsön az első lekérdezés után."
 
 msgid "book_type_auto"
-msgstr "Auto-Detect"
+msgstr "Automatikus felismerés"
 
 msgid "book_type_fiction"
 msgstr "Szépirodalom"
@@ -168,7 +168,7 @@ msgid "custom_api_endpoint_title"
 msgstr "Egyedi API %d — Végpont URL"
 
 msgid "custom_api_is_reasoning"
-msgstr "Gondolkodási modell (pl. DeepSeek-V4-Pro, DeepSeek-R1)"
+msgstr "Következtető modell (pl. DeepSeek-R1)"
 
 msgid "custom_api_key_title"
 msgstr "Egyedi API %d — API kulcs"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Egyedi API %d konfiguráció elmentve."
 
 msgid "desc_len_about_chars"
-msgstr "SZEREPLŐK LEÍRÁSA\n\n• Rövid (~80 kar.): Név, szerepkör és egy rövid megjegyzés.\n• Alapértelmezett (~200 kar.): Standard elemzés.\n• Részletes (~350 kar.): Gazdag szereplőelemzés tulajdonságokkal és motivációkkal.\n• Nagyon részletes (~500 kar.): Mélyreható elemzés.\n\nKOMPROMISSZUM\nHosszabb leírások → kevesebb visszaadott szereplő az első/teljes lekérdezés során. A későbbi 'Továbbiak lekérdezése' futtatásokat ez nem befolyásolja."
+msgstr "SZEREPLŐLEÍRÁSOK\n\n• Rövid (~80 karakter): Név, szerep és egy rövid megjegyzés.\n• Alapértelmezett (~200 karakter): Standard elemzés.\n• Részletes (~350 karakter): Gazdag szereplőelemzés vonásokkal és motivációkkal.\n• Nagyon részletes (~500 karakter): Mélyreható elemzés.\n\nKOMPROMISSZUM\nHosszabb leírások → kevesebb szereplő jelenik meg a kezdeti/teljes lekérdezések során. A későbbi lekérdezésekre ('Továbbiak lekérése') nincs hatással."
 
 msgid "desc_len_about_hist"
-msgstr "TÖRTÉNELMI ALAKOK ÉLETRAZZA\n\n• Rövid (~50 kar.): Név és elsődleges szerepkör.\n• Alapértelmezett (~100 kar.): Standard életrajz.\n• Részletes (~200 kar.): Életút, jelentőség és a könyv kontextusa.\n• Nagyon részletes (~300 kar.): Átfogó életrajz.\n\nKOMPROMISSZUM\nHosszabb életrajzok → kevesebb visszaadott történelmi alak az első/teljes lekérdezés során."
+msgstr "TÖRTÉNELMI SZEMÉLYEK ÉLETRAJZA\n\n• Rövid (~50 karakter): Név és elsődleges szerep.\n• Alapértelmezett (~100 karakter): Standard életrajz.\n• Részletes (~200 karakter): Életút, jelentőség és könyvbeli kontextus.\n• Nagyon részletes (~300 karakter): Átfogó életrajz.\n\nKOMPROMISSZUM\nHosszabb életrajzok → kevesebb történelmi személy jelenik meg a kezdeti/teljes lekérdezések során."
 
 msgid "desc_len_about_locs"
-msgstr "HELYSZÍNEK LEÍRÁSA\n\n• Rövid (~50 kar.): Hely neve és egysoros kontextus.\n• Alapértelmezett (~100 kar.): Standard leírás.\n• Részletes (~200 kar.): Hangulat, jelentőség és események.\n• Nagyon részletes (~300 kar.): Teljes leírás.\n\nKOMPROMISSZUM\nHosszabb leírások → kevesebb visszaadott helyszín az első/teljes lekérdezés során."
+msgstr "HELYSZÍNLEÍRÁSOK\n\n• Rövid (~50 karakter): Helyszínnév és egysoros kontextus.\n• Alapértelmezett (~100 karakter): Standard leírás.\n• Részletes (~200 karakter): Hangulat, jelentőség és események.\n• Nagyon részletes (~300 karakter): Teljes leírás.\n\nKOMPROMISSZUM\nHosszabb leírások → kevesebb helyszín jelenik meg a kezdeti/teljes lekérdezések során."
 
 msgid "desc_len_about_timeline"
-msgstr "IDŐVONAL — FEJEZETENKÉNT EGY ESEMÉNY (mindig)\n\nAz idővonal mindig pontosan egy bejegyzést tartalmaz fejezetenként. Ez a beállítás csak azt befolyásolja, hogy mennyi részlet szerepeljen az egyes összefoglalókban.\n\n• Rövid (~50 kar.): Rövid, egy kifejezésből álló összefoglaló.\n• Alapértelmezett (~80 kar.): Standard összefoglaló.\n• Részletes (~150 kar.): Tartalmazza a kontextust és a következményeket.\n• Nagyon részletes (~200 kar.): Teljes elbeszélő leírás.\n\nAz idővonalnál nincs mennyiségi kompromisszum."
+msgstr "IDŐVONAL — FEJEZETENKÉNT EGY ESEMÉNY (mindig)\n\nAz idővonal mindig pontosan egy bejegyzést tartalmaz fejezetenként. Ez a beállítás csak az egyes összefoglalók részletességét befolyásolja.\n\n• Rövid (~50 karakter): Rövid, egymondatos összefoglaló.\n• Alapértelmezett (~80 karakter): Standard összefoglaló.\n• Részletes (~150 karakter): Tartalmazza a kontextust és a következményeket.\n• Nagyon részletes (~200 karakter): Teljes narratív leírás.\n\nAz idővonal esetében nincs mennyiségi kompromisszum."
 
 msgid "desc_len_default"
 msgstr "Alapértelmezett"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Ne kérdezze újra"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "szereplők"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "helyszínek"
 
 msgid "entity_not_found"
 msgstr "'%s' nem található szereplőként vagy helyszínként."
+
+msgid "entity_ui_style_both"
+msgstr "Modern popup (mindkettő)"
+
+msgid "entity_ui_style_classic"
+msgstr "Klasszikus párbeszédpanel"
+
+msgid "entity_ui_style_desc"
+msgstr "Válassza ki, mikor használja az új Modern Popup felületet a klasszikus párbeszédpanel helyett az entitások leírásánál."
+
+msgid "entity_ui_style_in_text"
+msgstr "Modern popup (csak szövegben)"
+
+msgid "entity_ui_style_menu"
+msgstr "Modern popup (csak menü)"
 
 msgid "error_api_key_desc"
 msgstr "A megadott API kulcsot elutasították. Kérjük, ellenőrizze a beállításokat, és győződjön meg arról, hogy a kulcs helyes."
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "Keresés: '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Részleges egyezés – '%s' megjelenítése a lekérdezésre. Érintse meg alul a pontos kifejezés lekéréséhez."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -452,14 +467,23 @@ msgstr "Naplófájlok törlése"
 msgid "menu_config_header"
 msgstr "--- Jelenlegi konfiguráció ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Tartalom és lekérdezés beállításai"
+
 msgid "menu_custom_model_title"
 msgstr "Egyedi %s modell"
 
 msgid "menu_desc_length_settings"
 msgstr "Leírás hossza"
 
+msgid "menu_display_ui_settings"
+msgstr "Kijelző és felület beállításai"
+
 msgid "menu_enter_custom_model"
 msgstr "Egyedi modell megadása..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Entitásleírás stílusa"
 
 msgid "menu_fetch_author"
 msgstr "Szerzői infó lekérdezése (AI)"
@@ -498,13 +522,13 @@ msgid "menu_primary_ai_model"
 msgstr "Elsődleges AI modell"
 
 msgid "menu_reasoning_effort"
-msgstr "AI gondolkodási erőfeszítés"
+msgstr "MI következtetési erőfeszítés"
 
 msgid "menu_secondary_ai_model"
 msgstr "Másodlagos AI modell"
 
 msgid "menu_series_context"
-msgstr "Sorozatkontextus"
+msgstr "Sorozat kontextusa"
 
 msgid "menu_settings"
 msgstr "Beállítások"
@@ -514,6 +538,12 @@ msgstr "Glosszárium"
 
 msgid "menu_timeline"
 msgstr "Idővonal"
+
+msgid "menu_ui_popup_intext"
+msgstr "Lábjegyzet stílus használata szövegben történő kereséshez"
+
+msgid "menu_ui_popup_menu"
+msgstr "Lábjegyzet stílus használata menüben történő kereséshez"
 
 msgid "menu_update_xray"
 msgstr "X-Ray adatok frissítése"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Nem található X-Ray adat ehhez a könyvhöz. Szeretné lekérdezni az AI-tól most?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Nem találhatók másolatok."
 
 msgid "no_historical_data"
 msgstr "Még nincsenek adatok a történelmi alakokról.\n\nKérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót.\n\nAz AI felismeri a könyvben említett valós történelmi alakokat."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Még nincsenek helyszínadatok. Kérjük, használja előbb az 'X-Ray adatok lekérdezése' funkciót."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Nem történt összevonás."
 
 msgid "no_terms_data"
 msgstr "Még nincsenek kifejezésadatok. Kérjük, először használja az 'X-Ray adatok lekérése' opciót."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "A MI %d lehetséges másolatot talált a legutóbbi lekérdezésből. Ellenőrzi most?"
 
 msgid "plugin_description"
 msgstr "Alakítsa át olvasási élményét AI-alapú könyvelemzéssel, pont mint az Amazon Kindle X-Ray!"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Nincs beállítva (Alapértelmezett)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "Újra keresés erre: '%s'"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Sorozatkontextus betöltve (%d előző könyv)."
 
 msgid "series_context_prompt_text"
-msgstr "Úgy tűnik, ez a(z) '%2$s' sorozat %1$d. kötete. Betölti az előző %3$d könyv összefoglalóját?\n\n(Ezt a Beállítások → Sorozatkontextus menüben kapcsolhatja ki)"
+msgstr "Úgy tűnik, ez a(z) '%2$s' %1$d. kötete. Betölti az előző %3$d könyv összefoglalóját?\n\n(Ezt kikapcsolhatja a Beállítások → Sorozat kontextusa menüben)"
 
 msgid "series_context_prompt_title"
 msgstr "Sorozat észlelve"
@@ -693,7 +723,7 @@ msgid "series_no_prior_detected"
 msgstr "Nem észlelhető előzménykönyv ebben a sorozatban."
 
 msgid "series_prior_books_header"
-msgstr "── Prior Books ──"
+msgstr "── Korábbi könyvek ──"
 
 msgid "series_prior_label"
 msgstr "[Előzmény]"

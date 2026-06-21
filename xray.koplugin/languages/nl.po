@@ -9,7 +9,7 @@ msgid "about"
 msgstr "Over"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "AI-fout: "
 
 msgid "ai_fetch_complete"
 msgstr "Succesvol opgehaald van %s!\n\nBoek: %s\nAuteur: %s\n\nPersonages: %d\nLocaties: %d\nThema's: %d\nChronologische Gebeurtenissen: %d\nHistorische Figuren: %d\n\n%s\n\nSAMENVATTING:\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "AI Ophalen Voltooid!"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "Een AI API-sleutel is vereist."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "AI-duplicaat gedetecteerd"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "%d paar/paren succesvol samengevoegd."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "AI zoekt naar duplicaten..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Uitgeschakeld"
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Boekmodus opgeslagen!"
 
 msgid "book_type_about"
-msgstr "Het Boektype bepaalt welke AI-extractiestrategie wordt gebruikt en welke functies beschikbaar zijn.\n\n- Fictie: Richt zich op verhaal, personages en de tijdlijn van het plot.\n- Non-fictie: Richt zich op termen, concepten en historische figuren.\n\n'Automatisch detecteren' laat de AI beslissen na de eerste ophaling."
+msgstr "Het boektype bepaalt welke AI-extractiestrategie wordt gebruikt en welke functies beschikbaar zijn.\n\n- Fictie: Richt zich op verhaal, personages en tijdlijn.\n- Non-fictie: Richt zich op termen, concepten en historische personen.\n\n'Automatisch detecteren' laat de AI beslissen na de eerste ophaalactie."
 
 msgid "book_type_auto"
 msgstr "Automatisch detecteren"
@@ -165,10 +165,10 @@ msgid "custom_api_endpoint_hint"
 msgstr "bijv., https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Aangepaste API %d — Eindpunt URL"
+msgstr "Aangepaste API %d — Eindpunt-URL"
 
 msgid "custom_api_is_reasoning"
-msgstr "Is een redenerend model (bijv. DeepSeek-V4-Pro, DeepSeek-R1)"
+msgstr "Is redeneermodel (bijv. DeepSeek-R1)"
 
 msgid "custom_api_key_title"
 msgstr "Aangepaste API %d — API-sleutel"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Aangepaste API %d configuratie opgeslagen."
 
 msgid "desc_len_about_chars"
-msgstr "PERSONAGEBESCHRIJVINGEN\n\n• Kort (~80 tekens): Naam, rol en een korte notitie.\n• Standaard (~200 tekens): Standaard analyse.\n• Gedetailleerd (~350 tekens): Rijke personagestudie met eigenschappen en motivaties.\n• Zeer gedetailleerd (~500 tekens): Diepe analyse.\n\nAFWEGING\nLangere beschrijvingen → minder personages geretourneerd tijdens initiële/volledige ophalingen. Volgende 'Meer ophalen'-runs worden niet beïnvloed."
+msgstr "PERSONAGEBESCHRIJVINGEN\n\n• Kort (~80 tekens): Naam, rol en een korte notitie.\n• Standaard (~200 tekens): Standaardanalyse.\n• Gedetailleerd (~350 tekens): Rijke personagestudie met eigenschappen en motivaties.\n• Zeer gedetailleerd (~500 tekens): Diepgaande analyse.\n\nAFWEGING\nLangere beschrijvingen → minder personages geretourneerd tijdens initiële/volledige ophaalacties. Latere ophaalacties ('Meer ophalen') worden niet beïnvloed."
 
 msgid "desc_len_about_hist"
-msgstr "BIOGRAFIEËN VAN HISTORISCHE FIGUREN\n\n• Kort (~50 tekens): Naam en primaire rol.\n• Standaard (~100 tekens): Standaard biografie.\n• Gedetailleerd (~200 tekens): Leven, betekenis en boekcontext.\n• Zeer gedetailleerd (~300 tekens): Uitgebreide biografie.\n\nAFWEGING\nLangere biografieën → minder historische figuren geretourneerd tijdens initiële/volledige ophalingen."
+msgstr "BIOGRAFIEËN VAN HISTORISCHE PERSONEN\n\n• Kort (~50 tekens): Naam en primaire rol.\n• Standaard (~100 tekens): Standaardbiografie.\n• Gedetailleerd (~200 tekens): Leven, betekenis en boekcontext.\n• Zeer gedetailleerd (~300 tekens): Uitgebreide biografie.\n\nAFWEGING\nLangere biografieën → minder historische personen geretourneerd tijdens initiële/volledige ophaalacties."
 
 msgid "desc_len_about_locs"
-msgstr "LOCATIEBESCHRIJVINGEN\n\n• Kort (~50 tekens): Plaatsnaam en context in één regel.\n• Standaard (~100 tekens): Standaard beschrijving.\n• Gedetailleerd (~200 tekens): Sfeer, betekenis en gebeurtenissen.\n• Zeer gedetailleerd (~300 tekens): Volledige beschrijving.\n\nAFWEGING\nLangere beschrijvingen → minder locaties geretourneerd tijdens initiële/volledige ophalingen."
+msgstr "LOCATIEBESCHRIJVINGEN\n\n• Kort (~50 tekens): Locatienaam en context in één regel.\n• Standaard (~100 tekens): Standaardbeschrijving.\n• Gedetailleerd (~200 tekens): Atmosfeer, betekenis en gebeurtenissen.\n• Zeer gedetailleerd (~300 tekens): Volledige beschrijving.\n\nAFWEGING\nLangere beschrijvingen → minder locaties geretourneerd tijdens initiële/volledige ophaalacties."
 
 msgid "desc_len_about_timeline"
-msgstr "TIJDLIJN — ALTIJD ÉÉN GEBEURTENIS PER HOOFDSTUK\n\nDe tijdlijn heeft altijd precies één vermelding per hoofdstuk. Deze instelling heeft alleen invloed op hoeveel detail in elke samenvatting is opgenomen.\n\n• Kort (~50 tekens): Korte samenvatting in één zin.\n• Standaard (~80 tekens): Standaard samenvatting.\n• Gedetailleerd (~150 tekens): Inclusief context en gevolgen.\n• Zeer gedetailleerd (~200 tekens): Volledige verhalende beschrijving.\n\nEr is geen afweging in aantal voor de tijdlijn."
+msgstr "TIJDLINK — ALTIJD ÉÉN GEBEURTENIS PER HOOFDSTUK\n\nDe tijdlijn bevat altijd precies één item per hoofdstuk. Deze instelling heeft alleen invloed op de hoeveelheid details in elke samenvatting.\n\n• Kort (~50 tekens): Korte samenvatting in één zin.\n• Standaard (~80 tekens): Standaard samenvatting.\n• Gedetailleerd (~150 tekens): Bevat context en consequenties.\n• Zeer gedetailleerd (~200 tekens): Volledige beschrijving.\n\nEr is geen afweging in aantal voor de tijdlijn."
 
 msgid "desc_len_default"
 msgstr "Standaard"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Niet opnieuw vragen"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "personages"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "locaties"
 
 msgid "entity_not_found"
 msgstr "'%s' is niet gevonden als personage of locatie."
+
+msgid "entity_ui_style_both"
+msgstr "Modern popup (beide)"
+
+msgid "entity_ui_style_classic"
+msgstr "Klassieke dialoog"
+
+msgid "entity_ui_style_desc"
+msgstr "Selecteer wanneer de nieuwe Modern Popup UI moet worden gebruikt in plaats van de klassieke dialoog voor entiteitsbeschrijvingen."
+
+msgid "entity_ui_style_in_text"
+msgstr "Modern popup (alleen in-text)"
+
+msgid "entity_ui_style_menu"
+msgstr "Modern popup (alleen menu)"
 
 msgid "error_api_key_desc"
 msgstr "De opgegeven API-sleutel is geweigerd. Controleer uw instellingen en zorg ervoor dat de sleutel correct is."
@@ -360,7 +375,7 @@ msgid "later"
 msgstr "Later"
 
 msgid "linked_entries"
-msgstr "Gekoppelde vermeldingen"
+msgstr "Gekoppelde items"
 
 msgid "linked_entries_disabled"
 msgstr "Uitgeschakeld"
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "Opzoeken van '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Gedeeltelijke overeenkomst – '%s' tonen voor je zoekopdracht. Tik hieronder om de exacte term op te halen."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -452,14 +467,23 @@ msgstr "Logs wissen"
 msgid "menu_config_header"
 msgstr "--- Huidige configuratie ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Inhoud- & ophaalinstellingen"
+
 msgid "menu_custom_model_title"
 msgstr "Aangepast %s model"
 
 msgid "menu_desc_length_settings"
 msgstr "Beschrijvingslengte"
 
+msgid "menu_display_ui_settings"
+msgstr "Weergave- & UI-instellingen"
+
 msgid "menu_enter_custom_model"
 msgstr "Voer aangepast model in..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Stijl entiteitsbeschrijving"
 
 msgid "menu_fetch_author"
 msgstr "Auteursinformatie ophalen (AI)"
@@ -498,7 +522,7 @@ msgid "menu_primary_ai_model"
 msgstr "Primair AI-model"
 
 msgid "menu_reasoning_effort"
-msgstr "AI Redeneerinspanning"
+msgstr "AI-redeneerinspanning"
 
 msgid "menu_secondary_ai_model"
 msgstr "Secundair AI-model"
@@ -514,6 +538,12 @@ msgstr "Woordenlijst"
 
 msgid "menu_timeline"
 msgstr "Tijdlijn"
+
+msgid "menu_ui_popup_intext"
+msgstr "Voetnootstijl gebruiken voor in-text-opzoeken"
+
+msgid "menu_ui_popup_menu"
+msgstr "Voetnootstijl gebruiken voor menu-opzoeken"
 
 msgid "menu_update_xray"
 msgstr "X-Ray-gegevens bijwerken"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Geen X-Ray-gegevens gevonden voor dit boek. Wilt u deze nu ophalen via AI?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Geen duplicaten gevonden."
 
 msgid "no_historical_data"
 msgstr "Nog geen gegevens over historische figuren.\n\nGebruik eerst 'X-Ray-gegevens ophalen'.\n\nAI zal echte historische\nfiguren detecteren die in het boek worden genoemd."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Nog geen locatiegegevens. Gebruik eerst 'X-Ray-gegevens ophalen'."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Geen samenvoegingen uitgevoerd."
 
 msgid "no_terms_data"
 msgstr "Nog geen termengegevens. Gebruik eerst 'X-Ray-gegevens ophalen'."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "De AI heeft %d mogelijke duplicaat/duplicaten gevonden van de laatste opvraag. Nu controleren?"
 
 msgid "plugin_description"
 msgstr "Transformeer uw leeservaring met AI-gestuurde boekanalyse, net als Amazon Kindle X-Ray!"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Niet ingesteld (Standaard)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "Opnieuw zoeken naar '%s'"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Seriecontext geladen (%d eerdere boeken)."
 
 msgid "series_context_prompt_text"
-msgstr "Dit lijkt Boek %d van '%s' te zijn. Een samenvatting laden van de eerdere %d boek(en)?\n\n(U kunt dit uitschakelen in Instellingen → Seriecontext)"
+msgstr "Dit lijkt Boek %d van '%s' te zijn. Een samenvatting van de voorgaande %d boek(en) laden?\n\n(U kunt dit uitschakelen in Instellingen → Seriecontext)"
 
 msgid "series_context_prompt_title"
 msgstr "Serie gedetecteerd"

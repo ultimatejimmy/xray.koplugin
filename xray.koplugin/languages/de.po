@@ -9,7 +9,7 @@ msgid "about"
 msgstr "Über"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "KI-Fehler: "
 
 msgid "ai_fetch_complete"
 msgstr "Erfolgreich von %s abgerufen!\n\nBuch: %s\nAutor: %s\n\nCharaktere: %d\nOrte: %d\nThemen: %d\nTimeline-Ereignisse: %d\nHistorische Personen: %d\n\n%s\n\nZUSAMMENFASSUNG:\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "KI-Abruf abgeschlossen!"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "Ein KI-API-Schlüssel ist erforderlich."
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "KI-Duplikat erkannt"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "%d Paar(e) erfolgreich zusammengeführt."
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "KI sucht nach Duplikaten..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "Deaktiviert"
@@ -87,7 +87,7 @@ msgid "beta_preference_desc"
 msgstr "Wählen Sie Ihren bevorzugten Update-Kanal:"
 
 msgid "book_mode_auto"
-msgstr "Auto"
+msgstr "Automatisch"
 
 msgid "book_mode_desc"
 msgstr "Wählen Sie den Modus für dieses Buch."
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Buchmodus gespeichert!"
 
 msgid "book_type_about"
-msgstr "Der Buchtyp bestimmt, welche AI-Extraktionsstrategie verwendet wird und welche Funktionen verfügbar sind.\n\n- Belletristik: Konzentriert sich auf Erzählung, Charaktere und Handlung.\n- Sachbuch: Konzentriert sich auf Begriffe, Konzepte und historische Personen.\n\n'Auto-Erkennung' lässt die AI nach dem ersten Abruf entscheiden."
+msgstr "Der Buchtyp bestimmt, welche KI-Extraktionsstrategie verwendet wird und welche Funktionen verfügbar sind.\n\n- Belletristik: Konzentriert sich auf Handlung, Charaktere und Zeitleiste.\n- Sachbuch: Konzentriert sich auf Begriffe, Konzepte und historische Persönlichkeiten.\n\n'Auto-Detect' lässt die KI nach dem ersten Abruf entscheiden."
 
 msgid "book_type_auto"
 msgstr "Auto-Erkennung"
@@ -165,22 +165,22 @@ msgid "custom_api_endpoint_hint"
 msgstr "z.B. https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Custom API %d — Endpunkt-URL"
+msgstr "Benutzerdefinierte API %d — Endpunkt-URL"
 
 msgid "custom_api_is_reasoning"
-msgstr "Ist Reasoning-Modell (z.B. DeepSeek-R1)"
+msgstr "Ist ein Denkmodell (z. B. DeepSeek-R1)"
 
 msgid "custom_api_key_title"
-msgstr "Custom API %d — API-Schlüssel"
+msgstr "Benutzerdefinierte API %d — API-Schlüssel"
 
 msgid "custom_api_model_hint"
 msgstr "z.B. google/gemini-2.5-flash oder openai/gpt-4o"
 
 msgid "custom_api_model_title"
-msgstr "Custom API %d — Standardmodell"
+msgstr "Benutzerdefinierte API %d — Standardmodell"
 
 msgid "custom_api_name"
-msgstr "Custom API %d (OpenAI-kompatibel)"
+msgstr "Benutzerdefinierte API %d (OpenAI-kompatibel)"
 
 msgid "custom_api_not_configured"
 msgstr "(nicht konfiguriert — zum Einrichten tippen)"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Custom API %d Konfiguration gespeichert."
 
 msgid "desc_len_about_chars"
-msgstr "CHARAKTERBESCHREIBUNGEN\n\n• Kurz (~80 Zeichen): Name, Rolle und eine kurze Notiz.\n• Standard (~200 Zeichen): Standard-Analyse.\n• Detailliert (~350 Zeichen): Umfangreiche Charakterstudie mit Eigenschaften und Motivationen.\n• Sehr detailliert (~500 Zeichen): Tiefe Analyse.\n\nKOMPROMISS\nLängere Beschreibungen → weniger Charaktere bei anfänglichen/vollständigen Abrufen. Nachfolgende 'Mehr abrufen'-Vorgänge sind davon nicht betroffen."
+msgstr "CHARAKTERBESCHREIBUNGEN\n\n• Kurz (~80 Zeichen): Name, Rolle und eine kurze Notiz.\n• Standard (~200 Zeichen): Standardanalyse.\n• Detailliert (~350 Zeichen): Reichhaltige Charakterstudie mit Eigenschaften und Motivationen.\n• Sehr detailliert (~500 Zeichen): Tiefgehende Analyse.\n\nTRADE-OFF\nLängere Beschreibungen → weniger Charaktere werden bei den ersten/vollständigen Abrufen zurückgegeben. Spätere Abrufe ('Fetch More') sind davon unbeeinflusst."
 
 msgid "desc_len_about_hist"
-msgstr "BIOGRAFIEN HISTORISCHER PERSONEN\n\n• Kurz (~50 Zeichen): Name und Hauptrolle.\n• Standard (~100 Zeichen): Standard-Biografie.\n• Detailliert (~200 Zeichen): Leben, Bedeutung und Kontext im Buch.\n• Sehr detailliert (~300 Zeichen): Umfassende Biografie.\n\nKOMPROMISS\nLängere Biografien → weniger historische Personen bei anfänglichen/vollständigen Abrufen."
+msgstr "BIOGRAFIEN HISTORISCHER PERSÖNLICHKEITEN\n\n• Kurz (~50 Zeichen): Name und Hauptrolle.\n• Standard (~100 Zeichen): Standardbiografie.\n• Detailliert (~200 Zeichen): Leben, Bedeutung und Buchkontext.\n• Sehr detailliert (~300 Zeichen): Umfassende Biografie.\n\nTRADE-OFF\nLängere Biografien → weniger historische Persönlichkeiten werden bei den ersten/vollständigen Abrufen zurückgegeben."
 
 msgid "desc_len_about_locs"
-msgstr "STANDORTBESCHREIBUNGEN\n\n• Kurz (~50 Zeichen): Ortsname und Kontext in einer Zeile.\n• Standard (~100 Zeichen): Standard-Beschreibung.\n• Detailliert (~200 Zeichen): Atmosphäre, Bedeutung und Ereignisse.\n• Sehr detailliert (~300 Zeichen): Vollständige Beschreibung.\n\nKOMPROMISS\nLängere Beschreibungen → weniger Standorte bei anfänglichen/vollständigen Abrufen."
+msgstr "ORTSBESCHREIBUNGEN\n\n• Kurz (~50 Zeichen): Ortsname und einzeiliger Kontext.\n• Standard (~100 Zeichen): Standardbeschreibung.\n• Detailliert (~200 Zeichen): Atmosphäre, Bedeutung und Ereignisse.\n• Sehr detailliert (~300 Zeichen): Vollständige Beschreibung.\n\nTRADE-OFF\nLängere Beschreibungen → weniger Orte werden bei den ersten/vollständigen Abrufen zurückgegeben."
 
 msgid "desc_len_about_timeline"
-msgstr "ZEITSTRAHL — EIN EREIGNIS PRO KAPITEL (immer)\n\nDer Zeitstrahl enthält immer genau einen Eintrag pro Kapitel. Diese Einstellung beeinflusst nur, wie detailliert die jeweilige Zusammenfassung ist.\n\n• Kurz (~50 Zeichen): Kurze Zusammenfassung in einem Satz.\n• Standard (~80 Zeichen): Standard-Zusammenfassung.\n• Detailliert (~150 Zeichen): Inklusive Kontext und Konsequenzen.\n• Sehr detailliert (~200 Zeichen): Vollständige narrative Beschreibung.\n\nFür den Zeitstrahl gibt es keinen Kompromiss bei der Anzahl."
+msgstr "ZEITLEISTE — IMMER EIN EREIGNIS PRO KAPITEL\n\nDie Zeitleiste hat immer genau einen Eintrag pro Kapitel. Diese Einstellung beeinflusst nur, wie viele Details in jeder Zusammenfassung enthalten sind.\n\n• Kurz (~50 Zeichen): Kurze Zusammenfassung in einem Satz.\n• Standard (~80 Zeichen): Standardmäßige Zusammenfassung.\n• Detailliert (~150 Zeichen): Enthält Kontext und Konsequenzen.\n• Sehr detailliert (~200 Zeichen): Ausführliche narrative Beschreibung.\n\nFür die Zeitleiste gibt es keinen Trade-Off bei der Anzahl der Einträge."
 
 msgid "desc_len_default"
 msgstr "Standard"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "Für dieses Buch nicht mehr fragen"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "Charaktere"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "Orte"
 
 msgid "entity_not_found"
 msgstr "'%s' wurde nicht als Charakter oder Ort gefunden."
+
+msgid "entity_ui_style_both"
+msgstr "Modernes Popup (Beide)"
+
+msgid "entity_ui_style_classic"
+msgstr "Klassischer Dialog"
+
+msgid "entity_ui_style_desc"
+msgstr "Wählen Sie, wann die neue moderne Popup-Benutzeroberfläche anstelle des klassischen Dialogs für Entitätsbeschreibungen verwendet werden soll."
+
+msgid "entity_ui_style_in_text"
+msgstr "Modernes Popup (nur In-Text)"
+
+msgid "entity_ui_style_menu"
+msgstr "Modernes Popup (nur Menü)"
 
 msgid "error_api_key_desc"
 msgstr "Der bereitgestellte API-Schlüssel wurde abgelehnt. Bitte überprüfen Sie Ihre Einstellungen und stellen Sie sicher, dass der Schlüssel korrekt ist."
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "Suche nach '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "Teilweise Übereinstimmung – zeige '%s' für Ihre Anfrage. Tippen Sie unten, um den genauen Begriff abzurufen."
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -426,7 +441,7 @@ msgid "menu_ai_settings"
 msgstr "KI-Einstellungen"
 
 msgid "menu_api_keys"
-msgstr "API Keys & Providers"
+msgstr "API-Schlüssel & Anbieter"
 
 msgid "menu_author_info"
 msgstr "Autor-Info"
@@ -452,14 +467,23 @@ msgstr "Logs löschen"
 msgid "menu_config_header"
 msgstr "--- Aktuelle Konfiguration ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "Inhalts- & Abruf-Einstellungen"
+
 msgid "menu_custom_model_title"
 msgstr "Benutzerdefiniertes %s-Modell"
 
 msgid "menu_desc_length_settings"
 msgstr "Länge der Beschreibung"
 
+msgid "menu_display_ui_settings"
+msgstr "Anzeige- & Benutzeroberflächen-Einstellungen"
+
 msgid "menu_enter_custom_model"
 msgstr "Benutzerdefiniertes Modell eingeben..."
+
+msgid "menu_entity_ui_mode"
+msgstr "Stil der Entitätsbeschreibung"
 
 msgid "menu_fetch_author"
 msgstr "Autor-Info abrufen (KI)"
@@ -498,13 +522,13 @@ msgid "menu_primary_ai_model"
 msgstr "Primäres KI-Modell"
 
 msgid "menu_reasoning_effort"
-msgstr "AI Reasoning Effort"
+msgstr "KI-Denkaufwand"
 
 msgid "menu_secondary_ai_model"
 msgstr "Sekundäres KI-Modell"
 
 msgid "menu_series_context"
-msgstr "Series Context"
+msgstr "Reihen-Kontext"
 
 msgid "menu_settings"
 msgstr "Einstellungen"
@@ -514,6 +538,12 @@ msgstr "Glossar"
 
 msgid "menu_timeline"
 msgstr "Zeitstrahl"
+
+msgid "menu_ui_popup_intext"
+msgstr "Fußnoten-Stil für In-Text-Suche verwenden"
+
+msgid "menu_ui_popup_menu"
+msgstr "Fußnoten-Stil für Menü-Suche verwenden"
 
 msgid "menu_update_xray"
 msgstr "X-Ray Daten aktualisieren (Zusammenführen)"
@@ -528,7 +558,7 @@ msgid "menu_xray_mode"
 msgstr "X-Ray Modus-Einstellungen"
 
 msgid "merge_back"
-msgstr "← Back"
+msgstr "← Zurück"
 
 msgid "merge_button"
 msgstr "Merge"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "Keine X-Ray-Daten für dieses Buch gefunden. Möchten Sie diese jetzt von der KI abrufen?"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "Keine Duplikate gefunden."
 
 msgid "no_historical_data"
 msgstr "Noch keine Daten zu historischen Personen.\n\nBitte nutzen Sie zuerst 'X-Ray Daten abrufen'.\n\nKI wird reale historische Personen im Buch erkennen."
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "Noch keine Ortsdaten. Bitte nutzen Sie zuerst 'X-Ray Daten abrufen'."
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "Keine Zusammenführungen durchgeführt."
 
 msgid "no_terms_data"
 msgstr "Noch keine Begriffsdaten vorhanden. Bitte verwenden Sie zuerst 'Fetch X-Ray Data'."
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "Die KI hat %d mögliche(s) Duplikat(e) aus dem letzten Abruf gefunden. Jetzt überprüfen?"
 
 msgid "plugin_description"
 msgstr "Verbessern Sie Ihr Leseerlebnis mit KI-gestützter Buchanalyse, genau wie Amazon Kindle X-Ray!"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "Nicht festgelegt (Standard)"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "Erneute Suche nach '%s'"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Series Context geladen (%d vorherige Bücher)."
 
 msgid "series_context_prompt_text"
-msgstr "Dies scheint Buch %d von '%s' zu sein. Eine Zusammenfassung des/der vorherigen %d Buch/Bücher laden?\n\n(Sie können dies in den Einstellungen → Series Context deaktivieren)"
+msgstr "Dies scheint Buch %d von '%s' zu sein. Eine Zusammenfassung der vorherigen %d Buch/Bücher laden?\n\n(Sie können dies in Einstellungen → Reihen-Kontext deaktivieren)"
 
 msgid "series_context_prompt_title"
 msgstr "Serie erkannt"
@@ -693,7 +723,7 @@ msgid "series_no_prior_detected"
 msgstr "Keine vorherigen Bücher für diese Serie erkannt."
 
 msgid "series_prior_books_header"
-msgstr "── Prior Books ──"
+msgstr "── Vorherige Bücher ──"
 
 msgid "series_prior_label"
 msgstr "[Vorherige]"
@@ -804,5 +834,5 @@ msgid "xray_mode_desc"
 msgstr "Fügt eine 'X-Ray'-Schaltfläche zu Wörterbuch- und Auswahlmenüs für sofortige Lookups hinzu."
 
 msgid "yes"
-msgstr "Yes"
+msgstr "Ja"
 

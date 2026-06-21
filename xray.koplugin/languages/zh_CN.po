@@ -9,7 +9,7 @@ msgid "about"
 msgstr "关于"
 
 msgid "ai_error"
-msgstr "AI Error: "
+msgstr "AI 错误: "
 
 msgid "ai_fetch_complete"
 msgstr "已成功从 %s 获取！\n\n书名：%s\n作者：%s\n\n角色数：%d\n地点数：%d\n主题数：%d\n时间线事件：%d\n历史人物：%d\n\n%s\n\n摘要：\n%s"
@@ -18,16 +18,16 @@ msgid "ai_fetch_complete_msg"
 msgstr "AI 获取完成！"
 
 msgid "ai_key_required"
-msgstr "An AI API key is required."
+msgstr "需要配置 AI API 密钥。"
 
 msgid "ai_merge_confirm_title"
-msgstr "AI Duplicate Detected"
+msgstr "AI 发现重复条目"
 
 msgid "ai_merged_n"
-msgstr "Merged %d pair(s) successfully."
+msgstr "成功合并了 %d 对重复项。"
 
 msgid "ai_scanning_duplicates"
-msgstr "AI is scanning for duplicates..."
+msgstr "AI 正在扫描重复项..."
 
 msgid "auto_dupe_check_disabled"
 msgstr "已禁用"
@@ -102,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "书籍模式已保存！"
 
 msgid "book_type_about"
-msgstr "The Book Type determines which AI extraction strategy is used and which features are available.\n\n- Fiction: Focuses on narrative, characters, and plot timeline.\n- Non-Fiction: Focuses on terms, concepts, and historical figures.\n\n'Auto-Detect' will let the AI decide after the first fetch."
+msgstr "书籍类型决定了 AI 提取信息的侧重策略与可用功能。\n\n- 小说 (Fiction): 聚焦于叙事结构、登场角色与故事时间线。\n- 非小说 (Non-Fiction): 聚焦于专业术语、核心概念与相关历史人物。\n\n“自动检测”会在首次提取后由 AI 自动判断书籍类型。"
 
 msgid "book_type_auto"
 msgstr "自动检测"
@@ -144,7 +144,7 @@ msgid "config_default_gemini"
 msgstr "  默认 (Gemini)"
 
 msgid "config_model"
-msgstr "  模型："
+msgstr "  模型: "
 
 msgid "config_provider"
 msgstr "  服务商："
@@ -165,22 +165,22 @@ msgid "custom_api_endpoint_hint"
 msgstr "例如：https://openrouter.ai/api/v1/chat/completions"
 
 msgid "custom_api_endpoint_title"
-msgstr "Custom API %d — Endpoint URL"
+msgstr "自定义 API %d — 终结点 URL"
 
 msgid "custom_api_is_reasoning"
-msgstr "Is Reasoning Model (e.g. DeepSeek-R1)"
+msgstr "是否为推理模型 (如 DeepSeek-R1)"
 
 msgid "custom_api_key_title"
-msgstr "Custom API %d — API Key"
+msgstr "自定义 API %d — API 密钥"
 
 msgid "custom_api_model_hint"
 msgstr "例如：google/gemini-2.5-flash 或 openai/gpt-4o"
 
 msgid "custom_api_model_title"
-msgstr "Custom API %d — Default Model"
+msgstr "自定义 API %d — 默认模型"
 
 msgid "custom_api_name"
-msgstr "Custom API %d (OpenAI-compatible)"
+msgstr "自定义 API %d (OpenAI 兼容)"
 
 msgid "custom_api_not_configured"
 msgstr "（未配置 — 点击设置）"
@@ -189,16 +189,16 @@ msgid "custom_api_saved"
 msgstr "Custom API %d 配置已保存。"
 
 msgid "desc_len_about_chars"
-msgstr "CHARACTER DESCRIPTIONS\n\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Deep analysis.\n\nTRADE-OFF\nLonger descriptions → fewer characters returned during initial/full fetches. Subsequent 'Fetch More' runs are unaffected."
+msgstr "角色描述长度\n\n• 简短 (~80 字): 角色名称、身份与一句话简评。\n• 默认 (~200 字): 标准分析描述。\n• 详细 (~350 字): 包含性格特征与行为动机的丰富角色研究。\n• 极详细 (~500 字): 深度角色剖析。\n\n字数平衡\n描述长度越长 → 首次或全量获取时返回的角色总数可能会越少。后续运行“获取更多”不受此限制影响。"
 
 msgid "desc_len_about_hist"
-msgstr "HISTORICAL FIGURE BIOGRAPHIES\n\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\nTRADE-OFF\nLonger biographies → fewer historical figures returned during initial/full fetches."
+msgstr "历史人物生平长度\n\n• 简短 (~50 字): 人名与主要生平身份。\n• 默认 (~100 字): 标准详细度传记。\n• 详细 (~200 字): 生平经历、历史意义以及与本书关联的背景。\n• 极详细 (~300 字): 详尽的完整传记。\n\n字数平衡\n传记长度越长 → 首次或全量获取时返回的历史人物总数可能会越少。"
 
 msgid "desc_len_about_locs"
-msgstr "LOCATION DESCRIPTIONS\n\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Full description.\n\nTRADE-OFF\nLonger descriptions → fewer locations returned during initial/full fetches."
+msgstr "地点描述长度\n\n• 简短 (~50 字): 地点名称与单行背景介绍。\n• 默认 (~100 字): 标准详细度描述。\n• 详细 (~200 字): 地点氛围、历史意义与关联事件。\n• 极详细 (~300 字): 完整的详尽描述。\n\n字数平衡\n描述长度越长 → 首次或全量获取时返回的地点总数可能会越少。"
 
 msgid "desc_len_about_timeline"
-msgstr "TIMELINE — ONE EVENT PER CHAPTER (always)\n\nTimeline always has exactly one entry per chapter. This setting only affects how much detail is included in each summary.\n\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n• Very Detailed (~200 chars): Full narrative description.\n\nThere is no count trade-off for the timeline."
+msgstr "故事时间线 — 每章固定记录一个事件（始终有效）\n\n时间线为每章严格记录一个条目。此设置仅影响每章摘要的详细程度。\n\n• 简短 (~50 字): 简短的一句话摘要。\n• 默认 (~80 字): 标准详细度的摘要。\n• 详细 (~150 字): 包含前因后果与上下文细节。\n• 极详细 (~200 字): 完整的叙事性描述。\n\n时间线的条目总数不会因长度设置而减少。"
 
 msgid "desc_len_default"
 msgstr "默认"
@@ -216,13 +216,28 @@ msgid "dont_ask_again"
 msgstr "不再询问此书"
 
 msgid "entity_label_characters"
-msgstr "characters"
+msgstr "角色"
 
 msgid "entity_label_locations"
-msgstr "locations"
+msgstr "地点"
 
 msgid "entity_not_found"
 msgstr "未发现 '%s' 为角色或地点。"
+
+msgid "entity_ui_style_both"
+msgstr "现代弹窗 (全开启)"
+
+msgid "entity_ui_style_classic"
+msgstr "经典对话框"
+
+msgid "entity_ui_style_desc"
+msgstr "选择何时使用新的“现代弹窗”界面来替代“经典对话框”显示实体描述。"
+
+msgid "entity_ui_style_in_text"
+msgstr "现代弹窗 (仅书中)"
+
+msgid "entity_ui_style_menu"
+msgstr "现代弹窗 (仅菜单)"
 
 msgid "error_api_key_desc"
 msgstr "提供的 API Key 被拒绝。请检查您的设置并确保 Key 正确无误。"
@@ -333,7 +348,7 @@ msgid "label_gender"
 msgstr "性别"
 
 msgid "label_name"
-msgstr "姓名"
+msgstr "名称"
 
 msgid "label_occupation"
 msgstr "职业"
@@ -360,7 +375,7 @@ msgid "later"
 msgstr "Later"
 
 msgid "linked_entries"
-msgstr "关联条目"
+msgstr "链接条目"
 
 msgid "linked_entries_disabled"
 msgstr "已禁用"
@@ -378,7 +393,7 @@ msgid "looking_up_msg"
 msgstr "正在查询 '%s'..."
 
 msgid "low_conf_match"
-msgstr "Partial match — showing '%s' for your query. Tap below to fetch the exact term."
+msgstr "部分匹配 — 已显示“%s”的关联信息。点击下方重新获取精确词条。"
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -426,7 +441,7 @@ msgid "menu_ai_settings"
 msgstr "AI 设置"
 
 msgid "menu_api_keys"
-msgstr "API Keys & Providers"
+msgstr "API 密钥与服务商"
 
 msgid "menu_author_info"
 msgstr "作者信息"
@@ -452,14 +467,23 @@ msgstr "清除日志"
 msgid "menu_config_header"
 msgstr "--- 当前配置 ---"
 
+msgid "menu_content_fetch_settings"
+msgstr "内容获取设置"
+
 msgid "menu_custom_model_title"
 msgstr "自定义 %s 模型"
 
 msgid "menu_desc_length_settings"
 msgstr "描述长度"
 
+msgid "menu_display_ui_settings"
+msgstr "显示与界面设置"
+
 msgid "menu_enter_custom_model"
 msgstr "输入自定义模型..."
+
+msgid "menu_entity_ui_mode"
+msgstr "实体描述显示样式"
 
 msgid "menu_fetch_author"
 msgstr "获取作者信息 (AI)"
@@ -498,13 +522,13 @@ msgid "menu_primary_ai_model"
 msgstr "主位 AI 模型"
 
 msgid "menu_reasoning_effort"
-msgstr "AI 推理强度"
+msgstr "AI 推理深度"
 
 msgid "menu_secondary_ai_model"
 msgstr "次位 AI 模型"
 
 msgid "menu_series_context"
-msgstr "Series Context"
+msgstr "系列上下文"
 
 msgid "menu_settings"
 msgstr "设置"
@@ -514,6 +538,12 @@ msgstr "术语表"
 
 msgid "menu_timeline"
 msgstr "时间线"
+
+msgid "menu_ui_popup_intext"
+msgstr "书中查询使用脚注样式"
+
+msgid "menu_ui_popup_menu"
+msgstr "菜单查询使用脚注样式"
 
 msgid "menu_update_xray"
 msgstr "更新 X-Ray 数据 (合并)"
@@ -528,7 +558,7 @@ msgid "menu_xray_mode"
 msgstr "X-Ray 模式设置"
 
 msgid "merge_back"
-msgstr "← Back"
+msgstr "← 返回"
 
 msgid "merge_button"
 msgstr "Merge"
@@ -597,7 +627,7 @@ msgid "no_data_prompt"
 msgstr "未找到此书的 X-Ray 数据。是否现在通过 AI 获取？"
 
 msgid "no_duplicates_found"
-msgstr "No duplicates found."
+msgstr "未发现重复项。"
 
 msgid "no_historical_data"
 msgstr "暂无历史人物数据。\n\n请先使用“获取 X-Ray 数据”。\n\nAI 将自动检测书中提及的真实历史人物。"
@@ -606,7 +636,7 @@ msgid "no_location_data"
 msgstr "暂无地点数据。请先使用“获取 X-Ray 数据”。"
 
 msgid "no_merges_performed"
-msgstr "No merges were performed."
+msgstr "未执行任何合并。"
 
 msgid "no_terms_data"
 msgstr "尚无术语数据。请先使用“Fetch X-Ray Data”。"
@@ -621,7 +651,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "AI 发现了上次获取的 %d 个潜在重复项。现在查看吗？"
 
 msgid "plugin_description"
 msgstr "使用 AI 驱动的书籍分析提升您的阅读体验，就像 Kindle X-Ray 一样！"
@@ -648,7 +678,7 @@ msgid "reasoning_unset"
 msgstr "未设置（默认）"
 
 msgid "relookup_button"
-msgstr "Re-lookup '%s'"
+msgstr "重新查询“%s”"
 
 msgid "review"
 msgstr "Review"
@@ -681,7 +711,7 @@ msgid "series_context_loaded"
 msgstr "Series context 已加载（包含 %d 本前序书籍）。"
 
 msgid "series_context_prompt_text"
-msgstr "This appears to be Book %d of '%s'. Load a recap of the previous %d book(s)?\n\n(You can disable this in Settings → Series Context)"
+msgstr "这似乎是《%2$s》的第 %1$d 册。是否加载前 %3$d 册的书籍回顾？\n\n(您可以在 设置 → 系列上下文 中关闭此提示)"
 
 msgid "series_context_prompt_title"
 msgstr "检测到系列书籍"
@@ -693,7 +723,7 @@ msgid "series_no_prior_detected"
 msgstr "未检测到该系列的前序书籍。"
 
 msgid "series_prior_books_header"
-msgstr "── Prior Books ──"
+msgstr "── 前作回顾 ──"
 
 msgid "series_prior_label"
 msgstr "[前序]"
