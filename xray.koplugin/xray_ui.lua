@@ -388,7 +388,7 @@ function XRayBottomPopup:init()
     }
 
     local pad_top_px    = math.floor(fs * 0.55)
-    local pad_bottom_px = math.floor(fs * 0.35)
+    local pad_bottom_px = math.floor(fs * 0.85)
     if Device:isAndroid() then
         -- Add a safe area inset at the bottom for rounded screens and gesture bar
         local safe_bottom = 20
