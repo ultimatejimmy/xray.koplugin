@@ -1,0 +1,841 @@
+msgid ""
+msgstr ""
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "about"
+msgstr "حول"
+
+msgid "ai_error"
+msgstr "خطأ الذكاء الاصطناعي: "
+
+msgid "ai_fetch_complete"
+msgstr "تم الجلب بنجاح من %s !\n\nالكتاب: %s\nالمؤلف: %s\n\nالشخصيات: %d\nالمواقع: %d\nالمواضيع: %d\nأحداث المخطط الزمني: %d\nالشخصيات التاريخية: %d\n\n%s\n\nالملخص:\n%s"
+
+msgid "ai_fetch_complete_msg"
+msgstr "اكتمل جلب الذكاء الاصطناعي!"
+
+msgid "ai_key_required"
+msgstr "مطلوب مفتاح API للذكاء الاصطناعي."
+
+msgid "ai_merge_confirm_title"
+msgstr "تم الكشف عن تكرار بواسطة الذكاء الاصطناعي"
+
+msgid "ai_merged_n"
+msgstr "تم دمج %d زوج (أزواج) بنجاح."
+
+msgid "ai_scanning_duplicates"
+msgstr "يقوم الذكاء الاصطناعي بالبحث عن التكرارات..."
+
+msgid "auto_dupe_check_disabled"
+msgstr "معطل"
+
+msgid "auto_dupe_check_enabled"
+msgstr "ممكن"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "حدد تفضيلك للكشف التلقائي عن التكرارات بواسطة الذكاء الاصطناعي:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "عند تمكينه، يطلب X-Ray تلقائيًا من الذكاء الاصطناعي التحقق من الشخصيات والمواقع المكررة بعد كل جلب للبيانات. إذا تم الكشف عن تكرارات، فسيتم مطالبتك بمراجعتها ودمجها.\n\nسيؤدي تعطيل هذا إلى إيقاف جميع عمليات فحص التكرار في الخلفية. لا يزال بإمكانك دمج التكرارات يدويًا عبر قائمة الشخصيات أو المواقع.\n\nملاحظة: تستخدم كل عملية تحقق استدعاءً واحدًا لـ API للذكاء الاصطناعي. قد يفضل المستخدمون في المستويات المجانية أو المحدودة الحصة تعطيل هذا."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "التحقق من التكرار"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "فاصل الصفحات"
+
+msgid "auto_update_aggressive"
+msgstr "مكثف: تحقق عند كل فصل جديد"
+
+msgid "auto_update_balanced"
+msgstr "متوازن: تحقق كل 5 دقائق كحد أقصى"
+
+msgid "auto_update_disabled"
+msgstr "معطل"
+
+msgid "auto_update_economical"
+msgstr "اقتصادي: تحقق كل 15 دقيقة كحد أقصى"
+
+msgid "auto_update_freq_about"
+msgstr "يتحقق التحديث التلقائي من بيانات الفصل الجديد في الخلفية أثناء القراءة.\n\nالحدود والأداء\nيمكن أن تؤدي طلبات الخلفية المتكررة إلى استنزاف عمر البطارية وقد تتجاوز حدود معدل طلبات مزود الذكاء الاصطناعي (خاصة في النماذج الاحترافية Pro).\n\nالأوضاع\n• فائق Ultra: يتحقق كل عدد N من الصفحات التي تقوم بتكوينها (في منتصف الفصل)\n• مكثف Aggressive: يتحقق في كل مرة تدخل فيها فصلاً جديدًا\n• متوازن Balanced: يتحقق كل 5 دقائق كحد أقصى (موصى به)\n• اقتصادي Economical: يتحقق كل 15 دقيقة كحد أقصى\n• متباعد Sparse: يتحقق كل 30 دقيقة كحد أقصى\n• معطل Disabled: لا توجد طلبات في الخلفية\n\nملاحظة: إذا تم تخطي فصل بسبب حدود التكرار، فسيقوم X-Ray بتضمينه تلقائيًا في جلب الخلفية التالي."
+
+msgid "auto_update_freq_label"
+msgstr "تردد الجلب في الخلفية:"
+
+msgid "auto_update_sparse"
+msgstr "متباعد: تحقق كل 30 دقيقة كحد أقصى"
+
+msgid "auto_update_ultra"
+msgstr "فائق: تحقق كل %d صفحة"
+
+msgid "back_to_reading"
+msgstr "العودة إلى القراءة"
+
+msgid "beta_channel_desc"
+msgstr "تتيح لك القناة التجريبية تلقي إصدارات تجريبية من برنامج X-Ray المساعد. تتضمن هذه الإصدارات أحدث الميزات وإصلاحات الأخطاء ولكنها قد تكون أقل استقرارًا من الإصدار المستقر."
+
+msgid "beta_disabled"
+msgstr "القناة المستقرة (موصى بها)"
+
+msgid "beta_enabled"
+msgstr "تم تمكين القناة التجريبية"
+
+msgid "beta_preference_desc"
+msgstr "حدد تفضيل قناة التحديث الخاصة بك:"
+
+msgid "book_mode_auto"
+msgstr "تلقائي"
+
+msgid "book_mode_desc"
+msgstr "اختر الوضع لهذا الكتاب."
+
+msgid "book_mode_fiction"
+msgstr "خيال"
+
+msgid "book_mode_nonfiction"
+msgstr "غير خيالي"
+
+msgid "book_mode_saved"
+msgstr "تم حفظ وضع الكتاب!"
+
+msgid "book_type_about"
+msgstr "يحدد نوع الكتاب استراتيجية استخراج الذكاء الاصطناعي المستخدمة والميزات المتاحة.\n\n- خيال: يركز على السرد والشخصيات والمخطط الزمني للحبكة.\n- غير خيالي: يركز على المصطلحات والمفاهيم والشخصيات التاريخية.\n\nسيسمح 'الكشف التلقائي' للذكاء الاصطناعي باتخاذ القرار بعد الجلب الأول."
+
+msgid "book_type_auto"
+msgstr "كشف تلقائي"
+
+msgid "book_type_fiction"
+msgstr "خيال"
+
+msgid "book_type_nonfiction"
+msgstr "غير خيالي"
+
+msgid "book_type_saved"
+msgstr "تم حفظ نوع الكتاب!"
+
+msgid "cache_cleared"
+msgstr "تم مسح الذاكرة المؤقتة!\n\nيمكنك الآن جلب بيانات جديدة:\nالقائمة ← X-Ray ← جلب بيانات الذكاء الاصطناعي"
+
+msgid "cache_save_failed"
+msgstr "فشل حفظ الذاكرة المؤقتة"
+
+msgid "cache_save_success"
+msgstr "✓ تم تحديث الذاكرة المؤقتة."
+
+msgid "cache_saved"
+msgstr "تم الحفظ في الذاكرة المؤقتة!"
+
+msgid "cancel"
+msgstr "إلغاء"
+
+msgid "character_not_found"
+msgstr "لم يتم العثور على شخصية تطابق '%s'"
+
+msgid "close"
+msgstr "إغلاق"
+
+msgid "config_api_key_label"
+msgstr "%s مفتاح API: "
+
+msgid "config_default_gemini"
+msgstr "  الافتراضي (Gemini)"
+
+msgid "config_model"
+msgstr "  النموذج: "
+
+msgid "config_provider"
+msgstr "  المزود: "
+
+msgid "config_status_not_set"
+msgstr "غير معين"
+
+msgid "config_status_set"
+msgstr "معين"
+
+msgid "current_language"
+msgstr "ar"
+
+msgid "current_mode"
+msgstr "الحالي: "
+
+msgid "custom_api_endpoint_hint"
+msgstr "مثال: https://openrouter.ai/api/v1/chat/completions"
+
+msgid "custom_api_endpoint_title"
+msgstr "واجهة API مخصصة %d — عنوان URL للواجهة"
+
+msgid "custom_api_is_reasoning"
+msgstr "نموذج تفكير (مثل: DeepSeek-R1)"
+
+msgid "custom_api_key_title"
+msgstr "واجهة API مخصصة %d — مفتاح API"
+
+msgid "custom_api_model_hint"
+msgstr "مثال: google/gemini-2.5-flash أو openai/gpt-4o"
+
+msgid "custom_api_model_title"
+msgstr "واجهة API مخصصة %d — النموذج الافتراضي"
+
+msgid "custom_api_name"
+msgstr "واجهة API مخصصة %d (متوافقة مع OpenAI)"
+
+msgid "custom_api_not_configured"
+msgstr "(غير مكوّن — انقر للإعداد)"
+
+msgid "custom_api_saved"
+msgstr "تم حفظ إعدادات واجهة API المخصصة %d."
+
+msgid "desc_len_about_chars"
+msgstr "أوصاف الشخصيات\n\n• قصير (~80 حرفًا): الاسم، الدور، وملاحظة قصيرة.\n• افتراضي (~200 حرفًا): تحليل قياسي.\n• مفصل (~350 حرفًا): دراسة غنية للشخصية مع السمات والدوافع.\n• مفصل جدًا (~500 حرفًا): تحليل عميق.\n\nالمفاضلة\nأوصاف أطول ← شخصيات أقل يتم إرجاعها أثناء عمليات الجلب الأولية/الكاملة. لا تتأثر عمليات 'جلب المزيد' اللاحقة."
+
+msgid "desc_len_about_hist"
+msgstr "سير الشخصيات التاريخية\n\n• قصير (~50 حرفًا): الاسم والدور الأساسي.\n• افتراضي (~100 حرفًا): سيرة ذاتية قياسية.\n• مفصل (~200 حرفًا): الحياة، الأهمية، وسياق الكتاب.\n• مفصل جدًا (~300 حرفًا): سيرة ذاتية شاملة.\n\nالمفاضلة\nسير ذاتية أطول ← شخصيات تاريخية أقل يتم إرجاعها أثناء عمليات الجلب الأولية/الكاملة."
+
+msgid "desc_len_about_locs"
+msgstr "أوصاف المواقع\n\n• قصير (~50 حرفًا): اسم المكان وسياق من سطر واحد.\n• افتراضي (~100 حرفًا): وصف قياسي.\n• مفصل (~200 حرفًا): الأجواء، الأهمية، والأحداث.\n• مفصل جدًا (~300 حرفًا): وصف كامل.\n\nالمفاضلة\nأوصاف أطول ← مواقع أقل يتم إرجاعها أثناء عمليات الجلب الأولية/الكاملة."
+
+msgid "desc_len_about_timeline"
+msgstr "المخطط الزمني — حدث واحد لكل فصل (دائمًا)\n\nيحتوي المخطط الزمني دائمًا على إدخال واحد بالضبط لكل فصل. يؤثر هذا الإعداد فقط على كمية التفاصيل المضمنة في كل ملخص.\n\n• قصير (~50 حرفًا): ملخص قصير بعبارة واحدة.\n• افتراضي (~80 حرفًا): ملخص قياسي.\n• مفصل (~150 حرفًا): يتضمن السياق والعواقب.\n• مفصل جدًا (~200 حرفًا): وصف سردي كامل.\n\nلا توجد مفاضلة في عدد الأحداث بالنسبة للمخطط الزمني."
+
+msgid "desc_len_default"
+msgstr "افتراضي"
+
+msgid "desc_len_detailed"
+msgstr "مفصل"
+
+msgid "desc_len_short"
+msgstr "قصير"
+
+msgid "desc_len_v_detailed"
+msgstr "مفصل جدًا"
+
+msgid "dont_ask_again"
+msgstr "لا تسألني مرة أخرى"
+
+msgid "entity_label_characters"
+msgstr "الشخصيات"
+
+msgid "entity_label_locations"
+msgstr "المواقع"
+
+msgid "entity_not_found"
+msgstr "لم يتم العثور على '%s' كشخصية أو موقع."
+
+msgid "entity_ui_style_both"
+msgstr "نافذة منبثقة حديثة (كلاهما)"
+
+msgid "entity_ui_style_classic"
+msgstr "مربع حوار كلاسيكي"
+
+msgid "entity_ui_style_desc"
+msgstr "حدد متى يتم استخدام واجهة النافذة المنبثقة الحديثة الجديدة بدلاً من مربع الحوار الكلاسيكي لأوصاف الكيانات."
+
+msgid "entity_ui_style_in_text"
+msgstr "نافذة منبثقة حديثة (في النص فقط)"
+
+msgid "entity_ui_style_menu"
+msgstr "نافذة منبثقة حديثة (في القائمة فقط)"
+
+msgid "error_api_key_desc"
+msgstr "تم رفض مفتاح API المقدم. يرجى التحقق من إعداداتك والتأكد من صحة المفتاح."
+
+msgid "error_api_key_title"
+msgstr "مفتاح API غير صالح"
+
+msgid "error_extract_text"
+msgstr "خطأ: تعذر استخراج نص الكتاب."
+
+msgid "error_model_access_desc"
+msgstr "مفتاح API الخاص بك لا يملك صلاحية الوصول إلى النموذج المحدد. قد تحتاج إلى استخدام نموذج أو مزود مختلف."
+
+msgid "error_model_access_title"
+msgstr "تم رفض الإذن"
+
+msgid "error_model_not_found_desc"
+msgstr "نموذج الذكاء الاصطناعي المحدد غير متاح أو عنوان URL للواجهة غير صحيح."
+
+msgid "error_model_not_found_title"
+msgstr "النموذج غير موجود"
+
+msgid "error_no_api_key"
+msgstr "خطأ: لم يتم تعيين مفتاح API للذكاء الاصطناعي."
+
+msgid "error_parse_desc"
+msgstr "أرجع الذكاء الاصطناعي استجابة تعذر معالجتها. قد يكون هذا خللاً مؤقتًا."
+
+msgid "error_parse_title"
+msgstr "خطأ في البيانات"
+
+msgid "error_quota_desc"
+msgstr "نفدت أرصدة API الخاصة بك أو وصلت إلى حد معدل الاستخدام. يرجى التحقق من حالة الفواتير الخاصة بك أو الانتظار قليلاً قبل المحاولة مرة أخرى."
+
+msgid "error_quota_title"
+msgstr "تجاوز الحصة النسبية"
+
+msgid "error_service_down_desc"
+msgstr "خدمة الذكاء الاصطناعي غير متاحة مؤقتًا أو محملة بشكل زائد. يرجى المحاولة مرة أخرى بعد بضع دقائق."
+
+msgid "error_service_down_title"
+msgstr "الخدمة غير متوفرة"
+
+msgid "error_timeout_desc"
+msgstr "استغرق الطلب وقتًا طويلاً جدًا. يمكن أن يحدث هذا مع الكتب المعقدة أو اتصالات الشبكة البطيئة."
+
+msgid "error_timeout_title"
+msgstr "انتهت مهلة الاتصال"
+
+msgid "error_unknown_desc"
+msgstr "حدث خطأ غير متوقع: %s"
+
+msgid "error_unknown_title"
+msgstr "فشل الجلب"
+
+msgid "extracting_more_characters"
+msgstr "جاري استخراج شخصيات إضافية..."
+
+msgid "extracting_more_terms"
+msgstr "جاري استخراج مصطلحات إضافية..."
+
+msgid "fetch_button"
+msgstr "جلب"
+
+msgid "fetch_single_word_prompt"
+msgstr "لم يتم العثور على بيانات X-Ray لـ '%s'. هل ترغب في البحث عنها؟"
+
+msgid "fetch_successful"
+msgstr "تم الجلب بنجاح"
+
+msgid "fetching_ai"
+msgstr "تحليل الكتاب لتوليد بيانات X-Ray..."
+
+msgid "fetching_author"
+msgstr "جاري جلب معلومات المؤلف من %s..."
+
+msgid "fetching_series_context"
+msgstr "جاري جلب سياق السلسلة: الكتاب %d من %d…"
+
+msgid "fetching_series_info"
+msgstr "جاري تحديد كتب السلسلة..."
+
+msgid "fetching_wait"
+msgstr "⏳ يرجى الانتظار...\nقد تستغرق هذه العملية من 10 إلى 50 ثانية."
+
+msgid "find_mentions"
+msgstr "البحث عن الإشارات"
+
+msgid "full_book_option"
+msgstr "وضع الكتاب الكامل"
+
+msgid "label_aliases"
+msgstr "الأسماء المستعارة"
+
+msgid "label_category"
+msgstr "الفئة"
+
+msgid "label_definition"
+msgstr "التعريف"
+
+msgid "label_description"
+msgstr "الوصف"
+
+msgid "label_expanded"
+msgstr "يرمز إلى"
+
+msgid "label_gender"
+msgstr "الجنس"
+
+msgid "label_name"
+msgstr "الاسم"
+
+msgid "label_occupation"
+msgstr "المهنة"
+
+msgid "label_reasoning"
+msgstr "تفكير الذكاء الاصطناعي"
+
+msgid "label_role"
+msgstr "الدور"
+
+msgid "lang_follow_book"
+msgstr "تلقائي (اتبع الكتاب)"
+
+msgid "lang_follow_system"
+msgstr "تلقائي (اتبع النظام)"
+
+msgid "lang_mismatch_title"
+msgstr "عدم تطابق اللغة"
+
+msgid "language_changed_reopen"
+msgstr "تغيرت اللغة. أعد فتح القائمة لرؤية التغييرات."
+
+msgid "later"
+msgstr "لاحقًا"
+
+msgid "linked_entries"
+msgstr "الإدخالات المرتبطة"
+
+msgid "linked_entries_disabled"
+msgstr "معطل"
+
+msgid "linked_entries_enabled"
+msgstr "ممكن"
+
+msgid "linked_entries_setting_desc"
+msgstr "تقوم الإدخالات المرتبطة تلقائيًا بربط الشخصيات والمواقع والشخصيات التاريخية عندما يتم ذكرها في أوصاف بعضها البعض.\n\nسيؤدي تعطيل هذا إلى إخفاء زر 'الإدخالات المرتبطة' من حوارات التفاصيل."
+
+msgid "logs_cleared"
+msgstr "تم مسح السجلات!"
+
+msgid "looking_up_msg"
+msgstr "جاري البحث عن '%s'..."
+
+msgid "low_conf_match"
+msgstr "تطابق جزئي — يظهر '%s' لاستعلامك. انقر أدناه لجلب المصطلح الدقيق."
+
+msgid "mention_dismiss_btn"
+msgstr "✕"
+
+msgid "mention_return_btn"
+msgstr "رجوع"
+
+msgid "mention_return_label"
+msgstr "← العودة إلى ص.%d"
+
+msgid "mentions_at_location"
+msgstr "الإشارة: %s"
+
+msgid "mentions_disabled"
+msgstr "معطل"
+
+msgid "mentions_enabled"
+msgstr "ممكن"
+
+msgid "mentions_none"
+msgstr "لم يتم العثور على إشارات لـ '%s' بعد."
+
+msgid "mentions_preference_desc"
+msgstr "حدد تفضيلك لإشارات الشخصيات والمواقع:"
+
+msgid "mentions_refresh"
+msgstr "تحديث الإشارات"
+
+msgid "mentions_scanning"
+msgstr "جاري الفحص... %1 من %2 فصلاً"
+
+msgid "mentions_setting_desc"
+msgstr "يتيح لك فحص الإشارات العثور على كل تكرار لشخصية أو موقع في الكتاب. يحدث هذا تلقائيًا في الخلفية لضمان بقاء القارئ مستجيبًا.\n\nسيؤدي تعطيل هذا إلى إخفاء زر 'البحث عن الإشارات'."
+
+msgid "mentions_setting_title"
+msgstr "إعدادات الإشارات"
+
+msgid "mentions_title"
+msgstr "الإشارات: %s"
+
+msgid "menu_about"
+msgstr "حول"
+
+msgid "menu_ai_settings"
+msgstr "إعدادات الذكاء الاصطناعي"
+
+msgid "menu_api_keys"
+msgstr "مفاتيح API والمزودون"
+
+msgid "menu_author_info"
+msgstr "معلومات المؤلف"
+
+msgid "menu_auto_update_frequency"
+msgstr "إعدادات X-Ray التلقائية"
+
+msgid "menu_beta_channel"
+msgstr "إعدادات القناة التجريبية"
+
+msgid "menu_book_mode"
+msgstr "نوع الكتاب"
+
+msgid "menu_characters"
+msgstr "الشخصيات"
+
+msgid "menu_clear_cache"
+msgstr "مسح الذاكرة المؤقتة"
+
+msgid "menu_clear_logs"
+msgstr "مسح السجلات"
+
+msgid "menu_config_header"
+msgstr "--- التكوين الحالي ---"
+
+msgid "menu_content_fetch_settings"
+msgstr "إعدادات المحتوى والجلب"
+
+msgid "menu_custom_model_title"
+msgstr "نموذج %s مخصص"
+
+msgid "menu_desc_length_settings"
+msgstr "طول الوصف"
+
+msgid "menu_display_ui_settings"
+msgstr "إعدادات الشاشة وواجهة المستخدم"
+
+msgid "menu_enter_custom_model"
+msgstr "أدخل نموذجًا مخصصًا..."
+
+msgid "menu_entity_ui_mode"
+msgstr "نمط وصف الكيان"
+
+msgid "menu_fetch_author"
+msgstr "جلب معلومات المؤلف (بالذكاء الاصطناعي)"
+
+msgid "menu_fetch_more_chars"
+msgstr "جلب المزيد من الشخصيات"
+
+msgid "menu_fetch_more_terms"
+msgstr "جلب المزيد من المصطلحات"
+
+msgid "menu_fetch_series_context"
+msgstr "جلب / تحديث سياق السلسلة"
+
+msgid "menu_frequency"
+msgstr "التردد"
+
+msgid "menu_historical_figures"
+msgstr "الشخصيات التاريخية"
+
+msgid "menu_language"
+msgstr "اللغة"
+
+msgid "menu_linked_entries_settings"
+msgstr "إعدادات الإدخالات المرتبطة"
+
+msgid "menu_locations"
+msgstr "المواقع"
+
+msgid "menu_maintenance"
+msgstr "الصيانة"
+
+msgid "menu_mentions_settings"
+msgstr "إعدادات الإشارات"
+
+msgid "menu_primary_ai_model"
+msgstr "نموذج الذكاء الاصطناعي الأساسي"
+
+msgid "menu_reasoning_effort"
+msgstr "جهد تفكير الذكاء الاصطناعي"
+
+msgid "menu_secondary_ai_model"
+msgstr "نموذج الذكاء الاصطناعي الثانوي"
+
+msgid "menu_series_context"
+msgstr "سياق السلسلة"
+
+msgid "menu_settings"
+msgstr "الإعدادات"
+
+msgid "menu_terms"
+msgstr "المصطلحات"
+
+msgid "menu_timeline"
+msgstr "المخطط الزمني"
+
+msgid "menu_ui_popup_intext"
+msgstr "استخدام نمط الحاشية السفلية للبحث في النص"
+
+msgid "menu_ui_popup_menu"
+msgstr "استخدام نمط الحاشية السفلية للبحث في القائمة"
+
+msgid "menu_update_xray"
+msgstr "تحديث بيانات X-Ray"
+
+msgid "menu_view_config"
+msgstr "عرض جميع قيم التكوين"
+
+msgid "menu_xray"
+msgstr "X-Ray"
+
+msgid "menu_xray_mode"
+msgstr "البحث عن X-Ray في النص"
+
+msgid "merge_back"
+msgstr "← رجوع"
+
+msgid "merge_button"
+msgstr "دمج"
+
+msgid "merge_confirm"
+msgstr "دمج %s في %s ؟ سيتم حذف الإدخال الثانوي وامتصاص أسمائه المستعارة."
+
+msgid "merge_duplicates"
+msgstr "دمج التكرارات..."
+
+msgid "merge_failed"
+msgstr "فشل الدمج."
+
+msgid "merge_pick_primary"
+msgstr "اختر الإدخال الذي تريد الاحتفاظ به"
+
+msgid "merge_pick_secondary"
+msgstr "اختر الإدخال الذي تريد إزالته"
+
+msgid "merge_success"
+msgstr "تم دمج الإدخالات بنجاح."
+
+msgid "merging_smartly"
+msgstr "جاري الدمج..."
+
+msgid "model_free"
+msgstr "مجاني"
+
+msgid "model_paid"
+msgstr "مدفوع"
+
+msgid "msg_added_characters"
+msgstr "تمت إضافة %d شخصية جديدة!"
+
+msgid "msg_added_terms"
+msgstr "تمت إضافة %d مصطلحًا جديدًا!"
+
+msgid "msg_fetch_failed"
+msgstr "فشل طلب الذكاء الاصطناعي. يرجى التحقق من اتصالك أو إعدادات مفتاح API."
+
+msgid "msg_no_bio"
+msgstr "لا توجد سيرة ذاتية متاحة."
+
+msgid "msg_suggest_lang"
+msgstr "هذا الكتاب مكتوب باللغة %s. هل تريد تحويل لغة X-Ray لتطابقها؟"
+
+msgid "multiple_matches"
+msgstr "تطابقات متعددة لـ '%s'. أيهم تقصد؟"
+
+msgid "next"
+msgstr "التالي"
+
+msgid "no"
+msgstr "لا"
+
+msgid "no_api_key"
+msgstr "مفتاح API للذكاء الاصطناعي غير معين"
+
+msgid "no_author_data_fetch"
+msgstr "لا تتوفر معلومات عن المؤلف. هل ترغب في جلبها بالذكاء الاصطناعي؟"
+
+msgid "no_character_data"
+msgstr "لا توجد بيانات شخصيات بعد. يرجى استخدام 'جلب بيانات X-Ray' أولاً."
+
+msgid "no_data_prompt"
+msgstr "لم يتم العثور على بيانات X-Ray لهذا الكتاب. هل ترغب في جلبها من الذكاء الاصطناعي الآن؟"
+
+msgid "no_duplicates_found"
+msgstr "لم يتم العثور على تكرارات."
+
+msgid "no_historical_data"
+msgstr "لا توجد بيانات شخصيات تاريخية بعد. يرجى استخدام 'جلب بيانات X-Ray' أولاً."
+
+msgid "no_location_data"
+msgstr "لا توجد بيانات مواقع بعد. يرجى استخدام 'جلب بيانات X-Ray' أولاً."
+
+msgid "no_merges_performed"
+msgstr "لم يتم إجراء أي عمليات دمج."
+
+msgid "no_terms_data"
+msgstr "لا توجد بيانات مصطلحات بعد. يرجى استخدام 'جلب بيانات X-Ray' أولاً."
+
+msgid "no_timeline_data"
+msgstr "لا توجد بيانات مخطط زمني بعد. يرجى استخدام 'جلب بيانات X-Ray' أولاً."
+
+msgid "ok"
+msgstr "موافق"
+
+msgid "path"
+msgstr "plugins/xray.koplugin"
+
+msgid "pending_duplicates_prompt"
+msgstr "وجد الذكاء الاصطناعي %d تكرارًا محتملاً من الجلب الأخير. هل تريد المراجعة الآن؟"
+
+msgid "plugin_description"
+msgstr "حول تجربة القراءة الخاصة بك من خلال تحليل الكتب بمساعدة الذكاء الاصطناعي، تمامًا مثل ميزة X-Ray في أجهزة Amazon Kindle!"
+
+msgid "quick_menu_title"
+msgstr "قائمة X-Ray السريعة"
+
+msgid "read_more"
+msgstr "اقرأ المزيد"
+
+msgid "reason"
+msgstr "السبب"
+
+msgid "reasoning_about"
+msgstr "يتحكم في عمق 'التفكير' لنماذج التفكير:\n\n• غير معين Unset: لم يتم إرسال تعليمات محددة؛ يستخدم النموذج إعداداته الافتراضية الداخلية.\n• منخفض Low: استخراج سريع واقتصادي للكتب البسيطة.\n• متوسط Medium: عمق متوازن لمعظم الروايات.\n• مرتفع High: تحليل مفصل لشبكات الشخصيات المعقدة.\n\nينطبق على: GPT-5.x (o1/o3/gpt-5)، وClaude (sonnet/opus/haiku)، وGemini 2.5+.\n\nملاحظة: تفكر نماذج DeepSeek V4 بشكل متأصل — ليس لهذا الإعداد أي تأثير عليها."
+
+msgid "reasoning_high"
+msgstr "مرتفع"
+
+msgid "reasoning_low"
+msgstr "منخفض"
+
+msgid "reasoning_medium"
+msgstr "متوسط"
+
+msgid "reasoning_unset"
+msgstr "غير معين (الافتراضي)"
+
+msgid "relookup_button"
+msgstr "إعادة البحث عن '%s'"
+
+msgid "review"
+msgstr "مراجعة"
+
+msgid "save"
+msgstr "حفظ"
+
+msgid "search_button"
+msgstr "بحث"
+
+msgid "search_character"
+msgstr "البحث عن شخصيات..."
+
+msgid "search_character_title"
+msgstr "البحث عن الشخصية"
+
+msgid "search_hint"
+msgstr "أدخل اسم الشخصية"
+
+msgid "search_term"
+msgstr "البحث عن المصطلحات"
+
+msgid "series_ask_later_msg"
+msgstr "تم تأجيل ملخص السلسلة. سنطلب منك ذلك مرة أخرى عند فتح/استئناف هذا الكتاب."
+
+msgid "series_context_enabled_toggle"
+msgstr "تمكين سياق السلسلة"
+
+msgid "series_context_loaded"
+msgstr "تم تحميل سياق السلسلة (%d كتاب سابق)."
+
+msgid "series_context_prompt_text"
+msgstr "يبدو أن هذا هو الكتاب %d من '%s'. هل تريد تحميل ملخص لـ %d كتاب سابق؟\n\n(يمكنك تعطيل هذا في الإعدادات ← سياق السلسلة)"
+
+msgid "series_context_prompt_title"
+msgstr "تم الكشف عن سلسلة"
+
+msgid "series_disabled_msg"
+msgstr "تم تعطيل المطالبة التلقائية لهذا الكتاب. يمكنك جلب الملخص يدويًا من قائمة X-Ray."
+
+msgid "series_no_prior_detected"
+msgstr "لم يتم اكتشاف كتب سابقة لهذه السلسلة."
+
+msgid "series_prior_books_header"
+msgstr "── الكتب السابقة ──"
+
+msgid "series_prior_label"
+msgstr "[سابق]"
+
+msgid "skip"
+msgstr "تخطي"
+
+msgid "spoiler_free_about"
+msgstr "يحد وضع Spoiler-free (خالٍ من الحرق) من استخراج الذكاء الاصطناعي إلى الصفحات التي قرأتها بالفعل (حتى صفحتك الحالية)، مما يمنع حرق الأحداث من الفصول المستقبلية.\n\nيقوم وضع الكتاب الكامل بتحليل الكتاب بأكمله، والذي قد يحتوي على حرق للأحداث."
+
+msgid "spoiler_free_menu_option"
+msgstr "Spoiler-free"
+
+msgid "spoiler_free_option"
+msgstr "Spoiler-free Mode (Up to %d%% of the book)"
+
+msgid "spoiler_preference_desc"
+msgstr "حدد تفضيل حرق الأحداث لبيانات X-Ray:"
+
+msgid "spoiler_preference_title"
+msgstr "تفضيل حرق الأحداث"
+
+msgid "stop"
+msgstr "إيقاف"
+
+msgid "term_not_found"
+msgstr "لم يتم العثور على مصطلح يطابق '%s'"
+
+msgid "this_chapter"
+msgstr "هذا الفصل"
+
+msgid "this_page"
+msgstr "هذه الصفحة"
+
+msgid "updater_available_header"
+msgstr "يتوفر إصدار X-Ray %s الجديد!\nلديك حاليًا الإصدار %s."
+
+msgid "updater_btn_cancel"
+msgstr "إلغاء"
+
+msgid "updater_btn_download"
+msgstr "تنزيل وتثبيت"
+
+msgid "updater_btn_later"
+msgstr "لاحقًا"
+
+msgid "updater_btn_open_browser"
+msgstr "فتح في المتصفح"
+
+msgid "updater_btn_restart"
+msgstr "إعادة التشغيل"
+
+msgid "updater_cancelled_check"
+msgstr "تم إلغاء التحقق من التحديث."
+
+msgid "updater_cancelled_update"
+msgstr "تم إلغاء التحديث."
+
+msgid "updater_check"
+msgstr "التحقق من وجود تحديثات"
+
+msgid "updater_checking"
+msgstr "جاري التحقق من وجود تحديثات..."
+
+msgid "updater_download_prompt"
+msgstr "\n\nهل تريد التنزيل والتثبيت الآن؟"
+
+msgid "updater_downloading"
+msgstr "جاري تنزيل إصدار X-Ray %s..."
+
+msgid "updater_err_download"
+msgstr "خطأ في التنزيل: %s"
+
+msgid "updater_err_extract"
+msgstr "خطأ في الاستخراج: %s"
+
+msgid "updater_error_checking"
+msgstr "حدث خطأ أثناء التحقق من وجود تحديثات."
+
+msgid "updater_error_checking_detail"
+msgstr "حدث خطأ أثناء التحقق من وجود تحديثات: %s"
+
+msgid "updater_no_asset"
+msgstr "لم يتم العثور على ملف تحديث تلقائي.\n\nهل تريد فتح صفحة الإصدارات على GitHub؟"
+
+msgid "updater_success_restart"
+msgstr "تم تثبيت X-Ray %s بنجاح.\n\nهل تريد إعادة تشغيل KOReader لتطبيق التحديث؟"
+
+msgid "updater_up_to_date"
+msgstr "إصدار X-Ray محدث بالفعل (%s)."
+
+msgid "updater_whats_new"
+msgstr "ما الجديد:"
+
+msgid "updating_ai"
+msgstr "جاري تحديث بيانات X-Ray..."
+
+msgid "val"
+msgstr "???"
+
+msgid "xray_disabled_label"
+msgstr "معطل"
+
+msgid "xray_enabled_label"
+msgstr "ممكن"
+
+msgid "xray_mode_desc"
+msgstr "يضيف زر 'X-Ray' إلى القواميس وقوائم التحديد للبحث الفوري."
+
+msgid "yes"
+msgstr "نعم"
+

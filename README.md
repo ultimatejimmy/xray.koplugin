@@ -26,7 +26,7 @@ This plugin brings Kindle-style X-Ray features to KOReader. It uses AI to track 
 - **X-Ray Mode & Inline Fetching**: Get instant lookups by tapping the "X-Ray" button in dictionary or selection popups. If an entity is missing, the plugin can fetch it on-the-fly using AI without requiring a full book scan.
 - **Silent Weekly Updates**: Automatically checks for new plugin versions in the background once a week.
 - **Offline First**: You only need internet to fetch the data. After that, it's saved locally.
-- **Multilingual**: Available in English, German, French, Spanish, Brazilian Portuguese, Russian, Ukrainian, Turkish, Simplified Chinese, and Indonesian.
+- **Multilingual**: Available in English, German, French, Spanish, Brazilian Portuguese, Russian, Ukrainian, Turkish, Simplified Chinese, Indonesian, and Arabic.
 
 ## Documentation
 

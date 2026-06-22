@@ -6,7 +6,21 @@ local ConfirmBox = require("ui/widget/confirmbox")
 local ButtonDialog = require("ui/widget/buttondialog")
 local Menu = require("ui/widget/menu")
 local Screen = require("device").screen
-local _ = require("gettext")
+local gettext = require("gettext")
+local orig_isRTL = gettext.isRTL
+local plugin_instance
+
+gettext.isRTL = function()
+    if plugin_instance and plugin_instance:isRTL() and plugin_instance:isXRayUIActive() then
+        return true
+    end
+    if orig_isRTL then
+        return orig_isRTL()
+    end
+    return false
+end
+
+local _ = gettext
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 
 local M = {}
@@ -195,7 +209,7 @@ function XRayBottomPopup:init()
             text       = text,
             face       = face,
             width      = inner_w,
-            alignment  = align or "justify",
+            alignment  = align or ((self.plugin and self.plugin:isRTL()) and "right" or "justify"),
             justified  = true,
             bold       = is_bold,
         }
@@ -224,7 +238,8 @@ function XRayBottomPopup:init()
     end
 
     -- ── content ──────────────────────────────────────────────────────────────
-    local vg = VerticalGroup:new{ align = "left" }
+    local align = (self.plugin and self.plugin:isRTL()) and "right" or "left"
+    local vg = VerticalGroup:new{ align = align }
 
     -- 1. Name (bold, justified)
     vg[#vg+1] = make_text(tostring(e.name or "?"), face_normal, "justify", true)
@@ -584,6 +599,7 @@ function M:showLanguageSelection()
         nl = "Nederlands",
         pl = "Polski",
         id = "Bahasa Indonesia",
+        ar = "العربية",
     }
     
     local langs = self.loc and self.loc.available_languages or { "en", "de", "fr", "ru", "zh_CN", "tr", "pt_br", "es", "uk", "hu" }
@@ -596,7 +612,7 @@ function M:showLanguageSelection()
     end
     
     local dialog_title = (self.loc and self.loc:t("menu_language")) or "Language Selection"
-    self.ldlg = Menu:new{
+    self.ldlg = self:newMenu("ldlg", {
         title = dialog_title,
         item_table = items,
         is_borderless = true,
@@ -605,7 +621,7 @@ function M:showLanguageSelection()
         on_close_callback = function()
             self.ldlg = nil
         end
-    }
+    })
     UIManager:show(self.ldlg)
 end
 
@@ -616,7 +632,7 @@ function M:resolveLanguage(code)
             supported[c] = 1
         end
     else
-        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1 }
+        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ar=1 }
     end
     
     if code == "auto" or not code then
@@ -649,6 +665,38 @@ function M:resolveLanguage(code)
         return self:resolveLanguage("auto")
     end
     return code or "en"
+end
+
+function M:isRTL()
+    local lang = self.ai_helper and self.ai_helper.current_language
+    if not lang and self.ai_helper and self.ai_helper.settings then
+        lang = self:resolveLanguage(self.ai_helper.settings.language)
+    end
+    return lang == "ar"
+end
+
+function M:isXRayUIActive()
+    return self._menu_creating or self.xray_menu or self.char_menu or self.loc_menu or self.timeline_menu 
+        or self.hf_menu or self.terms_menu or self.ldlg or self.active_related_menu or self.length_presets_menu
+end
+
+function M:newMenu(var_name, args)
+    self._menu_creating = true
+    plugin_instance = self
+    
+    local orig_on_close = args.on_close_callback
+    args.on_close_callback = function()
+        if orig_on_close then
+            orig_on_close()
+        end
+        if var_name then
+            self[var_name] = nil
+        end
+    end
+    
+    local menu = Menu:new(args)
+    self._menu_creating = nil
+    return menu
 end
 
 function M:applyLanguageLogic()
@@ -695,6 +743,7 @@ function M:checkBookLanguageMatch()
         nl = "Nederlands",
         pl = "Polski",
         id = "Bahasa Indonesia",
+        ar = "العربية",
     }
     
     local supported = {}
@@ -873,7 +922,7 @@ function M:showCharacters()
         self.char_menu = nil
     end
 
-    self.char_menu = Menu:new{
+    self.char_menu = self:newMenu("char_menu", {
         title = self.loc:t("menu_characters") .. " (" .. #self.characters .. ")",
         item_table = items,
         is_borderless = true,
@@ -883,7 +932,7 @@ function M:showCharacters()
             if self.is_cancelled then return end
             self:showFullXRayMenu() 
         end,
-    }
+    })
     UIManager:show(self.char_menu)
 
     UIManager:scheduleIn(0.3, function()
@@ -1042,13 +1091,13 @@ function M:showRelatedEntities(related, opts)
         })
     end
     
-    self.active_related_menu = Menu:new{
+    self.active_related_menu = self:newMenu("active_related_menu", {
         title = self.loc:t("linked_entries") or "Linked Entries",
         item_table = items,
         on_close_callback = function()
             self.active_related_menu = nil
         end
-    }
+    })
     UIManager:show(self.active_related_menu)
 end
 
@@ -1067,7 +1116,8 @@ function M:showCharacterDetails(character, opts)
     local buttontable_width = dialog_width - 2 * border_window - 2 * padding_button
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
-    local vg = VerticalGroup:new{ align = "left" }
+    local align = self:isRTL() and "right" or "left"
+    local vg = VerticalGroup:new{ align = align }
 
     -- 1. Bold Name (no label)
     table.insert(vg, TextBoxWidget:new{
@@ -1075,7 +1125,7 @@ function M:showCharacterDetails(character, opts)
         face = Font:getFace("cfont", fs),
         width = title_group_width,
         bold = true,
-        alignment = "left",
+        alignment = align,
     })
 
     -- 2. Aliases (with label, if present)
@@ -1095,7 +1145,7 @@ function M:showCharacterDetails(character, opts)
             text = (self.loc:t("label_aliases") or "ALIASES") .. ": " .. table.concat(meaningful_aliases, ", "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1116,7 +1166,7 @@ function M:showCharacterDetails(character, opts)
             text = table.concat(attrs, " | "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1128,14 +1178,14 @@ function M:showCharacterDetails(character, opts)
             face = Font:getFace("cfont", fs),
             width = title_group_width,
             bold = true,
-            alignment = "left",
+            alignment = align,
         })
         table.insert(vg, VerticalSpan:new{ width = math.max(4, math.floor(fs * 0.2)) })
         table.insert(vg, TextBoxWidget:new{
             text = character.ai_reasoning,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1158,7 +1208,7 @@ function M:showCharacterDetails(character, opts)
             text = display_desc,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1282,7 +1332,8 @@ function M:showLocationDetails(loc_item, opts)
     local buttontable_width = dialog_width - 2 * border_window - 2 * padding_button
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
-    local vg = VerticalGroup:new{ align = "left" }
+    local align = self:isRTL() and "right" or "left"
+    local vg = VerticalGroup:new{ align = align }
 
     -- 1. Bold Name (no label)
     table.insert(vg, TextBoxWidget:new{
@@ -1290,7 +1341,7 @@ function M:showLocationDetails(loc_item, opts)
         face = Font:getFace("cfont", fs),
         width = title_group_width,
         bold = true,
-        alignment = "left",
+        alignment = align,
     })
 
     -- 2. Description (no label)
@@ -1313,7 +1364,7 @@ function M:showLocationDetails(loc_item, opts)
             text = display_desc,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1427,7 +1478,8 @@ function M:showTermDetails(term, opts)
     local buttontable_width = dialog_width - 2 * border_window - 2 * padding_button
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
-    local vg = VerticalGroup:new{ align = "left" }
+    local align = self:isRTL() and "right" or "left"
+    local vg = VerticalGroup:new{ align = align }
 
     -- 1. Bold Name (no label)
     table.insert(vg, TextBoxWidget:new{
@@ -1435,7 +1487,7 @@ function M:showTermDetails(term, opts)
         face = Font:getFace("cfont", fs),
         width = title_group_width,
         bold = true,
-        alignment = "left",
+        alignment = align,
     })
 
     -- 2. Aliases (with label, if present)
@@ -1455,7 +1507,7 @@ function M:showTermDetails(term, opts)
             text = (self.loc:t("label_aliases") or "ALIASES") .. ": " .. table.concat(meaningful_aliases, ", "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1473,7 +1525,7 @@ function M:showTermDetails(term, opts)
             text = table.concat(attrs, " | "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1496,7 +1548,7 @@ function M:showTermDetails(term, opts)
             text = display_definition,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1509,7 +1561,7 @@ function M:showTermDetails(term, opts)
             text = warning,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -1681,7 +1733,7 @@ function M:showTerms()
         end
     end
     
-    self.terms_menu = Menu:new{
+    self.terms_menu = self:newMenu("terms_menu", {
         title = (self.loc:t("menu_terms") or "Glossary") .. " (" .. #self.terms .. ")",
         item_table = items,
         is_borderless = true,
@@ -1691,7 +1743,7 @@ function M:showTerms()
             if self.is_cancelled then return end
             self:showFullXRayMenu() 
         end,
-    }
+    })
     UIManager:show(self.terms_menu)
 end
 
@@ -2324,6 +2376,7 @@ function M:showAutoUpdateSettings()
         local is_enabled = self.auto_fetch_enabled
         local current_cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
         local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
+        local btn_align = self:isRTL() and "right" or "left"
         
         info_dialog = ButtonDialog:new{
             title = (self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings") .. "\n\n" .. (self.loc:t("auto_update_freq_label") or "Background fetching frequency:"),
@@ -2331,7 +2384,7 @@ function M:showAutoUpdateSettings()
                 {
                     {
                         text = (is_enabled and page_interval ~= nil and page_interval > 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_ultra", page_interval or 25) or ("Ultra: checks every " .. (page_interval or 25) .. " pages")),
-                        align = "left",
+                        align = btn_align,
                         callback = function()
                             local SpinWidget = require("ui/widget/spinwidget")
                             local spin_dialog
@@ -2363,7 +2416,7 @@ function M:showAutoUpdateSettings()
                 {
                     {
                         text = (is_enabled and page_interval == nil and current_cooldown == 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_aggressive") or "Aggressive: checks every new chapter"),
-                        align = "left",
+                        align = btn_align,
                         callback = function()
                             self.auto_fetch_enabled = true
                             self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 0, auto_fetch_page_interval = nil })
@@ -2374,7 +2427,7 @@ function M:showAutoUpdateSettings()
                 {
                     {
                         text = (is_enabled and current_cooldown == 300 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_balanced") or "Balanced: checks at most every 5 mins"),
-                        align = "left",
+                        align = btn_align,
                         callback = function()
                             self.auto_fetch_enabled = true
                             self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 300, auto_fetch_page_interval = nil })
@@ -2385,7 +2438,7 @@ function M:showAutoUpdateSettings()
                 {
                     {
                         text = (is_enabled and current_cooldown == 900 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_economical") or "Economical: checks at most every 15 mins"),
-                        align = "left",
+                        align = btn_align,
                         callback = function()
                             self.auto_fetch_enabled = true
                             self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 900, auto_fetch_page_interval = nil })
@@ -2396,7 +2449,7 @@ function M:showAutoUpdateSettings()
                 {
                     {
                         text = (is_enabled and current_cooldown == 1800 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_sparse") or "Sparse: checks at most every 30 mins"),
-                        align = "left",
+                        align = btn_align,
                         callback = function()
                             self.auto_fetch_enabled = true
                             self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 1800, auto_fetch_page_interval = nil })
@@ -2407,7 +2460,7 @@ function M:showAutoUpdateSettings()
                 {
                     {
                         text = (not is_enabled and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_disabled") or "Disabled"),
-                        align = "left",
+                        align = btn_align,
                         callback = function()
                             self.auto_fetch_enabled = false
                             self.ai_helper:saveSettings({ auto_fetch_on_chapter = false, auto_fetch_page_interval = nil })
@@ -2520,11 +2573,11 @@ function M:showDescriptionLengthSettings()
         },
     }
 
-    local menu = Menu:new{
+    self.length_presets_menu = self:newMenu("length_presets_menu", {
         title = self.loc:t("menu_desc_length_settings"),
         item_table = menu_items,
-    }
-    UIManager:show(menu)
+    })
+    UIManager:show(self.length_presets_menu)
 end
 
 function M:showEntityLengthPresets(setting_key, entity_name, is_timeline)
@@ -2549,13 +2602,14 @@ function M:showEntityLengthPresets(setting_key, entity_name, is_timeline)
             { name = self.loc:t("desc_len_v_detailed"), val = is_timeline and 200 or (setting_key == "char_desc_len" and 500 or 300) },
         }
 
+        local btn_align = self:isRTL() and "right" or "left"
         local buttons = {}
         for _, p in ipairs(presets) do
             local label = (current_val == p.val and "[✓] " or "[  ] ") .. p.name
             local pval = p.val
             table.insert(buttons, {{
                 text = label,
-                align = "left",
+                align = btn_align,
                 callback = function()
                     if self.ai_helper then
                         local updates = {}
@@ -2655,7 +2709,7 @@ function M:showLocations()
         return
     end
     
-    self.loc_menu = Menu:new{
+    self.loc_menu = self:newMenu("loc_menu", {
         title = self.loc:t("menu_locations"),
         item_table = items,
         is_borderless = true,
@@ -2665,7 +2719,7 @@ function M:showLocations()
             if self.is_cancelled then return end
             self:showFullXRayMenu() 
         end,
-    }
+    })
     UIManager:show(self.loc_menu)
 
     UIManager:scheduleIn(0.3, function()
@@ -2849,7 +2903,7 @@ function M:showTimeline()
         self.timeline_menu = nil
     end
 
-    self.timeline_menu = Menu:new{ 
+    self.timeline_menu = self:newMenu("timeline_menu", { 
         title = self.loc:t("menu_timeline"), 
         item_table = items, 
         is_borderless = true, 
@@ -2859,7 +2913,7 @@ function M:showTimeline()
             if self.is_cancelled then return end
             self:showFullXRayMenu() 
         end,
-    }
+    })
     UIManager:show(self.timeline_menu)
 end
 
@@ -2878,7 +2932,8 @@ function M:showHistoricalFigureDetails(fig, opts)
     local buttontable_width = dialog_width - 2 * border_window - 2 * padding_button
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
-    local vg = VerticalGroup:new{ align = "left" }
+    local align = self:isRTL() and "right" or "left"
+    local vg = VerticalGroup:new{ align = align }
 
     -- 1. Bold Name (no label)
     table.insert(vg, TextBoxWidget:new{
@@ -2886,7 +2941,7 @@ function M:showHistoricalFigureDetails(fig, opts)
         face = Font:getFace("cfont", fs),
         width = title_group_width,
         bold = true,
-        alignment = "left",
+        alignment = align,
     })
 
     -- 2. Biography/Description (no label)
@@ -2909,7 +2964,7 @@ function M:showHistoricalFigureDetails(fig, opts)
             text = display_bio,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
-            alignment = "left",
+            alignment = align,
         })
     end
 
@@ -3026,7 +3081,7 @@ function M:showHistoricalFigures()
         })
     end
 
-    self.hf_menu = Menu:new{
+    self.hf_menu = self:newMenu("hf_menu", {
         title = self.loc:t("menu_historical_figures"), 
         item_table = items, 
         is_borderless = true, 
@@ -3036,20 +3091,20 @@ function M:showHistoricalFigures()
             if self.is_cancelled then return end
             self:showFullXRayMenu() 
         end,
-    }
+    })
     UIManager:show(self.hf_menu)
 end
 
 function M:showQuickXRayMenu() self:showFullXRayMenu() end
 function M:showFullXRayMenu()
     if self.xray_menu then UIManager:close(self.xray_menu); self.xray_menu = nil end
-    self.xray_menu = Menu:new{ 
+    self.xray_menu = self:newMenu("xray_menu", { 
         title = self.loc:t("menu_xray") or "X-Ray", 
         item_table = self:getSubMenuItems(), 
         is_borderless = true, 
         width = Screen:getWidth(), 
         height = Screen:getHeight() 
-    }
+    })
     UIManager:show(self.xray_menu) 
 end
 

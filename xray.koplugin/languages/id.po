@@ -537,7 +537,7 @@ msgid "menu_terms"
 msgstr "Glosarium"
 
 msgid "menu_timeline"
-msgstr "menu_timeline"
+msgstr "Lini Masa"
 
 msgid "menu_ui_popup_intext"
 msgstr "menu_ui_popup_intext"
