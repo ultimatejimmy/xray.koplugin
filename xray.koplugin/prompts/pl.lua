@@ -6,7 +6,7 @@ return {
     author_only = [[Zidentyfikuj i przedstaw biografię autora książki "%s". 
 Metadane sugerują, że autorem jest "%s". 
 1
-BARDZO WAŻNE: Zweryfikuj autora za pomocą KONTEKSTU TEKSTU KSIĄŻKI (jeśli został podany na końcu tego monitu), aby zapewnić 100% dokładności i uniknąć błędnej identyfikacji.
+BARDZO WAŻNE: Zweryfikuj autora za pomocą KONTEKSTU TEKSTU KSIĄŻKI (jeśli został podany na końcu tego monitu), aby zapewnić 100%% dokładności i uniknąć błędnej identyfikacji.
 
 WYMAGANY FORMAT JSON:
 {
@@ -287,7 +287,37 @@ WYMAGANY FORMAT JSON:
   ]
 }]],
 
-    -- Fallback strings
+        -- Find Duplicates
+    find_duplicates = [[
+Książka: %s
+Autor: %s
+Postęp czytania: %d%%
+
+Przeglądasz następującą listę %s wyodrębnionych z tej książki.
+Twoim zadaniem jest zidentyfikowanie wpisów, które wydają się być tą samą encją zapisaną pod różnymi nazwami.
+
+LISTA:
+%s
+
+ZASADY:
+- Duplikat istnieje, gdy dwa wpisy wyraźnie odnoszą się do tej samej encji (np. "Wielka Biblioteka" i "Wielka Biblioteka" lub "Jan" i "Jan Kowalski").
+- NIE oznaczaj wpisów, które są jedynie powiązane lub podobne, ale odrębne.
+- NIE oznaczaj wpisów, chyba że masz absolutną pewność, że to ta sama encja.
+- Jeśli nie ma duplikatów, zwróć pustą tablicę.
+- ZASADA SPOILERA: Nie używaj wiedzy spoza %d%% postępu czytania.
+
+WYMAGANY FORMAT JSON:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "Nazwa wpisu do ZACHOWANIA (bardziej kompletna lub oficjalna nazwa)",
+      "secondary": "Nazwa wpisu do USUNIĘCIA",
+      "reason": "Krótki powód (maks. 100 znaków)"
+    }
+  ]
+}]],
+
+-- Fallback strings
     fallback = {
         unknown_book = "Nieznana książka",
         unknown_author = "Nieznany autor",

@@ -6,7 +6,7 @@ return {
     author_only = [[Identifica y proporciona una biografía del autor del libro "%s". 
 Los metadatos sugieren que el autor es "%s". 
 
-CRÍTICO: Verifica el autor utilizando el CONTEXTO DEL TEXTO DEL LIBRO (si se proporciona al final de este mensaje) para garantizar el 100% de precisión y evitar identificaciones incorrectas.
+CRÍTICO: Verifica el autor utilizando el CONTEXTO DEL TEXTO DEL LIBRO (si se proporciona al final de este mensaje) para garantizar el 100%% de precisión y evitar identificaciones incorrectas.
 
 FORMATO JSON REQUERIDO:
 {
@@ -275,7 +275,50 @@ FORMATO JSON REQUERIDO:
   ]
 }]],
 
-    -- Cadenas de respaldo
+        -- Find Duplicates
+    find_duplicates = [[
+Libro: %s
+Autor: %s
+Progreso de lectura: %d%%
+
+Está revisando la siguiente lista de %s extraídos de este libro.
+Su tarea es identificar las entradas que parezcan ser la MISMA entidad enumerada bajo diferentes nombres.
+
+LISTA:
+%s
+
+REGLAS:
+- Existe un duplicado cuando dos entradas se refieren claramente a la misma entidad (por ejemplo, "La Gran Biblioteca" y "Gran Biblioteca", o "John" y "John Doe").
+- NO marque entradas que sean simplemente relacionadas o similares pero distintas.
+- NO marque entradas a menos que esté muy seguro de que son la misma entidad.
+- Si no existen duplicados, devuelva un array vacío.
+- REGLA DE SPOILER: No utilice información que vaya más allá del %d%% del progreso de lectura.
+
+FORMATO JSON REQUERIDO:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "Nombre de la entrada a CONSERVAR (el nombre más completo o formal)",
+      "secondary": "Nombre de la entrada a ELIMINAR",
+      "reason": "Razón breve (máx. 100 caracteres)"
+    }
+  ]
+}]],
+
+    -- Merge Descriptions
+    merge_descriptions = [[
+TAREA: Combine las siguientes dos descripciones de la misma entidad (personaje o ubicación) en un solo resumen cohesivo y conciso.
+Elimine la información redundante y asegúrese de que la descripción final fluya de forma natural.
+
+Descripción principal: %s
+Descripción secundaria: %s
+
+FORMATO JSON REQUERIDO:
+{
+  "merged_description": "Descripción combinada y pulida (Máx. {MAX_CHAR_DESC} caracteres)"
+}]],
+
+-- Cadenas de respaldo
     fallback = {
         unknown_book = "Libro desconocido",
         unknown_author = "Autor desconocido",

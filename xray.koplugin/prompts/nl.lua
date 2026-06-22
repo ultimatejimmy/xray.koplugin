@@ -287,7 +287,37 @@ VEREIST JSON-FORMAAT:
   ]
 }]],
 
-    -- Fallback strings
+        -- Find Duplicates
+    find_duplicates = [[
+Boek: %s
+Auteur: %s
+Leesvoortgang: %d%%
+
+U bekijkt de volgende lijst van %s die uit dit boek zijn geëxtraheerd.
+Het is uw taak om vermeldingen te identificeren die dezelfde entiteit lijken te zijn, maar onder verschillende namen worden vermeld.
+
+LIJST:
+%s
+
+REGELS:
+- Er is sprake van een duplicaat wanneer twee vermeldingen duidelijk naar dezelfde entiteit verwijzen (bijv. "De Grote Bibliotheek" and "Grote Bibliotheek", of "John" and "John Doe").
+- Markeer geen vermeldingen die alleen gerelateerd of vergelijkbaar zijn, maar toch verschillend.
+- Markeer vermeldingen alleen als u er zeer zeker van bent dat het om dezelfde entiteit gaat.
+- Als er geen duplicaten bestaan, retourneer dan een lege array.
+- SPOILERREGEL: Gebruik geen kennis van voorbij %d%% leesvoortgang.
+
+VEREIST JSON-FORMAT:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "Naam van de vermelding die BEHOUDEN moet worden (de meer volledige of formele naam)",
+      "secondary": "Naam van de vermelding die VERWIJDERD moet worden",
+      "reason": "Korte reden (max. 100 tekens)"
+    }
+  ]
+}]],
+
+-- Fallback strings
     fallback = {
         unknown_book = "Onbekend boek",
         unknown_author = "Onbekende auteur",

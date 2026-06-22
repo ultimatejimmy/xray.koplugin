@@ -26,11 +26,11 @@ TÂCHE : Effectuez une analyse complète X-Ray. Affichez UNIQUEMENT un objet JSO
 PARTITIONNEMENT CRITIQUE DE L'ATTENTION :
 Vous traitez un document massif avec deux blocs de texte fournis à la fin de cette invite :
 1. "CHAPTER SAMPLES" : Il s'agit du macro-contexte du livre jusqu'à l'emplacement actuel du lecteur.
-2. "BOOK TEXT CONTEXT" : Il s'agit du micro-contexte des %d derniers caractères.
+2. "BOOK TEXT CONTEXT" : Il s'agit du micro-contexte des 20k derniers caractères.
 
 PROTOCOLE ANTI-TRONCATURE (CRITIQUE) :
-Vous avez une limite de sortie maximale stricte. Si les "CHAPTER SAMPLES" contiennent PLUS DE %d chapitres (par exemple, une édition omnibus) :
-1. Vous DEVEZ réduire la liste des personnages aux %d personnages les plus importants.
+Vous avez une limite de sortie maximale stricte. Si les "CHAPTER SAMPLES" contiennent PLUS DE 40 chapitres (par exemple, une édition omnibus) :
+1. Vous DEVEZ réduire la liste des personnages aux 10 personnages les plus importants.
 2. Vous DEVEZ réduire les descriptions des personnages à {MAX_CHAR_DESC} caractères MAX.
 3. Vous DEVEZ réduire les résumés des événements de la chronologie à {MAX_TIMELINE_EVENT} caractères MAX.
 Le fait de ne pas compresser votre sortie pour les livres massifs entraînera la troncature et l'échec du JSON.
@@ -45,7 +45,7 @@ Pour éviter de sauter des chapitres ou d'halluciner des événements, vous DEVE
 Étape 6. PAS DE SPOILERS : Arrêtez-vous exactement à la marque de %d%%. N'incluez pas d'événements après cette progression.
 
 ALGORITHME POUR LES PERSONNAGES ET LES FIGURES HISTORIQUES :
-Étape 1. Extrayez les personnages importants en utilisant les deux blocs de texte. ({NUM_CHARS} normaux, MAX %d si omnibus).
+Étape 1. Extrayez les personnages importants en utilisant les deux blocs de texte. ({NUM_CHARS} normaux, MAX 10 si omnibus).
 Étape 2. Vous DEVEZ utiliser leurs noms complets et formels (par exemple, "Abraham Van Helsing"). N'utilisez PAS de surnoms familiers comme nom principal.
 Étape 3. Fournissez jusqu'à 3 noms alternatifs, titres ou surnoms sous lesquels ce personnage est connu dans un tableau `aliases`. Incluez leur prénom et nom de famille courants s'ils sont utilisés. IMPORTANT : Si un nom de famille est partagé par plusieurs personnages (par exemple, des membres de la famille), NE l'incluez PAS comme alias pour aucun des personnages.
 Étape 4. Recherchez activement jusqu'à {NUM_HIST} personnes RÉELLES NOTABLES de l'histoire humaine (ex: Présidents, Auteurs, Généraux). Ajoutez-les à `historical_figures`.
@@ -128,7 +128,7 @@ FORMAT JSON REQUIS :
 Auteur : %s
 Progression de la lecture : %d%%
 
-TÂCHE : Extrayez EXACTEMENT %d personnages importants SUPPLÉMENTAIRES du texte.
+TÂCHE : Extrayez EXACTEMENT 10 personnages importants SUPPLÉMENTAIRES du texte.
 Retournez UNIQUEMENT un objet JSON valide.
 
 MANDAT DE CONCISION (CRITIQUE) :
@@ -275,7 +275,50 @@ FORMAT JSON REQUIS :
   ]
 }]],
 
-    -- Fallback strings
+        -- Find Duplicates
+    find_duplicates = [[
+Livre : %s
+Auteur : %s
+Progression de la lecture : %d%%
+
+Vous passez en revue la liste suivante de %s extraits de ce livre.
+Votre tâche consiste à identifier les entrées qui semblent être la MÊME entité répertoriée sous différents noms.
+
+LISTE :
+%s
+
+RÈGLES :
+- Un doublon existe lorsque deux entrées font clairement référence à la même entité (par exemple, "La Grande Bibliothèque" et "Grande Chronique", ou "Jean" et "Jean Dupont").
+- Ne signalez PAS les entrées qui sont simplement liées ou similaires mais distinctes.
+- Ne signalez les entrées que si vous êtes convaincu qu'il s'agit de la même entité.
+- Si aucun doublon n'existe, renvoyez un tableau vide.
+- RÈGLE CONTRE LES SPOILERS : N'utilisez pas d'informations au-delà de %d%% de progression de la lecture.
+
+FORMAT JSON REQUIS :
+{
+  "duplicate_pairs": [
+    {
+      "primary": "Nom de l'entrée à CONSERVER (le nom le plus complet ou formel)",
+      "secondary": "Nom de l'entrée à SUPPRIMER",
+      "reason": "Raison brève (max 100 caractères)"
+    }
+  ]
+}]],
+
+    -- Merge Descriptions
+    merge_descriptions = [[
+TÂCHE : Combinez les deux descriptions suivantes de la même entité (personnage ou lieu) en un résumé unique, cohérent et concis.
+Supprimez les informations redondantes et assurez-vous que la description finale s'enchaîne naturellement.
+
+Description principale : %s
+Description secondaire : %s
+
+FORMAT JSON REQUIS :
+{
+  "merged_description": "Description combinée et polie (Max {MAX_CHAR_DESC} caractères)"
+}]],
+
+-- Fallback strings
     fallback = {
         unknown_book = "Livre inconnu",
         unknown_author = "Auteur inconnu",

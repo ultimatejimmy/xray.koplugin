@@ -309,7 +309,7 @@ msgid "fetch_successful"
 msgstr "获取成功"
 
 msgid "fetching_ai"
-msgstr "正在通过 %s 分析书籍以生成 X-Ray 数据..."
+msgstr "正在分析书籍以生成 X-Ray 数据..."
 
 msgid "fetching_author"
 msgstr "正在从 %s 获取作者信息..."

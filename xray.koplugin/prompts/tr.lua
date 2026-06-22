@@ -29,7 +29,7 @@ Bu istemin sonunda sağlanan iki metin bloğunu işliyorsunuz:
 
 ANTI-TRUNCATION PROTOKOLÜ (KRİTİK):
 Katı bir maksimum çıktı sınırınız var. Eğer "CHAPTER SAMPLES" 40'tan FAZLA bölüm içeriyorsa (örn. bir omnibus baskısı):
-1. Karakter listesini SADECE en önemli ilk {NUM_CHARS} karakterle sınırlamalısınız.
+1. Karakter listesini SADECE en önemli ilk 10 karakterle sınırlamalısınız.
 2. Karakter açıklamalarını MAKSİMUM {MAX_CHAR_DESC} karakterle sınırlamalısınız.
 3. Zaman çizelgesi olay özetlerini MAKSİMUM {MAX_TIMELINE_EVENT} karakterle sınırlamalısınız.
 Çıktınızı devasa kitaplar için sıkıştırmazsanız, JSON kesilecek ve hata verecektir.
@@ -47,7 +47,7 @@ KARAKTERLER VE TARİHİ KİŞİLER İÇİN ALGORİTMA:
 Adım 1. Her iki metin bloğunu da kullanarak önemli karakterleri çıkar. (Normalde {NUM_CHARS}, omnibus ise MAKSİMUM 10).
 Adım 2. Karakterlerin TAM resmi isimlerini kullanmalısın (örn. "Abraham Van Helsing"). Gündelik takma adları ana isim olarak kullanma.
 Adım 3. Bu karakterin bilindiği 3 adede kadar alternatif isim, unvan veya takma adı bir `aliases` dizisinde sağla. Kullanılıyorsa ortak adlarını ve soyadlarını dahil et. ÖNEMLİ: Eğer bir soyadı birden fazla karakter (örn. aile üyeleri) tarafından paylaşılıyorsa, bunu hiçbir karakter için bir takma ad olarak dahil ETME.
-Step 4. Actively scan for up to {NUM_HIST} NOTABLE REAL people from human history (e.g., Presidents, Authors, Generals). Add them to `historical_figures`.
+Adım 4. İnsanlık tarihinden en fazla {NUM_HIST} ÖNEMLİ GERÇEK kişiyi aktif olarak tara (örn., Başkanlar, Yazarlar, Generaller). Bunları `historical_figures` dizisine ekle.
 CRITICAL for Characters & Historical Figures:
 - DO NOT extract characters or historical figures mentioned ONLY in non-narrative frontmatter or backmatter (e.g., Acknowledgments, Author Bio, Dedications, Title Page, Copyright).
 - Historical Figures MUST be verified real-world people with widespread historical recognition.
@@ -223,7 +223,50 @@ If `is_valid` is false:
 ]],
 
     -- Yedek dizeler (Fallback)
-    -- Multi-Book Series Context Prompts
+        -- Find Duplicates
+    find_duplicates = [[
+Kitap: %s
+Yazar: %s
+Okuma Durumu: %d%%
+
+Bu kitaptan çıkarılan aşağıdaki %s listesini inceliyorsunuz.
+Göreviniz, farklı adlar altında listelenen AYNI varlığa ait gibi görünen girdileri belirlemektir.
+
+LİSTE:
+%s
+
+KURALLAR:
+- İki girdinin açıkça aynı varlığa atıfta bulunması durumunda bir yinelenen varlık söz konusudur (örneğin, "Büyük Kütüphane" ve "Büyük Kütüphane" veya "John" ve "John Doe").
+- Yalnızca ilişkili veya benzer olan ancak farklı olan girdileri işaretlemeyin.
+- Aynı varlık olduğundan son derece emin olmadığınız sürece girdileri işaretlemeyin.
+- Yinelenen varlık yoksa, boş bir dizi döndürün.
+- SPOILER KURALI: Okuma durumunun %d%% ötesindeki bilgileri kullanmayın.
+
+GEREKLİ JSON BİÇİMİ:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "KORUNACAK girdinin adı (daha eksiksiz veya resmi olan ad)",
+      "secondary": "KALDIRILACAK girdinin adı",
+      "reason": "Kısa neden (en fazla 100 karakter)"
+    }
+  ]
+}]],
+
+    -- Merge Descriptions
+    merge_descriptions = [[
+GÖREV: Aynı varlığın (karakter veya konum) aşağıdaki iki açıklamasını tek, tutarlı ve kısa bir özette birleştirin.
+Gereksiz bilgileri kaldırın ve nihai açıklamanın doğal bir şekilde akmasını sağlayın.
+
+Birincil Açıklama: %s
+İkincil Açıklama: %s
+
+GEREKLİ JSON BİÇİMİ:
+{
+  "merged_description": "Birleştirilmiş ve cilalanmış açıklama (En fazla {MAX_CHAR_DESC} karakter)"
+}]],
+
+-- Multi-Book Series Context Prompts
     series_detect = [[Kitap Adı: %s
 Yazar: %s
 

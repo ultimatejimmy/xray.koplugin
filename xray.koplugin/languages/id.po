@@ -1,0 +1,841 @@
+msgid ""
+msgstr ""
+"Language-Team: Bahasa Indonesia\n"
+"Language: id\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "about"
+msgstr "Tentang"
+
+msgid "ai_error"
+msgstr "Kesalahan AI: "
+
+msgid "ai_fetch_complete"
+msgstr "Berhasil mengambil data dari %s!\n\nBuku: %s\nPenulis: %s\n\nKarakter: %d\nLokasi: %d\nTema: %d\nAcara Lini Masa: %d\nTokoh Sejarah: %d\n\n%s\n\nRINGKASAN:\n%s"
+
+msgid "ai_fetch_complete_msg"
+msgstr "Pengambilan Data AI Selesai!"
+
+msgid "ai_key_required"
+msgstr "Kunci API AI diperlukan."
+
+msgid "ai_merge_confirm_title"
+msgstr "Duplikat AI Terdeteksi"
+
+msgid "ai_merged_n"
+msgstr "Berhasil menggabungkan %d pasangan."
+
+msgid "ai_scanning_duplicates"
+msgstr "AI sedang memindai duplikat..."
+
+msgid "auto_dupe_check_disabled"
+msgstr "Nonaktif"
+
+msgid "auto_dupe_check_enabled"
+msgstr "Aktif"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "Pilih preferensi Anda untuk deteksi duplikat AI otomatis:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "Jika diaktifkan, X-Ray secara otomatis meminta AI untuk memeriksa karakter dan lokasi duplikat setelah setiap pengambilan data. Jika duplikat terdeteksi, Anda akan diminta untuk meninjau dan menggabungkannya.\n\nMenonaktifkan ini akan menghentikan semua pemindaian duplikat di latar belakang. Anda masih dapat menggabungkan duplikat secara manual melalui menu Karakter atau Lokasi.\n\nCatatan: setiap pemeriksaan menggunakan satu panggilan API AI. Pengguna dengan paket gratis atau terbatas kuota mungkin lebih suka menonaktifkan ini."
+
+msgid "auto_dupe_check_setting_title"
+msgstr "Pemeriksaan Duplikat"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Interval Halaman"
+
+msgid "auto_update_aggressive"
+msgstr "Agresif: periksa setiap bab baru"
+
+msgid "auto_update_balanced"
+msgstr "Seimbang: periksa paling banyak setiap 5 menit"
+
+msgid "auto_update_disabled"
+msgstr "Nonaktif"
+
+msgid "auto_update_economical"
+msgstr "Ekonomis: periksa paling banyak setiap 15 menit"
+
+msgid "auto_update_freq_about"
+msgstr "Pembaruan otomatis memeriksa data bab baru di latar belakang saat Anda membaca.\n\nBATAS & KINERJA\nPermintaan latar belakang yang sering dapat menguras DAYA BATERAI dan dapat mencapai BATAS HARGAPenyedia AI (terutama pada model Pro).\n\nMODE\n• Ultra: Memeriksa setiap N halaman yang Anda konfigurasikan (tengah bab)\n• Agresif: Memeriksa setiap kali Anda memasuki bab baru\n• Seimbang: Memeriksa paling banyak setiap 5 menit (direkomendasikan)\n• Ekonomis: Memeriksa paling banyak setiap 15 menit\n• Jarang: Memeriksa paling banyak setiap 30 menit\n• Nonaktif: Tidak ada permintaan latar belakang\n\nCatatan: Jika bab terlewat karena batas frekuensi, X-Ray akan secara otomatis menyertakannya dalam pengambilan latar belakang berikutnya."
+
+msgid "auto_update_freq_label"
+msgstr "Frekuensi pengambilan latar belakang:"
+
+msgid "auto_update_sparse"
+msgstr "Jarang: periksa paling banyak setiap 30 menit"
+
+msgid "auto_update_ultra"
+msgstr "Ultra: periksa setiap %d halaman"
+
+msgid "back_to_reading"
+msgstr "Kembali Membaca"
+
+msgid "beta_channel_desc"
+msgstr "Saluran beta memungkinkan Anda menerima versi pra-rilis dari plugin X-Ray. Versi-versi ini menyertakan fitur terbaru dan perbaikan bug tetapi mungkin kurang stabil dibandingkan rilis reguler."
+
+msgid "beta_disabled"
+msgstr "Saluran Stabil (Direkomendasikan)"
+
+msgid "beta_enabled"
+msgstr "Saluran Beta Diaktifkan"
+
+msgid "beta_preference_desc"
+msgstr "Pilih preferensi saluran pembaruan Anda:"
+
+msgid "book_mode_auto"
+msgstr "Otomatis"
+
+msgid "book_mode_desc"
+msgstr "Pilih mode untuk buku ini."
+
+msgid "book_mode_fiction"
+msgstr "Fiksi"
+
+msgid "book_mode_nonfiction"
+msgstr "Non-Fiksi"
+
+msgid "book_mode_saved"
+msgstr "Mode buku disimpan!"
+
+msgid "book_type_about"
+msgstr "Jenis Buku menentukan strategi ekstraksi AI mana yang digunakan dan fitur mana yang tersedia.\n\n- Fiksi: Berfokus pada narasi, karakter, dan lini masa plot.\n- Non-Fiksi: Berfokus pada istilah, konsep, dan tokoh sejarah.\n\n'Deteksi Otomatis' akan membiarkan AI memutuskan setelah pengambilan data pertama."
+
+msgid "book_type_auto"
+msgstr "Deteksi Otomatis"
+
+msgid "book_type_fiction"
+msgstr "Fiksi"
+
+msgid "book_type_nonfiction"
+msgstr "Non-Fiksi"
+
+msgid "book_type_saved"
+msgstr "Jenis Buku disimpan!"
+
+msgid "cache_cleared"
+msgstr "Cache dihapus!\n\nAnda sekarang dapat mengambil data baru:\nMenu → X-Ray → Ambil Data AI"
+
+msgid "cache_save_failed"
+msgstr "Gagal menyimpan cache"
+
+msgid "cache_save_success"
+msgstr "✓ Cache diperbarui."
+
+msgid "cache_saved"
+msgstr "Disimpan ke cache!"
+
+msgid "cancel"
+msgstr "Batal"
+
+msgid "character_not_found"
+msgstr "Tidak ada karakter yang cocok dengan '%s'"
+
+msgid "close"
+msgstr "Tutup"
+
+msgid "config_api_key_label"
+msgstr "Kunci API %s: "
+
+msgid "config_default_gemini"
+msgstr "  Default (Gemini)"
+
+msgid "config_model"
+msgstr "  Model: "
+
+msgid "config_provider"
+msgstr "  Provider: "
+
+msgid "config_status_not_set"
+msgstr "BELUM DIATUR"
+
+msgid "config_status_set"
+msgstr "SUDAH DIATUR"
+
+msgid "current_language"
+msgstr "id"
+
+msgid "current_mode"
+msgstr "Saat ini: "
+
+msgid "custom_api_endpoint_hint"
+msgstr "mis., https://openrouter.ai/api/v1/chat/completions"
+
+msgid "custom_api_endpoint_title"
+msgstr "API Kustom %d — URL Endpoint"
+
+msgid "custom_api_is_reasoning"
+msgstr "Model Penalaran (mis. DeepSeek-R1)"
+
+msgid "custom_api_key_title"
+msgstr "API Kustom %d — Kunci API"
+
+msgid "custom_api_model_hint"
+msgstr "mis., google/gemini-2.5-flash atau openai/gpt-4o"
+
+msgid "custom_api_model_title"
+msgstr "API Kustom %d — Model Default"
+
+msgid "custom_api_name"
+msgstr "API Kustom %d (Kompatibel dengan OpenAI)"
+
+msgid "custom_api_not_configured"
+msgstr "(belum dikonfigurasi — ketuk untuk mengatur)"
+
+msgid "custom_api_saved"
+msgstr "Konfigurasi API Kustom %d disimpan."
+
+msgid "desc_len_about_chars"
+msgstr "DESKRIPSI KARAKTER\n\n• Pendek (~80 karakter): Nama, peran, dan catatan singkat.\n• Default (~200 karakter): Analisis standar.\n• Detail (~350 karakter): Studi karakter yang kaya dengan sifat dan motivasi.\n• Sangat Detail (~500 karakter): Analisis mendalam.\n\nPILIHAN KONSEKUENSI\nDeskripsi yang lebih panjang → lebih sedikit karakter yang dikembalikan selama pengambilan awal/penuh. Proses 'Ambil Lebih Banyak' berikutnya tidak terpengaruh."
+
+msgid "desc_len_about_hist"
+msgstr "BIOGRAFI TOKOH SEJARAH\n\n• Pendek (~50 karakter): Nama dan peran utama.\n• Default (~100 karakter): Biografi standar.\n• Detail (~200 karakter): Kehidupan, signifikansi, dan konteks buku.\n• Sangat Detail (~300 karakter): Biografi komprehensif.\n\nPILIHAN KONSEKUENSI\nBiografi yang lebih panjang → lebih sedikit tokoh sejarah yang dikembalikan selama pengambilan awal/penuh."
+
+msgid "desc_len_about_locs"
+msgstr "DESKRIPSI LOKASI\n\n• Pendek (~50 karakter): Nama tempat dan konteks satu baris.\n• Default (~100 karakter): Deskripsi standar.\n• Detail (~200 karakter): Atmosfer, signifikansi, dan peristiwa.\n• Sangat Detail (~300 karakter): Deskripsi lengkap.\n\nPILIHAN KONSEKUENSI\nDeskripsi yang lebih panjang → lebih sedikit lokasi yang dikembalikan selama pengambilan awal/penuh."
+
+msgid "desc_len_about_timeline"
+msgstr "LINI MASA — SATU ACARA PER BAB (selalu)\n\nLini masa selalu memiliki tepat satu entri per bab. Pengaturan ini hanya memengaruhi seberapa detail yang disertakan dalam setiap ringkasan.\n\n• Pendek (~50 karakter): Ringkasan satu frasa singkat.\n• Default (~80 karakter): Ringkasan standar.\n• Detail (~150 karakter): Menyertakan konteks dan konsekuensi.\n• Sangat Detail (~200 karakter): Deskripsi narasi lengkap.\n\nTidak ada pilihan konsekuensi jumlah untuk lini masa."
+
+msgid "desc_len_default"
+msgstr "desc_len_default"
+
+msgid "desc_len_detailed"
+msgstr "desc_len_detailed"
+
+msgid "desc_len_short"
+msgstr "desc_len_short"
+
+msgid "desc_len_v_detailed"
+msgstr "desc_len_v_detailed"
+
+msgid "dont_ask_again"
+msgstr "Jangan tanya lagi"
+
+msgid "entity_label_characters"
+msgstr "karakter"
+
+msgid "entity_label_locations"
+msgstr "lokasi"
+
+msgid "entity_not_found"
+msgstr "'%s' tidak ditemukan sebagai karakter atau lokasi."
+
+msgid "entity_ui_style_both"
+msgstr "Popup Modern (Keduanya)"
+
+msgid "entity_ui_style_classic"
+msgstr "Dialog Klasik"
+
+msgid "entity_ui_style_desc"
+msgstr "Pilih kapan harus menggunakan UI Popup Modern baru alih-alih Dialog Klasik untuk deskripsi entitas."
+
+msgid "entity_ui_style_in_text"
+msgstr "Popup Modern (Hanya dalam teks)"
+
+msgid "entity_ui_style_menu"
+msgstr "Popup Modern (Hanya menu)"
+
+msgid "error_api_key_desc"
+msgstr "Kunci API yang diberikan ditolak. Harap periksa pengaturan Anda dan pastikan kuncinya benar."
+
+msgid "error_api_key_title"
+msgstr "Kunci API Tidak Valid"
+
+msgid "error_extract_text"
+msgstr "error_extract_text"
+
+msgid "error_model_access_desc"
+msgstr "Kunci API Anda tidak memiliki akses ke model yang dipilih. Anda mungkin perlu menggunakan model atau penyedia yang berbeda."
+
+msgid "error_model_access_title"
+msgstr "Izin Ditolak"
+
+msgid "error_model_not_found_desc"
+msgstr "Model AI yang dipilih tidak tersedia atau URL endpoint salah."
+
+msgid "error_model_not_found_title"
+msgstr "Model Tidak Ditemukan"
+
+msgid "error_no_api_key"
+msgstr "error_no_api_key"
+
+msgid "error_parse_desc"
+msgstr "AI mengembalikan respons yang tidak dapat diproses. Ini mungkin gangguan sementara."
+
+msgid "error_parse_title"
+msgstr "Kesalahan Data"
+
+msgid "error_quota_desc"
+msgstr "Kredit API Anda habis atau Anda telah mencapai batas laju. Harap periksa status tagihan Anda atau tunggu beberapa saat sebelum mencoba lagi."
+
+msgid "error_quota_title"
+msgstr "Kuota Terlampaui"
+
+msgid "error_service_down_desc"
+msgstr "Layanan AI sementara tidak tersedia atau kelebihan beban. Silakan coba lagi dalam beberapa menit."
+
+msgid "error_service_down_title"
+msgstr "Layanan Tidak Tersedia"
+
+msgid "error_timeout_desc"
+msgstr "Permintaan memakan waktu terlalu lama. Ini bisa terjadi pada buku yang kompleks atau koneksi jaringan yang lambat."
+
+msgid "error_timeout_title"
+msgstr "Koneksi Habis Waktu"
+
+msgid "error_unknown_desc"
+msgstr "Kesalahan tak terduga terjadi: %s"
+
+msgid "error_unknown_title"
+msgstr "Pengambilan Gagal"
+
+msgid "extracting_more_characters"
+msgstr "extracting_more_characters"
+
+msgid "extracting_more_terms"
+msgstr "Mengekstrak istilah tambahan..."
+
+msgid "fetch_button"
+msgstr "fetch_button"
+
+msgid "fetch_single_word_prompt"
+msgstr "Tidak ada data X-Ray yang ditemukan untuk '%s'. Apakah Anda ingin mencarinya?"
+
+msgid "fetch_successful"
+msgstr "fetch_successful"
+
+msgid "fetching_ai"
+msgstr "Menganalisis buku untuk menghasilkan data X-Ray..."
+
+msgid "fetching_author"
+msgstr "Mengambil info penulis dari %s..."
+
+msgid "fetching_series_context"
+msgstr "Mengambil konteks seri: Buku %d dari %d…"
+
+msgid "fetching_series_info"
+msgstr "fetching_series_info"
+
+msgid "fetching_wait"
+msgstr "fetching_wait"
+
+msgid "find_mentions"
+msgstr "Temukan Sebutan"
+
+msgid "full_book_option"
+msgstr "full_book_option"
+
+msgid "label_aliases"
+msgstr "ALIAS"
+
+msgid "label_category"
+msgstr "KATEGORI"
+
+msgid "label_definition"
+msgstr "DEFINISI"
+
+msgid "label_description"
+msgstr "DESKRIPSI"
+
+msgid "label_expanded"
+msgstr "KEPANJANGAN DARI"
+
+msgid "label_gender"
+msgstr "JENIS KELAMIN"
+
+msgid "label_name"
+msgstr "NAMA"
+
+msgid "label_occupation"
+msgstr "PEKERJAAN"
+
+msgid "label_reasoning"
+msgstr "PENALARAN AI"
+
+msgid "label_role"
+msgstr "PERAN"
+
+msgid "lang_follow_book"
+msgstr "Otomatis (Ikuti Buku)"
+
+msgid "lang_follow_system"
+msgstr "lang_follow_system"
+
+msgid "lang_mismatch_title"
+msgstr "Ketidakcocokan Bahasa"
+
+msgid "language_changed_reopen"
+msgstr "language_changed_reopen"
+
+msgid "later"
+msgstr "Nanti"
+
+msgid "linked_entries"
+msgstr "Entri Terkait"
+
+msgid "linked_entries_disabled"
+msgstr "Nonaktif"
+
+msgid "linked_entries_enabled"
+msgstr "Aktif"
+
+msgid "linked_entries_setting_desc"
+msgstr "Entri Terkait secara otomatis menghubungkan karakter, lokasi, dan tokoh sejarah ketika mereka disebutkan dalam deskripsi satu sama lain.\n\nMenonaktifkan ini akan menyembunyikan tombol 'Entri Terkait' dari dialog detail."
+
+msgid "logs_cleared"
+msgstr "Log dihapus!"
+
+msgid "looking_up_msg"
+msgstr "Mencari '%s'..."
+
+msgid "low_conf_match"
+msgstr "Kecocokan parsial — menampilkan '%s' untuk kueri Anda. Ketuk di bawah untuk mengambil istilah yang tepat."
+
+msgid "mention_dismiss_btn"
+msgstr "✕"
+
+msgid "mention_return_btn"
+msgstr "← Kembali"
+
+msgid "mention_return_label"
+msgstr "← Kembali ke hal.%d"
+
+msgid "mentions_at_location"
+msgstr "Sebutan: %s"
+
+msgid "mentions_disabled"
+msgstr "Nonaktif"
+
+msgid "mentions_enabled"
+msgstr "Aktif"
+
+msgid "mentions_none"
+msgstr "Belum ada sebutan yang ditemukan untuk '%s'."
+
+msgid "mentions_preference_desc"
+msgstr "Pilih preferensi Anda untuk sebutan karakter dan lokasi:"
+
+msgid "mentions_refresh"
+msgstr "Segarkan Sebutan"
+
+msgid "mentions_scanning"
+msgstr "Memindai... %1 dari %2 bab"
+
+msgid "mentions_setting_desc"
+msgstr "Pemindaian sebutan memungkinkan Anda menemukan setiap kemunculan karakter atau lokasi dalam buku. Ini terjadi secara otomatis di latar belakang untuk memastikan pembaca tetap responsif.\n\nMenonaktifkan ini akan menyembunyikan tombol 'Temukan Sebutan'."
+
+msgid "mentions_setting_title"
+msgstr "Pengaturan Sebutan"
+
+msgid "mentions_title"
+msgstr "Sebutan: %s"
+
+msgid "menu_about"
+msgstr "Tentang"
+
+msgid "menu_ai_settings"
+msgstr "menu_ai_settings"
+
+msgid "menu_api_keys"
+msgstr "menu_api_keys"
+
+msgid "menu_author_info"
+msgstr "menu_author_info"
+
+msgid "menu_auto_update_frequency"
+msgstr "menu_auto_update_frequency"
+
+msgid "menu_beta_channel"
+msgstr "Pengaturan Saluran Beta"
+
+msgid "menu_book_mode"
+msgstr "Mode Buku"
+
+msgid "menu_characters"
+msgstr "menu_characters"
+
+msgid "menu_clear_cache"
+msgstr "menu_clear_cache"
+
+msgid "menu_clear_logs"
+msgstr "Bersihkan Log"
+
+msgid "menu_config_header"
+msgstr "menu_config_header"
+
+msgid "menu_content_fetch_settings"
+msgstr "Pengaturan Konten & Pengambilan"
+
+msgid "menu_custom_model_title"
+msgstr "Model %s Kustom"
+
+msgid "menu_desc_length_settings"
+msgstr "Pengaturan Panjang Deskripsi"
+
+msgid "menu_display_ui_settings"
+msgstr "Pengaturan Tampilan & UI"
+
+msgid "menu_enter_custom_model"
+msgstr "menu_enter_custom_model"
+
+msgid "menu_entity_ui_mode"
+msgstr "Gaya Deskripsi Entitas"
+
+msgid "menu_fetch_author"
+msgstr "menu_fetch_author"
+
+msgid "menu_fetch_more_chars"
+msgstr "Ambil Karakter Lainnya"
+
+msgid "menu_fetch_more_terms"
+msgstr "Ambil Istilah Lainnya"
+
+msgid "menu_fetch_series_context"
+msgstr "Ambil / Segarkan Konteks Seri"
+
+msgid "menu_frequency"
+msgstr "Frekuensi"
+
+msgid "menu_historical_figures"
+msgstr "menu_historical_figures"
+
+msgid "menu_language"
+msgstr "menu_language"
+
+msgid "menu_linked_entries_settings"
+msgstr "Pengaturan Entri Terkait"
+
+msgid "menu_locations"
+msgstr "menu_locations"
+
+msgid "menu_maintenance"
+msgstr "menu_maintenance"
+
+msgid "menu_mentions_settings"
+msgstr "Pengaturan Sebutan"
+
+msgid "menu_primary_ai_model"
+msgstr "menu_primary_ai_model"
+
+msgid "menu_reasoning_effort"
+msgstr "Upaya Penalaran AI"
+
+msgid "menu_secondary_ai_model"
+msgstr "menu_secondary_ai_model"
+
+msgid "menu_series_context"
+msgstr "Konteks Seri"
+
+msgid "menu_settings"
+msgstr "menu_settings"
+
+msgid "menu_terms"
+msgstr "Glosarium"
+
+msgid "menu_timeline"
+msgstr "menu_timeline"
+
+msgid "menu_ui_popup_intext"
+msgstr "menu_ui_popup_intext"
+
+msgid "menu_ui_popup_menu"
+msgstr "menu_ui_popup_menu"
+
+msgid "menu_update_xray"
+msgstr "Perbarui Data X-Ray (Gabung)"
+
+msgid "menu_view_config"
+msgstr "menu_view_config"
+
+msgid "menu_xray"
+msgstr "menu_xray"
+
+msgid "menu_xray_mode"
+msgstr "menu_xray_mode"
+
+msgid "merge_back"
+msgstr "← Kembali"
+
+msgid "merge_button"
+msgstr "Gabungkan"
+
+msgid "merge_confirm"
+msgstr "Gabungkan %s ke dalam %s? Entri sekunder akan dihapus dan aliasnya akan diserap."
+
+msgid "merge_duplicates"
+msgstr "⋈ Gabungkan Duplikat..."
+
+msgid "merge_failed"
+msgstr "Penggabungan gagal."
+
+msgid "merge_pick_primary"
+msgstr "Pilih entri yang ingin DIPERTAHANKAN"
+
+msgid "merge_pick_secondary"
+msgstr "Pilih entri yang ingin DIHAPUS"
+
+msgid "merge_success"
+msgstr "Entri berhasil digabungkan."
+
+msgid "merging_smartly"
+msgstr "Menggabungkan..."
+
+msgid "model_free"
+msgstr "gratis"
+
+msgid "model_paid"
+msgstr "berbayar"
+
+msgid "msg_added_characters"
+msgstr "Menambahkan %d karakter baru!"
+
+msgid "msg_added_terms"
+msgstr "Menambahkan %d istilah baru!"
+
+msgid "msg_fetch_failed"
+msgstr "Permintaan AI gagal. Silakan periksa koneksi atau pengaturan API Anda."
+
+msgid "msg_no_bio"
+msgstr "Tidak ada biografi yang tersedia."
+
+msgid "msg_suggest_lang"
+msgstr "Buku ini dalam bahasa %s. Ubah bahasa X-Ray agar sesuai?"
+
+msgid "multiple_matches"
+msgstr "Beberapa kecocokan untuk '%s'. Mana yang Anda maksud?"
+
+msgid "next"
+msgstr "next"
+
+msgid "no"
+msgstr "no"
+
+msgid "no_api_key"
+msgstr "Kunci API tidak diatur!"
+
+msgid "no_author_data_fetch"
+msgstr "Tidak ada info penulis yang tersedia. Ambil dari AI?"
+
+msgid "no_character_data"
+msgstr "no_character_data"
+
+msgid "no_data_prompt"
+msgstr "Tidak ada data X-Ray yang ditemukan untuk buku ini. Apakah Anda ingin mengambilnya dari AI sekarang?"
+
+msgid "no_duplicates_found"
+msgstr "Tidak ada duplikat yang ditemukan."
+
+msgid "no_historical_data"
+msgstr "no_historical_data"
+
+msgid "no_location_data"
+msgstr "no_location_data"
+
+msgid "no_merges_performed"
+msgstr "Tidak ada penggabungan yang dilakukan."
+
+msgid "no_terms_data"
+msgstr "Belum ada data istilah. Silakan gunakan 'Ambil Data X-Ray' terlebih dahulu."
+
+msgid "no_timeline_data"
+msgstr "no_timeline_data"
+
+msgid "ok"
+msgstr "ok"
+
+msgid "path"
+msgstr "path"
+
+msgid "pending_duplicates_prompt"
+msgstr "AI menemukan %d kemungkinan duplikat dari pengambilan terakhir. Tinjau sekarang?"
+
+msgid "plugin_description"
+msgstr "plugin_description"
+
+msgid "quick_menu_title"
+msgstr "Menu Cepat X-Ray"
+
+msgid "read_more"
+msgstr "read_more"
+
+msgid "reason"
+msgstr "Alasan"
+
+msgid "reasoning_about"
+msgstr "Mengontrol kedalaman 'berpikir' untuk model penalaran:\n\n• Belum diatur: Tidak ada instruksi khusus yang dikirim; model menggunakan default internalnya.\n• Rendah: Ekstraksi cepat dan ekonomis untuk buku-buku sederhana.\n• Sedang: Kedalaman seimbang untuk sebagian besar narasi.\n• Tinggi: Analisis detail untuk jaringan karakter yang kompleks.\n\nBerlaku untuk: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), dan Gemini 2.5+.\n\nCatatan: DeepSeek V4 menalar secara inheren — pengaturan ini tidak berpengaruh padanya."
+
+msgid "reasoning_high"
+msgstr "Tinggi"
+
+msgid "reasoning_low"
+msgstr "Rendah"
+
+msgid "reasoning_medium"
+msgstr "Sedang"
+
+msgid "reasoning_unset"
+msgstr "Belum diatur (Default)"
+
+msgid "relookup_button"
+msgstr "Cari ulang '%s'"
+
+msgid "review"
+msgstr "Tinjau"
+
+msgid "save"
+msgstr "save"
+
+msgid "search_button"
+msgstr "Cari"
+
+msgid "search_character"
+msgstr "Cari Karakter..."
+
+msgid "search_character_title"
+msgstr "Pencarian Karakter"
+
+msgid "search_hint"
+msgstr "Masukkan nama karakter"
+
+msgid "search_term"
+msgstr "Cari Istilah"
+
+msgid "series_ask_later_msg"
+msgstr "Konteks seri ditunda. Kami akan bertanya lagi saat Anda membuka/melanjutkan buku ini."
+
+msgid "series_context_enabled_toggle"
+msgstr "Aktifkan Konteks Seri"
+
+msgid "series_context_loaded"
+msgstr "Konteks seri dimuat (%d buku sebelumnya)."
+
+msgid "series_context_prompt_text"
+msgstr "Buku ini tampaknya adalah Buku %d dari '%s'. Muat ringkasan dari %d buku sebelumnya?\n\n(Anda dapat menonaktifkan ini di Pengaturan → Konteks Seri)"
+
+msgid "series_context_prompt_title"
+msgstr "Seri Terdeteksi"
+
+msgid "series_disabled_msg"
+msgstr "Konfirmasi otomatis dinonaktifkan untuk buku ini. Anda dapat mengambil ringkasan secara manual dari menu X-Ray."
+
+msgid "series_no_prior_detected"
+msgstr "Tidak ada buku sebelumnya yang terdeteksi untuk seri ini."
+
+msgid "series_prior_books_header"
+msgstr "── Buku Sebelumnya ──"
+
+msgid "series_prior_label"
+msgstr "[Sebelumnya]"
+
+msgid "skip"
+msgstr "Lewati"
+
+msgid "spoiler_free_about"
+msgstr "Mode bebas spoiler membatasi ekstraksi AI pada halaman yang telah Anda baca (hingga halaman Anda saat ini), mencegah spoiler dari bab-bab mendatang.\n\nMode Buku Penuh menganalisis seluruh buku, yang mungkin berisi spoiler."
+
+msgid "spoiler_free_menu_option"
+msgstr "spoiler_free_menu_option"
+
+msgid "spoiler_free_option"
+msgstr "Mode Bebas Spoiler (Hingga %d%% buku)"
+
+msgid "spoiler_preference_desc"
+msgstr "spoiler_preference_desc"
+
+msgid "spoiler_preference_title"
+msgstr "spoiler_preference_title"
+
+msgid "stop"
+msgstr "Berhenti"
+
+msgid "term_not_found"
+msgstr "Tidak ada istilah yang cocok dengan '%s'"
+
+msgid "this_chapter"
+msgstr "this_chapter"
+
+msgid "this_page"
+msgstr "this_page"
+
+msgid "updater_available_header"
+msgstr "X-Ray %s tersedia!\nAnda memiliki versi %s."
+
+msgid "updater_btn_cancel"
+msgstr "Batal"
+
+msgid "updater_btn_download"
+msgstr "Unduh dan pasang"
+
+msgid "updater_btn_later"
+msgstr "Nanti"
+
+msgid "updater_btn_open_browser"
+msgstr "Buka di browser"
+
+msgid "updater_btn_restart"
+msgstr "Muat Ulang"
+
+msgid "updater_cancelled_check"
+msgstr "Pemeriksaan pembaruan dibatalkan."
+
+msgid "updater_cancelled_update"
+msgstr "Pembaruan dibatalkan."
+
+msgid "updater_check"
+msgstr "Periksa Pembaruan"
+
+msgid "updater_checking"
+msgstr "Memeriksa pembaruan..."
+
+msgid "updater_download_prompt"
+msgstr "\n\nUnduh dan pasang sekarang?"
+
+msgid "updater_downloading"
+msgstr "Mengunduh X-Ray %s..."
+
+msgid "updater_err_download"
+msgstr "Kesalahan unduhan: %s"
+
+msgid "updater_err_extract"
+msgstr "Kesalahan ekstraksi: %s"
+
+msgid "updater_error_checking"
+msgstr "Kesalahan saat memeriksa pembaruan."
+
+msgid "updater_error_checking_detail"
+msgstr "Kesalahan saat memeriksa pembaruan: %s"
+
+msgid "updater_no_asset"
+msgstr "Tidak ada file pembaruan otomatis yang ditemukan.\n\nBuka halaman rilis di GitHub?"
+
+msgid "updater_success_restart"
+msgstr "X-Ray %s berhasil dipasang.\n\nMuat ulang KOReader untuk menerapkan pembaruan?"
+
+msgid "updater_up_to_date"
+msgstr "X-Ray sudah mutakhir (%s)."
+
+msgid "updater_whats_new"
+msgstr "Apa yang baru:"
+
+msgid "updating_ai"
+msgstr "Memperbarui Data X-Ray..."
+
+msgid "val"
+msgstr "val"
+
+msgid "xray_disabled_label"
+msgstr "xray_disabled_label"
+
+msgid "xray_enabled_label"
+msgstr "xray_enabled_label"
+
+msgid "xray_mode_desc"
+msgstr "Menambahkan tombol 'X-Ray' ke menu kamus dan pilihan untuk pencarian instan."
+
+msgid "yes"
+msgstr "yes"
+
