@@ -381,6 +381,78 @@ function XRayPlugin:onPageUpdate(pageno)
     
     if not self.ui or not self.ui.document then return end
 
+    -- 1. Ultra mode: bypass chapter-boundary and is_populated guards; fire on page interval alone
+    local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
+    if page_interval and page_interval > 0 then
+        local last = self.last_bg_fetch_page
+        if not last then
+            self.last_bg_fetch_page = pageno
+            self:log("XRayPlugin: Ultra mode initialized last_bg_fetch_page to " .. tostring(pageno))
+            -- If cache is completely empty, trigger initial silent fetch immediately
+            if not self.timeline or #self.timeline == 0 then
+                self:log("XRayPlugin: Cache is empty. Triggering immediate initial fetch in Ultra mode.")
+                local chapter_title = nil
+                local toc = self.ui.document:getToc()
+                if toc and #toc > 0 then
+                    for _, entry in ipairs(toc) do
+                        if entry.page and entry.page <= pageno then
+                            chapter_title = entry.title
+                            break
+                        end
+                    end
+                end
+                chapter_title = chapter_title or ("Page " .. tostring(pageno))
+
+                if not (self.bg_fetch_pending or self.bg_fetch_active) then
+                    self.bg_fetch_pending = true
+                    UIManager:scheduleIn(2, function()
+                        if self.destroyed then return end
+                        self.bg_fetch_pending = false
+                        self:triggerBackgroundMergeFetch(chapter_title)
+                    end)
+                end
+            end
+            return
+        end
+
+        -- Use absolute difference to handle backward navigation, page jumps, etc.
+        local diff = math.abs(pageno - last)
+        if diff < page_interval then
+            return
+        end
+        self:log("XRayPlugin: Ultra mode page interval crossed. Page: " .. tostring(pageno) .. ", Last: " .. tostring(last) .. ", Diff: " .. tostring(diff) .. ", Interval: " .. tostring(page_interval))
+        self.last_bg_fetch_page = pageno
+
+        -- Debounce: ignore if a fetch is already scheduled or active
+        if self.bg_fetch_pending or self.bg_fetch_active then 
+            self:log("XRayPlugin: Fetch already pending or active. Debouncing Ultra mode trigger.")
+            return 
+        end
+        self.bg_fetch_pending = true
+
+        -- Resolve current chapter title from TOC if available
+        local chapter_title = nil
+        local toc = self.ui.document:getToc()
+        if toc and #toc > 0 then
+            for _, entry in ipairs(toc) do
+                if entry.page and entry.page <= pageno then
+                    chapter_title = entry.title
+                else
+                    break
+                end
+            end
+        end
+        chapter_title = chapter_title or ("Page " .. tostring(pageno))
+
+        UIManager:scheduleIn(2, function()
+            if self.destroyed then return end
+            self.bg_fetch_pending = false
+            self:triggerBackgroundMergeFetch(chapter_title)
+        end)
+        return
+    end
+
+    -- 2. Standard chapter-based mode checks (requires TOC)
     -- Resolve current chapter title from TOC
     local toc = self.ui.document:getToc()
     if not toc or #toc == 0 then
@@ -413,25 +485,6 @@ function XRayPlugin:onPageUpdate(pageno)
         return 
     end
 
-    -- Ultra mode: bypass chapter-boundary and is_populated guards; fire on page interval alone
-    local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
-    if page_interval and page_interval > 0 then
-        local last = self.last_bg_fetch_page or 0
-        if (pageno - last) < page_interval then
-            return
-        end
-        self.last_bg_fetch_page = pageno
-        -- Debounce: ignore if a fetch is already scheduled
-        if self.bg_fetch_pending or self.bg_fetch_active then return end
-        self.bg_fetch_pending = true
-        UIManager:scheduleIn(2, function()
-            if self.destroyed then return end
-            self.bg_fetch_pending = false
-            self:triggerBackgroundMergeFetch(chapter_title)
-        end)
-        return
-    end
-
     -- Check if it's already populated in the timeline data
     local is_populated = false
     local norm_title = self:normalizeChapterName(chapter_title)
@@ -461,9 +514,6 @@ function XRayPlugin:onPageUpdate(pageno)
         self.chapters_fetched[unique_id] = true
         return
     end
-    self.last_pageno = pageno
-
-    if not self.auto_fetch_enabled then return end
 
     -- Already fetched this chapter this session?
     if self.chapters_fetched[unique_id] then 
