@@ -177,4 +177,25 @@ describe("AIHelper", function()
             assert.is_false(AIHelper:isAnthropic("custom1", "https://openrouter.ai/api/v1/chat/completions"))
         end)
     end)
+
+    describe("Anthropic request headers", function()
+        it("should send only x-api-key for native claude or anthropic.com", function()
+            AIHelper.settings.primary_ai = { provider = "claude", model = "claude-3-7-sonnet-latest" }
+            AIHelper.providers.claude.api_key = "sk-ant-test"
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local req = requests[1]
+            assert.are.equal("sk-ant-test", req.headers["x-api-key"])
+            assert.is_nil(req.headers["Authorization"])
+        end)
+
+        it("should send only Authorization Bearer for custom slot proxies", function()
+            AIHelper.settings.primary_ai = { provider = "custom1", model = "deepseek-v4-flash" }
+            AIHelper.providers.custom1.api_key = "openmodel-key"
+            AIHelper.providers.custom1.endpoint = "https://api.openmodel.ai/v1/messages"
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local req = requests[1]
+            assert.are.equal("Bearer openmodel-key", req.headers["Authorization"])
+            assert.is_nil(req.headers["x-api-key"])
+        end)
+    end)
 end)

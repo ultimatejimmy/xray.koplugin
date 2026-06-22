@@ -271,10 +271,14 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 url = config.endpoint or "https://api.anthropic.com/v1/messages"
                 headers = {
                     ["Content-Type"] = "application/json",
-                    ["x-api-key"] = config.api_key,
-                    ["Authorization"] = "Bearer " .. config.api_key,
                     ["anthropic-version"] = "2023-06-01"
                 }
+                local is_native_anthropic = (ai.provider == "claude") or (config.endpoint or ""):find("api.anthropic.com")
+                if is_native_anthropic then
+                    headers["x-api-key"] = config.api_key
+                else
+                    headers["Authorization"] = "Bearer " .. config.api_key
+                end
                 
                 if ai.provider == "custom1" or ai.provider == "custom2" then
                     if (config.endpoint or ""):find("openrouter.ai") then
@@ -564,7 +568,10 @@ function AIHelper:makeRequestAsync(request_params, result_file)
                         elseif parsed.content and parsed.content[1] then
                             local content = parsed.content[1].text
                             if content then
-                                local text_to_decode = "{" .. content
+                                local text_to_decode = content
+                                if not content:find("^%s*{") then
+                                    text_to_decode = "{" .. content
+                                end
                                 local inner_ok, inner = pcall(json_req.decode, text_to_decode)
                                 valid_json = inner_ok and inner ~= nil
                                 if not valid_json then
@@ -574,8 +581,12 @@ function AIHelper:makeRequestAsync(request_params, result_file)
                                         local repair_ok, repair_data = pcall(json_req.decode, repaired)
                                         if repair_ok and repair_data then
                                             self:log("AIHelper Child: fixTruncatedJSON succeeded for Anthropic / " .. req.provider)
+                                            local text_for_synthetic = repaired
+                                            if not content:find("^%s*{") then
+                                                text_for_synthetic = repaired:sub(2)
+                                            end
                                             local synthetic = json_req.encode({
-                                                content = {{ text = repaired:sub(2), type = "text" }}
+                                                content = {{ text = text_for_synthetic, type = "text" }}
                                             })
                                             response_text = synthetic
                                             valid_json = true
@@ -782,8 +793,12 @@ function AIHelper:checkAsyncResult(result_file)
         end
     elseif provider == "claude" or self:isAnthropic(provider, self.providers[provider] and self.providers[provider].endpoint) then
         if data.content and data.content[1] and data.content[1].text then
-            -- Prepend the '{' that we prefilled in the request
-            ai_text = "{" .. data.content[1].text
+            local content_text = data.content[1].text
+            if content_text:find("^%s*{") then
+                ai_text = content_text
+            else
+                ai_text = "{" .. content_text
+            end
         end
     else
         if data.choices and data.choices[1] then
@@ -1161,6 +1176,22 @@ function AIHelper:loadLanguage()
         local ok_loc, loc_prompts = pcall(dofile, loc_file)
         if ok_loc and type(loc_prompts) == "table" then for k, v in pairs(loc_prompts) do self.prompts[k] = v end end
     end
+end
+
+function AIHelper:isAnthropic(provider, endpoint)
+    if provider == "claude" then return true end
+    if (provider == "custom1" or provider == "custom2") then
+        local prov = self.providers[provider]
+        if prov and prov.format == "anthropic" then
+            return true
+        elseif prov and prov.format == "openai" then
+            return false
+        end
+        if endpoint then
+            return endpoint:find("/v1/messages") ~= nil or endpoint:find("/messages") ~= nil
+        end
+    end
+    return false
 end
 
 function AIHelper:createPrompt(title, author, context, section_name, targeted_word)
@@ -1542,10 +1573,15 @@ function AIHelper:callClaude(prompt, config, current_model)
     
     local headers = { 
         ["Content-Type"] = "application/json", 
-        ["x-api-key"] = config.api_key, 
-        ["Authorization"] = "Bearer " .. config.api_key,
         ["anthropic-version"] = "2023-06-01" 
     }
+    
+    local is_native_anthropic = (provider_id == "claude") or (config.endpoint or ""):find("api.anthropic.com")
+    if is_native_anthropic then
+        headers["x-api-key"] = config.api_key
+    else
+        headers["Authorization"] = "Bearer " .. config.api_key
+    end
     
     if provider_id and (provider_id == "custom1" or provider_id == "custom2") then
         if (config.endpoint or ""):find("openrouter.ai") then
@@ -1564,7 +1600,11 @@ function AIHelper:callClaude(prompt, config, current_model)
     if code_num == 200 and response_text then
         local success, data = pcall(json.decode, response_text)
         if success and data.content and data.content[1] and data.content[1].text then
-            local text_content = "{" .. data.content[1].text
+            local content_text = data.content[1].text
+            local text_content = content_text
+            if not content_text:find("^%s*{") then
+                text_content = "{" .. content_text
+            end
             local parsed_data, err = self:parseAIResponse(text_content)
             if parsed_data then
                 return parsed_data
