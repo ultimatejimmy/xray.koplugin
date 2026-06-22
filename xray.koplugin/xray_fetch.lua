@@ -198,7 +198,10 @@ function M:fetchSingleWord(text, pos0, pos1)
                     self:sortDataByFrequency(target_list, book_text, "name")
                     if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
                     
-                    local updated = self.cache_manager:loadCache(self.ui.document.file) or {}
+                    if not self.book_data then
+                        self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+                    end
+                    local updated = self.book_data
                     updated.characters = self.characters
                     updated.locations = self.locations
                     updated.historical_figures = self.historical_figures
@@ -206,7 +209,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                     updated.timeline = self.timeline
                     updated.book_type = self.book_type or updated.book_type
                     updated.author_info = self.author_info or updated.author_info
-                    updated.last_fetch_page = (self.book_data and self.book_data.last_fetch_page) or updated.last_fetch_page
+                    updated.last_fetch_page = updated.last_fetch_page
                     
                     self.cache_manager:asyncSaveCache(self.ui.document.file, updated)
                 end
@@ -735,13 +738,16 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     -- If we don't have author info in memory, check if the cache already has it
     if not self.author_info then
         if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-        local existing = self.cache_manager:loadCache(self.ui.document.file)
+        local existing = self.book_data or self.cache_manager:loadCache(self.ui.document.file)
         if existing and existing.author_info then
             self.author_info = existing.author_info
         end
     end
 
-    local updated_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+    if not self.book_data then
+        self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+    end
+    local updated_data = self.book_data
     updated_data.book_title = title
     updated_data.author = author
     updated_data.characters = self.characters
@@ -798,27 +804,57 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
     if not self.ai_helper or not self.ai_helper.hasApiKey or not self.ai_helper:hasApiKey() then return end
     if self.ai_helper.settings and self.ai_helper.settings.auto_dupe_check_enabled == false then return end
 
-    -- Run checks for characters and locations in sequence
-    local function checkList(list, list_name, entity_label, on_done)
+    local DataStorage = require("datastorage")
+    local settings_xray_dir = DataStorage:getSettingsDir() .. "/xray"
+
+    -- Run checks for characters and locations in sequence using async subprocesses
+    local function checkListAsync(list, list_name, entity_label, on_done)
         if not list or #list < 2 then on_done(nil); return end
-        UIManager:scheduleIn(0.1, function()
-            if self.destroyed then return end
-            local pairs_found, err_code, err_msg = self.ai_helper:findDuplicates(
-                title, author, list, entity_label, reading_percent
-            )
-            if pairs_found then
-                self:log("XRayPlugin: Duplicate check found " .. tostring(#pairs_found) .. " potential duplicate " .. list_name)
-            else
-                self:log("XRayPlugin: Duplicate check error for " .. list_name .. ": " .. tostring(err_msg))
+        
+        local unique_id = tostring(os.time()) .. "_" .. tostring(math.random(1000, 9999))
+        local result_file = settings_xray_dir .. "/dupe_res_" .. list_name .. "_" .. unique_id .. ".json"
+        
+        self:log("XRayPlugin: Starting async duplicate check for " .. list_name)
+        local pid = self.ai_helper:findDuplicatesAsync(title, author, list, entity_label, reading_percent, result_file)
+        if not pid then
+            self:log("XRayPlugin: Failed to start async duplicate check for " .. list_name)
+            on_done(nil)
+            return
+        end
+        
+        local poll_count = 0
+        local max_polls = 150 -- 5 minutes at 2s intervals
+        local function poll()
+            if self.destroyed then
+                pcall(function() os.remove(result_file) end)
+                return
             end
-            on_done(pairs_found and #pairs_found > 0 and pairs_found or nil)
-        end)
+            poll_count = poll_count + 1
+            local data, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file)
+            if data == nil then
+                if poll_count < max_polls then
+                    UIManager:scheduleIn(2, poll)
+                else
+                    self:log("XRayPlugin: Async duplicate check for " .. list_name .. " timed out")
+                    pcall(function() os.remove(result_file) end)
+                    on_done(nil)
+                end
+            elseif data == false then
+                self:log("XRayPlugin: Async duplicate check for " .. list_name .. " failed: " .. tostring(p_err_msg))
+                on_done(nil)
+            else
+                self:log("XRayPlugin: Async duplicate check for " .. list_name .. " succeeded")
+                local pairs_found = data.duplicate_pairs or data.DuplicatePairs
+                on_done(pairs_found)
+            end
+        end
+        UIManager:scheduleIn(2, poll)
     end
 
-    checkList(self.characters, "characters",
+    checkListAsync(self.characters, "characters",
         self.loc:t("entity_label_characters") or "characters",
         function(char_pairs)
-            checkList(self.locations, "locations",
+            checkListAsync(self.locations, "locations",
                 self.loc:t("entity_label_locations") or "locations",
                 function(loc_pairs)
                     local has_chars = char_pairs and #char_pairs > 0
@@ -827,13 +863,12 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
                     if not has_chars and not has_locs then return end
 
                     if is_silent then
-                        -- Store for later notification
                         self.pending_duplicate_review = {
                             characters = char_pairs,
                             locations  = loc_pairs,
                         }
+                        self:log("XRayPlugin: Stored " .. tostring(has_chars and #char_pairs or 0) .. " char and " .. tostring(has_locs and #loc_pairs or 0) .. " loc duplicate pairs for later review")
                     else
-                        -- Show immediately after fetch success dialog
                         UIManager:scheduleIn(0.5, function()
                             if self.destroyed then return end
                             if has_chars then
@@ -984,7 +1019,10 @@ function M:fetchMoreCharacters()
             
             -- Save to cache
             if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-            local updated_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            if not self.book_data then
+                self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            end
+            local updated_data = self.book_data
             updated_data.book_title = title
             updated_data.author = author
             updated_data.characters = self.characters
@@ -1134,7 +1172,10 @@ function M:fetchMoreTerms()
             end
             
             if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-            local updated_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            if not self.book_data then
+                self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            end
+            local updated_data = self.book_data
             updated_data.book_title = title
             updated_data.author = author
             updated_data.characters = self.characters
@@ -1212,7 +1253,10 @@ function M:fetchAuthorInfo()
             deathDate = sanitizeMetadata(author_data.author_death or "---") 
         }
         if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-        local cache = self.cache_manager:loadCache(self.ui.document.file) or {}
+        if not self.book_data then
+            self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+        end
+        local cache = self.book_data
         cache.author_info = self.author_info
         cache.author = self.author_info.name
         cache.author_bio = self.author_info.description
@@ -1392,7 +1436,10 @@ function M:mergeSeriesContext(cache_data, series_info)
         self.cache_manager = require(plugin_path .. "xray_cachemanager"):new()
     end
     local book_path = self.ui.document.file
-    local cache = self.cache_manager:loadCache(book_path) or {}
+    if not self.book_data then
+        self.book_data = self.cache_manager:loadCache(book_path) or {}
+    end
+    local cache = self.book_data
     cache.series_context_loaded = true
     cache.series_slug = series_info.slug
     cache.characters = self.characters

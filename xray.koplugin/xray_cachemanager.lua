@@ -198,7 +198,7 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
 
                         -- Yield control back to UIManager loop periodically
                         write_count = write_count + 1
-                        if write_count >= 100 then
+                        if write_count >= 20 then
                             write_count = 0
                             coroutine.yield()
                         end

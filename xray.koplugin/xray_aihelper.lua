@@ -1669,8 +1669,8 @@ end
 
 function AIHelper:validateAndCleanData(data)
     if not data then return nil end
-    -- Pass-through for single-word lookup results
-    if data.is_valid ~= nil then return data end
+    -- Pass-through for single-word lookup results or duplicate review results
+    if data.is_valid ~= nil or data.duplicate_pairs ~= nil or data.DuplicatePairs ~= nil then return data end
     
     local strings = self:getFallbackStrings()
     local function ensureString(v, d) return (type(v) == "string" and #v > 0) and v or d or "" end
@@ -1804,6 +1804,40 @@ function AIHelper:findDuplicates(title, author, entities, entity_type_label, rea
         return result.duplicate_pairs
     end
     return nil, err_code or "error_parse", err_msg or "No duplicate_pairs in response"
+end
+
+function AIHelper:findDuplicatesAsync(title, author, entities, entity_type_label, reading_percent, result_file)
+    if not self.prompts then self:loadLanguage() end
+    local template = self.prompts.find_duplicates
+    if not template then return nil, "no_prompt", "find_duplicates prompt missing" end
+
+    -- Build compact list string
+    local lines = {}
+    for _, e in ipairs(entities) do
+        local line = "- " .. (e.name or "?")
+        if e.aliases and type(e.aliases) == "table" and #e.aliases > 0 then
+            line = line .. " (aka: " .. table.concat(e.aliases, ", ") .. ")"
+        end
+        local desc = e.description or e.biography or ""
+        if #desc > 0 then
+            line = line .. ": " .. desc:sub(1, 100)
+        end
+        table.insert(lines, line)
+    end
+
+    local p = reading_percent or 100
+    local prompt = string.format(template,
+        title or "Unknown", author or "Unknown",
+        p, entity_type_label or "entities",
+        table.concat(lines, "\n"), p
+    )
+    prompt = self:sanitize_utf8(prompt)
+
+    local requests, error_code, error_msg = self:buildComprehensiveRequest(nil, nil, nil, prompt)
+    if not requests then return nil, error_code or "error_build", error_msg or "Failed to build request" end
+
+    local pid = self:makeRequestAsync(requests, result_file)
+    return pid
 end
 
 return AIHelper

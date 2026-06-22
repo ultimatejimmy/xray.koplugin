@@ -148,7 +148,10 @@ function M:saveMentionsToCache()
         self.cache_manager = require(plugin_path .. "xray_cachemanager"):new()
     end
     
-    local updated = self.cache_manager:loadCache(self.ui.document.file) or {}
+    if not self.book_data then
+        self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+    end
+    local updated = self.book_data
     
     -- Update only the entity lists that contain the new mentions
     updated.characters         = self.characters

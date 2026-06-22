@@ -23,14 +23,18 @@ function Logger:log(message)
     if not self.path then return end
     local log_path = self.path .. "/xray.log"
     
-    -- Check size and rotate if necessary
-    local f_size = io.open(log_path, "r")
-    if f_size then
-        local current_size = f_size:seek("end")
-        f_size:close()
-        if current_size > self.max_size then
-            os.remove(log_path .. ".old")
-            os.rename(log_path, log_path .. ".old")
+    self.write_count = (self.write_count or 0) + 1
+    if self.write_count >= 50 then
+        self.write_count = 0
+        -- Check size and rotate if necessary
+        local f_size = io.open(log_path, "r")
+        if f_size then
+            local current_size = f_size:seek("end")
+            f_size:close()
+            if current_size > self.max_size then
+                os.remove(log_path .. ".old")
+                os.rename(log_path, log_path .. ".old")
+            end
         end
     end
 
