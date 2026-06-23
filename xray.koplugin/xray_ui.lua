@@ -10,12 +10,12 @@ local gettext = require("gettext")
 local orig_isRTL = gettext.isRTL
 local plugin_instance
 
-gettext.isRTL = function()
+gettext.isRTL = function(...)
     if plugin_instance and plugin_instance:isRTL() and plugin_instance:isXRayUIActive() then
         return true
     end
     if orig_isRTL then
-        return orig_isRTL()
+        return orig_isRTL(...)
     end
     return false
 end
@@ -45,24 +45,22 @@ local Size            = require("ui/size")
 
 local DEFAULT_POPUP_FONT_SIZE = 22
 
-local function _getPopupFontSize()
+local function _getPopupFontSize(plugin)
     local size
-    if G_reader_settings then
-        size = G_reader_settings:readSetting("cre_font_size") or G_reader_settings:readSetting("kopt_font_size")
+    if plugin and plugin.ui and plugin.ui.font and plugin.ui.font.configurable then
+        size = plugin.ui.font.configurable.font_size
+    elseif G_reader_settings then
+        size = G_reader_settings:readSetting("cre_font_size")
+              or G_reader_settings:readSetting("kopt_font_size")
     end
     if size then
-        -- Match the book size exactly, capped at 22 pt minimum to prevent it from being too small
-        size = math.max(22, size)
-    else
-        -- Default fallback size (22 pt unscaled)
-        size = 22
+        return size  -- raw pt value; Font:getFace will call scaleBySize internally
     end
-    local Device = require("device")
-    if Device:isAndroid() then
-        -- Android high-DPI screens need a moderate size boost to match WSL visual scale
-        size = math.floor(size * 1.20)
+    -- Absolute fallback when no book is open
+    if Screen.scaleBySize then
+        return Screen:scaleBySize(22)
     end
-    return size
+    return 22
 end
 
 local XRayBottomPopup = InputContainer:extend{
@@ -85,123 +83,43 @@ function XRayBottomPopup:init()
 
     local e = self.entity or {}
 
-    local function resolveDocFontFilename(family)
-        if not family or family == "" then return nil, nil end
-        local path, idx
-        
-        local function ensureInFontList(p)
-            if not p or p == "" then return p end
-            pcall(function()
-                local FontList = require("fontlist")
-                local fl = FontList:getFontList()
-                local found = false
-                for _, v in ipairs(fl) do
-                    if v == p then found = true break end
-                end
-                if not found then
-                    table.insert(fl, p)
-                end
-            end)
-            return p
-        end
-
-        -- 1. Try CRe directly, as it knows exactly what file it uses for this family
-        pcall(function()
-            local cre = require("document/credocument"):engineInit()
-            if cre and cre.getFontFaceFilenameAndFaceIndex then
-                path, idx = cre.getFontFaceFilenameAndFaceIndex(family)
-            end
-        end)
-        
-        if type(path) == "string" and path ~= "" then
-            return ensureInFontList(path), idx
-        end
-        
-        -- 2. Fallback to FontList mapping
-        pcall(function()
-            local FontList = require("fontlist")
-            if not FontList.fontlist[1] then FontList:getFontList() end
-            if FontList.fontnames and FontList.fontnames[family] then
-                local infos = FontList.fontnames[family]
-                if infos and infos[1] and infos[1].path then
-                    path = ensureInFontList(infos[1].path)
-                    idx = infos[1].index
-                end
-            end
-        end)
-        return path, idx
+    local doc_family
+    if self.plugin and self.plugin.ui and self.plugin.ui.font then
+        doc_family = self.plugin.ui.font.font_face
     end
-
-    local doc_family = G_reader_settings and G_reader_settings:readSetting("cre_font_family")
+    if not doc_family and G_reader_settings then
+        doc_family = G_reader_settings:readSetting("cre_font_family")
+    end
     local Device = require("device")
-    local doc_filename, doc_faceindex
-    if not Device:isAndroid() then
-        doc_filename, doc_faceindex = resolveDocFontFilename(doc_family)
-    end
 
-    local function getAvailableSerifFont()
-        local ok, FontList = pcall(require, "fontlist")
-        if not ok or not FontList then return nil, nil end
-        if not FontList.fontlist or not FontList.fontlist[1] then
-            pcall(function() FontList:getFontList() end)
-        end
-        if FontList.fontnames then
-            local function getRegularInfo(infos)
-                for _, info in ipairs(infos) do
-                    if not info.italic and not info.bold then
-                        return info
+    local function getFontSafe(preferred_family, size)
+        if preferred_family and preferred_family ~= "" then
+            -- Resolve the CRE face name to an actual font file path
+            local ok, credoc = pcall(require, "document/credocument")
+            if ok and credoc and credoc.engineInit then
+                local ok2, cre = pcall(credoc.engineInit, credoc)
+                if ok2 and cre and cre.getFontFaceFilenameAndFaceIndex then
+                    local filename, faceindex = cre.getFontFaceFilenameAndFaceIndex(preferred_family)
+                    if not filename then
+                        filename, faceindex = cre.getFontFaceFilenameAndFaceIndex(preferred_family, nil, true)
                     end
-                end
-                return infos[1]
-            end
-
-            local candidates = {
-                "free serif", "droid serif", "noto serif", "dejavu serif",
-                "gentium book basic", "charis sil", "libertinus serif",
-                "georgia", "times new roman", "times", "serif"
-            }
-            for _, cand in ipairs(candidates) do
-                for family_name, infos in pairs(FontList.fontnames) do
-                    if family_name:lower():find(cand, 1, true) then
-                        local info = getRegularInfo(infos)
-                        if info and info.path then
-                            return info.path, info.index
-                        end
-                    end
-                end
-            end
-            for family_name, infos in pairs(FontList.fontnames) do
-                if family_name:lower():find("serif", 1, true) then
-                    local info = getRegularInfo(infos)
-                    if info and info.path then
-                        return info.path, info.index
+                    if filename then
+                        local face_ok, face = pcall(Font.getFace, Font, filename, size, faceindex)
+                        if face_ok and face then return face end
                     end
                 end
             end
         end
-        return nil, nil
-    end
-
-    local function getFontSafe(preferred, preferred_idx, fallback_path, fallback_idx, size)
-        local face = Font:getFace("cfont", size)
-        if preferred then
-            local ok, f = pcall(Font.getFace, Font, preferred, size, preferred_idx)
-            if ok and f then return f end
-        end
-        if fallback_path then
-            local ok, f = pcall(Font.getFace, Font, fallback_path, size, fallback_idx)
-            if ok and f then return f end
-        end
-        return face
+        -- Fallback to the standard UI content font
+        return Font:getFace("cfont", size)
     end
 
     -- Fonts
-    local serif_path, serif_idx = getAvailableSerifFont()
-    local face_normal = getFontSafe(doc_filename, doc_faceindex, serif_path, serif_idx, fs)
+    local face_normal = getFontSafe(doc_family, fs)
     local face_btn    = Font:getFace("cfont", math.max(12, fs - 2))
 
     local fs_small    = math.max(12, fs - 4)
-    local face_small_normal = getFontSafe(doc_filename, doc_faceindex, serif_path, serif_idx, fs_small)
+    local face_small_normal = getFontSafe(doc_family, fs_small)
 
     -- TextBoxWidget — wrap multilínea, justificado con guionado
     local function make_text(text, face, align, is_bold)
@@ -226,7 +144,7 @@ function XRayBottomPopup:init()
             face       = face_btn,
             padding_h  = btn_padding_h,
             padding_v  = btn_padding_v,
-            margin     = 0,
+            margin     = math.max(16, gap * 4),
             radius     = 4,
             bordersize = 2,
             callback   = cb,
@@ -239,10 +157,10 @@ function XRayBottomPopup:init()
 
     -- ── content ──────────────────────────────────────────────────────────────
     local align = (self.plugin and self.plugin:isRTL()) and "right" or "left"
-    local vg = VerticalGroup:new{ align = align }
+    local vg_components = { align = align }
 
     -- 1. Name (bold, justified)
-    vg[#vg+1] = make_text(tostring(e.name or "?"), face_normal, "justify", true)
+    table.insert(vg_components, make_text(tostring(e.name or "?"), face_normal, "justify", true))
 
     local has_metadata = false
 
@@ -262,8 +180,8 @@ function XRayBottomPopup:init()
         if #kept > 0 then aliases_str = table.concat(kept, ", ") end
     end
     if aliases_str then
-        vg[#vg+1] = VerticalSpan:new{ width = gap }
-        vg[#vg+1] = make_text(get_loc_t("label_aliases", "ALIASES") .. ": " .. aliases_str, face_small_normal, "justify")
+        table.insert(vg_components, VerticalSpan:new{ width = gap })
+        table.insert(vg_components, make_text(get_loc_t("label_aliases", "ALIASES") .. ": " .. aliases_str, face_small_normal, "justify"))
         has_metadata = true
     end
 
@@ -280,15 +198,15 @@ function XRayBottomPopup:init()
     end
 
     if #attrs > 0 then
-        vg[#vg+1] = VerticalSpan:new{ width = gap }
-        vg[#vg+1] = make_text(table.concat(attrs, " | "), face_small_normal, "justify")
+        table.insert(vg_components, VerticalSpan:new{ width = gap })
+        table.insert(vg_components, make_text(table.concat(attrs, " | "), face_small_normal, "justify"))
         has_metadata = true
     end
 
     -- 6. AI Reasoning
     if e.ai_reasoning and e.ai_reasoning ~= "" then
-        vg[#vg+1] = VerticalSpan:new{ width = gap }
-        vg[#vg+1] = make_text("[" .. get_loc_t("label_reasoning", "AI REASONING") .. "]\n" .. e.ai_reasoning, face_small_normal, "justify")
+        table.insert(vg_components, VerticalSpan:new{ width = gap })
+        table.insert(vg_components, make_text("[" .. get_loc_t("label_reasoning", "AI REASONING") .. "]\n" .. e.ai_reasoning, face_small_normal, "justify"))
         has_metadata = true
     end
 
@@ -307,9 +225,9 @@ function XRayBottomPopup:init()
             end
             display_desc = display_desc .. " ..."
         end
-        local desc_gap = has_metadata and math.max(12, gap * 3) or gap
-        vg[#vg+1] = VerticalSpan:new{ width = desc_gap }
-        vg[#vg+1] = make_text(display_desc, face_normal, "justify")
+        local desc_gap = has_metadata and fs or gap
+        table.insert(vg_components, VerticalSpan:new{ width = desc_gap })
+        table.insert(vg_components, make_text(display_desc, face_normal, "justify"))
     end
 
     -- ── buttons ──────────────────────────────────────────────────────────────
@@ -380,20 +298,22 @@ function XRayBottomPopup:init()
         for _, btn in ipairs(active_btns) do
             row_h = math.max(row_h, btn:getSize().h)
         end
-        btn_row = HorizontalGroup:new{ align = "center" }
+        local btn_components = { align = "center" }
         local btn_w = math.floor(inner_w / #active_btns)
-        for i, btn in ipairs(active_btns) do
-            btn_row[i] = LeftContainer:new{
+        for _, btn in ipairs(active_btns) do
+            table.insert(btn_components, LeftContainer:new{
                 dimen = Geom:new{ w = btn_w, h = row_h },
                 btn,
-            }
+            })
         end
+        btn_row = HorizontalGroup:new(btn_components)
     end
 
     if btn_row then
-        vg[#vg+1] = VerticalSpan:new{ width = math.max(28, gap * 6) }
-        vg[#vg+1] = btn_row
+        table.insert(vg_components, btn_row)
     end
+
+    local vg = VerticalGroup:new(vg_components)
 
     -- ── frame: line flush on top, then padded content ─────────────────────
     local line_h    = (Size.line and Size.line.thick) or 2
@@ -413,18 +333,20 @@ function XRayBottomPopup:init()
         pad_bottom_px = pad_bottom_px + safe_bottom
     end
 
-    local outer_vg = VerticalGroup:new{ align = "left" }
-    outer_vg[1] = separator
-    outer_vg[2] = FrameContainer:new{
-        background     = Blitbuffer.COLOR_WHITE,
-        bordersize     = 0,
-        radius         = 0,
-        padding_top    = pad_top_px,
-        padding_bottom = pad_bottom_px,
-        padding_left   = pad,
-        padding_right  = pad,
-        width          = sw,
-        vg,
+    local outer_vg = VerticalGroup:new{
+        align = "left",
+        separator,
+        FrameContainer:new{
+            background     = Blitbuffer.COLOR_WHITE,
+            bordersize     = 0,
+            radius         = 0,
+            padding_top    = pad_top_px,
+            padding_bottom = pad_bottom_px,
+            padding_left   = pad,
+            padding_right  = pad,
+            width          = sw,
+            vg,
+        }
     }
 
     self.popup_frame = FrameContainer:new{
@@ -445,11 +367,17 @@ function XRayBottomPopup:init()
     self.ges_events = {
         TapOutside = {
             GestureRange:new{
-                ges   = "tap",
-                range = Geom:new{ x = 0, y = 0, w = sw, h = popup_y },
+                ges     = "tap",
+                range   = Geom:new{ x = 0, y = 0, w = sw, h = popup_y },
             },
         },
     }
+
+    if Device.hasKeys and Device:hasKeys() then
+        self.key_events = {
+            Close = { { Device.input.group.Back } },
+        }
+    end
 
     local BottomContainer = require("ui/widget/container/bottomcontainer")
     self[1] = BottomContainer:new{
@@ -459,6 +387,11 @@ function XRayBottomPopup:init()
 end
 
 function XRayBottomPopup:onTapOutside()
+    UIManager:close(self)
+    return true
+end
+
+function XRayBottomPopup:onClose()
     UIManager:close(self)
     return true
 end
@@ -501,7 +434,7 @@ local function showBottomPopup(plugin, entity)
         normalized.role = normalized.category
     end
 
-    local fs  = _getPopupFontSize()
+    local fs  = _getPopupFontSize(plugin)
     local pad = 28  -- default
     if G_reader_settings then
         pad = G_reader_settings:readSetting("xray_popup_margin") or pad
@@ -766,6 +699,7 @@ function M:checkBookLanguageMatch()
     local current_lang = self.loc:getLanguage()
     if lang == current_lang then return end
     
+    self.suggestion_dismissed = self.suggestion_dismissed or {}
     if self.suggestion_dismissed[self.ui.document.file] then return end
     
     -- Check if we should ignore this book (from cache)
@@ -1110,7 +1044,7 @@ function M:showCharacterDetails(character, opts)
         showBottomPopup(self, character)
         return
     end
-    local fs = _getPopupFontSize()
+    local fs = _getPopupFontSize(self)
     local border_window = (Size.border and Size.border.window) or 1
     local padding_button = (Size.padding and Size.padding.button) or 10
     local padding_default = (Size.padding and Size.padding.default) or 10
@@ -1121,10 +1055,10 @@ function M:showCharacterDetails(character, opts)
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
     local align = self:isRTL() and "right" or "left"
-    local vg = VerticalGroup:new{ align = align }
+    local vg_components = { align = align }
 
     -- 1. Bold Name (no label)
-    table.insert(vg, TextBoxWidget:new{
+    table.insert(vg_components, TextBoxWidget:new{
         text = character.name or "???",
         face = Font:getFace("cfont", fs),
         width = title_group_width,
@@ -1144,8 +1078,8 @@ function M:showCharacterDetails(character, opts)
         end
     end
     if #meaningful_aliases > 0 then
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = (self.loc:t("label_aliases") or "ALIASES") .. ": " .. table.concat(meaningful_aliases, ", "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
@@ -1165,8 +1099,8 @@ function M:showCharacterDetails(character, opts)
         table.insert(attrs, character.gender)
     end
     if #attrs > 0 then
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = table.concat(attrs, " | "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
@@ -1176,16 +1110,16 @@ function M:showCharacterDetails(character, opts)
 
     -- 4. AI Reasoning (if present)
     if character.ai_reasoning then
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = "[" .. (self.loc:t("label_reasoning") or "AI REASONING") .. "]",
             face = Font:getFace("cfont", fs),
             width = title_group_width,
             bold = true,
             alignment = align,
         })
-        table.insert(vg, VerticalSpan:new{ width = math.max(4, math.floor(fs * 0.2)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(4, math.floor(fs * 0.2)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = character.ai_reasoning,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
@@ -1207,14 +1141,16 @@ function M:showCharacterDetails(character, opts)
             end
             display_desc = display_desc .. " ..."
         end
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = display_desc,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
             alignment = align,
         })
     end
+
+    local vg = VerticalGroup:new(vg_components)
 
     local linked_enabled = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.linked_entries_enabled ~= false
     local related = linked_enabled and self:findRelatedEntities(resolved_desc or "", character.name) or {}
@@ -1315,7 +1251,8 @@ function M:showCharacterDetails(character, opts)
     end
 
     self.active_details_dialog = ButtonDialog:new{
-        _added_widgets = { vg },
+        title = character.name or "Details",
+        widget = vg,
         buttons = buttons,
     }
     UIManager:show(self.active_details_dialog)
@@ -1326,7 +1263,7 @@ function M:showLocationDetails(loc_item, opts)
         showBottomPopup(self, loc_item)
         return
     end
-    local fs = _getPopupFontSize()
+    local fs = _getPopupFontSize(self)
     local border_window = (Size.border and Size.border.window) or 1
     local padding_button = (Size.padding and Size.padding.button) or 10
     local padding_default = (Size.padding and Size.padding.default) or 10
@@ -1337,10 +1274,10 @@ function M:showLocationDetails(loc_item, opts)
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
     local align = self:isRTL() and "right" or "left"
-    local vg = VerticalGroup:new{ align = align }
+    local vg_components = { align = align }
 
     -- 1. Bold Name (no label)
-    table.insert(vg, TextBoxWidget:new{
+    table.insert(vg_components, TextBoxWidget:new{
         text = loc_item.name or "???",
         face = Font:getFace("cfont", fs),
         width = title_group_width,
@@ -1363,14 +1300,16 @@ function M:showLocationDetails(loc_item, opts)
             end
             display_desc = display_desc .. " ..."
         end
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = display_desc,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
             alignment = align,
         })
     end
+
+    local vg = VerticalGroup:new(vg_components)
 
     local linked_enabled = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.linked_entries_enabled ~= false
     local related = linked_enabled and self:findRelatedEntities(desc, loc_item.name) or {}
@@ -1461,7 +1400,8 @@ function M:showLocationDetails(loc_item, opts)
     end
 
     self.active_details_dialog = ButtonDialog:new{
-        _added_widgets = { vg },
+        title = loc_item.name or "Details",
+        widget = vg,
         buttons = buttons,
     }
     UIManager:show(self.active_details_dialog)
@@ -1472,7 +1412,7 @@ function M:showTermDetails(term, opts)
         showBottomPopup(self, term)
         return
     end
-    local fs = _getPopupFontSize()
+    local fs = _getPopupFontSize(self)
     local border_window = (Size.border and Size.border.window) or 1
     local padding_button = (Size.padding and Size.padding.button) or 10
     local padding_default = (Size.padding and Size.padding.default) or 10
@@ -1483,10 +1423,10 @@ function M:showTermDetails(term, opts)
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
     local align = self:isRTL() and "right" or "left"
-    local vg = VerticalGroup:new{ align = align }
+    local vg_components = { align = align }
 
     -- 1. Bold Name (no label)
-    table.insert(vg, TextBoxWidget:new{
+    table.insert(vg_components, TextBoxWidget:new{
         text = term.name or "???",
         face = Font:getFace("cfont", fs),
         width = title_group_width,
@@ -1506,8 +1446,8 @@ function M:showTermDetails(term, opts)
         end
     end
     if #meaningful_aliases > 0 then
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = (self.loc:t("label_aliases") or "ALIASES") .. ": " .. table.concat(meaningful_aliases, ", "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
@@ -1515,7 +1455,7 @@ function M:showTermDetails(term, opts)
         })
     end
 
-    -- 3. Combined attributes (expanded, category) - smaller size
+    -- 3. Combined attributes
     local attrs = {}
     if term.expanded and term.expanded ~= "" and term.expanded ~= term.name then
         table.insert(attrs, term.expanded)
@@ -1524,8 +1464,8 @@ function M:showTermDetails(term, opts)
         table.insert(attrs, term.category)
     end
     if #attrs > 0 then
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = table.concat(attrs, " | "),
             face = Font:getFace("cfont", math.max(12, fs - 4)),
             width = title_group_width,
@@ -1547,8 +1487,8 @@ function M:showTermDetails(term, opts)
             end
             display_definition = display_definition .. " ..."
         end
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = display_definition,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
@@ -1556,18 +1496,20 @@ function M:showTermDetails(term, opts)
         })
     end
 
-    -- 5. Low confidence warning (if present)
+    -- 5. Low confidence warning
     if opts and opts.low_confidence then
         local warning = self.loc:t("low_conf_match", term.name)
             or string.format("Partial match — showing '%s' for your query. Tap below to fetch the exact term.", term.name)
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = warning,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
             alignment = align,
         })
     end
+
+    local vg = VerticalGroup:new(vg_components)
 
     local linked_enabled = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.linked_entries_enabled ~= false
     local related = linked_enabled and self:findRelatedEntities(term.definition or "", term.name) or {}
@@ -1620,9 +1562,7 @@ function M:showTermDetails(term, opts)
         end
     else
         if opts and opts.low_confidence then
-            buttons = {
-                get_relookup_row()
-            }
+            buttons = { get_relookup_row() }
             if mentions_enabled then
                 table.insert(buttons, {
                     {
@@ -1705,7 +1645,8 @@ function M:showTermDetails(term, opts)
     end
 
     self.active_details_dialog = ButtonDialog:new{
-        _added_widgets = { vg },
+        title = term.name or "Details",
+        widget = vg,
         buttons = buttons,
     }
     UIManager:show(self.active_details_dialog)
@@ -2940,7 +2881,7 @@ function M:showHistoricalFigureDetails(fig, opts)
         showBottomPopup(self, fig)
         return
     end
-    local fs = _getPopupFontSize()
+    local fs = _getPopupFontSize(self)
     local border_window = (Size.border and Size.border.window) or 1
     local padding_button = (Size.padding and Size.padding.button) or 10
     local padding_default = (Size.padding and Size.padding.default) or 10
@@ -2951,10 +2892,10 @@ function M:showHistoricalFigureDetails(fig, opts)
     local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
 
     local align = self:isRTL() and "right" or "left"
-    local vg = VerticalGroup:new{ align = align }
+    local vg_components = { align = align }
 
     -- 1. Bold Name (no label)
-    table.insert(vg, TextBoxWidget:new{
+    table.insert(vg_components, TextBoxWidget:new{
         text = fig.name or "???",
         face = Font:getFace("cfont", fs),
         width = title_group_width,
@@ -2977,14 +2918,16 @@ function M:showHistoricalFigureDetails(fig, opts)
             end
             display_bio = display_bio .. " ..."
         end
-        table.insert(vg, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
-        table.insert(vg, TextBoxWidget:new{
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+        table.insert(vg_components, TextBoxWidget:new{
             text = display_bio,
             face = Font:getFace("cfont", fs),
             width = title_group_width,
             alignment = align,
         })
     end
+
+    local vg = VerticalGroup:new(vg_components)
 
     local linked_enabled = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.linked_entries_enabled ~= false
     local related = linked_enabled and self:findRelatedEntities(bio, fig.name) or {}
@@ -3018,7 +2961,6 @@ function M:showHistoricalFigureDetails(fig, opts)
                 }
             }
         }
-        
         if not mentions_enabled then
             table.remove(buttons[2], 1)
         end
@@ -3076,7 +3018,8 @@ function M:showHistoricalFigureDetails(fig, opts)
     end
 
     self.active_details_dialog = ButtonDialog:new{
-        _added_widgets = { vg },
+        title = fig.name or "Details",
+        widget = vg,
         buttons = buttons,
     }
     UIManager:show(self.active_details_dialog)

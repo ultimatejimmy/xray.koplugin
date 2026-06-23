@@ -247,7 +247,13 @@ function _G.createMockPlugin()
             paging = {
                 getCurrentPage = function() return 10 end
             },
-            handleEvent = function() end
+            handleEvent = function() end,
+            font = {
+                font_face = "FreeSerif",
+                configurable = {
+                    font_size = 22,
+                }
+            }
         },
         loc = {
             t = function(s, ...)
