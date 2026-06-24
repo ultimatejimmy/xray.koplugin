@@ -117,7 +117,7 @@ FORMATO JSON REQUERIDO:
   "timeline": [
     {
       "chapter": "Título Exato do Capítulo das Amostras",
-      "event": "Narrative summary of this chapter. {TIMELINE_DETAIL_GUIDANCE} (Max {MAX_TIMELINE_EVENT} chars)"
+      "event": "{TIMELINE_EXAMPLE}"
     }
   ]
 } ]],

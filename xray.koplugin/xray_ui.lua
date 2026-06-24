@@ -278,7 +278,7 @@ function XRayBottomPopup:init()
     end
 
     -- C. Find Mentions button
-    if mentions_enabled then
+    if mentions_enabled and not e.is_timeline then
         local right_btn = make_btn(get_loc_t("find_mentions", "Find Mentions"), function()
             UIManager:close(self)
             if plugin then
@@ -2959,13 +2959,7 @@ function M:showTimeline()
                     text = ev.chapter or "",
                     keep_menu_open = true,
                     callback = function()
-                        local TextViewer = require("ui/widget/textviewer")
-                        local text_viewer = TextViewer:new{
-                            title = ev.chapter or "Prior Book Summary",
-                            text = ev.event or "",
-                            text_type = "book_info",
-                        }
-                        UIManager:show(text_viewer)
+                        self:showTimelineEventDetails(ev, { source = "menu" })
                     end
                 })
             end
@@ -2974,13 +2968,7 @@ function M:showTimeline()
                 text = (ev.chapter or "") .. ": " .. (ev.event or ""),
                 keep_menu_open = true,
                 callback = function()
-                    local TextViewer = require("ui/widget/textviewer")
-                    local text_viewer = TextViewer:new{
-                        title = ev.chapter or "Event Summary",
-                        text = ev.event or "",
-                        text_type = "book_info",
-                    }
-                    UIManager:show(text_viewer)
+                    self:showTimelineEventDetails(ev, { source = "menu" })
                 end
             })
         end
@@ -3003,6 +2991,136 @@ function M:showTimeline()
         end,
     })
     UIManager:show(self.timeline_menu)
+end
+
+function M:showTimelineEventDetails(ev, opts)
+    -- (A) Bottom-popup path (when enabled in settings)
+    if shouldUseBottomPopup(self, opts) then
+        -- Wrap the timeline event as a normalized entity for the existing popup
+        local entity = {
+            name        = ev.chapter or "",
+            description = ev.event   or "",
+            is_timeline = true,
+        }
+        showBottomPopup(self, entity)
+        return
+    end
+
+    -- (B) ButtonDialog path
+    local fs = _getPopupFontSize(self)
+    local border_window  = (Size.border  and Size.border.window)   or 1
+    local padding_button = (Size.padding and Size.padding.button)   or 10
+    local padding_default= (Size.padding and Size.padding.default)  or 10
+    local margin_default = (Size.margin  and Size.margin.default)   or 5
+
+    local dialog_width       = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9)
+    local buttontable_width  = dialog_width - 2 * border_window - 2 * padding_button
+    local content_width      = buttontable_width - 2 * (padding_default + margin_default)
+
+    local align = self:isRTL() and "right" or "left"
+    local vg_components = { align = align }
+
+    -- 1. Chapter title (bold)
+    table.insert(vg_components, TextBoxWidget:new{
+        text      = ev.chapter or "",
+        face      = Font:getFace("cfont", fs),
+        width     = content_width,
+        bold      = true,
+        alignment = align,
+    })
+
+    -- 2. Event text (possibly truncated)
+    local event_text   = ev.event or ""
+    local display_text = event_text
+    local is_truncated = false
+    local TRUNCATE_AT  = 300   -- chars before we add Read More
+
+    if #event_text > TRUNCATE_AT then
+        is_truncated  = true
+        display_text  = event_text:sub(1, TRUNCATE_AT)
+        local last_sp = display_text:match("^.*()%s")
+        if last_sp then display_text = display_text:sub(1, last_sp - 1) end
+        display_text  = display_text .. " ..."
+    end
+
+    if event_text ~= "" then
+        table.insert(vg_components, VerticalSpan:new{
+            width = math.max(6, math.floor(fs * 0.3))
+        })
+        table.insert(vg_components, TextBoxWidget:new{
+            text      = display_text,
+            face      = Font:getFace("cfont", fs),
+            width     = content_width,
+            alignment = align,
+        })
+    end
+
+    local linked_enabled = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.linked_entries_enabled ~= false
+    local related = linked_enabled and self:findRelatedEntities(event_text, ev.chapter) or {}
+
+    local vg = VerticalGroup:new(vg_components)
+
+    -- Buttons
+    local buttons = {}
+    if #related > 0 then
+        buttons = {
+            {
+                {
+                    text     = self.loc:t("linked_entries") or "Linked Entries",
+                    callback = function()
+                        self:showRelatedEntities(related, opts)
+                    end,
+                },
+                {
+                    text     = self.loc:t("close") or "Close",
+                    callback = function()
+                        if self.active_details_dialog then
+                            UIManager:close(self.active_details_dialog)
+                        end
+                        self.active_details_dialog = nil
+                    end,
+                }
+            }
+        }
+    else
+        buttons = {
+            {
+                {
+                    text     = self.loc:t("close") or "Close",
+                    callback = function()
+                        if self.active_details_dialog then
+                            UIManager:close(self.active_details_dialog)
+                        end
+                        self.active_details_dialog = nil
+                    end,
+                }
+            }
+        }
+    end
+
+    if is_truncated then
+        table.insert(buttons, 1, {
+            {
+                text           = self.loc:t("read_more") or "Read More",
+                keep_menu_open = true,
+                callback       = function()
+                    local TextViewer = require("ui/widget/textviewer")
+                    local viewer = TextViewer:new{
+                        title     = ev.chapter or "",
+                        text      = event_text,
+                        text_type = "book_info",
+                    }
+                    UIManager:show(viewer)
+                end,
+            }
+        })
+    end
+
+    self.active_details_dialog = ButtonDialog:new{
+        _added_widgets = { vg },
+        buttons        = buttons,
+    }
+    UIManager:show(self.active_details_dialog)
 end
 
 function M:showHistoricalFigureDetails(fig, opts)

@@ -151,7 +151,7 @@ FORMATO JSON RICHIESTO:
   "cronologia": [
     {
       "chapter": "Titolo esatto del capitolo dagli esempi",
-      "event": "Narrative summary of this chapter. {TIMELINE_DETAIL_GUIDANCE} (Max {MAX_TIMELINE_EVENT} chars)"
+      "event": "{TIMELINE_EXAMPLE}"
     }
   ]
 }]],

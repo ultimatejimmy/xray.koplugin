@@ -118,7 +118,7 @@ return {
     "timeline": [
     {
       "chapter": "样本中的准确章节标题",
-      "event": "Narrative summary of this chapter. {TIMELINE_DETAIL_GUIDANCE} (Max {MAX_TIMELINE_EVENT} chars)"
+      "event": "{TIMELINE_EXAMPLE}"
     }
   ]
 } ]],

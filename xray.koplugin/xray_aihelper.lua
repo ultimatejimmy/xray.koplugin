@@ -1423,15 +1423,22 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
 
         -- Guidance for timeline detail based on target length setting
         local tl_guidance = "Write a concise single-sentence summary."
+        local tl_example = "The hero escapes the burning city and reunites with his companions at the river crossing."
         if tl_len <= 50 then
             tl_guidance = "Write a brief one-phrase summary."
+            tl_example = "The hero escapes the burning city."
         elseif tl_len <= 80 then
             tl_guidance = "Write a concise single-sentence summary."
+            tl_example = "The hero escapes the burning city and reunites with his companions at the river crossing."
         elseif tl_len <= 150 then
             tl_guidance = "Write a detailed summary including context and key consequences."
+            tl_example = "The hero escapes the burning city, pursued by guards, and reunites with companions at the river crossing, where they plan their next move against the antagonist."
         else
             tl_guidance = "Write a rich, full narrative description including character actions, key events, and their consequences."
+            tl_example = "The hero escapes the burning city under cover of darkness, pursued by the king's guards. After a harrowing chase, he reunites with companions at the river crossing, where they learn the antagonist has seized the eastern fortress and begin planning a counterattack."
         end
+
+        local min_tl_len = math.floor(tl_len * 0.75)
 
         final_prompt = final_prompt
             :gsub("{MAX_CHAR_DESC}",    tostring(char_len))
@@ -1439,7 +1446,9 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
             :gsub("{MAX_LOC_DESC}",     tostring(loc_len))
             :gsub("{NUM_LOCS}",         tostring(num_locs))
             :gsub("{MAX_TIMELINE_EVENT}",tostring(tl_len))
+            :gsub("{MIN_TIMELINE_EVENT}",tostring(min_tl_len))
             :gsub("{TIMELINE_DETAIL_GUIDANCE}", tl_guidance)
+            :gsub("{TIMELINE_EXAMPLE}", tl_example)
             :gsub("{MAX_HIST_BIO}",     tostring(hist_len))
             :gsub("{NUM_HIST}",         tostring(num_hist))
             :gsub("{MAX_TERM_DEF}",     tostring(term_len))

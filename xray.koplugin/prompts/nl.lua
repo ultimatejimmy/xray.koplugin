@@ -119,7 +119,7 @@ VEREIST JSON-FORMAAT:
   "timeline": [
     {
       "chapter": "Exacte hoofdstuktitel uit voorbeelden",
-      "event": "Narrative summary of this chapter. {TIMELINE_DETAIL_GUIDANCE} (Max {MAX_TIMELINE_EVENT} chars)"
+      "event": "{TIMELINE_EXAMPLE}"
     }
   ]
 }]],
