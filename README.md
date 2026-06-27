@@ -1,7 +1,5 @@
 # X-Ray Plugin for KOReader
 
-*Note: This is a fork of the original plugin by [0zd3m1r/koreader-xray-plugin](https://github.com/0zd3m1r/koreader-xray-plugin).*
-
 ![Platform](https://img.shields.io/badge/platform-KOReader-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
