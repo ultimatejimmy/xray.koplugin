@@ -126,11 +126,11 @@ function M:_drawUnitUnderlines(bb)
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then return end
     
     local settings = self.ai_helper and self.ai_helper.settings or {}
-    local underline_style = settings.unit_underline_style or "invisible"
+    local underline_style = settings.unit_underline_style or "wavy"
     if underline_style == "invisible" then return end
     
     local thickness = tonumber(settings.unit_underline_thickness) or 2
-    local intensity = settings.unit_underline_intensity or "medium"
+    local intensity = settings.unit_underline_intensity or "light"
 
     local color_val = Blitbuffer.Color8(150)
     if intensity == "light" then
@@ -141,7 +141,7 @@ function M:_drawUnitUnderlines(bb)
 
     for _, box in ipairs(self.unit_conversion_boxes) do
         if box.x and box.y and box.w and box.h then
-            local y_line = box.y + box.h - thickness
+            local y_line = box.y + box.h - thickness - 2
             if underline_style == "wavy" then
                 for offset = 0, box.w - 1, 4 do
                     local wave_y = y_line + (math.floor(offset / 4) % 2 == 0 and 0 or 1)
@@ -194,7 +194,7 @@ function M:scanBookForUnits()
     if not self.ui or not self.ui.document then return end
     
     local settings = self.ai_helper and self.ai_helper.settings or {}
-    if settings.unit_converter_enabled == false or settings.unit_underline_enabled == false then
+    if settings.unit_converter_enabled ~= true or settings.unit_underline_enabled == false then
         self:clearUnitUnderlines()
         return
     end
@@ -334,6 +334,10 @@ function M:scanBookForUnits()
                     else
                         break
                     end
+                end
+                
+                while #valid_words > 0 and valid_words[1] == "and" do
+                    table.remove(valid_words, 1)
                 end
 
                 if #valid_words > 0 then
@@ -713,7 +717,7 @@ end
 
 function M:_handleUnitTap(ges)
     local settings = self.ai_helper and self.ai_helper.settings or {}
-    if settings.unit_converter_enabled == false then return false end
+    if settings.unit_converter_enabled ~= true then return false end
     
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then
         return false

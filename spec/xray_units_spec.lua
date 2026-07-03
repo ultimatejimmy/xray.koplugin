@@ -208,6 +208,11 @@ describe("xray_units", function()
             assert.are.equal("three miles", res[1].original)
             assert.are.equal("4.83 km", res[1].converted)
             assert.are.equal("length", res[1].category)
+
+            local res2 = xray_units.detectMeasurements("He walked and ten meters today.", "to_imperial")
+            assert.are.equal(1, #res2)
+            assert.are.equal("ten meters", res2[1].original)
+            assert.are.equal("32.81 feet", res2[1].converted)
         end)
 
         it("ignores non-measurement uses of unit words", function()

@@ -898,10 +898,10 @@ function XRayPlugin:getSubMenuItems()
                     {
                         text = self.loc:t("unit_conv_enabled") or "Enable Unit Converter",
                         checked_func = function()
-                            return self.ai_helper.settings.unit_converter_enabled ~= false
+                            return self.ai_helper.settings.unit_converter_enabled == true
                         end,
                         callback = function()
-                            local current = self.ai_helper.settings.unit_converter_enabled ~= false
+                            local current = self.ai_helper.settings.unit_converter_enabled == true
                             self.ai_helper:saveSettings({ unit_converter_enabled = not current })
                             if self.scanBookForUnits then self:scanBookForUnits() end
                         end
@@ -1176,9 +1176,9 @@ function XRayPlugin:showUnitStyleCard()
         end
 
         local settings = self.ai_helper.settings or {}
-        local underline_style = settings.unit_underline_style or "invisible"
+        local underline_style = settings.unit_underline_style or "wavy"
         local underline_thickness = tonumber(settings.unit_underline_thickness) or 2
-        local underline_intensity = settings.unit_underline_intensity or "medium"
+        local underline_intensity = settings.unit_underline_intensity or "light"
         local tooltip_timeout = tonumber(settings.unit_tooltip_timeout) or 4
 
         local function saveSetting(key, val)

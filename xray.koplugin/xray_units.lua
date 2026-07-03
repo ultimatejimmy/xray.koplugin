@@ -600,6 +600,10 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
                                     end
                                 end
 
+                                while #valid_words > 0 and valid_words[1] == "and" do
+                                    table.remove(valid_words, 1)
+                                end
+
                                 if #valid_words > 0 then
                                     local phrase = table.concat(valid_words, " ")
                                     local val = parseNumberText(phrase)
