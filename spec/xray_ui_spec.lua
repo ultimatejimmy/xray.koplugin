@@ -430,4 +430,95 @@ describe("xray_ui", function()
             assert.is_true(plugin.book_data.series_context_dismissed)
         end)
     end)
+
+    describe("scanBookForUnits", function()
+        it("should successfully scan document and populate unit_xp_matches", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "auto",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "meters",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "he walked five ",
+                    next_text = " today."
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                return mock_hits
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_five" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_five" and unit_end == "xp2" then return "five meters" end
+                if cand == "xp_five" then return "five" end
+                return ""
+            end
+            
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("xp_five", plugin.unit_xp_matches[1].start_xp)
+            assert.are.equal("xp2", plugin.unit_xp_matches[1].end_xp)
+            assert.are.equal("five meters", plugin.unit_xp_matches[1].original)
+        end)
+
+        it("should successfully scan '80 degrees Celcius' and populate unit_xp_matches", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "degrees Celcius",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The liquid is at 80 ",
+                    next_text = " today."
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                return mock_hits
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_80" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_80" and unit_end == "xp2" then return "80 degrees Celcius" end
+                if cand == "xp_80" then return "80" end
+                return ""
+            end
+            
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("xp_80", plugin.unit_xp_matches[1].start_xp)
+            assert.are.equal("xp2", plugin.unit_xp_matches[1].end_xp)
+            assert.are.equal("80 degrees Celcius", plugin.unit_xp_matches[1].original)
+            assert.are.equal("176 °F", plugin.unit_xp_matches[1].converted)
+        end)
+    end)
 end)

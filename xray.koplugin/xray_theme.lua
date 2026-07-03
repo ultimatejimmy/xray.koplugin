@@ -28,7 +28,6 @@ local M = {
     pad_v_top = sc(12),
     pad_v_bottom = sc(12),
     gap = sc(8),
-    face_label_size = 14,
 }
 
 function M.getFontSafe(preferred_family, size)

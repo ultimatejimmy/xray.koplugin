@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Spanish\n"
-"Language: es\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Activar conversor de unidades"
 
 msgid "unit_conv_style_settings"
 msgstr "Ajustes de estilo y subrayado"
+
+msgid "unit_intensity_dark"
+msgstr "Oscuro"
+
+msgid "unit_intensity_light"
+msgstr "Claro"
+
+msgid "unit_intensity_medium"
+msgstr "Medio"
+
+msgid "unit_style_preview_title"
+msgstr "VISTA PREVIA DE ESTILO"
+
+msgid "unit_timeout_never"
+msgstr "Nunca"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Duración del aviso"
+
+msgid "unit_underline_intensity_label"
+msgstr "Intensidad del subrayado"
+
+msgid "unit_underline_invisible"
+msgstr "Invisible"
+
+msgid "unit_underline_solid"
+msgstr "Sólido"
+
+msgid "unit_underline_style_label"
+msgstr "Estilo de subrayado"
+
+msgid "unit_underline_thickness_label"
+msgstr "Grosor del subrayado"
+
+msgid "unit_underline_wavy"
+msgstr "Ondulado"
 
 msgid "updater_available_header"
 msgstr "¡X-Ray %s está disponible!\nTienes la %s."

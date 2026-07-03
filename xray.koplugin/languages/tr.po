@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Turkish\n"
-"Language: tr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Birim Dönüştürücüyü Etkinleştir"
 
 msgid "unit_conv_style_settings"
 msgstr "Stil ve alt çizgi ayarları"
+
+msgid "unit_intensity_dark"
+msgstr "Koyu"
+
+msgid "unit_intensity_light"
+msgstr "Açık"
+
+msgid "unit_intensity_medium"
+msgstr "Orta"
+
+msgid "unit_style_preview_title"
+msgstr "STİL ÖNİZLEME"
+
+msgid "unit_timeout_never"
+msgstr "Asla"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "İpucu Zamanı"
+
+msgid "unit_underline_intensity_label"
+msgstr "Altı Çizili Yoğunluğu"
+
+msgid "unit_underline_invisible"
+msgstr "Görünmez"
+
+msgid "unit_underline_solid"
+msgstr "Düz"
+
+msgid "unit_underline_style_label"
+msgstr "Altı Çizili Stili"
+
+msgid "unit_underline_thickness_label"
+msgstr "Altı Çizili Kalınlığı"
+
+msgid "unit_underline_wavy"
+msgstr "Dalgalı"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s mevcut!\nSizde %s var."

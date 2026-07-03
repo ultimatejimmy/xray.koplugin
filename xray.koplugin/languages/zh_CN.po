@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Chinese (Simplified)\n"
-"Language: zh_CN\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "启用单位转换器"
 
 msgid "unit_conv_style_settings"
 msgstr "样式与下划线设置"
+
+msgid "unit_intensity_dark"
+msgstr "深"
+
+msgid "unit_intensity_light"
+msgstr "淡"
+
+msgid "unit_intensity_medium"
+msgstr "中"
+
+msgid "unit_style_preview_title"
+msgstr "样式预览"
+
+msgid "unit_timeout_never"
+msgstr "从不"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "提示框超时"
+
+msgid "unit_underline_intensity_label"
+msgstr "下划线深浅"
+
+msgid "unit_underline_invisible"
+msgstr "不可见"
+
+msgid "unit_underline_solid"
+msgstr "实线"
+
+msgid "unit_underline_style_label"
+msgstr "下划线样式"
+
+msgid "unit_underline_thickness_label"
+msgstr "下划线粗细"
+
+msgid "unit_underline_wavy"
+msgstr "波浪线"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s 已发布！\n您当前的版本是 %s。"

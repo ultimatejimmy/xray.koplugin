@@ -2,13 +2,34 @@
 local M = {}
 
 local WRITTEN_NUMBERS = {
-    one = 1, two = 2, three = 3, four = 4, five = 5,
+    half = 0.5, zero = 0, one = 1, two = 2, three = 3, four = 4, five = 5,
     six = 6, seven = 7, eight = 8, nine = 9, ten = 10,
     eleven = 11, twelve = 12, thirteen = 13, fourteen = 14, fifteen = 15,
     sixteen = 16, seventeen = 17, eighteen = 18, nineteen = 19, twenty = 20,
     thirty = 30, forty = 40, fifty = 50, sixty = 60, seventy = 70, eighty = 80, ninety = 90,
-    hundred = 100, thousand = 1000
+    hundred = 100, thousand = 1000, million = 1000000
 }
+
+local NON_ENGLISH_ASCII = {
+    zoll=true, pulgada=true, pulgadas=true, pouce=true, pouces=true,
+    pollice=true, pollici=true, polegada=true, polegadas=true, cal=true,
+    cale=true, cali=true, fuss=true, pie=true, pies=true,
+    pied=true, pieds=true, piede=true, piedi=true, ["pé"]=true,
+    ["pés"]=true, voet=true, stopa=true, stopy=true, stop=true,
+    ayak=true, kaki=true, yarda=true, yardas=true, iarda=true,
+    iarde=true, jarda=true, jardas=true, jard=true, hardy=true,
+    jardy=true, meile=true, meilen=true, milla=true, millas=true,
+    mille=true, milles=true, miglio=true, miglia=true, milha=true,
+    milhas=true, mijl=true, mijlen=true, mila=true, mil=true,
+    unze=true, unzen=true, onza=true, onzas=true, once=true,
+    onces=true, oncia=true, uncja=true, uncje=true, uncji=true,
+    uncia=true, ons=true, pfund=true, libra=true, libras=true,
+    livre=true, livres=true, libbra=true, libbre=true, funt=true,
+    funty=true, font=true, libre=true, pon=true, hektar=true,
+    ettaro=true, ettari=true, hektary=true
+}
+
+M.NON_ENGLISH_ASCII = NON_ENGLISH_ASCII
 
 -- Returns standard conversion direction based on reader settings
 function M.getDefaultDirection()
@@ -35,20 +56,42 @@ function M.formatNumber(val, lang)
     -- Remove trailing zeros and dot
     formatted = formatted:gsub("0+$", ""):gsub("%.$", "")
     
+    local integer_part, decimal_part = formatted:match("^([^%.]*)(%.?.*)$")
+    local decimal_sep = "."
+    local thousand_sep = ","
+    
     if lang and COMMA_LOCALES[lang] then
-        formatted = formatted:gsub("%.", ",")
+        decimal_sep = ","
+        thousand_sep = "."
     end
-    return formatted
+    
+    -- Format thousands in the integer part
+    local left, num = integer_part:match("^([^%d]*)(%d+)$")
+    if num then
+        local rev = num:reverse():gsub("(%d%d%d)", "%1" .. thousand_sep):reverse()
+        -- Escape thousand_sep for the pattern match in gsub
+        local escaped_sep = thousand_sep:gsub("([^%w])", "%%%1")
+        rev = rev:gsub("^" .. escaped_sep, "")
+        integer_part = left .. rev
+    end
+    
+    if decimal_part and decimal_part ~= "" then
+        decimal_part = decimal_sep .. decimal_part:sub(2)
+    end
+    
+    return integer_part .. decimal_part
 end
 
--- Converts written number text to a numeric value
 local function parseNumberText(str)
     if not str then return nil end
-    str = str:lower():gsub("^%s+", ""):gsub("%s+$", "")
+    str = str:lower():gsub("\194\160", " "):gsub("^%s+", ""):gsub("%s+$", "")
+    if str == "half" or str == "half a" or str == "half an" then return 0.5 end
     
     -- Try direct numeric
+    -- Strip English thousand separator commas (comma followed by exactly 3 digits)
+    local clean_str = str:gsub(",(%d%d%d%f[%D])", "%1")
     -- Replace European comma with dot for conversion if present
-    local clean_str = str:gsub(",", ".")
+    clean_str = clean_str:gsub(",", ".")
     local num = tonumber(clean_str)
     if num then return num end
     
@@ -57,9 +100,12 @@ local function parseNumberText(str)
     local found = false
     for word in str:gmatch("[a-z]+") do
         local wval = WRITTEN_NUMBERS[word]
+        if not (wval or word == "and" or word == "a" or word == "an") then
+            return nil
+        end
         if wval then
             found = true
-            if wval == 100 or wval == 1000 then
+            if wval == 100 or wval == 1000 or wval == 1000000 then
                 if val == 0 then val = 1 end
                 val = val * wval
             else
@@ -168,9 +214,8 @@ local UNITS = {
     { category = "weight", system = "metric", name = "g", std_target = "oz", aliases = { "grams", "gram", "g", "grammes", "gramme", "gramm", "gramo", "gramos", "grammo", "grammi", "grama", "gramas", "gramy", "грамм", "грамма", "граммов", "грам", "грама", "грамів", "جرام", "جرامات", "克" } },
     { category = "weight", system = "metric", name = "kg", std_target = "lb", aliases = { "kilograms", "kilogram", "kg", "kilogrammes", "kilogramme", "kilogramm", "kilogramo", "kilogramos", "kilogrames", "kilo", "kilos", "chilogrammo", "chilogrammi", "chilo", "chili", "quilograma", "quilogramas", "quilo", "quilos", "kilogramy", "килограмм", "килограмма", "килограммов", "кілограм", "кілограма", "кілограмів", "كيلوجرام", "كيلوجرامات", "公斤", "千克" } },
 
-    -- TEMP
-    { category = "temp", system = "imperial", name = "f", std_target = "c", aliases = { "fahrenheit", "f", "degrees fahrenheit", "deg f", "°f", "°fahrenheit", "deg. f", "degrees f" } },
-    { category = "temp", system = "metric", name = "c", std_target = "f", aliases = { "celsius", "c", "degrees celsius", "deg c", "°c", "°celsius", "deg. c", "degrees c" } },
+    { category = "temp", system = "imperial", name = "f", std_target = "c", aliases = { "fahrenheit", "f", "degrees fahrenheit", "degree fahrenheit", "deg f", "°f", "°fahrenheit", "deg. f", "degrees f", "degree f" } },
+    { category = "temp", system = "metric", name = "c", std_target = "f", aliases = { "celsius", "celcius", "c", "degrees celsius", "degree celsius", "degrees celcius", "degree celcius", "deg c", "°c", "°celsius", "°celcius", "deg. c", "degrees c", "degree c" } },
 
     -- VOLUME
     { category = "volume", system = "imperial", name = "fl oz", std_target = "ml", aliases = { "fluid ounces", "fluid ounce", "fl oz", "fl%. oz%." } },
@@ -291,6 +336,7 @@ M.detectVagueQuantifier = detectVagueQuantifier
 -- Detects all measurements in text and returns conversion results
 function M.detectMeasurements(text, direction, enabled_categories, current_lang)
     if not text or text == "" then return {} end
+    current_lang = current_lang or "en"
     
     direction = direction or M.getDefaultDirection()
     enabled_categories = enabled_categories or {
@@ -298,7 +344,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
     }
     
     local results = {}
-    local text_lower = text:lower()
+    local text_lower = text:lower():gsub("\194\160", " ")
 
     -- 1. Try compound units first (e.g. 6 feet 2 inches or 6'2")
     -- Pattern: (%d+)%s*'%s*(%d+)%s*"
@@ -326,6 +372,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
             end
             init = e + 1
         end
+        
         
         -- Pattern: (%d+)%s+feet%s+(%d+)%s+inches
         local compound_units = {
@@ -400,10 +447,13 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
             
             if matches_direction then
                 for _, alias in ipairs(u.aliases) do
-                    local escaped_alias = alias:gsub("([^%w])", "%%%1")
+                    local alias_lower = alias:lower()
+                    local is_en = (current_lang:lower() == "en")
+                    if not (is_en and NON_ENGLISH_ASCII[alias_lower]) then
+                        local escaped_alias = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
                     
                     -- A: Digit pattern: matches numbers like "12.5", "12", "12,5"
-                    local pattern = "([%d%.%,]+)%s*(" .. escaped_alias .. ")%f[%W]"
+                    local pattern = "([%d%.%,]+)%s*%-?%s*(" .. escaped_alias .. ")%f[%W]"
                     local init = 1
                     while true do
                         local s, e, num_str, unit_match = text_lower:find(pattern, init)
@@ -495,7 +545,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
                     for _, conn in ipairs(connectors) do
                         local d_pat
                         if conn == "," then
-                            d_pat = "([%d%.%,]+)%s*,%s*([%d%.%,]+)%s*(" .. escaped_alias .. ")%f[%W]"
+                            d_pat = "([%d%.%,]+)%s*,%s+([%d%.%,]+)%s*(" .. escaped_alias .. ")%f[%W]"
                         elseif conn == "-" or conn == "–" then
                             d_pat = "([%d%.%,]+)%s*[" .. conn .. "]%s*([%d%.%,]+)%s*(" .. escaped_alias .. ")%f[%W]"
                         else
@@ -504,98 +554,137 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
                         process_range_pattern(d_pat, false)
                     end
 
-                    for _, conn in ipairs(connectors) do
-                        local w_pat
-                        if conn == "," then
-                            w_pat = "([a-z%d%-]+)%s*,%s*([a-z%d%-]+)%s*(" .. escaped_alias .. ")%f[%W]"
-                        else
-                            w_pat = "([a-z%d%-]+)%s+" .. conn .. "%s+([a-z%d%-]+)%s*(" .. escaped_alias .. ")%f[%W]"
+                    if not (alias_lower == "in" or alias_lower == "st") then
+                        for _, conn in ipairs(connectors) do
+                            local w_pat
+                            if conn == "," then
+                                w_pat = "([a-z%d%-]+)%s*,%s+([a-z%d%-]+)%s*(" .. escaped_alias .. ")%f[%W]"
+                            else
+                                w_pat = "([a-z%d%-]+)%s+" .. conn .. "%s+([a-z%d%-]+)%s*(" .. escaped_alias .. ")%f[%W]"
+                            end
+                            process_range_pattern(w_pat, true)
                         end
-                        process_range_pattern(w_pat, true)
                     end
 
                     -- B: Written numbers (English only fallback): matches e.g. "six feet"
-                    local written_pattern = "([a-z%-]+)%s*(" .. escaped_alias .. ")%f[%W]"
-                    init = 1
-                    while true do
-                        local s, e, word_str, unit_match = text_lower:find(written_pattern, init)
-                        if not s then break end
-                        
-                        -- Guard word boundary at the start
-                        local before_char = s > 1 and text_lower:sub(s - 1, s - 1) or ""
-                        if not before_char:match("%a") then
-                            local val = parseNumberText(word_str)
-                            if val then
-                                local conv_raw = M.convert(val, u.category, u.name, u.std_target)
-                                local conv_val, conv_unit = applySmartScaling(conv_raw, u.category, u.std_target)
-                                
-                                if conv_unit == "c" then conv_unit = "°C"
-                                elseif conv_unit == "f" then conv_unit = "°F" end
-                                
-                                local conv_str = M.formatNumber(conv_val, current_lang) .. " " .. M.pluralizeUnit(conv_val, conv_unit)
-                                
-                                table.insert(results, {
-                                    start_pos = s,
-                                    end_pos = e,
-                                    original = text:sub(s, e),
-                                    converted = conv_str,
-                                    category = u.category
-                                })
-                            end
-                        end
-                        init = e + 1
-                    end
-
-                    -- C: Vague quantifiers (e.g. "a few hundred yards") using pure Lua loop
-                    local multipliers = { "dozen", "hundred", "thousand", "million" }
-                    for _, mult in ipairs(multipliers) do
-                        local vague_pattern = "([a-z%s]+)%s+" .. mult .. "%s*(" .. escaped_alias .. ")%f[%W]"
+                    if not (alias_lower == "in" or alias_lower == "st") then
+                        local written_pattern = "([a-z%- ]+)%s+(" .. escaped_alias .. ")%f[%W]"
                         init = 1
                         while true do
-                            local s, e, prefix, unit_match = text_lower:find(vague_pattern, init)
+                            local s, e, word_str, unit_match = text_lower:find(written_pattern, init)
                             if not s then break end
                             
+                            -- Guard word boundary at the start
                             local before_char = s > 1 and text_lower:sub(s - 1, s - 1) or ""
                             if not before_char:match("%a") then
-                                local clean_pref = prefix:gsub("^%s+", ""):gsub("%s+$", "")
-                                for _, q in ipairs(VAGUE_ORDER) do
-                                    if clean_pref == q or clean_pref:sub(-#q) == q then
-                                        local band = VAGUE_BANDS[q]
-                                        local mult_val = VAGUE_MULTIPLIERS[mult]
-                                        if band and mult_val then
-                                            local val1 = band[1] * mult_val
-                                            local val2 = band[2] * mult_val
-                                            local conv_raw1 = M.convert(val1, u.category, u.name, u.std_target)
-                                            local conv_val1, conv_unit = applySmartScaling(conv_raw1, u.category, u.std_target)
-                                            local conv_raw2 = M.convert(val2, u.category, u.name, u.std_target)
-                                            local conv_val2 = applySmartScaling(conv_raw2, u.category, u.std_target)
-                                            
-                                            if conv_unit == "c" then conv_unit = "°C"
-                                            elseif conv_unit == "f" then conv_unit = "°F" end
-                                            
-                                            local conv_str
-                                            if val1 == val2 then
-                                                conv_str = "≈" .. M.formatNumber(conv_val1, current_lang) .. " " .. M.pluralizeUnit(conv_val1, conv_unit)
-                                            else
-                                                conv_str = "≈" .. M.formatNumber(conv_val1, current_lang) .. "–" .. M.formatNumber(conv_val2, current_lang) .. " " .. M.pluralizeUnit(conv_val2, conv_unit)
-                                            end
-                                            
-                                            local match_start = s + (prefix:find(q, 1, true) or 1) - 1
-                                            table.insert(results, {
-                                                start_pos = match_start,
-                                                end_pos = e,
-                                                original = text:sub(match_start, e),
-                                                converted = conv_str,
-                                                category = u.category,
-                                                vague = true
-                                            })
-                                            break
+                                -- Parse multi-word phrase by trying longest suffix first
+                                local phrase_words = {}
+                                for w in word_str:gmatch("[a-z%-]+") do
+                                    table.insert(phrase_words, w)
+                                end
+                                
+                                -- Filter to ensure we only keep contiguous valid written number tokens from the right
+                                local valid_words = {}
+                                local i_w = #phrase_words
+                                while i_w >= 1 do
+                                    local w = phrase_words[i_w]
+                                    local clean_w = w:gsub("[%-,]$", "")
+                                    if clean_w == "a" and i_w > 1 and phrase_words[i_w-1]:gsub("[%-,]$", "") == "half" then
+                                        table.insert(valid_words, 1, "half a")
+                                        i_w = i_w - 2
+                                    elseif clean_w == "and" or parseNumberText(clean_w) then
+                                        table.insert(valid_words, 1, clean_w)
+                                        i_w = i_w - 1
+                                    else
+                                        break
+                                    end
+                                end
+
+                                if #valid_words > 0 then
+                                    local phrase = table.concat(valid_words, " ")
+                                    local val = parseNumberText(phrase)
+                                    if val then
+                                        local phrase_start_idx = word_str:find(phrase, 1, true)
+                                        local match_start = s
+                                        if phrase_start_idx then
+                                            match_start = s + phrase_start_idx - 1
                                         end
+
+                                        local conv_raw = M.convert(val, u.category, u.name, u.std_target)
+                                        local conv_val, conv_unit = applySmartScaling(conv_raw, u.category, u.std_target)
+                                        
+                                        if conv_unit == "c" then conv_unit = "°C"
+                                        elseif conv_unit == "f" then conv_unit = "°F" end
+                                        
+                                        local conv_str = M.formatNumber(conv_val, current_lang) .. " " .. M.pluralizeUnit(conv_val, conv_unit)
+                                        
+                                        table.insert(results, {
+                                            start_pos = match_start,
+                                            end_pos = e,
+                                            original = text:sub(match_start, e),
+                                            converted = conv_str,
+                                            category = u.category
+                                        })
                                     end
                                 end
                             end
                             init = e + 1
                         end
+                    end
+
+                    -- C: Vague quantifiers (e.g. "a few hundred yards") using pure Lua loop
+                    if not (alias_lower == "in" or alias_lower == "st") then
+                        local multipliers = { "dozen", "hundred", "thousand", "million" }
+                        for _, mult in ipairs(multipliers) do
+                            local vague_pattern = "([a-z%s]+)%s+" .. mult .. "%s*(" .. escaped_alias .. ")%f[%W]"
+                            init = 1
+                            while true do
+                                local s, e, prefix, unit_match = text_lower:find(vague_pattern, init)
+                                if not s then break end
+                                
+                                local before_char = s > 1 and text_lower:sub(s - 1, s - 1) or ""
+                                if not before_char:match("%a") then
+                                    local clean_pref = prefix:gsub("^%s+", ""):gsub("%s+$", "")
+                                    for _, q in ipairs(VAGUE_ORDER) do
+                                        if clean_pref == q or clean_pref:sub(-#q) == q then
+                                            local band = VAGUE_BANDS[q]
+                                            local mult_val = VAGUE_MULTIPLIERS[mult]
+                                            if band and mult_val then
+                                                local val1 = band[1] * mult_val
+                                                local val2 = band[2] * mult_val
+                                                local conv_raw1 = M.convert(val1, u.category, u.name, u.std_target)
+                                                local conv_val1, conv_unit = applySmartScaling(conv_raw1, u.category, u.std_target)
+                                                local conv_raw2 = M.convert(val2, u.category, u.name, u.std_target)
+                                                local conv_val2 = applySmartScaling(conv_raw2, u.category, u.std_target)
+                                                
+                                                if conv_unit == "c" then conv_unit = "°C"
+                                                elseif conv_unit == "f" then conv_unit = "°F" end
+                                                
+                                                local conv_str
+                                                if val1 == val2 then
+                                                    conv_str = "≈" .. M.formatNumber(conv_val1, current_lang) .. " " .. M.pluralizeUnit(conv_val1, conv_unit)
+                                                else
+                                                    conv_str = "≈" .. M.formatNumber(conv_val1, current_lang) .. "–" .. M.formatNumber(conv_val2, current_lang) .. " " .. M.pluralizeUnit(conv_val2, conv_unit)
+                                                end
+                                                
+                                                local match_start = s + (prefix:find(q, 1, true) or 1) - 1
+                                                table.insert(results, {
+                                                    start_pos = match_start,
+                                                    end_pos = e,
+                                                    original = text:sub(match_start, e),
+                                                    converted = conv_str,
+                                                    category = u.category,
+                                                    vague = true
+                                                })
+                                                break
+                                            end
+                                        end
+                                    end
+                                end
+                                init = e + 1
+                            end
+                        end
+                    end
                     end
                 end
             end
@@ -682,9 +771,12 @@ function M.getScanAliases(direction, enabled_categories, lang)
                 for _, alias in ipairs(u.aliases) do
                     local alias_lower = alias:lower()
                     if not EXCLUDED[alias_lower] and #alias_lower > 1 and not seen[alias_lower] then
-                        if should_keep_alias(alias_lower, lang) then
-                            seen[alias_lower] = true
-                            table.insert(aliases, alias_lower)
+                        local is_en = (lang:lower() == "en")
+                        if not (is_en and NON_ENGLISH_ASCII[alias_lower]) then
+                            if should_keep_alias(alias_lower, lang) then
+                                seen[alias_lower] = true
+                                table.insert(aliases, alias_lower)
+                            end
                         end
                     end
                 end

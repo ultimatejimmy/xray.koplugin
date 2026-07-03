@@ -1156,7 +1156,16 @@ function XRayPlugin:showUnitStyleCard()
 
     local sw = Screen:getWidth()
     local sh = Screen:getHeight()
-    local dialog_w = math.min(sw - sc(40), sc(340))
+    local dialog_w = math.min(sw - sc(20), sc(380))
+
+    local fs = 20
+    if G_reader_settings then
+        fs = G_reader_settings:readSetting("cre_font_size") or 20
+    end
+    -- Clamp UI fonts to reasonable sizes based on reader settings
+    local ui_font_size = math.max(14, math.min(fs, 24))
+    local label_font_size = math.max(11, math.min(fs - 4, 18))
+    local title_font_size = math.max(10, math.min(fs - 5, 15))
 
     local overlay
     local refresh
@@ -1167,7 +1176,7 @@ function XRayPlugin:showUnitStyleCard()
         end
 
         local settings = self.ai_helper.settings or {}
-        local underline_style = settings.unit_underline_style or "solid"
+        local underline_style = settings.unit_underline_style or "invisible"
         local underline_thickness = tonumber(settings.unit_underline_thickness) or 2
         local underline_intensity = settings.unit_underline_intensity or "medium"
         local tooltip_timeout = tonumber(settings.unit_tooltip_timeout) or 4
@@ -1203,9 +1212,9 @@ function XRayPlugin:showUnitStyleCard()
                     background = xray_theme.color_bg,
                     HorizontalGroup:new{
                         align = "center",
-                        TextWidget:new{ text = dot_char, face = Font:getFace("cfont", 16) },
+                        TextWidget:new{ text = dot_char, face = Font:getFace("cfont", ui_font_size) },
                         WidgetContainer:new{ dimen = Geom:new{ w = sc(4), h = 1 } },
-                        TextWidget:new{ text = opt.text, face = Font:getFace("cfont", 16) },
+                        TextWidget:new{ text = opt.text, face = Font:getFace("cfont", ui_font_size) },
                     }
                 }
                 local item = InputContainer:new{ frame }
@@ -1239,17 +1248,19 @@ function XRayPlugin:showUnitStyleCard()
         function UnderlinePreview:paintTo(bb, x, y)
             local y_line = y + self.height - self.underline_thickness
             if self.underline_style == "wavy" then
-                for offset = 0, self.width - 1, 2 do
-                    local wave_y = y_line + (math.floor(offset / 2) % 2 == 0 and 0 or 1)
-                    local segment_w = math.min(2, self.width - offset)
+                for offset = 0, self.width - 1, 4 do
+                    local wave_y = y_line + (math.floor(offset / 4) % 2 == 0 and 0 or 1)
+                    local segment_w = math.min(4, self.width - offset)
                     bb:paintRect(x + offset, wave_y, segment_w, self.underline_thickness, self.underline_color_val)
                 end
+            elseif self.underline_style == "invisible" then
+                -- Draw nothing
             else
                 bb:paintRect(x, y_line, self.width, self.underline_thickness, self.underline_color_val)
             end
         end
 
-        local face = Font:getFace("cfont", 18)
+        local face = Font:getFace("cfont", ui_font_size + 2)
         local sample_text = TextWidget:new{
             text = "walked 2 miles today",
             face = face,
@@ -1286,10 +1297,6 @@ function XRayPlugin:showUnitStyleCard()
 
         local tooltip_text = "3.22 km"
 
-        local fs = 20
-        if G_reader_settings then
-            fs = G_reader_settings:readSetting("cre_font_size") or 20
-        end
         local tooltip_face = Font:getFace("cfont", fs)
         local pad_h = 28
         local pad_v = math.floor(fs * 0.55)
@@ -1365,14 +1372,15 @@ function XRayPlugin:showUnitStyleCard()
         }
 
         local title_label = TextWidget:new{
-            text = "STYLE PREVIEW",
-            face = Font:getFace("infofont", 11),
-            fgcolor = xray_theme.color_label_dim,
+            text = self.loc:t("unit_style_preview_title") or "STYLE PREVIEW",
+            face = Font:getFace("infofont", title_font_size),
+            fgcolor = Blitbuffer.COLOR_BLACK,
         }
 
         local style_row = option_row({
-            { text = "Solid", value = "solid" },
-            { text = "Wavy", value = "wavy" }
+            { text = self.loc:t("unit_underline_solid") or "Solid", value = "solid" },
+            { text = self.loc:t("unit_underline_wavy") or "Wavy", value = "wavy" },
+            { text = self.loc:t("unit_underline_invisible") or "Invisible", value = "invisible" }
         }, underline_style, "unit_underline_style")
 
         local thickness_row = option_row({
@@ -1382,16 +1390,16 @@ function XRayPlugin:showUnitStyleCard()
         }, underline_thickness, "unit_underline_thickness")
 
         local intensity_row = option_row({
-            { text = "Light", value = "light" },
-            { text = "Medium", value = "medium" },
-            { text = "Dark", value = "dark" }
+            { text = self.loc:t("unit_intensity_light") or "Light", value = "light" },
+            { text = self.loc:t("unit_intensity_medium") or "Medium", value = "medium" },
+            { text = self.loc:t("unit_intensity_dark") or "Dark", value = "dark" }
         }, underline_intensity, "unit_underline_intensity")
 
         local timeout_row = option_row({
             { text = "2s", value = 2 },
             { text = "4s", value = 4 },
             { text = "8s", value = 8 },
-            { text = "Never", value = 0 }
+            { text = self.loc:t("unit_timeout_never") or "Never", value = 0 }
         }, tooltip_timeout, "unit_tooltip_timeout")
 
         local function span()
@@ -1407,17 +1415,17 @@ function XRayPlugin:showUnitStyleCard()
         local function label(text)
             return TextWidget:new{
                 text = text:upper(),
-                face = Font:getFace("cfont", xray_theme.face_label_size),
-                fgcolor = xray_theme.color_label_dim,
+                face = Font:getFace("cfont", label_font_size),
+                fgcolor = Blitbuffer.COLOR_BLACK,
                 alignment = "left",
             }
         end
 
         local close_btn = Button:new{
             text = "Close",
-            face = Font:getFace("cfont", 16),
+            face = Font:getFace("cfont", ui_font_size),
             width = dialog_w - sc(32),
-            height = sc(36),
+            height = sc(42),
             bordersize = xray_theme.border_btn,
             radius = xray_theme.radius_btn,
             callback = function()
@@ -1429,8 +1437,8 @@ function XRayPlugin:showUnitStyleCard()
         local card = FrameContainer:new{
             padding = sc(12),
             radius = xray_theme.radius_window,
-            bordersize = xray_theme.border_window,
-            color = xray_theme.color_border,
+            bordersize = sc(2),
+            color = Blitbuffer.COLOR_BLACK,
             background = xray_theme.color_bg,
             width = dialog_w,
             VerticalGroup:new{
@@ -1439,16 +1447,16 @@ function XRayPlugin:showUnitStyleCard()
                 span(),
                 preview_panel,
                 span(),
-                label("Underline Style"),
+                label(self.loc:t("unit_underline_style_label") or "Underline Style"),
                 style_row,
                 span(),
-                label("Underline Thickness"),
+                label(self.loc:t("unit_underline_thickness_label") or "Underline Thickness"),
                 thickness_row,
                 span(),
-                label("Underline Intensity"),
+                label(self.loc:t("unit_underline_intensity_label") or "Underline Intensity"),
                 intensity_row,
                 span(),
-                label("Tooltip Timeout"),
+                label(self.loc:t("unit_tooltip_timeout_label") or "Tooltip Timeout"),
                 timeout_row,
                 span(),
                 divider(),
@@ -1457,7 +1465,16 @@ function XRayPlugin:showUnitStyleCard()
             }
         }
 
-        local movable = MovableContainer:new{ card }
+        local card_outer = FrameContainer:new{
+            bordersize = sc(1),
+            color = Blitbuffer.Color8(180),
+            padding = 0,
+            background = xray_theme.color_bg,
+            radius = xray_theme.radius_window,
+            card
+        }
+
+        local movable = MovableContainer:new{ card_outer }
         if self._styling_offset then
             movable:setMovedOffset(self._styling_offset)
         end
@@ -1491,8 +1508,6 @@ function XRayPlugin:showUnitStyleCard()
 
     refresh()
 end
-
-
 
 -- Extracted functions are now loaded via mixins (xray_data, xray_ui, xray_fetch, xray_mentions)
 

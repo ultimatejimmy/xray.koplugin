@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Polish\n"
-"Language: pl\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Włącz konwerter jednostek"
 
 msgid "unit_conv_style_settings"
 msgstr "Ustawienia stylu i podkreślenia"
+
+msgid "unit_intensity_dark"
+msgstr "Ciemna"
+
+msgid "unit_intensity_light"
+msgstr "Jasna"
+
+msgid "unit_intensity_medium"
+msgstr "Średnia"
+
+msgid "unit_style_preview_title"
+msgstr "PODGLĄD STYLU"
+
+msgid "unit_timeout_never"
+msgstr "Nigdy"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Czas podpowiedzi"
+
+msgid "unit_underline_intensity_label"
+msgstr "Intensywność podkreślenia"
+
+msgid "unit_underline_invisible"
+msgstr "Niewidoczna"
+
+msgid "unit_underline_solid"
+msgstr "Ciągła"
+
+msgid "unit_underline_style_label"
+msgstr "Styl podkreślenia"
+
+msgid "unit_underline_thickness_label"
+msgstr "Grubość podkreślenia"
+
+msgid "unit_underline_wavy"
+msgstr "Falista"
 
 msgid "updater_available_header"
 msgstr "Dostępna jest wersja X-Ray %s!\nPosiadasz wersję %s."

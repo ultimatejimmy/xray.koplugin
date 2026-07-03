@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Arabic\n"
-"Language: ar\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "تمكين محول الوحدات"
 
 msgid "unit_conv_style_settings"
 msgstr "إعدادات النمط والتسطير"
+
+msgid "unit_intensity_dark"
+msgstr "داكن"
+
+msgid "unit_intensity_light"
+msgstr "فاتح"
+
+msgid "unit_intensity_medium"
+msgstr "متوسط"
+
+msgid "unit_style_preview_title"
+msgstr "معاينة النمط"
+
+msgid "unit_timeout_never"
+msgstr "أبداً"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "مهلة تلميح الأدوات"
+
+msgid "unit_underline_intensity_label"
+msgstr "كثافة التسطير"
+
+msgid "unit_underline_invisible"
+msgstr "غير مرئي"
+
+msgid "unit_underline_solid"
+msgstr "صلب"
+
+msgid "unit_underline_style_label"
+msgstr "نمط التسطير"
+
+msgid "unit_underline_thickness_label"
+msgstr "سمك التسطير"
+
+msgid "unit_underline_wavy"
+msgstr "متموج"
 
 msgid "updater_available_header"
 msgstr "يتوفر إصدار X-Ray %s الجديد!\nلديك حاليًا الإصدار %s."

@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: French\n"
-"Language: fr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Activer le convertisseur d'unités"
 
 msgid "unit_conv_style_settings"
 msgstr "Paramètres de style et soulignement"
+
+msgid "unit_intensity_dark"
+msgstr "Sombre"
+
+msgid "unit_intensity_light"
+msgstr "Clair"
+
+msgid "unit_intensity_medium"
+msgstr "Moyen"
+
+msgid "unit_style_preview_title"
+msgstr "APERÇU DU STYLE"
+
+msgid "unit_timeout_never"
+msgstr "Jamais"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Délai de l'infobulle"
+
+msgid "unit_underline_intensity_label"
+msgstr "Intensité du soulignement"
+
+msgid "unit_underline_invisible"
+msgstr "Invisible"
+
+msgid "unit_underline_solid"
+msgstr "Continu"
+
+msgid "unit_underline_style_label"
+msgstr "Style de soulignement"
+
+msgid "unit_underline_thickness_label"
+msgstr "Épaisseur du soulignement"
+
+msgid "unit_underline_wavy"
+msgstr "Ondulé"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s est disponible !\nVous avez la version %s."

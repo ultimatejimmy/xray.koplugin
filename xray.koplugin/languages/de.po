@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: German\n"
-"Language: de\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Einheitenrechner aktivieren"
 
 msgid "unit_conv_style_settings"
 msgstr "Stil- und Unterstreichungseinstellungen"
+
+msgid "unit_intensity_dark"
+msgstr "Dunkel"
+
+msgid "unit_intensity_light"
+msgstr "Hell"
+
+msgid "unit_intensity_medium"
+msgstr "Mittel"
+
+msgid "unit_style_preview_title"
+msgstr "STIL-VORSCHAU"
+
+msgid "unit_timeout_never"
+msgstr "Nie"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Tooltip-Timeout"
+
+msgid "unit_underline_intensity_label"
+msgstr "Unterstreichungsintensität"
+
+msgid "unit_underline_invisible"
+msgstr "Unsichtbar"
+
+msgid "unit_underline_solid"
+msgstr "Durchgehend"
+
+msgid "unit_underline_style_label"
+msgstr "Unterstreichungsstil"
+
+msgid "unit_underline_thickness_label"
+msgstr "Unterstreichungsdicke"
+
+msgid "unit_underline_wavy"
+msgstr "Wellig"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s ist verfügbar!\nSie haben %s."

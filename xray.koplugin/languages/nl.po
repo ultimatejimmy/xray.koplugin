@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Dutch\n"
-"Language: nl\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Eenhedenconvertor inschakelen"
 
 msgid "unit_conv_style_settings"
 msgstr "Stijl- en onderstrepingsinstellingen"
+
+msgid "unit_intensity_dark"
+msgstr "Donker"
+
+msgid "unit_intensity_light"
+msgstr "Licht"
+
+msgid "unit_intensity_medium"
+msgstr "Middel"
+
+msgid "unit_style_preview_title"
+msgstr "STIJLVOORBEELD"
+
+msgid "unit_timeout_never"
+msgstr "Nooit"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Tooltip time-out"
+
+msgid "unit_underline_intensity_label"
+msgstr "Onderstreepintensiteit"
+
+msgid "unit_underline_invisible"
+msgstr "Onzichtbaar"
+
+msgid "unit_underline_solid"
+msgstr "Ononderbroken"
+
+msgid "unit_underline_style_label"
+msgstr "Onderstreepstijl"
+
+msgid "unit_underline_thickness_label"
+msgstr "Onderstreepdikte"
+
+msgid "unit_underline_wavy"
+msgstr "Golvend"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s is beschikbaar!\nU heeft %s."

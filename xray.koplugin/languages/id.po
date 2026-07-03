@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Bahasa Indonesia\n"
-"Language: id\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Aktifkan Konverter Satuan"
 
 msgid "unit_conv_style_settings"
 msgstr "Pengaturan Gaya & Garis Bawah"
+
+msgid "unit_intensity_dark"
+msgstr "Gelap"
+
+msgid "unit_intensity_light"
+msgstr "Terang"
+
+msgid "unit_intensity_medium"
+msgstr "Sedang"
+
+msgid "unit_style_preview_title"
+msgstr "PRATINJAU GAYA"
+
+msgid "unit_timeout_never"
+msgstr "Jangan Pernah"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Batas Waktu Tooltip"
+
+msgid "unit_underline_intensity_label"
+msgstr "Intensitas Garis Bawah"
+
+msgid "unit_underline_invisible"
+msgstr "Tak Terlihat"
+
+msgid "unit_underline_solid"
+msgstr "Padat"
+
+msgid "unit_underline_style_label"
+msgstr "Gaya Garis Bawah"
+
+msgid "unit_underline_thickness_label"
+msgstr "Ketebalan Garis Bawah"
+
+msgid "unit_underline_wavy"
+msgstr "Bergelombang"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s tersedia!\nAnda memiliki versi %s."

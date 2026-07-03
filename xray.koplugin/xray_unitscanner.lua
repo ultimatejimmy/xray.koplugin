@@ -126,7 +126,9 @@ function M:_drawUnitUnderlines(bb)
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then return end
     
     local settings = self.ai_helper and self.ai_helper.settings or {}
-    local underline_style = settings.unit_underline_style or "solid"
+    local underline_style = settings.unit_underline_style or "invisible"
+    if underline_style == "invisible" then return end
+    
     local thickness = tonumber(settings.unit_underline_thickness) or 2
     local intensity = settings.unit_underline_intensity or "medium"
 
@@ -141,9 +143,9 @@ function M:_drawUnitUnderlines(bb)
         if box.x and box.y and box.w and box.h then
             local y_line = box.y + box.h - thickness
             if underline_style == "wavy" then
-                for offset = 0, box.w - 1, 2 do
-                    local wave_y = y_line + (math.floor(offset / 2) % 2 == 0 and 0 or 1)
-                    local segment_w = math.min(2, box.w - offset)
+                for offset = 0, box.w - 1, 4 do
+                    local wave_y = y_line + (math.floor(offset / 4) % 2 == 0 and 0 or 1)
+                    local segment_w = math.min(4, box.w - offset)
                     bb:paintRect(box.x + offset, wave_y, segment_w, thickness, color_val)
                 end
             else
@@ -157,6 +159,7 @@ end
 local function extend_span_start(doc, unit_start, num_val)
     if not doc or not unit_start or not num_val then return unit_start end
     local cand = unit_start
+    local best_cand = unit_start
     for i = 1, 8 do
         local ok, prev = pcall(function()
             return doc:getPrevVisibleWordStart(cand)
@@ -168,20 +171,22 @@ local function extend_span_start(doc, unit_start, num_val)
         end)
         if ok2 and t then
             t = t:gsub("^%s+", ""):gsub("%s+$", ""):lower()
-            local v = xray_units.parseNumberText(t)
+            local clean_t = t:gsub("[%-,]$", "")
+            local v = xray_units.parseNumberText(clean_t)
             if v and math.abs(v - num_val) < 0.001 then
-                return cand
-            end
-            local head = t:match("^([a-z%d%.,%-]+)")
-            if head then
-                local hv = xray_units.parseNumberText(head)
-                if hv and math.abs(hv - num_val) < 0.001 then
-                    return cand
+                best_cand = cand
+            else
+                local head = clean_t:match("^([a-z%d%.,%-]+)")
+                if head then
+                    local hv = xray_units.parseNumberText(head)
+                    if hv and math.abs(hv - num_val) < 0.001 then
+                        best_cand = cand
+                    end
                 end
             end
         end
     end
-    return unit_start
+    return best_cand
 end
 
 -- Scan the entire book and cache matches
@@ -197,9 +202,6 @@ function M:scanBookForUnits()
     log("scanBookForUnits: starting whole book scan")
     
     local direction = settings.unit_conversion_direction or "auto"
-    if direction == "auto" then
-        direction = xray_units.getDefaultDirection()
-    end
     log("scanBookForUnits: direction=" .. tostring(direction))
     
     local enabled_cats = {
@@ -221,7 +223,9 @@ function M:scanBookForUnits()
     -- Escape and join aliases into a regex pattern
     local escaped_aliases = {}
     for _, alias in ipairs(aliases) do
-        table.insert(escaped_aliases, (alias:gsub("([^%w])", "%%%1")))
+        local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
+        esc = esc:gsub("%s+", "\\s+")
+        table.insert(escaped_aliases, esc)
     end
     -- Sort descending by length to prevent shadowing issues (e.g. "m" matching before "mm")
     table.sort(escaped_aliases, function(a, b)
@@ -247,15 +251,6 @@ function M:scanBookForUnits()
 
     local xp_matches = {}
     local lang = self.loc and self.loc:getLanguage() or "en"
-    
-    local is_tens = {
-        twenty=true, thirty=true, forty=true, fifty=true,
-        sixty=true, seventy=true, eighty=true, ninety=true
-    }
-    local is_units = {
-        one=true, two=true, three=true, four=true, five=true,
-        six=true, seven=true, eight=true, nine=true
-    }
 
     for _, hit in ipairs(hits) do
         local is_range = false
@@ -276,9 +271,10 @@ function M:scanBookForUnits()
             local p = (hit.prev_text or ""):gsub("%s+$", "")
             
             -- Try digit range
+            -- Try digit range
             local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
             if not r1 then
-                r1, r2 = p:match("([0-9%.%,]+)%s*,%s*([0-9%.%,]+)$")
+                r1, r2 = p:match("([0-9%.%,]+)%s*,%s+([0-9%.%,]+)$")
             end
             if r1 and r2 then
                 val1 = xray_units.parseNumberText(r1)
@@ -291,11 +287,18 @@ function M:scanBookForUnits()
                 -- Try written word range
                 local w1, w2 = p:match("([a-z%d%-]+)%s*[,]?%s*(?:to|or|%-|and)%s*([a-z%d%-]+)$")
                 if not w1 then
-                    w1, w2 = p:match("([a-z%d%-]+)%s*,%s*([a-z%d%-]+)$")
+                    w1, w2 = p:match("([a-z%d%-]+)%s*,%s+([a-z%d%-]+)$")
                 end
                 if w1 and w2 then
+                    local phrase_words = {}
+                    for w in p:gmatch("[a-z%d%-%.%,]+") do
+                        table.insert(phrase_words, w)
+                    end
+                    -- A range requires two distinct parsed parts separated by a connector.
+                    -- If the whole thing parses as a single compound (like "twenty three"), it's not a range.
                     local is_compound = false
-                    if is_tens[w1] and is_units[w2] and not p:find("%s+to%s") and not p:find("%s+or%s") and not p:find("%s+and%s") and not p:find(",") then
+                    local combined_val = xray_units.parseNumberText(w1 .. " " .. w2)
+                    if combined_val and not p:find("%s+to%s") and not p:find("%s+or%s") and not p:find("%s+and%s") and not p:find(",") then
                         is_compound = true
                     end
                     
@@ -311,24 +314,41 @@ function M:scanBookForUnits()
             end
             
             if not is_range then
-                -- Single number or written compound
-                local single = p:match("([a-z%d%-%.%,]+)$")
-                if single then
-                    local clean_single = single:gsub("%-$", "")
-                    local tens = p:match("([a-z]+)%s+[a-z%d%-%.%,]+$")
-                    if tens and is_tens[tens] then
-                        clean_single = tens .. " " .. clean_single
+                -- Single number or written compound (greedy backward accumulation)
+                local words = {}
+                for w in p:gmatch("[a-z%d%-%.%,]+") do
+                    table.insert(words, w)
+                end
+                
+                local valid_words = {}
+                local i_w = #words
+                while i_w >= 1 do
+                    local w = words[i_w]
+                    local clean_w = w:gsub("[%-,]$", "")
+                    if clean_w == "a" and i_w > 1 and words[i_w-1]:gsub("[%-,]$", "") == "half" then
+                        table.insert(valid_words, 1, "half a")
+                        i_w = i_w - 2
+                    elseif clean_w == "and" or xray_units.parseNumberText(clean_w) then
+                        table.insert(valid_words, 1, clean_w)
+                        i_w = i_w - 1
+                    else
+                        break
                     end
-                    val = xray_units.parseNumberText(clean_single)
-                    if val then
-                        num_str = clean_single
+                end
+
+                if #valid_words > 0 then
+                    local phrase = table.concat(valid_words, " ")
+                    local best_val = xray_units.parseNumberText(phrase)
+                    if best_val then
+                        val = best_val
+                        num_str = phrase
                     end
                 end
             end
         end
         
         if val or is_range then
-            local matched_unit = (hit.matched_text or ""):lower()
+            local matched_unit = (hit.matched_text or ""):lower():gsub("\194\160", " "):gsub("%s+", " ")
             local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
             if not u then
                 for _, unit_def in ipairs(xray_units.UNITS or {}) do

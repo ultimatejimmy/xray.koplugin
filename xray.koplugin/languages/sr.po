@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Српски\n"
-"Language: sr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Омогући претварач јединица"
 
 msgid "unit_conv_style_settings"
 msgstr "Подешавања стила и подвлачења"
+
+msgid "unit_intensity_dark"
+msgstr "Тамна"
+
+msgid "unit_intensity_light"
+msgstr "Светла"
+
+msgid "unit_intensity_medium"
+msgstr "Средња"
+
+msgid "unit_style_preview_title"
+msgstr "ПРЕГЛЕД СТИЛА"
+
+msgid "unit_timeout_never"
+msgstr "Никад"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Време објашњења"
+
+msgid "unit_underline_intensity_label"
+msgstr "Интензитет подвлачења"
+
+msgid "unit_underline_invisible"
+msgstr "Невидљива"
+
+msgid "unit_underline_solid"
+msgstr "Непрекидна"
+
+msgid "unit_underline_style_label"
+msgstr "Стил подвлачења"
+
+msgid "unit_underline_thickness_label"
+msgstr "Дебљина подвлачења"
+
+msgid "unit_underline_wavy"
+msgstr "Таласаста"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s је доступан!\nИмате верзију %s."

@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Hungarian\n"
-"Language: hu\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Mértékegység-átváltó engedélyezése"
 
 msgid "unit_conv_style_settings"
 msgstr "Stílus és aláhúzás beállításai"
+
+msgid "unit_intensity_dark"
+msgstr "Sötét"
+
+msgid "unit_intensity_light"
+msgstr "Világos"
+
+msgid "unit_intensity_medium"
+msgstr "Közepes"
+
+msgid "unit_style_preview_title"
+msgstr "STÍLUS ELŐNÉZET"
+
+msgid "unit_timeout_never"
+msgstr "Soha"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Eszköztipp ideje"
+
+msgid "unit_underline_intensity_label"
+msgstr "Aláhúzás intenzitása"
+
+msgid "unit_underline_invisible"
+msgstr "Láthatatlan"
+
+msgid "unit_underline_solid"
+msgstr "Folytonos"
+
+msgid "unit_underline_style_label"
+msgstr "Aláhúzási stílus"
+
+msgid "unit_underline_thickness_label"
+msgstr "Aláhúzás vastagsága"
+
+msgid "unit_underline_wavy"
+msgstr "Hullámos"
 
 msgid "updater_available_header"
 msgstr "Elérhető az X-Ray %s!\nÖnnek a(z) %s verziója van meg."

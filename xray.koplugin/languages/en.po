@@ -809,6 +809,42 @@ msgstr "Enable Unit Converter"
 msgid "unit_conv_style_settings"
 msgstr "Style & Underline Settings"
 
+msgid "unit_intensity_dark"
+msgstr "Dark"
+
+msgid "unit_intensity_light"
+msgstr "Light"
+
+msgid "unit_intensity_medium"
+msgstr "Medium"
+
+msgid "unit_style_preview_title"
+msgstr "STYLE PREVIEW"
+
+msgid "unit_timeout_never"
+msgstr "Never"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Tooltip Timeout"
+
+msgid "unit_underline_intensity_label"
+msgstr "Underline Intensity"
+
+msgid "unit_underline_invisible"
+msgstr "Invisible"
+
+msgid "unit_underline_solid"
+msgstr "Solid"
+
+msgid "unit_underline_style_label"
+msgstr "Underline Style"
+
+msgid "unit_underline_thickness_label"
+msgstr "Underline Thickness"
+
+msgid "unit_underline_wavy"
+msgstr "Wavy"
+
 msgid "updater_available_header"
 msgstr "X-Ray %s is available!\nYou have %s."
 

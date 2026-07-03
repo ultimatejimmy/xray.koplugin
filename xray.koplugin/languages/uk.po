@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Ukrainian\n"
-"Language: uk\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Увімкнути конвертер одиниць"
 
 msgid "unit_conv_style_settings"
 msgstr "Налаштування стилю та підкреслення"
+
+msgid "unit_intensity_dark"
+msgstr "Темна"
+
+msgid "unit_intensity_light"
+msgstr "Світла"
+
+msgid "unit_intensity_medium"
+msgstr "Середня"
+
+msgid "unit_style_preview_title"
+msgstr "ПЕРЕГЛЯД СТИЛЮ"
+
+msgid "unit_timeout_never"
+msgstr "Ніколи"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Час підказки"
+
+msgid "unit_underline_intensity_label"
+msgstr "Інтенсивність підкреслення"
+
+msgid "unit_underline_invisible"
+msgstr "Невидима"
+
+msgid "unit_underline_solid"
+msgstr "Суцільна"
+
+msgid "unit_underline_style_label"
+msgstr "Стиль підкреслення"
+
+msgid "unit_underline_thickness_label"
+msgstr "Товщина підкреслення"
+
+msgid "unit_underline_wavy"
+msgstr "Хвиляста"
 
 msgid "updater_available_header"
 msgstr "Доступний X-Ray %s!\nУ вас встановлено %s."

@@ -1,7 +1,5 @@
 msgid ""
 msgstr ""
-"Language-Team: Russian\n"
-"Language: ru\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
@@ -808,6 +806,42 @@ msgstr "Включить конвертер величин"
 
 msgid "unit_conv_style_settings"
 msgstr "Настройки стиля и подчеркивания"
+
+msgid "unit_intensity_dark"
+msgstr "Темная"
+
+msgid "unit_intensity_light"
+msgstr "Светлая"
+
+msgid "unit_intensity_medium"
+msgstr "Средняя"
+
+msgid "unit_style_preview_title"
+msgstr "ПРЕДПРОСМОТР СТИЛЯ"
+
+msgid "unit_timeout_never"
+msgstr "Никогда"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "Время подсказки"
+
+msgid "unit_underline_intensity_label"
+msgstr "Интенсивность подчеркивания"
+
+msgid "unit_underline_invisible"
+msgstr "Невидимая"
+
+msgid "unit_underline_solid"
+msgstr "Сплошная"
+
+msgid "unit_underline_style_label"
+msgstr "Стиль подчеркивания"
+
+msgid "unit_underline_thickness_label"
+msgstr "Толщина подчеркивания"
+
+msgid "unit_underline_wavy"
+msgstr "Волнистая"
 
 msgid "updater_available_header"
 msgstr "Доступен X-Ray %s!\nУ вас установлена %s."

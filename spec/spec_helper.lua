@@ -108,9 +108,23 @@ package.loaded["ui/widget/menu"] = {
 package.loaded["ui/widget/verticalgroup"] = {
     new = function(a, b) return { type = "VerticalGroup", args = b or a } end
 }
-package.loaded["ui/widget/widget"] = {
-    new = function(a, b) return { type = "Widget", args = b or a } end
-}
+package.loaded["ui/widget/widget"] = (function()
+    local klass = {}
+    klass.extend = function(self, prototype)
+        prototype = prototype or {}
+        prototype.new = function(cls, args)
+            local instance = {}
+            for k, v in pairs(prototype) do instance[k] = v end
+            for k, v in pairs(args or {}) do instance[k] = v end
+            return instance
+        end
+        return prototype
+    end
+    klass.new = function(self, args)
+        return klass:extend(args):new()
+    end
+    return klass
+end)()
 package.loaded["ui/widget/widgetcontainer"] = {
     new = function(a, b) return { type = "WidgetContainer", args = b or a } end
 }
@@ -202,6 +216,7 @@ package.loaded["ffi/blitbuffer"] = {
 package.loaded["ui/font"] = {
     getFace = function() return {} end
 }
+package.loaded["ui/rendertext"] = {}
 package.loaded["ui/event"] = {
     new = function(a, b, c) 
         if type(a) == "string" then return { name = a, args = b } end

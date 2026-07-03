@@ -17,30 +17,18 @@ if sys.version_info >= (3, 7):
         pass
 
 NEW_KEYS = {
-    "menu_unit_converter",
-    "unit_conv_enabled",
-    "unit_conv_direction",
-    "unit_conv_direction_auto",
-    "unit_conv_direction_metric",
-    "unit_conv_direction_imperial",
-    "unit_conv_underline",
-    "unit_conv_underline_style",
-    "unit_conv_style_solid",
-    "unit_conv_style_wavy",
-    "unit_conv_thickness",
-    "unit_conv_intensity",
-    "intensity_light",
-    "intensity_medium",
-    "intensity_dark",
-    "unit_conv_timeout",
-    "timeout_never",
-    "unit_conv_categories",
-    "unit_conv_cat_length",
-    "unit_conv_cat_weight",
-    "unit_conv_cat_temp",
-    "unit_conv_cat_volume",
-    "unit_conv_cat_speed",
-    "unit_conv_cat_area"
+    "unit_style_preview_title",
+    "unit_underline_solid",
+    "unit_underline_wavy",
+    "unit_underline_invisible",
+    "unit_intensity_light",
+    "unit_intensity_medium",
+    "unit_intensity_dark",
+    "unit_timeout_never",
+    "unit_underline_style_label",
+    "unit_underline_thickness_label",
+    "unit_underline_intensity_label",
+    "unit_tooltip_timeout_label"
 }
 
 def get_gemini_key():
