@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "АИ скенира дупликате..."
 
+msgid "author_born"
+msgstr "Рођен: "
+
+msgid "author_died"
+msgstr "Преминуо: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Онемогућено"
 
@@ -134,17 +140,8 @@ msgstr "Није пронађен лик који одговара '%s'"
 msgid "close"
 msgstr "Затвори"
 
-msgid "config_api_key_label"
-msgstr "%s АПИ кључ: "
-
 msgid "config_default_gemini"
 msgstr "  Подразумевано (Gemini)"
-
-msgid "config_model"
-msgstr "  Модел: "
-
-msgid "config_provider"
-msgstr "  Провајдер: "
 
 msgid "config_status_not_set"
 msgstr "НИЈЕ ПОДЕШЕН"
@@ -472,9 +469,6 @@ msgstr "Очисти кеш"
 
 msgid "menu_clear_logs"
 msgstr "Очисти дневнике"
-
-msgid "menu_config_header"
-msgstr "--- Тренутна конфигурација ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Подешавања садржаја и преузимања"

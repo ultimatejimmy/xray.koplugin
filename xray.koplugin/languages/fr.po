@@ -29,6 +29,12 @@ msgstr "Analyse IA"
 msgid "ai_scanning_duplicates"
 msgstr "L'IA recherche des doublons..."
 
+msgid "author_born"
+msgstr "Naissance : "
+
+msgid "author_died"
+msgstr "Décès : "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Désactivé"
 
@@ -134,17 +140,8 @@ msgstr "Aucun personnage trouvé correspondant à '%s'"
 msgid "close"
 msgstr "Fermer"
 
-msgid "config_api_key_label"
-msgstr "Clé API %s : "
-
 msgid "config_default_gemini"
 msgstr "  Par défaut (Gemini)"
-
-msgid "config_model"
-msgstr "  Modèle: "
-
-msgid "config_provider"
-msgstr "  Fournisseur : "
 
 msgid "config_status_not_set"
 msgstr "NON CONFIGURÉ"
@@ -472,9 +469,6 @@ msgstr "Vider le cache"
 
 msgid "menu_clear_logs"
 msgstr "Effacer les logs"
-
-msgid "menu_config_header"
-msgstr "--- Configuration actuelle ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Paramètres de contenu et de récupération"

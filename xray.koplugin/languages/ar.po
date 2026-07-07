@@ -29,6 +29,12 @@ msgstr "فحص بالذكاء الاصطناعي"
 msgid "ai_scanning_duplicates"
 msgstr "يقوم الذكاء الاصطناعي بالبحث عن التكرارات..."
 
+msgid "author_born"
+msgstr "ولد: "
+
+msgid "author_died"
+msgstr "توفي: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "معطل"
 
@@ -134,17 +140,8 @@ msgstr "لم يتم العثور على شخصية تطابق '%s'"
 msgid "close"
 msgstr "إغلاق"
 
-msgid "config_api_key_label"
-msgstr "%s مفتاح API: "
-
 msgid "config_default_gemini"
 msgstr "  الافتراضي (Gemini)"
-
-msgid "config_model"
-msgstr "  النموذج: "
-
-msgid "config_provider"
-msgstr "  المزود: "
 
 msgid "config_status_not_set"
 msgstr "غير معين"
@@ -472,9 +469,6 @@ msgstr "مسح الذاكرة المؤقتة"
 
 msgid "menu_clear_logs"
 msgstr "مسح السجلات"
-
-msgid "menu_config_header"
-msgstr "--- التكوين الحالي ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "إعدادات المحتوى والجلب"

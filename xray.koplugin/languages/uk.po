@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "ШІ сканує дублікати..."
 
+msgid "author_born"
+msgstr "Народився: "
+
+msgid "author_died"
+msgstr "Помер: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Вимкнено"
 
@@ -134,17 +140,8 @@ msgstr "Персонаж, що відповідає '%s', не знайдени�
 msgid "close"
 msgstr "Закрити"
 
-msgid "config_api_key_label"
-msgstr "API-ключ %s: "
-
 msgid "config_default_gemini"
 msgstr "  За замовчуванням (Gemini)"
-
-msgid "config_model"
-msgstr "  Модель: "
-
-msgid "config_provider"
-msgstr "  Провайдер: "
 
 msgid "config_status_not_set"
 msgstr "НЕ ВСТАНОВЛЕНО"
@@ -472,9 +469,6 @@ msgstr "Очистити кеш"
 
 msgid "menu_clear_logs"
 msgstr "Очистити логи"
-
-msgid "menu_config_header"
-msgstr "--- Поточна конфігурація ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Налаштування контенту та завантаження"

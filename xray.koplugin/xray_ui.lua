@@ -2362,37 +2362,6 @@ function M:showSpoilerSettings()
     })
 end
 
-function M:showDescriptionLengthSettings()
-    local menu_items = {
-        {
-            text = self.loc:t("menu_characters"),
-            callback = function() self:showEntityLengthPresets("char_desc_len", self.loc:t("menu_characters")) end,
-        },
-        {
-            text = self.loc:t("menu_locations"),
-            callback = function() self:showEntityLengthPresets("loc_desc_len", self.loc:t("menu_locations")) end,
-        },
-        {
-            text = self.loc:t("menu_timeline"),
-            callback = function() self:showEntityLengthPresets("timeline_event_len", self.loc:t("menu_timeline"), true) end,
-        },
-        {
-            text = self.loc:t("menu_historical_figures"),
-            callback = function() self:showEntityLengthPresets("hist_fig_bio_len", self.loc:t("menu_historical_figures")) end,
-        },
-        {
-            text = self.loc:t("menu_terms") or "Glossary",
-            callback = function() self:showEntityLengthPresets("term_def_len", self.loc:t("menu_terms") or "Glossary") end,
-        },
-    }
-
-    self.length_presets_menu = self:newMenu("length_presets_menu", {
-        title = self.loc:t("menu_desc_length_settings"),
-        item_table = menu_items,
-    })
-    UIManager:show(self.length_presets_menu)
-end
-
 function M:showEntityLengthPresets(setting_key, entity_name, is_timeline)
     local defaults = {
         char_desc_len    = 200,
@@ -2449,8 +2418,84 @@ function M:showAuthorInfo()
         ask_dialog = ButtonDialog:new{ title = (self.loc:t("menu_fetch_author") or "Fetch Author Info") .. "\n\n" .. (self.loc:t("no_author_data_fetch") or "No author biography available. Fetch now?"), buttons = {{{ text = self.loc:t("cancel"), callback = function() UIManager:close(ask_dialog) end }, { text = self.loc:t("fetch_button") or "Fetch", is_enter_default = true, callback = function() UIManager:close(ask_dialog); UIManager:nextTick(function() self:fetchAuthorInfo() end) end }}} }
         UIManager:show(ask_dialog); return
     end
-    local lines = { "NAME: " .. (self.author_info.name or "Unknown"), "BORN: " .. (self.author_info.birthDate or "---"), "DIED: " .. (self.author_info.deathDate or "---"), "", "BIOGRAPHY:", (self.author_info.description or "No biography available.") }
-    UIManager:show(InfoMessage:new{ text = table.concat(lines, "\n"), timeout = 30 })
+
+    local ButtonDialog = require("ui/widget/buttondialog")
+    local VerticalGroup = require("ui/widget/verticalgroup")
+    local TextBoxWidget = require("ui/widget/textboxwidget")
+    local VerticalSpan = require("ui/widget/verticalspan")
+    local Font = require("ui/font")
+    local Geom = require("ui/geometry")
+    local Screen = require("device").screen
+    
+    local dialog_width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9)
+    local border_window = (Size.border and Size.border.window) or 1
+    local padding_button = (Size.padding and Size.padding.button) or 10
+    local padding_default = (Size.padding and Size.padding.default) or 10
+    local margin_default = (Size.margin and Size.margin.default) or 5
+    local buttontable_width = dialog_width - 2 * border_window - 2 * padding_button
+    local title_group_width = buttontable_width - 2 * (padding_default + margin_default)
+
+    local fs = _getPopupFontSize(self)
+    local align = self:isRTL() and "right" or "left"
+    local vg_components = { align = align }
+
+    -- 1. Bold Name
+    table.insert(vg_components, TextBoxWidget:new{
+        text = self.author_info.name or "Unknown",
+        face = Font:getFace("cfont", fs),
+        width = title_group_width,
+        bold = true,
+        alignment = align,
+    })
+
+    -- 2. Metadata (Born / Died)
+    local metadata = {}
+    if self.author_info.birthDate and self.author_info.birthDate ~= "" and self.author_info.birthDate ~= "---" then
+        table.insert(metadata, (self.loc:t("author_born") or "Born: ") .. self.author_info.birthDate)
+    end
+    if self.author_info.deathDate and self.author_info.deathDate ~= "" and self.author_info.deathDate ~= "---" then
+        table.insert(metadata, (self.loc:t("author_died") or "Died: ") .. self.author_info.deathDate)
+    end
+    if #metadata > 0 then
+        local xray_theme = require(plugin_path .. "xray_theme")
+        table.insert(vg_components, VerticalSpan:new{ width = math.max(4, math.floor(fs * 0.2)) })
+        table.insert(vg_components, TextBoxWidget:new{
+            text = table.concat(metadata, "   "),
+            face = Font:getFace("cfont", fs - 4),
+            fgcolor = xray_theme.color_label_dim,
+            width = title_group_width,
+            alignment = align,
+        })
+    end
+
+    -- 3. Biography Description
+    table.insert(vg_components, VerticalSpan:new{ width = math.max(6, math.floor(fs * 0.3)) })
+    table.insert(vg_components, TextBoxWidget:new{
+        text = self.author_info.description or "No biography available.",
+        face = Font:getFace("cfont", fs),
+        width = title_group_width,
+        alignment = align,
+    })
+
+    local vg = VerticalGroup:new(vg_components)
+
+    local buttons = {
+        {
+            {
+                text = self.loc:t("close") or "Close",
+                callback = function()
+                    if self.active_details_dialog then UIManager:close(self.active_details_dialog) end
+                    self.active_details_dialog = nil
+                end,
+            }
+        }
+    }
+
+    self.active_details_dialog = ButtonDialog:new{
+        _added_widgets = { vg },
+        buttons = buttons,
+    }
+    UIManager:show(self.active_details_dialog)
 end
 
 function M:showLocations()
@@ -3780,43 +3825,50 @@ function M:showCharacterSearch()
 end
 
 function M:showConfigSummary()
-    local text = (self.loc:t("menu_config_header") or "--- Current Configuration ---") .. "\n\n"
-    
     local primary = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.primary_ai or nil
     local secondary = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.secondary_ai or nil
     
     local primary_label = self.loc:t("menu_primary_ai_model") or "Primary AI Model"
     local secondary_label = self.loc:t("menu_secondary_ai_model") or "Secondary AI Model"
-    local provider_label = self.loc:t("config_provider") or "  Provider: "
-    local model_label = self.loc:t("config_model") or "  Model: "
-    local default_label = self.loc:t("config_default_gemini") or "  Default (Gemini)"
+    local default_label = self.loc:t("config_default_gemini") or "Default (Gemini)"
     local set_label = self.loc:t("config_status_set") or "SET"
     local not_set_label = self.loc:t("config_status_not_set") or "NOT SET"
 
-    text = text .. primary_label .. ":\n"
-    if primary then 
-        text = text .. provider_label .. primary.provider .. "\n" .. model_label .. primary.model .. "\n\n" 
-    else 
-        text = text .. default_label .. "\n\n" 
+    local lines = {}
+    table.insert(lines, "[B]AI Model Configurations[/B]")
+    
+    table.insert(lines, "• [B]" .. primary_label .. "[/B]:")
+    if primary then
+        table.insert(lines, "  " .. primary.provider .. " (" .. primary.model .. ")")
+    else
+        table.insert(lines, "  " .. default_label)
     end
     
-    text = text .. secondary_label .. ":\n"
-    if secondary then 
-        text = text .. provider_label .. secondary.provider .. "\n" .. model_label .. secondary.model .. "\n\n" 
-    else 
-        text = text .. default_label .. "\n\n" 
+    table.insert(lines, "• [B]" .. secondary_label .. "[/B]:")
+    if secondary then
+        table.insert(lines, "  " .. secondary.provider .. " (" .. secondary.model .. ")")
+    else
+        table.insert(lines, "  " .. default_label)
     end
+    
+    table.insert(lines, "")
+    table.insert(lines, "[B]API Key Credentials[/B]")
     
     local function add(p, n)
         local c = self.ai_helper.providers[p]
-        local key_label = (self.loc:t("config_api_key_label") or "%s API Key: "):format(n)
-        text = text .. key_label .. ((c.api_key and #c.api_key > 0) and set_label or not_set_label) .. "\n"
+        local is_set = c and c.api_key and #c.api_key > 0
+        local status = is_set and "[B]" .. set_label .. "[/B]" or not_set_label
+        table.insert(lines, "• " .. n .. ": " .. status)
     end
-    add("gemini", "Google Gemini"); add("chatgpt", "ChatGPT")
-    add("deepseek", "DeepSeek"); add("claude", "Anthropic Claude")
-    add("custom1", "Custom API 1"); add("custom2", "Custom API 2")
-    
-    UIManager:show(InfoMessage:new{ text = text, timeout = 15 })
+    add("gemini", "Google Gemini")
+    add("chatgpt", "ChatGPT")
+    add("deepseek", "DeepSeek")
+    add("claude", "Anthropic Claude")
+    add("custom1", "Custom API 1")
+    add("custom2", "Custom API 2")
+
+    local XRaySettingsCard = require("xray_settings_card")
+    XRaySettingsCard.showAbout(self, self.loc:t("menu_view_config") or "View All Config Values", table.concat(lines, "\n"))
 end
 
 function M:showReasoningEffortSettings()

@@ -29,6 +29,12 @@ msgstr "KI-Scan"
 msgid "ai_scanning_duplicates"
 msgstr "KI sucht nach Duplikaten..."
 
+msgid "author_born"
+msgstr "Geboren: "
+
+msgid "author_died"
+msgstr "Gestorben: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Deaktiviert"
 
@@ -134,17 +140,8 @@ msgstr "Kein Charakter gefunden, der auf '%s' passt"
 msgid "close"
 msgstr "Schließen"
 
-msgid "config_api_key_label"
-msgstr "%s API-Key: "
-
 msgid "config_default_gemini"
 msgstr "  Standard (Gemini)"
-
-msgid "config_model"
-msgstr "  Modell: "
-
-msgid "config_provider"
-msgstr "  Anbieter: "
 
 msgid "config_status_not_set"
 msgstr "NICHT GESETZT"
@@ -472,9 +469,6 @@ msgstr "Cache leeren"
 
 msgid "menu_clear_logs"
 msgstr "Logs löschen"
-
-msgid "menu_config_header"
-msgstr "--- Aktuelle Konfiguration ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Inhalts- & Abruf-Einstellungen"

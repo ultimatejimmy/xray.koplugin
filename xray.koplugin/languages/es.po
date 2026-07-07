@@ -29,6 +29,12 @@ msgstr "Escaneo con IA"
 msgid "ai_scanning_duplicates"
 msgstr "La IA está buscando duplicados..."
 
+msgid "author_born"
+msgstr "Nació: "
+
+msgid "author_died"
+msgstr "Murió: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Desactivado"
 
@@ -134,17 +140,8 @@ msgstr "No se encontró ningún personaje que coincida con '%s'"
 msgid "close"
 msgstr "Cerrar"
 
-msgid "config_api_key_label"
-msgstr "Clave API %s: "
-
 msgid "config_default_gemini"
 msgstr "  Predeterminado (Gemini)"
-
-msgid "config_model"
-msgstr "  Modelo: "
-
-msgid "config_provider"
-msgstr "  Proveedor: "
 
 msgid "config_status_not_set"
 msgstr "NO ESTABLECIDO"
@@ -472,9 +469,6 @@ msgstr "Borrar caché"
 
 msgid "menu_clear_logs"
 msgstr "Limpiar registros"
-
-msgid "menu_config_header"
-msgstr "--- Configuración Actual ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Ajustes de contenido y obtención"

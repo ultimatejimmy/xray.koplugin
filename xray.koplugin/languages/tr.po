@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "Yapay zeka kopyaları tarıyor..."
 
+msgid "author_born"
+msgstr "Doğum: "
+
+msgid "author_died"
+msgstr "Ölüm: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Devre Dışı"
 
@@ -134,17 +140,8 @@ msgstr "Karakter bulunamadı: %s\n\nİpucu: İsmin bir kısmını yazın"
 msgid "close"
 msgstr "Kapat"
 
-msgid "config_api_key_label"
-msgstr "%s API Anahtarı: "
-
 msgid "config_default_gemini"
 msgstr "  Varsayılan (Gemini)"
-
-msgid "config_model"
-msgstr "  Model: "
-
-msgid "config_provider"
-msgstr "  Sağlayıcı: "
 
 msgid "config_status_not_set"
 msgstr "AYARLANMAMIŞ"
@@ -472,9 +469,6 @@ msgstr "Önbelleği Temizle"
 
 msgid "menu_clear_logs"
 msgstr "Günlükleri Temizle"
-
-msgid "menu_config_header"
-msgstr "--- Mevcut Yapılandırma ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "İçerik & Getirme Ayarları"

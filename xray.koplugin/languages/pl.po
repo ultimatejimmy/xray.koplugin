@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "AI szuka duplikatów..."
 
+msgid "author_born"
+msgstr "Urodzony: "
+
+msgid "author_died"
+msgstr "Zmarł: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Wyłączone"
 
@@ -134,17 +140,8 @@ msgstr "Nie znaleziono postaci pasującej do '%s'"
 msgid "close"
 msgstr "Zamknij"
 
-msgid "config_api_key_label"
-msgstr "Klucz API %s: "
-
 msgid "config_default_gemini"
 msgstr "  Domyślny (Gemini)"
-
-msgid "config_model"
-msgstr "  Model: "
-
-msgid "config_provider"
-msgstr "  Dostawca: "
 
 msgid "config_status_not_set"
 msgstr "NIEUSTAWIONY"
@@ -472,9 +469,6 @@ msgstr "Wyczyść pamięć podręczną"
 
 msgid "menu_clear_logs"
 msgstr "Wyczyść dzienniki"
-
-msgid "menu_config_header"
-msgstr "--- Bieżąca konfiguracja ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Ustawienia zawartości i pobierania"

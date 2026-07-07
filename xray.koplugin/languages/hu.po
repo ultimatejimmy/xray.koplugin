@@ -29,6 +29,12 @@ msgstr "AI-vizsgálat"
 msgid "ai_scanning_duplicates"
 msgstr "A MI másolatokat keres..."
 
+msgid "author_born"
+msgstr "Született: "
+
+msgid "author_died"
+msgstr "Elhunyt: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Letiltva"
 
@@ -134,17 +140,8 @@ msgstr "Nem található a következőnek megfelelő szereplő: '%s'"
 msgid "close"
 msgstr "Bezárás"
 
-msgid "config_api_key_label"
-msgstr "%s API kulcs: "
-
 msgid "config_default_gemini"
 msgstr "  Alapértelmezett (Gemini)"
-
-msgid "config_model"
-msgstr "  Modell: "
-
-msgid "config_provider"
-msgstr "  Szolgáltató: "
 
 msgid "config_status_not_set"
 msgstr "NINCS BEÁLLÍTVA"
@@ -472,9 +469,6 @@ msgstr "Gyorsítótár törlése"
 
 msgid "menu_clear_logs"
 msgstr "Naplófájlok törlése"
-
-msgid "menu_config_header"
-msgstr "--- Jelenlegi konfiguráció ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Tartalom és lekérdezés beállításai"

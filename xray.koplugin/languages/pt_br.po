@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "IA procurando duplicados..."
 
+msgid "author_born"
+msgstr "Nascimento: "
+
+msgid "author_died"
+msgstr "Falecimento: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Desativado"
 
@@ -134,17 +140,8 @@ msgstr "Nenhum personagem encontrado correspondente a '%s'"
 msgid "close"
 msgstr "Fechar"
 
-msgid "config_api_key_label"
-msgstr "Chave API %s: "
-
 msgid "config_default_gemini"
 msgstr "  Padrão (Gemini)"
-
-msgid "config_model"
-msgstr "  Modelo: "
-
-msgid "config_provider"
-msgstr "  Provedor: "
 
 msgid "config_status_not_set"
 msgstr "NÃO DEFINIDO"
@@ -472,9 +469,6 @@ msgstr "Limpar Cache"
 
 msgid "menu_clear_logs"
 msgstr "Limpar Logs"
-
-msgid "menu_config_header"
-msgstr "--- Configuração Atual ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Configurações de conteúdo e obtenção"

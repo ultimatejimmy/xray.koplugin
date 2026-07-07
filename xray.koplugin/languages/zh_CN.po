@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "AI 正在扫描重复项..."
 
+msgid "author_born"
+msgstr "出生: "
+
+msgid "author_died"
+msgstr "去世: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "已禁用"
 
@@ -134,17 +140,8 @@ msgstr "未找到匹配“%s”的角色"
 msgid "close"
 msgstr "关闭"
 
-msgid "config_api_key_label"
-msgstr "%s API 密钥："
-
 msgid "config_default_gemini"
 msgstr "  默认 (Gemini)"
-
-msgid "config_model"
-msgstr "  模型: "
-
-msgid "config_provider"
-msgstr "  服务商："
 
 msgid "config_status_not_set"
 msgstr "未设置"
@@ -472,9 +469,6 @@ msgstr "清除缓存"
 
 msgid "menu_clear_logs"
 msgstr "清除日志"
-
-msgid "menu_config_header"
-msgstr "--- 当前配置 ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "内容获取设置"

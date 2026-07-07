@@ -861,7 +861,33 @@ function XRayPlugin:getSubMenuItems()
                     {
                         text = self.loc:t("menu_desc_length_settings") or "Description Length Settings",
                         keep_menu_open = true,
-                        callback = function() self:showDescriptionLengthSettings() end,
+                        sub_item_table = {
+                            {
+                                text = self.loc:t("menu_characters") or "Characters",
+                                keep_menu_open = true,
+                                callback = function() self:showEntityLengthPresets("char_desc_len", self.loc:t("menu_characters")) end,
+                            },
+                            {
+                                text = self.loc:t("menu_locations") or "Locations",
+                                keep_menu_open = true,
+                                callback = function() self:showEntityLengthPresets("loc_desc_len", self.loc:t("menu_locations")) end,
+                            },
+                            {
+                                text = self.loc:t("menu_timeline") or "Timeline",
+                                keep_menu_open = true,
+                                callback = function() self:showEntityLengthPresets("timeline_event_len", self.loc:t("menu_timeline"), true) end,
+                            },
+                            {
+                                text = self.loc:t("menu_historical_figures") or "Historical Figures",
+                                keep_menu_open = true,
+                                callback = function() self:showEntityLengthPresets("hist_fig_bio_len", self.loc:t("menu_historical_figures")) end,
+                            },
+                            {
+                                text = self.loc:t("menu_terms") or "Glossary",
+                                keep_menu_open = true,
+                                callback = function() self:showEntityLengthPresets("term_def_len", self.loc:t("menu_terms") or "Glossary") end,
+                            },
+                        }
                     },
                     {
                         text = self.loc:t("menu_series_context") or "Series Context",

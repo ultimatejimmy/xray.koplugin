@@ -29,6 +29,12 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "ИИ сканирует дубликаты..."
 
+msgid "author_born"
+msgstr "Родился: "
+
+msgid "author_died"
+msgstr "Умер: "
+
 msgid "auto_dupe_check_disabled"
 msgstr "Выключено"
 
@@ -134,17 +140,8 @@ msgstr "Персонаж, соответствующий '%s', не найден
 msgid "close"
 msgstr "Закрыть"
 
-msgid "config_api_key_label"
-msgstr "API ключ %s: "
-
 msgid "config_default_gemini"
 msgstr "  По умолчанию (Gemini)"
-
-msgid "config_model"
-msgstr "  Модель: "
-
-msgid "config_provider"
-msgstr "  Провайдер: "
 
 msgid "config_status_not_set"
 msgstr "НЕ УСТАНОВЛЕН"
@@ -472,9 +469,6 @@ msgstr "Очистить кэш"
 
 msgid "menu_clear_logs"
 msgstr "Очистить логи"
-
-msgid "menu_config_header"
-msgstr "--- Текущая конфигурация ---"
 
 msgid "menu_content_fetch_settings"
 msgstr "Настройки контента и загрузки"
