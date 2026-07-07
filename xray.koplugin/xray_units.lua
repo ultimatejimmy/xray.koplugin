@@ -85,6 +85,10 @@ end
 local function parseNumberText(str)
     if not str then return nil end
     str = str:lower():gsub("\194\160", " "):gsub("^%s+", ""):gsub("%s+$", "")
+    -- Normalize Unicode minus/dashes to standard hyphen
+    str = str:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
+    -- Strip spaces after leading minus sign
+    str = str:gsub("^%-%s+", "-")
     if str == "half" or str == "half a" or str == "half an" then return 0.5 end
     
     -- Try direct numeric

@@ -447,6 +447,7 @@ function M:scanBookForUnits()
         else
             -- 2. Try prefix_word or prev_text tail
             local p = (hit.prev_text or ""):gsub("%s+$", "")
+            p = p:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
             
             -- Try digit range
             -- Try digit range
@@ -523,6 +524,12 @@ function M:scanBookForUnits()
                     end
                 end
                 
+                -- Check if a minus sign was left just before the matched digit (e.g. separated by space)
+                if i_w >= 1 and words[i_w] == "-" and #valid_words > 0 and saw_digit then
+                    valid_words[1] = "-" .. valid_words[1]
+                    i_w = i_w - 1
+                end
+                
                 while #valid_words > 0 and valid_words[1] == "and" do
                     table.remove(valid_words, 1)
                 end
@@ -569,7 +576,7 @@ function M:scanBookForUnits()
                     local sign = ""
                     if u.category == "temp" then
                         local before_num = (hit.prev_text or ""):match("([^%d]*)$") or ""
-                        if before_num:match("%-") or before_num:match("−") then
+                        if (before_num:match("%-") or before_num:match("−")) and val > 0 then
                             val = -val
                             sign = "-"
                         end

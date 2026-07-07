@@ -608,5 +608,96 @@ describe("xray_ui", function()
             assert.are.equal("37°C", plugin.unit_xp_matches[1].original)
             assert.are.equal("98.6 °F", plugin.unit_xp_matches[1].converted)
         end)
+
+        it("should successfully scan and underline negative temperatures: '-37°C', '−37°C', '- 37°C'", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            -- Test 1: ASCII minus
+            local mock_hits1 = {
+                {
+                    matched_text = "°C",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The temperature is -37",
+                    next_text = "."
+                }
+            }
+            plugin.ui.document.findAllText = function() return mock_hits1 end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_minus37" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_minus37" and unit_end == "xp2" then return "-37°C" end
+                if cand == "xp_minus37" then return "-37" end
+                return ""
+            end
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("-37°C", plugin.unit_xp_matches[1].original)
+            assert.are.equal("-34.6 °F", plugin.unit_xp_matches[1].converted)
+
+            -- Test 2: Unicode minus
+            local mock_hits2 = {
+                {
+                    matched_text = "°C",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The temperature is −37",
+                    next_text = "."
+                }
+            }
+            plugin.ui.document.findAllText = function() return mock_hits2 end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_uni37" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_uni37" and unit_end == "xp2" then return "−37°C" end
+                if cand == "xp_uni37" then return "−37" end
+                return ""
+            end
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("−37°C", plugin.unit_xp_matches[1].original)
+            assert.are.equal("-34.6 °F", plugin.unit_xp_matches[1].converted)
+
+            -- Test 3: Space after minus
+            local mock_hits3 = {
+                {
+                    matched_text = "°C",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The temperature is - 37",
+                    next_text = "."
+                }
+            }
+            plugin.ui.document.findAllText = function() return mock_hits3 end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_space37" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_space37" and unit_end == "xp2" then return "- 37°C" end
+                if cand == "xp_space37" then return "- 37" end
+                return ""
+            end
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("- 37°C", plugin.unit_xp_matches[1].original)
+            assert.are.equal("-34.6 °F", plugin.unit_xp_matches[1].converted)
+        end)
     end)
 end)
