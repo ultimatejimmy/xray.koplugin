@@ -843,6 +843,12 @@ msgstr "Espessura do sublinhado"
 msgid "unit_underline_wavy"
 msgstr "Ondulado"
 
+msgid "unit_underline_dotted"
+msgstr "Pontilhado"
+
+msgid "unit_underline_dashed"
+msgstr "Tracejado"
+
 msgid "updater_available_header"
 msgstr "X-Ray %s está disponível!\nSua versão é %s."
 

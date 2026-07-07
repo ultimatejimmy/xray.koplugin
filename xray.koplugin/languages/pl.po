@@ -843,6 +843,12 @@ msgstr "Grubość podkreślenia"
 msgid "unit_underline_wavy"
 msgstr "Falista"
 
+msgid "unit_underline_dotted"
+msgstr "Kropkowany"
+
+msgid "unit_underline_dashed"
+msgstr "Kreskowany"
+
 msgid "updater_available_header"
 msgstr "Dostępna jest wersja X-Ray %s!\nPosiadasz wersję %s."
 

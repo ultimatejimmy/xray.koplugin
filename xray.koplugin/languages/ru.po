@@ -843,6 +843,12 @@ msgstr "Толщина подчеркивания"
 msgid "unit_underline_wavy"
 msgstr "Волнистая"
 
+msgid "unit_underline_dotted"
+msgstr "Точечный"
+
+msgid "unit_underline_dashed"
+msgstr "Штриховой"
+
 msgid "updater_available_header"
 msgstr "Доступен X-Ray %s!\nУ вас установлена %s."
 

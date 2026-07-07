@@ -843,6 +843,12 @@ msgstr "Дебљина подвлачења"
 msgid "unit_underline_wavy"
 msgstr "Таласаста"
 
+msgid "unit_underline_dotted"
+msgstr "Тачкасто"
+
+msgid "unit_underline_dashed"
+msgstr "Цртичасто"
+
 msgid "updater_available_header"
 msgstr "X-Ray %s је доступан!\nИмате верзију %s."
 

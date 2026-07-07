@@ -843,6 +843,12 @@ msgstr "Grosor del subrayado"
 msgid "unit_underline_wavy"
 msgstr "Ondulado"
 
+msgid "unit_underline_dotted"
+msgstr "Punteado"
+
+msgid "unit_underline_dashed"
+msgstr "Rayado"
+
 msgid "updater_available_header"
 msgstr "¡X-Ray %s está disponible!\nTienes la %s."
 

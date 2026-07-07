@@ -843,6 +843,12 @@ msgstr "Onderstreepdikte"
 msgid "unit_underline_wavy"
 msgstr "Golvend"
 
+msgid "unit_underline_dotted"
+msgstr "Stippellijn"
+
+msgid "unit_underline_dashed"
+msgstr "Streepjeslijn"
+
 msgid "updater_available_header"
 msgstr "X-Ray %s is beschikbaar!\nU heeft %s."
 

@@ -845,6 +845,12 @@ msgstr "Underline Thickness"
 msgid "unit_underline_wavy"
 msgstr "Wavy"
 
+msgid "unit_underline_dotted"
+msgstr "Dotted"
+
+msgid "unit_underline_dashed"
+msgstr "Dashed"
+
 msgid "updater_available_header"
 msgstr "X-Ray %s is available!\nYou have %s."
 

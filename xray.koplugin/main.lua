@@ -1241,22 +1241,24 @@ function XRayPlugin:showUnitStyleCard()
             underline_style = underline_style,
             underline_thickness = underline_thickness,
             underline_color_val = nil,
+            plugin = nil,
         }
         function UnderlinePreview:getSize()
             return Geom:new{ w = self.width, h = self.height }
         end
         function UnderlinePreview:paintTo(bb, x, y)
-            local y_line = y + self.height - self.underline_thickness
-            if self.underline_style == "wavy" then
-                for offset = 0, self.width - 1, 4 do
-                    local wave_y = y_line + (math.floor(offset / 4) % 2 == 0 and 0 or 1)
-                    local segment_w = math.min(4, self.width - offset)
-                    bb:paintRect(x + offset, wave_y, segment_w, self.underline_thickness, self.underline_color_val)
+            local plugin = self.plugin
+            if plugin and plugin._draw_underline then
+                local grey = 150
+                if underline_intensity == "light" then
+                    grey = 200
+                elseif underline_intensity == "dark" then
+                    grey = 30
                 end
-            elseif self.underline_style == "invisible" then
-                -- Draw nothing
-            else
-                bb:paintRect(x, y_line, self.width, self.underline_thickness, self.underline_color_val)
+                local Screen = require("device").screen
+                local thickness = Screen:scaleBySize(self.underline_thickness)
+                local box = { x = x, y = y, w = self.width, h = self.height }
+                plugin._draw_underline(bb, box, self.underline_style, grey, thickness, self.underline_thickness, plugin.path)
             end
         end
 
@@ -1287,6 +1289,7 @@ function XRayPlugin:showUnitStyleCard()
             underline_thickness = underline_thickness,
             underline_color_val = underline_color_val,
             overlap_offset = { w_walked, 0 },
+            plugin = self,
         }
 
         local preview_example = OverlapGroup:new{
@@ -1377,9 +1380,17 @@ function XRayPlugin:showUnitStyleCard()
             fgcolor = Blitbuffer.COLOR_BLACK,
         }
 
-        local style_row = option_row({
+        local style_row_1 = option_row({
             { text = self.loc:t("unit_underline_solid") or "Solid", value = "solid" },
-            { text = self.loc:t("unit_underline_wavy") or "Wavy", value = "wavy" },
+            { text = self.loc:t("unit_underline_wavy") or "Wavy", value = "wavy" }
+        }, underline_style, "unit_underline_style")
+
+        local style_row_2 = option_row({
+            { text = self.loc:t("unit_underline_dotted") or "Dotted", value = "dotted" },
+            { text = self.loc:t("unit_underline_dashed") or "Dashed", value = "dashed" }
+        }, underline_style, "unit_underline_style")
+
+        local style_row_3 = option_row({
             { text = self.loc:t("unit_underline_invisible") or "Invisible", value = "invisible" }
         }, underline_style, "unit_underline_style")
 
@@ -1448,7 +1459,11 @@ function XRayPlugin:showUnitStyleCard()
                 preview_panel,
                 span(),
                 label(self.loc:t("unit_underline_style_label") or "Underline Style"),
-                style_row,
+                style_row_1,
+                WidgetContainer:new{ dimen = Geom:new{ w = 1, h = sc(4) } },
+                style_row_2,
+                WidgetContainer:new{ dimen = Geom:new{ w = 1, h = sc(4) } },
+                style_row_3,
                 span(),
                 label(self.loc:t("unit_underline_thickness_label") or "Underline Thickness"),
                 thickness_row,

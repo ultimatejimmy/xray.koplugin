@@ -745,6 +745,10 @@ function M.getScanAliases(direction, enabled_categories, lang)
         if alias:match("^[%z\1-\127]+$") then
             return true
         end
+        -- Always keep universal degree symbols
+        if alias:find("°") then
+            return true
+        end
         -- For non-ASCII: check if it matches the current language's script
         local l_lower = l:lower()
         if l_lower == "ru" or l_lower == "uk" or l_lower == "sr" then

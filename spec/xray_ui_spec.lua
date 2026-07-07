@@ -520,5 +520,93 @@ describe("xray_ui", function()
             assert.are.equal("80 degrees Celcius", plugin.unit_xp_matches[1].original)
             assert.are.equal("176 °F", plugin.unit_xp_matches[1].converted)
         end)
+
+        it("should successfully scan 'Two 25-liter' and treat it as 25 liters, not 2 liters", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "liter",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "He bought Two 25-",
+                    next_text = " bottles."
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                return mock_hits
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_25" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_25" and unit_end == "xp2" then return "25-liter" end
+                if cand == "xp_25" then return "25" end
+                return ""
+            end
+            
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("25-liter", plugin.unit_xp_matches[1].original)
+            assert.are.equal("6.6 gallons", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should successfully scan '37°C' with degree symbol", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "°C",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The temperature is 37",
+                    next_text = "."
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                -- Verify regex pattern allows °C matching without leading word boundary
+                assert.is_true(pat:find("°[Cc]") ~= nil)
+                return mock_hits
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_37" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_37" and unit_end == "xp2" then return "37°C" end
+                if cand == "xp_37" then return "37" end
+                return ""
+            end
+            
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("37°C", plugin.unit_xp_matches[1].original)
+            assert.are.equal("98.6 °F", plugin.unit_xp_matches[1].converted)
+        end)
     end)
 end)

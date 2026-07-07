@@ -843,6 +843,12 @@ msgstr "سمك التسطير"
 msgid "unit_underline_wavy"
 msgstr "متموج"
 
+msgid "unit_underline_dotted"
+msgstr "منقط"
+
+msgid "unit_underline_dashed"
+msgstr "متقطع"
+
 msgid "updater_available_header"
 msgstr "يتوفر إصدار X-Ray %s الجديد!\nلديك حاليًا الإصدار %s."
 

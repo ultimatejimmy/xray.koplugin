@@ -121,6 +121,177 @@ function M:_resolveHighlightBoxes()
     log("Resolved " .. tostring(#resolved) .. " visual conversion boxes on screen")
 end
 
+local _wavy_svg_template
+local _wavy_tile_cache = {}
+
+local function _load_wavy_template(plugin_path)
+    if _wavy_svg_template then return _wavy_svg_template end
+    local path = plugin_path .. "/assets/wavy-underline.svg"
+    local fh = io.open(path, "r")
+    if not fh then return nil end
+    _wavy_svg_template = fh:read("*a")
+    fh:close()
+    return _wavy_svg_template
+end
+
+local function _wavy_tile(plugin_path, raw_width, grey)
+    local key = raw_width .. "_" .. grey
+    local cached = _wavy_tile_cache[key]
+    if cached ~= nil then return cached end
+
+    local template = _load_wavy_template(plugin_path)
+    if not template then
+        _wavy_tile_cache[key] = false
+        return false
+    end
+
+    local hex  = string.format("#%02x%02x%02x", grey, grey, grey)
+    local svg  = template:gsub('stroke="black"', 'stroke="' .. hex .. '"')
+    svg = svg:gsub('stroke="' .. hex .. '"', 'stroke="' .. hex .. '" stroke-width="' .. raw_width .. '"')
+
+    local DataStorage = require("datastorage")
+    local sidecar_dir = DataStorage:getDataDir() .. "/xray"
+    os.execute("mkdir -p " .. sidecar_dir)
+    local svg_path = sidecar_dir .. "/wavy_" .. key .. ".svg"
+    local fh = io.open(svg_path, "w")
+    if fh then fh:write(svg); fh:close() end
+
+    local svg_w = 8
+    local svg_h = 4
+    local tile_w = Screen:scaleBySize(svg_w)
+    local tile_h = math.max(1, math.floor(tile_w * svg_h / svg_w + 0.5))
+    local RenderImage = require("ui/renderimage")
+    local ok, tile = pcall(function()
+        return RenderImage:renderSVGImageFile(svg_path, tile_w, tile_h)
+    end)
+    if not ok or not tile then
+        _wavy_tile_cache[key] = false
+        return false
+    end
+    _wavy_tile_cache[key] = tile
+    return tile
+end
+
+local _circle_tile_cache = {}
+
+local function _circle_tile(diameter, grey)
+    local key = diameter .. "_" .. grey
+    local cached = _circle_tile_cache[key]
+    if cached ~= nil then return cached end
+
+    local hex = string.format("#%02x%02x%02x", grey, grey, grey)
+    local r = diameter / 2
+    local svg = string.format('<svg width="%d" height="%d" viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg"><circle cx="%f" cy="%f" r="%f" fill="%s"/></svg>',
+        diameter, diameter, diameter, diameter, r, r, r, hex)
+
+    local DataStorage = require("datastorage")
+    local sidecar_dir = DataStorage:getDataDir() .. "/xray"
+    os.execute("mkdir -p " .. sidecar_dir)
+    local svg_path = sidecar_dir .. "/circle_" .. key .. ".svg"
+    local fh = io.open(svg_path, "w")
+    if fh then
+        fh:write(svg)
+        fh:close()
+    end
+
+    local RenderImage = require("ui/renderimage")
+    local ok, tile = pcall(function()
+        return RenderImage:renderSVGImageFile(svg_path, diameter, diameter)
+    end)
+    if not ok or not tile then
+        _circle_tile_cache[key] = false
+        return false
+    end
+    _circle_tile_cache[key] = tile
+    return tile
+end
+
+local function paintFilledCircle(bb, x0, y0, diameter, color)
+    if diameter <= 1 then
+        bb:paintRect(x0, y0, 1, 1, color)
+        return
+    elseif diameter == 2 then
+        bb:paintRect(x0, y0, 2, 2, color)
+        return
+    end
+    local c = (diameter - 1) / 2
+    local r = diameter / 2
+    local r_sq = r * r
+    for dy = 0, diameter - 1 do
+        local dist_y = dy - c
+        local dist_y_sq = dist_y * dist_y
+        local start_x = nil
+        local end_x = nil
+        for dx = 0, diameter - 1 do
+            local dist_x = dx - c
+            if dist_x * dist_x + dist_y_sq <= r_sq then
+                if not start_x then
+                    start_x = dx
+                end
+                end_x = dx
+            end
+        end
+        if start_x and end_x then
+            bb:paintRect(x0 + start_x, y0 + dy, end_x - start_x + 1, 1, color)
+        end
+    end
+end
+
+local function _draw_underline(bb, box, style, grey, thickness, raw_thickness, plugin_path)
+    local y  = box.y + box.h - thickness - 2
+    local x0 = box.x
+    local x1 = box.x + box.w
+    local color_val = Blitbuffer.Color8(grey)
+
+    if style == "invisible" then
+        return
+    elseif style == "wavy" then
+        local tile = _wavy_tile(plugin_path, raw_thickness, grey)
+        if tile then
+            local tw, th = tile:getWidth(), tile:getHeight()
+            local ypos = box.y + box.h - math.floor((th + thickness) / 2 + 0.5) - 2
+            local x = x0
+            while x < x1 do
+                local w = math.min(tw, x1 - x)
+                bb:alphablitFrom(tile, x, ypos, 0, 0, w, th)
+                x = x + tw
+            end
+            return
+        end
+    end
+
+    if style == "solid" then
+        bb:paintRect(x0, y, box.w, thickness, color_val)
+    elseif style == "dotted" then
+        local dot_w = thickness
+        local gap_w = thickness
+        local x = x0
+        local tile = _circle_tile(dot_w, grey)
+        if tile then
+            local tw, th = tile:getWidth(), tile:getHeight()
+            while x < x1 do
+                local w = math.min(tw, x1 - x)
+                bb:alphablitFrom(tile, x, y, 0, 0, w, th)
+                x = x + tw + gap_w
+            end
+        else
+            while x < x1 do
+                paintFilledCircle(bb, x, y, dot_w, color_val)
+                x = x + dot_w + gap_w
+            end
+        end
+    elseif style == "dashed" then
+        local dash_w = Screen:scaleBySize(6)
+        local gap_w = Screen:scaleBySize(3)
+        local x = x0
+        while x < x1 do
+            local w = math.min(dash_w, x1 - x)
+            bb:paintRect(x, y, w, thickness, color_val)
+            x = x + dash_w + gap_w
+        end
+    end
+end
+
 function M:_drawUnitUnderlines(bb)
     self:_resolveHighlightBoxes()
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then return end
@@ -129,28 +300,20 @@ function M:_drawUnitUnderlines(bb)
     local underline_style = settings.unit_underline_style or "wavy"
     if underline_style == "invisible" then return end
     
-    local thickness = tonumber(settings.unit_underline_thickness) or 2
+    local raw_thickness = tonumber(settings.unit_underline_thickness) or 2
+    local thickness = Screen:scaleBySize(raw_thickness)
     local intensity = settings.unit_underline_intensity or "light"
 
-    local color_val = Blitbuffer.Color8(150)
+    local grey = 150
     if intensity == "light" then
-        color_val = Blitbuffer.Color8(200)
+        grey = 200
     elseif intensity == "dark" then
-        color_val = Blitbuffer.Color8(30)
+        grey = 30
     end
 
     for _, box in ipairs(self.unit_conversion_boxes) do
         if box.x and box.y and box.w and box.h then
-            local y_line = box.y + box.h - thickness - 2
-            if underline_style == "wavy" then
-                for offset = 0, box.w - 1, 4 do
-                    local wave_y = y_line + (math.floor(offset / 4) % 2 == 0 and 0 or 1)
-                    local segment_w = math.min(4, box.w - offset)
-                    bb:paintRect(box.x + offset, wave_y, segment_w, thickness, color_val)
-                end
-            else
-                bb:paintRect(box.x, y_line, box.w, thickness, color_val)
-            end
+            _draw_underline(bb, box, underline_style, grey, thickness, raw_thickness, self.path)
         end
     end
 end
@@ -221,18 +384,33 @@ function M:scanBookForUnits()
     end
 
     -- Escape and join aliases into a regex pattern
-    local escaped_aliases = {}
+    local word_aliases = {}
+    local degree_aliases = {}
     for _, alias in ipairs(aliases) do
         local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
         esc = esc:gsub("%s+", "\\s+")
-        table.insert(escaped_aliases, esc)
+        if alias:find("°") then
+            table.insert(degree_aliases, esc)
+        else
+            table.insert(word_aliases, esc)
+        end
     end
     -- Sort descending by length to prevent shadowing issues (e.g. "m" matching before "mm")
-    table.sort(escaped_aliases, function(a, b)
+    table.sort(word_aliases, function(a, b)
+        return #a > #b
+    end)
+    table.sort(degree_aliases, function(a, b)
         return #a > #b
     end)
     
-    local pat = "\\b(" .. table.concat(escaped_aliases, "|") .. ")\\b"
+    local pats = {}
+    if #word_aliases > 0 then
+        table.insert(pats, "\\b(" .. table.concat(word_aliases, "|") .. ")\\b")
+    end
+    if #degree_aliases > 0 then
+        table.insert(pats, "(" .. table.concat(degree_aliases, "|") .. ")\\b")
+    end
+    local pat = table.concat(pats, "|")
     log("scanBookForUnits: regex pattern=[" .. pat .. "]")
     
     local doc = self.ui.document
@@ -322,17 +500,26 @@ function M:scanBookForUnits()
                 
                 local valid_words = {}
                 local i_w = #words
+                local saw_digit = false
                 while i_w >= 1 do
                     local w = words[i_w]
                     local clean_w = w:gsub("[%-,]$", "")
                     if clean_w == "a" and i_w > 1 and words[i_w-1]:gsub("[%-,]$", "") == "half" then
+                        if saw_digit then break end
                         table.insert(valid_words, 1, "half a")
                         i_w = i_w - 2
-                    elseif clean_w == "and" or xray_units.parseNumberText(clean_w) then
-                        table.insert(valid_words, 1, clean_w)
-                        i_w = i_w - 1
                     else
-                        break
+                        local val_parsed = xray_units.parseNumberText(clean_w)
+                        if clean_w == "and" or val_parsed then
+                            if saw_digit then break end
+                            if clean_w:match("%d") then
+                                saw_digit = true
+                            end
+                            table.insert(valid_words, 1, clean_w)
+                            i_w = i_w - 1
+                        else
+                            break
+                        end
                     end
                 end
                 
@@ -734,4 +921,5 @@ function M:_handleUnitTap(ges)
 end
 
 M._PointerArrow = _PointerArrow
+M._draw_underline = _draw_underline
 return M

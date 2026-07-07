@@ -843,6 +843,12 @@ msgstr "下划线粗细"
 msgid "unit_underline_wavy"
 msgstr "波浪线"
 
+msgid "unit_underline_dotted"
+msgstr "点线"
+
+msgid "unit_underline_dashed"
+msgstr "虚线"
+
 msgid "updater_available_header"
 msgstr "X-Ray %s 已发布！\n您当前的版本是 %s。"
 

@@ -843,6 +843,12 @@ msgstr "Aláhúzás vastagsága"
 msgid "unit_underline_wavy"
 msgstr "Hullámos"
 
+msgid "unit_underline_dotted"
+msgstr "Pontozott"
+
+msgid "unit_underline_dashed"
+msgstr "Szaggatott"
+
 msgid "updater_available_header"
 msgstr "Elérhető az X-Ray %s!\nÖnnek a(z) %s verziója van meg."
 

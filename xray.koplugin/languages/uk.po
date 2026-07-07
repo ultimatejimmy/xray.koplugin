@@ -843,6 +843,12 @@ msgstr "Товщина підкреслення"
 msgid "unit_underline_wavy"
 msgstr "Хвиляста"
 
+msgid "unit_underline_dotted"
+msgstr "Крапковий"
+
+msgid "unit_underline_dashed"
+msgstr "Штриховий"
+
 msgid "updater_available_header"
 msgstr "Доступний X-Ray %s!\nУ вас встановлено %s."
 

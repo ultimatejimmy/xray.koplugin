@@ -843,6 +843,12 @@ msgstr "Spessore sottolineatura"
 msgid "unit_underline_wavy"
 msgstr "Ondulato"
 
+msgid "unit_underline_dotted"
+msgstr "Puntinato"
+
+msgid "unit_underline_dashed"
+msgstr "Tratteggiato"
+
 msgid "updater_available_header"
 msgstr "La radiografia %s è disponibile!\nHai %s."
 
