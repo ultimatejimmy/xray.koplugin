@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Nl\n"
+"Language: nl\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Over"
 
 msgid "ai_error"
 msgstr "AI-fout: "
@@ -113,9 +112,6 @@ msgstr "Fictie"
 
 msgid "book_type_nonfiction"
 msgstr "Non-fictie"
-
-msgid "book_type_saved"
-msgstr "Boektype opgeslagen!"
 
 msgid "cache_cleared"
 msgstr "Cache gewist!\n\nU kunt nu nieuwe gegevens ophalen:\nMenu → X-Ray → AI-gegevens ophalen"
@@ -825,6 +821,12 @@ msgstr "Nooit"
 msgid "unit_tooltip_timeout_label"
 msgstr "Tooltip time-out"
 
+msgid "unit_underline_dashed"
+msgstr "Streepjeslijn"
+
+msgid "unit_underline_dotted"
+msgstr "Stippellijn"
+
 msgid "unit_underline_intensity_label"
 msgstr "Onderstreepintensiteit"
 
@@ -842,12 +844,6 @@ msgstr "Onderstreepdikte"
 
 msgid "unit_underline_wavy"
 msgstr "Golvend"
-
-msgid "unit_underline_dotted"
-msgstr "Stippellijn"
-
-msgid "unit_underline_dashed"
-msgstr "Streepjeslijn"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s is beschikbaar!\nU heeft %s."

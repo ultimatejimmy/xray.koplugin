@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Pt_br\n"
+"Language: pt_br\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Sobre"
 
 msgid "ai_error"
 msgstr "Erro da IA: "
@@ -113,9 +112,6 @@ msgstr "Ficção"
 
 msgid "book_type_nonfiction"
 msgstr "Não-Ficção"
-
-msgid "book_type_saved"
-msgstr "Tipo de livro salvo!"
 
 msgid "cache_cleared"
 msgstr "Cache limpo!\n\nVocê pode buscar novos dados agora:\nMenu → Buscar dados do X-Ray"
@@ -262,7 +258,7 @@ msgid "error_model_not_found_title"
 msgstr "Modelo Não Encontrado"
 
 msgid "error_no_api_key"
-msgstr "error_no_api_key"
+msgstr "Erro: sem chave de API"
 
 msgid "error_parse_desc"
 msgstr "A IA retornou uma resposta que não pôde ser processada. Isso pode ser uma falha temporária."
@@ -825,6 +821,12 @@ msgstr "Nunca"
 msgid "unit_tooltip_timeout_label"
 msgstr "Tempo limite da dica"
 
+msgid "unit_underline_dashed"
+msgstr "Tracejado"
+
+msgid "unit_underline_dotted"
+msgstr "Pontilhado"
+
 msgid "unit_underline_intensity_label"
 msgstr "Intensidade do sublinhado"
 
@@ -842,12 +844,6 @@ msgstr "Espessura do sublinhado"
 
 msgid "unit_underline_wavy"
 msgstr "Ondulado"
-
-msgid "unit_underline_dotted"
-msgstr "Pontilhado"
-
-msgid "unit_underline_dashed"
-msgstr "Tracejado"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s está disponível!\nSua versão é %s."

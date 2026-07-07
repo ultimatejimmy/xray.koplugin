@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Es\n"
+"Language: es\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Acerca de"
 
 msgid "ai_error"
 msgstr "Error de IA: "
@@ -113,9 +112,6 @@ msgstr "Ficción"
 
 msgid "book_type_nonfiction"
 msgstr "No ficción"
-
-msgid "book_type_saved"
-msgstr "¡Tipo de libro guardado!"
 
 msgid "cache_cleared"
 msgstr "¡Caché borrada!\n\nAhora puedes obtener nuevos datos:\nMenú → X-Ray → Obtener datos de IA"
@@ -825,6 +821,12 @@ msgstr "Nunca"
 msgid "unit_tooltip_timeout_label"
 msgstr "Duración del aviso"
 
+msgid "unit_underline_dashed"
+msgstr "Rayado"
+
+msgid "unit_underline_dotted"
+msgstr "Punteado"
+
 msgid "unit_underline_intensity_label"
 msgstr "Intensidad del subrayado"
 
@@ -842,12 +844,6 @@ msgstr "Grosor del subrayado"
 
 msgid "unit_underline_wavy"
 msgstr "Ondulado"
-
-msgid "unit_underline_dotted"
-msgstr "Punteado"
-
-msgid "unit_underline_dashed"
-msgstr "Rayado"
 
 msgid "updater_available_header"
 msgstr "¡X-Ray %s está disponible!\nTienes la %s."

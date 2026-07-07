@@ -161,7 +161,8 @@ def sync():
     
     en_final = {}
     for key in used_keys:
-        en_final[key] = en_existing.get(key) or used_keys[key] or key
+        code_fallback = used_keys.get(key, "")
+        en_final[key] = (code_fallback if code_fallback else en_existing.get(key)) or key
     
     save_po(en_path, 'English', 'en', en_final.keys(), en_final, used_keys)
     print(f"Updated {MASTER_LANG}.po")

@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Id\n"
+"Language: id\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Tentang"
 
 msgid "ai_error"
 msgstr "Kesalahan AI: "
@@ -113,9 +112,6 @@ msgstr "Fiksi"
 
 msgid "book_type_nonfiction"
 msgstr "Non-Fiksi"
-
-msgid "book_type_saved"
-msgstr "Jenis Buku disimpan!"
 
 msgid "cache_cleared"
 msgstr "Cache dihapus!\n\nAnda sekarang dapat mengambil data baru:\nMenu → X-Ray → Ambil Data AI"
@@ -825,6 +821,12 @@ msgstr "Jangan Pernah"
 msgid "unit_tooltip_timeout_label"
 msgstr "Batas Waktu Tooltip"
 
+msgid "unit_underline_dashed"
+msgstr "Putus-putus"
+
+msgid "unit_underline_dotted"
+msgstr "Titik-titik"
+
 msgid "unit_underline_intensity_label"
 msgstr "Intensitas Garis Bawah"
 
@@ -842,12 +844,6 @@ msgstr "Ketebalan Garis Bawah"
 
 msgid "unit_underline_wavy"
 msgstr "Bergelombang"
-
-msgid "unit_underline_dotted"
-msgstr "Titik-titik"
-
-msgid "unit_underline_dashed"
-msgstr "Putus-putus"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s tersedia!\nAnda memiliki versi %s."

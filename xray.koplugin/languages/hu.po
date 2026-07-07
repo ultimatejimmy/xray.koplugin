@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Hu\n"
+"Language: hu\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Névjegy"
 
 msgid "ai_error"
 msgstr "MI hiba: "
@@ -113,9 +112,6 @@ msgstr "Szépirodalom"
 
 msgid "book_type_nonfiction"
 msgstr "Ismeretterjesztő"
-
-msgid "book_type_saved"
-msgstr "Könyvtípus mentve!"
 
 msgid "cache_cleared"
 msgstr "Gyorsítótár törölve!\n\nMost már lekérdezhet új adatokat:\nMenü → X-Ray → AI adatok lekérdezése"
@@ -825,6 +821,12 @@ msgstr "Soha"
 msgid "unit_tooltip_timeout_label"
 msgstr "Eszköztipp ideje"
 
+msgid "unit_underline_dashed"
+msgstr "Szaggatott"
+
+msgid "unit_underline_dotted"
+msgstr "Pontozott"
+
 msgid "unit_underline_intensity_label"
 msgstr "Aláhúzás intenzitása"
 
@@ -842,12 +844,6 @@ msgstr "Aláhúzás vastagsága"
 
 msgid "unit_underline_wavy"
 msgstr "Hullámos"
-
-msgid "unit_underline_dotted"
-msgstr "Pontozott"
-
-msgid "unit_underline_dashed"
-msgstr "Szaggatott"
 
 msgid "updater_available_header"
 msgstr "Elérhető az X-Ray %s!\nÖnnek a(z) %s verziója van meg."

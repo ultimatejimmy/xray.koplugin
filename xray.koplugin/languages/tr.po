@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Tr\n"
+"Language: tr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Hakkında"
 
 msgid "ai_error"
 msgstr "Yapay Zeka Hatası: "
@@ -113,9 +112,6 @@ msgstr "Kurgu"
 
 msgid "book_type_nonfiction"
 msgstr "Kurgu Dışı"
-
-msgid "book_type_saved"
-msgstr "Kitap Türü kaydedildi!"
 
 msgid "cache_cleared"
 msgstr "Önbellek temizlendi!\n\nŞimdi yeni verileri çekebilirsiniz:\nMenü → X-Ray → AI Verilerini Çek"
@@ -262,7 +258,7 @@ msgid "error_model_not_found_title"
 msgstr "Model Bulunamadı"
 
 msgid "error_no_api_key"
-msgstr "error_no_api_key"
+msgstr "Hata: API anahtarı eksik"
 
 msgid "error_parse_desc"
 msgstr "AI, işlenemeyen bir yanıt döndürdü. Bu geçici bir aksaklık olabilir."
@@ -825,6 +821,12 @@ msgstr "Asla"
 msgid "unit_tooltip_timeout_label"
 msgstr "İpucu Zamanı"
 
+msgid "unit_underline_dashed"
+msgstr "Kesikli"
+
+msgid "unit_underline_dotted"
+msgstr "Noktalı"
+
 msgid "unit_underline_intensity_label"
 msgstr "Altı Çizili Yoğunluğu"
 
@@ -842,12 +844,6 @@ msgstr "Altı Çizili Kalınlığı"
 
 msgid "unit_underline_wavy"
 msgstr "Dalgalı"
-
-msgid "unit_underline_dotted"
-msgstr "Noktalı"
-
-msgid "unit_underline_dashed"
-msgstr "Kesikli"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s mevcut!\nSizde %s var."

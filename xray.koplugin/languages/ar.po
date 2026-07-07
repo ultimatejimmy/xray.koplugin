@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Ar\n"
+"Language: ar\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "حول"
 
 msgid "ai_error"
 msgstr "خطأ الذكاء الاصطناعي: "
@@ -113,9 +112,6 @@ msgstr "خيال"
 
 msgid "book_type_nonfiction"
 msgstr "غير خيالي"
-
-msgid "book_type_saved"
-msgstr "تم حفظ نوع الكتاب!"
 
 msgid "cache_cleared"
 msgstr "تم مسح الذاكرة المؤقتة!\n\nيمكنك الآن جلب بيانات جديدة:\nالقائمة ← X-Ray ← جلب بيانات الذكاء الاصطناعي"
@@ -825,6 +821,12 @@ msgstr "أبداً"
 msgid "unit_tooltip_timeout_label"
 msgstr "مهلة تلميح الأدوات"
 
+msgid "unit_underline_dashed"
+msgstr "متقطع"
+
+msgid "unit_underline_dotted"
+msgstr "منقط"
+
 msgid "unit_underline_intensity_label"
 msgstr "كثافة التسطير"
 
@@ -842,12 +844,6 @@ msgstr "سمك التسطير"
 
 msgid "unit_underline_wavy"
 msgstr "متموج"
-
-msgid "unit_underline_dotted"
-msgstr "منقط"
-
-msgid "unit_underline_dashed"
-msgstr "متقطع"
 
 msgid "updater_available_header"
 msgstr "يتوفر إصدار X-Ray %s الجديد!\nلديك حاليًا الإصدار %s."

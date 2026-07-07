@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Uk\n"
+"Language: uk\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Про програму"
 
 msgid "ai_error"
 msgstr "Помилка ШІ: "
@@ -113,9 +112,6 @@ msgstr "Художня література"
 
 msgid "book_type_nonfiction"
 msgstr "Науково-популярна література"
-
-msgid "book_type_saved"
-msgstr "Тип книги збережено!"
 
 msgid "cache_cleared"
 msgstr "Кеш очищено!\n\nТепер ви можете отримати нові дані:\nМеню → X-Ray → Отримати дані ШІ"
@@ -262,7 +258,7 @@ msgid "error_model_not_found_title"
 msgstr "Модель не знайдено"
 
 msgid "error_no_api_key"
-msgstr "error_no_api_key"
+msgstr "Помилка: відсутній ключ API"
 
 msgid "error_parse_desc"
 msgstr "AI повернув відповідь, яку не вдалося обробити. Це може бути тимчасовий збій."
@@ -825,6 +821,12 @@ msgstr "Ніколи"
 msgid "unit_tooltip_timeout_label"
 msgstr "Час підказки"
 
+msgid "unit_underline_dashed"
+msgstr "Штриховий"
+
+msgid "unit_underline_dotted"
+msgstr "Крапковий"
+
 msgid "unit_underline_intensity_label"
 msgstr "Інтенсивність підкреслення"
 
@@ -842,12 +844,6 @@ msgstr "Товщина підкреслення"
 
 msgid "unit_underline_wavy"
 msgstr "Хвиляста"
-
-msgid "unit_underline_dotted"
-msgstr "Крапковий"
-
-msgid "unit_underline_dashed"
-msgstr "Штриховий"
 
 msgid "updater_available_header"
 msgstr "Доступний X-Ray %s!\nУ вас встановлено %s."

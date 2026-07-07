@@ -700,4 +700,21 @@ describe("xray_ui", function()
             assert.are.equal("-34.6 °F", plugin.unit_xp_matches[1].converted)
         end)
     end)
+
+    describe("showAbout", function()
+        it("should successfully initialize M.showAbout card overlay without throwing errors", function()
+            local xray_settings_card = require("xray_settings_card")
+            local success, err = pcall(function()
+                xray_settings_card.showAbout(plugin, "Test Title", "This is a [B]test[/B] about text.")
+            end)
+            if not success then
+                error(err)
+            end
+            
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("InputContainer", last.type)
+        end)
+    end)
 end)
+

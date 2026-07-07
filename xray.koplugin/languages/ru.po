@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Ru\n"
+"Language: ru\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "О программе"
 
 msgid "ai_error"
 msgstr "Ошибка ИИ: "
@@ -113,9 +112,6 @@ msgstr "Художественная"
 
 msgid "book_type_nonfiction"
 msgstr "Документальная"
-
-msgid "book_type_saved"
-msgstr "Тип книги сохранен!"
 
 msgid "cache_cleared"
 msgstr "Кэш очищен!\n\nТеперь вы можете получить новые данные:\nМеню → X-Ray → Получить данные ИИ"
@@ -262,7 +258,7 @@ msgid "error_model_not_found_title"
 msgstr "Модель не найдена"
 
 msgid "error_no_api_key"
-msgstr "error_no_api_key"
+msgstr "Ошибка: отсутствует API-ключ"
 
 msgid "error_parse_desc"
 msgstr "AI вернул ответ, который не удалось обработать. Возможно, это временный сбой."
@@ -825,6 +821,12 @@ msgstr "Никогда"
 msgid "unit_tooltip_timeout_label"
 msgstr "Время подсказки"
 
+msgid "unit_underline_dashed"
+msgstr "Штриховой"
+
+msgid "unit_underline_dotted"
+msgstr "Точечный"
+
 msgid "unit_underline_intensity_label"
 msgstr "Интенсивность подчеркивания"
 
@@ -842,12 +844,6 @@ msgstr "Толщина подчеркивания"
 
 msgid "unit_underline_wavy"
 msgstr "Волнистая"
-
-msgid "unit_underline_dotted"
-msgstr "Точечный"
-
-msgid "unit_underline_dashed"
-msgstr "Штриховой"
 
 msgid "updater_available_header"
 msgstr "Доступен X-Ray %s!\nУ вас установлена %s."

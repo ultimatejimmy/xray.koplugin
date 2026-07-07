@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Pl\n"
+"Language: pl\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "O wtyczce"
 
 msgid "ai_error"
 msgstr "Błąd AI: "
@@ -113,9 +112,6 @@ msgstr "Fikcja"
 
 msgid "book_type_nonfiction"
 msgstr "Literatura faktu"
-
-msgid "book_type_saved"
-msgstr "Zapisano typ książki!"
 
 msgid "cache_cleared"
 msgstr "Pamięć podręczna wyczyszczona!\n\nMożesz teraz pobrać nowe dane:\nMenu → X-Ray → Pobierz dane AI"
@@ -825,6 +821,12 @@ msgstr "Nigdy"
 msgid "unit_tooltip_timeout_label"
 msgstr "Czas podpowiedzi"
 
+msgid "unit_underline_dashed"
+msgstr "Kreskowany"
+
+msgid "unit_underline_dotted"
+msgstr "Kropkowany"
+
 msgid "unit_underline_intensity_label"
 msgstr "Intensywność podkreślenia"
 
@@ -842,12 +844,6 @@ msgstr "Grubość podkreślenia"
 
 msgid "unit_underline_wavy"
 msgstr "Falista"
-
-msgid "unit_underline_dotted"
-msgstr "Kropkowany"
-
-msgid "unit_underline_dashed"
-msgstr "Kreskowany"
 
 msgid "updater_available_header"
 msgstr "Dostępna jest wersja X-Ray %s!\nPosiadasz wersję %s."

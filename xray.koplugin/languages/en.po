@@ -5,14 +5,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "about"
-msgstr "About"
-
 msgid "ai_error"
 msgstr "AI Error: "
 
 msgid "ai_fetch_complete"
-msgstr "Successfully fetched from %s!\n\nBook: %s\nAuthor: %s\n\nCharacters: %d\nLocations: %d\nThemes: %d\nTimeline Events: %d\nHistorical Figures: %d\n\n%s\n\nSUMMARY:\n%s"
+msgstr "Fetched from %s\n\nBook: %s\nAuthor: %s\n\nCharacters: %d | Locations: %d | Themes: %d | Events: %d | History: %d\n\n%s\n\n%s"
 
 msgid "ai_fetch_complete_msg"
 msgstr "AI Fetch Complete!"
@@ -42,7 +39,7 @@ msgid "auto_dupe_check_preference_desc"
 msgstr "Select your preference for automatic AI duplicate detection:"
 
 msgid "auto_dupe_check_setting_desc"
-msgstr "When enabled, X-Ray automatically asks the AI to check for duplicate characters and locations after every data fetch. If duplicates are detected, you will be prompted to review and merge them.\n\nDisabling this will stop all background duplicate scanning. You can still merge duplicates manually via the Characters or Locations menu.\n\nNote: each check uses one AI API call. Users on free-tier or quota-limited plans may prefer to disable this."
+msgstr "When enabled, X-Ray automatically asks the AI to check for duplicate characters and locations after every data fetch. If duplicates are detected, you will be prompted to review and merge them.\n\nDisabling this will stop all background duplicate scanning. You can still merge duplicates manually via the Characters or Locations menu.\n\n[B]Note:[/B] each check uses [B]one[/B] AI API call. Users on free-tier or quota-limited plans may prefer to disable this."
 
 msgid "auto_dupe_check_setting_title"
 msgstr "Duplicate Check"
@@ -63,10 +60,10 @@ msgid "auto_update_economical"
 msgstr "Economical: checks at most every 15 mins"
 
 msgid "auto_update_freq_about"
-msgstr "Auto-update checks for new chapter data in the background as you read.\n\nLIMITS & PERFORMANCE\nFrequent background requests can drain BATTERY LIFE and may hit AI PROVIDER RATE LIMITS (especially on Pro models).\n\nMODES\n• Ultra: Checks every N pages you configure (mid-chapter)\n• Aggressive: Checks every time you enter a new chapter\n• Balanced: Checks at most every 5 minutes (recommended)\n• Economical: Checks at most every 15 minutes\n• Sparse: Checks at most every 30 minutes\n• Disabled: No background requests\n\nNote: If a chapter is skipped due to frequency limits, X-Ray will automatically include it in the next background fetch."
+msgstr "Auto-update checks for new chapter data in the background as you read.\n\n[B]Limits & Performance[/B]\nFrequent background requests can drain [B]battery life[/B] and may hit [B]AI provider rate limits[/B].\n\n[B]Note:[/B] skipped chapters will be automatically included in the next background update."
 
 msgid "auto_update_freq_label"
-msgstr "Background fetching frequency:"
+msgstr "Background Fetching Frequency"
 
 msgid "auto_update_sparse"
 msgstr "Sparse: checks at most every 30 mins"
@@ -75,10 +72,10 @@ msgid "auto_update_ultra"
 msgstr "Ultra: checks every %d pages"
 
 msgid "back_to_reading"
-msgstr "Back to Reading"
+msgstr "Back"
 
 msgid "beta_channel_desc"
-msgstr "The beta channel allows you to receive pre-release versions of the X-Ray plugin. These versions include the latest features and bug fixes but may be less stable than the regular release."
+msgstr "The beta channel allows you to receive pre-release versions of the X-Ray plugin. These versions include the latest features and bug fixes but may be [B]less stable[/B] than the regular release."
 
 msgid "beta_disabled"
 msgstr "Stable Channel (Recommended)"
@@ -93,7 +90,7 @@ msgid "book_mode_auto"
 msgstr "Auto"
 
 msgid "book_mode_desc"
-msgstr "Select the mode for this book."
+msgstr "Select the type for this book:"
 
 msgid "book_mode_fiction"
 msgstr "Fiction"
@@ -105,7 +102,7 @@ msgid "book_mode_saved"
 msgstr "Book mode saved!"
 
 msgid "book_type_about"
-msgstr "The Book Type determines which AI extraction strategy is used and which features are available.\n\n- Fiction: Focuses on narrative, characters, and plot timeline.\n- Non-Fiction: Focuses on terms, concepts, and historical figures.\n\n'Auto-Detect' will let the AI decide after the first fetch."
+msgstr "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch."
 
 msgid "book_type_auto"
 msgstr "Auto-Detect"
@@ -116,20 +113,17 @@ msgstr "Fiction"
 msgid "book_type_nonfiction"
 msgstr "Non-Fiction"
 
-msgid "book_type_saved"
-msgstr "Book Type saved!"
-
 msgid "cache_cleared"
 msgstr "Cache cleared!\n\nYou can now fetch new data:\nMenu → X-Ray → Fetch AI Data"
 
 msgid "cache_save_failed"
-msgstr "Failed to save cache"
+msgstr "✗ Cache failed."
 
 msgid "cache_save_success"
 msgstr "✓ Cache updated."
 
 msgid "cache_saved"
-msgstr "Saved to cache!"
+msgstr "[Saved]"
 
 msgid "cancel"
 msgstr "Cancel"
@@ -192,16 +186,16 @@ msgid "custom_api_saved"
 msgstr "Custom API %d configuration saved."
 
 msgid "desc_len_about_chars"
-msgstr "CHARACTER DESCRIPTIONS\n\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Deep analysis.\n\nTRADE-OFF\nLonger descriptions → fewer characters returned during initial/full fetches. Subsequent 'Fetch More' runs are unaffected."
+msgstr "Controls how much detail the AI includes in each character's profile.\n\n[B]Size options[/B]\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Full deep analysis.\n\n[B]Trade-off[/B]\nLonger descriptions consume more tokens, meaning [B]fewer[/B] characters are returned during initial fetches."
 
 msgid "desc_len_about_hist"
-msgstr "HISTORICAL FIGURE BIOGRAPHIES\n\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\nTRADE-OFF\nLonger biographies → fewer historical figures returned during initial/full fetches."
+msgstr "Controls how much detail the AI includes in each historical figure's biography.\n\n[B]Size options[/B]\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\n[B]Trade-off[/B]\nLonger biographies consume more tokens, meaning [B]fewer[/B] figures are returned during initial fetches."
 
 msgid "desc_len_about_locs"
-msgstr "LOCATION DESCRIPTIONS\n\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Full description.\n\nTRADE-OFF\nLonger descriptions → fewer locations returned during initial/full fetches."
+msgstr "Controls how much detail the AI includes in each location's description.\n\n[B]Size options[/B]\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Comprehensive description.\n\n[B]Trade-off[/B]\nLonger descriptions consume more tokens, meaning [B]fewer[/B] locations are returned during initial fetches."
 
 msgid "desc_len_about_timeline"
-msgstr "TIMELINE — ONE EVENT PER CHAPTER (always)\n\nTimeline always has exactly one entry per chapter. This setting only affects how much detail is included in each summary.\n\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n• Very Detailed (~200 chars): Full narrative description.\n\nThere is no count trade-off for the timeline."
+msgstr "Controls how much detail the AI includes in each summary on the book timeline.\n\n[B]Size options[/B]\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n\n[B]Note:[/B] the timeline always has exactly one entry per chapter, so there is no size trade-off."
 
 msgid "desc_len_default"
 msgstr "Default"
@@ -312,10 +306,10 @@ msgid "fetch_successful"
 msgstr "Fetch successful"
 
 msgid "fetching_ai"
-msgstr "Analyzing book to generate X-Ray data..."
+msgstr "Fetching AI..."
 
 msgid "fetching_author"
-msgstr "Fetching author info from %s..."
+msgstr "Fetching Author..."
 
 msgid "fetching_series_context"
 msgstr "Fetching series context: Book %d of %d…"
@@ -324,7 +318,7 @@ msgid "fetching_series_info"
 msgstr "Identifying series books…"
 
 msgid "fetching_wait"
-msgstr "⏳ Please wait...\nThis process may take 10-50 seconds."
+msgstr "This may take a moment.\nTap Cancel to stop."
 
 msgid "find_mentions"
 msgstr "Find Mentions"
@@ -333,7 +327,7 @@ msgid "full_book_option"
 msgstr "Full Book Mode"
 
 msgid "label_aliases"
-msgstr "ALIASES"
+msgstr "Aliases"
 
 msgid "label_category"
 msgstr "CATEGORY"
@@ -357,7 +351,7 @@ msgid "label_occupation"
 msgstr "OCCUPATION"
 
 msgid "label_reasoning"
-msgstr "AI REASONING"
+msgstr "AI Reasoning"
 
 msgid "label_role"
 msgstr "ROLE"
@@ -372,7 +366,7 @@ msgid "lang_mismatch_title"
 msgstr "Language Mismatch"
 
 msgid "language_changed_reopen"
-msgstr "Language changed. Reopen the menu to see the changes."
+msgstr "Language changed."
 
 msgid "later"
 msgstr "Later"
@@ -387,7 +381,7 @@ msgid "linked_entries_enabled"
 msgstr "Enabled"
 
 msgid "linked_entries_setting_desc"
-msgstr "Linked Entries automatically connects characters, locations, and historical figures when they are mentioned in each other's descriptions.\n\nDisabling this will hide the 'Linked Entries' button from detail dialogs."
+msgstr "Linked Entries automatically connects characters, locations, and historical figures when they are mentioned in each other's descriptions.\n\nDisabling this will hide the [B]Linked Entries[/B] button from detail dialogs."
 
 msgid "log_empty"
 msgstr "Log is empty."
@@ -414,7 +408,7 @@ msgid "mention_dismiss_btn"
 msgstr "✕"
 
 msgid "mention_return_btn"
-msgstr "Back to Reading"
+msgstr "← Back"
 
 msgid "mention_return_label"
 msgstr "← Back to p.%d"
@@ -441,7 +435,7 @@ msgid "mentions_scanning"
 msgstr "Scanning... %1 of %2 chapters"
 
 msgid "mentions_setting_desc"
-msgstr "Mentions scanning allows you to find every occurrence of a character or location in the book. This happens automatically in the background to ensure the reader stays responsive.\n\nDisabling this will hide the 'Find Mentions' button."
+msgstr "Mentions scanning allows you to find every occurrence of a character or location in the book. This happens [B]automatically[/B] in the background to ensure the reader stays responsive.\n\nDisabling this will stop all background scanning and hide the [B]Find Mentions[/B] button."
 
 msgid "mentions_setting_title"
 msgstr "Mentions Settings"
@@ -501,7 +495,7 @@ msgid "menu_entity_ui_mode"
 msgstr "Entity Description Style"
 
 msgid "menu_fetch_author"
-msgstr "Fetch Author Info (AI)"
+msgstr "Fetch Author Info"
 
 msgid "menu_fetch_more_chars"
 msgstr "Fetch More Characters"
@@ -537,7 +531,7 @@ msgid "menu_primary_ai_model"
 msgstr "Primary AI Model"
 
 msgid "menu_reasoning_effort"
-msgstr "AI Reasoning Effort"
+msgstr "AI Model Reasoning Effort"
 
 msgid "menu_secondary_ai_model"
 msgstr "Secondary AI Model"
@@ -552,7 +546,7 @@ msgid "menu_terms"
 msgstr "Glossary"
 
 msgid "menu_timeline"
-msgstr "Timeline"
+msgstr "Events"
 
 msgid "menu_ui_popup_intext"
 msgstr "Use Footnote Style for In-text Lookups"
@@ -567,19 +561,19 @@ msgid "menu_unit_converter"
 msgstr "Unit Converter"
 
 msgid "menu_update_xray"
-msgstr "Update X-Ray Data"
+msgstr "Update X-Ray Data (Merge)"
 
 msgid "menu_view_config"
 msgstr "View All Config Values"
 
 msgid "menu_view_log"
-msgstr "X-Ray Log"
+msgstr "View Log"
 
 msgid "menu_xray"
 msgstr "X-Ray"
 
 msgid "menu_xray_mode"
-msgstr "In-text Lookups"
+msgstr "X-Ray Mode Settings"
 
 msgid "merge_back"
 msgstr "← Back"
@@ -591,7 +585,7 @@ msgid "merge_confirm"
 msgstr "Merge %s into %s? The secondary entry will be deleted and its aliases absorbed."
 
 msgid "merge_duplicates"
-msgstr "Merge Duplicates..."
+msgstr "Merge Duplicates"
 
 msgid "merge_failed"
 msgstr "Merge failed."
@@ -621,7 +615,7 @@ msgid "msg_added_terms"
 msgstr "Added %d new terms!"
 
 msgid "msg_fetch_failed"
-msgstr "AI Fetch Failed"
+msgstr "AI request failed. Please check your connection or API settings."
 
 msgid "msg_no_bio"
 msgstr "No biography available."
@@ -639,10 +633,10 @@ msgid "no"
 msgstr "No"
 
 msgid "no_api_key"
-msgstr "AI API Key not set!\n\nEnter API key in:\nMenu → X-Ray → AI Settings"
+msgstr "No API key set!"
 
 msgid "no_author_data_fetch"
-msgstr "No author info available.\n\nWould you like to fetch it from AI?"
+msgstr "No author biography available. Fetch now?"
 
 msgid "no_character_data"
 msgstr "No character data yet.\n\nPlease use 'Fetch X-Ray Data' first."
@@ -660,7 +654,7 @@ msgid "no_location_data"
 msgstr "No location data yet. Please use 'Fetch X-Ray Data' first."
 
 msgid "no_merges_performed"
-msgstr "No pairs were merged."
+msgstr "No merges performed."
 
 msgid "no_terms_data"
 msgstr "No terms data yet. Please use 'Fetch X-Ray Data' first."
@@ -678,7 +672,7 @@ msgid "path"
 msgstr "plugins/xray.koplugin"
 
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
+msgstr "AI found %d possible duplicate location(s) from the last fetch. Review now?"
 
 msgid "plugin_description"
 msgstr "Transform your reading experience with AI-powered book analysis, just like Amazon Kindle X-Ray!"
@@ -693,7 +687,7 @@ msgid "reason"
 msgstr "Reason"
 
 msgid "reasoning_about"
-msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), and Gemini 2.5+.\n\nNote: DeepSeek V4 reasons inherently — this setting has no effect on it."
+msgstr "Controls [B]thinking[/B] depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\n[B]Applies to:[/B] GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), and Gemini 2.5+.\n\n[B]Note:[/B] DeepSeek V4 reasons [B]inherently[/B] — this setting has no effect on it."
 
 msgid "reasoning_high"
 msgstr "High"
@@ -765,7 +759,7 @@ msgid "skip"
 msgstr "Skip"
 
 msgid "spoiler_free_about"
-msgstr "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\nFull Book Mode analyzes the entire book, which may contain spoilers."
+msgstr "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\n[B]Full Book Mode:[/B] Analyzes the entire book, which [B]may contain spoilers[/B]."
 
 msgid "spoiler_free_menu_option"
 msgstr "Spoiler-free"
@@ -777,31 +771,31 @@ msgid "spoiler_preference_desc"
 msgstr "Select your spoiler preference for X-Ray data:"
 
 msgid "spoiler_preference_title"
-msgstr "Spoiler Preference"
+msgstr "Spoiler Settings"
 
 msgid "stop"
 msgstr "Stop"
 
 msgid "term_not_found"
-msgstr "No term found matching '%s'"
+msgstr "Term not found."
 
 msgid "this_chapter"
 msgstr "This Chapter"
 
 msgid "this_page"
-msgstr "This Page"
+msgstr "Section"
 
 msgid "unit_conv_direction"
 msgstr "Conversion Direction"
 
 msgid "unit_conv_direction_auto"
-msgstr "Auto (follow device setting)"
+msgstr "Auto (Follow Device)"
 
 msgid "unit_conv_direction_imperial"
-msgstr "Always convert to imperial"
+msgstr "To Imperial"
 
 msgid "unit_conv_direction_metric"
-msgstr "Always convert to metric"
+msgstr "To Metric"
 
 msgid "unit_conv_enabled"
 msgstr "Enable Unit Converter"
@@ -827,6 +821,12 @@ msgstr "Never"
 msgid "unit_tooltip_timeout_label"
 msgstr "Tooltip Timeout"
 
+msgid "unit_underline_dashed"
+msgstr "Dashed"
+
+msgid "unit_underline_dotted"
+msgstr "Dotted"
+
 msgid "unit_underline_intensity_label"
 msgstr "Underline Intensity"
 
@@ -844,12 +844,6 @@ msgstr "Underline Thickness"
 
 msgid "unit_underline_wavy"
 msgstr "Wavy"
-
-msgid "unit_underline_dotted"
-msgstr "Dotted"
-
-msgid "unit_underline_dashed"
-msgstr "Dashed"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s is available!\nYou have %s."
@@ -912,7 +906,7 @@ msgid "updater_whats_new"
 msgstr "What's new:"
 
 msgid "updating_ai"
-msgstr "Updating X-Ray Data..."
+msgstr "Updating X-Ray..."
 
 msgid "val"
 msgstr "???"

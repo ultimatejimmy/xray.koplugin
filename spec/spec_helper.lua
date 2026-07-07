@@ -135,6 +135,24 @@ package.loaded["ui/widget/container/framecontainer"] = {
         return fc
     end
 }
+package.loaded["ui/widget/container/alphacontainer"] = {
+    new = function(a, b)
+        local ac = { type = "AlphaContainer", args = b or a }
+        ac.getSize = function() return { w = 800, h = 800 } end
+        ac.paintTo = function() end
+        ac.onCloseWidget = function() end
+        return ac
+    end
+}
+package.loaded["ui/widget/container/centercontainer"] = {
+    new = function(a, b) return { type = "CenterContainer", args = b or a } end
+}
+package.loaded["ui/widget/container/movablecontainer"] = {
+    new = function(a, b) return { type = "MovableContainer", args = b or a } end
+}
+package.loaded["ui/widget/container/widgetcontainer"] = {
+    new = function(a, b) return { type = "WidgetContainer", args = b or a } end
+}
 package.loaded["ui/widget/container/inputcontainer"] = (function()
     local klass = {}
     klass.extend = function(self, prototype)
@@ -211,7 +229,9 @@ package.loaded["ffi/blitbuffer"] = {
     COLOR_WHITE = 1,
     COLOR_GRAY = 2,
     COLOR_LIGHT_GRAY = 3,
-    COLOR_DARK_GRAY = 4
+    COLOR_DARK_GRAY = 4,
+    COLOR_GRAY_B = 5,
+    Color8 = function(g) return g end
 }
 package.loaded["ui/font"] = {
     getFace = function() return {} end

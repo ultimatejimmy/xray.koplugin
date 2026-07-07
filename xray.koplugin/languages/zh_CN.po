@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Zh_cn\n"
+"Language: zh_CN\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "关于"
 
 msgid "ai_error"
 msgstr "AI 错误: "
@@ -113,9 +112,6 @@ msgstr "虚构"
 
 msgid "book_type_nonfiction"
 msgstr "非虚构"
-
-msgid "book_type_saved"
-msgstr "书籍类型已保存！"
 
 msgid "cache_cleared"
 msgstr "缓存已清除！\n\n现在可以获取新数据：\n菜单 → X-Ray → 获取 AI 数据"
@@ -262,7 +258,7 @@ msgid "error_model_not_found_title"
 msgstr "模型未找到"
 
 msgid "error_no_api_key"
-msgstr "error_no_api_key"
+msgstr "错误：未设置 API 密钥"
 
 msgid "error_parse_desc"
 msgstr "AI 返回了无法处理的响应。这可能是一个暂时的故障。"
@@ -825,6 +821,12 @@ msgstr "从不"
 msgid "unit_tooltip_timeout_label"
 msgstr "提示框超时"
 
+msgid "unit_underline_dashed"
+msgstr "虚线"
+
+msgid "unit_underline_dotted"
+msgstr "点线"
+
 msgid "unit_underline_intensity_label"
 msgstr "下划线深浅"
 
@@ -842,12 +844,6 @@ msgstr "下划线粗细"
 
 msgid "unit_underline_wavy"
 msgstr "波浪线"
-
-msgid "unit_underline_dotted"
-msgstr "点线"
-
-msgid "unit_underline_dashed"
-msgstr "虚线"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s 已发布！\n您当前的版本是 %s。"

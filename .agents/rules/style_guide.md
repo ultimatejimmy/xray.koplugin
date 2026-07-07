@@ -75,26 +75,87 @@ local card_outer = FrameContainer:new{
 Grouped inputs (radio-button equivalents) should use filled buttons with standard borders that visually highlight selection:
 - **Selected**: Solid border (`border_btn`), bullet point (`●`).
 - **Unselected**: Thin gray border (`sc(1)`), empty circle (`○`).
-```lua
-local frame = FrameContainer:new{
-    bordersize = is_selected and xray_theme.border_btn or sc(1),
-    radius = xray_theme.radius_btn,
-    padding = sc(6),
-    color = is_selected and xray_theme.color_border or xray_theme.color_section_rule,
-    background = xray_theme.color_bg,
-    HorizontalGroup:new{
-        align = "center",
-        TextWidget:new{ text = is_selected and "●" or "○", face = Font:getFace("cfont", 16) },
-        WidgetContainer:new{ dimen = Geom:new{ w = sc(4), h = 1 } },
-        TextWidget:new{ text = opt.text, face = Font:getFace("cfont", 16) },
-    }
-}
-```
+- **Tap Hit-testing**: To ensure the entire horizontal button surface is tappable, do not rely on default container dimensions. Specify a custom `GestureRange` function that returns a bounding box spanning the full width of the option button:
+  ```lua
+  local item = InputContainer:new{ frame }
+  item.ges_events = {
+      Tap = {
+          GestureRange:new{
+              ges = "tap",
+              range = function()
+                  return Geom:new{
+                      x = frame.dimen.x,
+                      y = frame.dimen.y,
+                      w = dialog_w - sc(32),
+                      h = frame.dimen.h
+                  }
+              end
+          }
+      }
+  }
+  ```
+- **Text wrapping**: To support longer or localized text without clipping or overflow, use a `TextBoxWidget` for option labels instead of `TextWidget`, specifying a fixed layout width constrained to leave room for padding, the selection dot, and the dot-spacer:
+  ```lua
+  TextBoxWidget:new{
+      text = opt.text,
+      face = Font:getFace("cfont", ui_font_size),
+      fgcolor = Blitbuffer.COLOR_BLACK,
+      width = dialog_w - sc(72),
+      alignment = "left",
+  }
+  ```
 
 ### Multi-Row translation safe wrapping
 When option picker groups have more than 3 options or contain translatable text (which can vary widely in length), split them into multiple horizontal rows stacked vertically with a `sc(4)` gap. Never force them into a single row.
 
+### Styled About Popups
+Any "About" or informational sub-dialogs/popups launched from a settings card must match the primary UI style:
+- Use the exact double-border `FrameContainer` design card.
+- Build content with `TextBoxWidget` elements for full wrapping.
+- Provide a single full-width standard button at the bottom for "Close".
+- Render the overlay on the frontmost `"ui"` layer.
+- **Formatting**:
+  - Subheaders: Use **bold** formatting (by wrapping text in `PTF_BOLD_START` and `PTF_BOLD_END` unicode tokens `\xEF\xBF\xB2` / `\xEF\xBF\xB3`). Never use ALL CAPS.
+  - Inline emphasis: Use standard Markdown *italics* (`*word*` or `_word_`). Never use ALL CAPS.
+  - Structure: Group lists with clear bullet points (`•` characters) and keep information brief. Avoid duplicating lists (like modes) that are already clear on the settings card itself.
+
+### Close/About Button Rows in Settings Cards
+When a settings card requires both an "About" (help) button and a "Close" button, lay them out horizontally at the bottom of the card inside a `HorizontalGroup`:
+- The two buttons share the horizontal space equally, utilizing a width of `(dialog_w - sc(40)) / 2`.
+- A vertical spacer/gap of `sc(8)` is placed between them horizontally.
+- Both buttons should use `bordersize = xray_theme.border_btn` and `radius = xray_theme.radius_btn`.
+
+```lua
+local about_btn = Button:new{
+    text = self.loc:t("menu_about") or "About",
+    face = Font:getFace("cfont", ui_font_size),
+    width = (dialog_w - sc(40)) / 2,
+    height = sc(42),
+    bordersize = xray_theme.border_btn,
+    radius = xray_theme.radius_btn,
+    callback = function() ... end
+}
+
+local close_btn = Button:new{
+    text = self.loc:t("close") or "Close",
+    face = Font:getFace("cfont", ui_font_size),
+    width = (dialog_w - sc(40)) / 2,
+    height = sc(42),
+    bordersize = xray_theme.border_btn,
+    radius = xray_theme.radius_btn,
+    callback = function() ... end
+}
+
+local btn_row = HorizontalGroup:new{
+    align = "center",
+    about_btn,
+    WidgetContainer:new{ dimen = Geom:new{ w = sc(8), h = 1 } },
+    close_btn,
+}
+```
+
 ---
+
 
 ## 3. Footnote Style Display (Bottom Popup)
 

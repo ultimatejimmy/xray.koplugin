@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: Sr\n"
+"Language: sr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "О додатку"
 
 msgid "ai_error"
 msgstr "АИ грешка: "
@@ -113,9 +112,6 @@ msgstr "Белетристика"
 
 msgid "book_type_nonfiction"
 msgstr "Стручна литература"
-
-msgid "book_type_saved"
-msgstr "Тип књиге сачуван!"
 
 msgid "cache_cleared"
 msgstr "Кеш је очишћен!\n\nСада можете преузети нове податке:\nМени → X-Ray → Преузми АИ податке"
@@ -825,6 +821,12 @@ msgstr "Никад"
 msgid "unit_tooltip_timeout_label"
 msgstr "Време објашњења"
 
+msgid "unit_underline_dashed"
+msgstr "Цртичасто"
+
+msgid "unit_underline_dotted"
+msgstr "Тачкасто"
+
 msgid "unit_underline_intensity_label"
 msgstr "Интензитет подвлачења"
 
@@ -842,12 +844,6 @@ msgstr "Дебљина подвлачења"
 
 msgid "unit_underline_wavy"
 msgstr "Таласаста"
-
-msgid "unit_underline_dotted"
-msgstr "Тачкасто"
-
-msgid "unit_underline_dashed"
-msgstr "Цртичасто"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s је доступан!\nИмате верзију %s."

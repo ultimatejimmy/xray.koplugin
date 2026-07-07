@@ -9,6 +9,8 @@ local Screen = require("device").screen
 local gettext = require("gettext")
 local orig_isRTL = gettext.isRTL
 local plugin_instance
+local B1 = "\xEF\xBF\xB2" -- PTF_BOLD_START
+local B2 = "\xEF\xBF\xB3" -- PTF_BOLD_END
 
 gettext.isRTL = function(...)
     if plugin_instance and plugin_instance:isRTL() and plugin_instance:isXRayUIActive() then
@@ -23,6 +25,7 @@ end
 local _ = gettext
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local xray_units = require(plugin_path .. "xray_units")
+local XRaySettingsCard = require(plugin_path .. "xray_settings_card")
 
 local M = {}
 
@@ -1759,22 +1762,27 @@ function M:showTermSearch()
 end
 
 function M:showBookTypeSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        
-        local current = "auto"
-        if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-        local cache = self.book_data or self.cache_manager:loadCache(self.ui.document.file)
-        if cache and cache.book_mode_override then
-            current = cache.book_mode_override
-        else
-            current = self.ai_helper.settings.default_book_mode or "auto"
-        end
-
-        local function setType(mode)
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("menu_book_mode") or "Book Type",
+        description = self.loc:t("book_mode_desc") or "Select the type for this book:",
+        options = {
+            { text = self.loc:t("book_type_auto") or "Auto-Detect", value = "auto" },
+            { text = self.loc:t("book_type_fiction") or "Fiction", value = "fiction" },
+            { text = self.loc:t("book_type_nonfiction") or "Non-Fiction", value = "non_fiction" },
+        },
+        get_current_func = function()
+            local current = "auto"
+            if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
+            local cache = self.book_data or self.cache_manager:loadCache(self.ui.document.file)
+            if cache and cache.book_mode_override then
+                current = cache.book_mode_override
+            else
+                current = self.ai_helper.settings.default_book_mode or "auto"
+            end
+            return current
+        end,
+        save_func = function(mode)
+            if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
             if not self.book_data then
                 self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
             end
@@ -1782,263 +1790,72 @@ function M:showBookTypeSettings()
             cache.book_mode_override = mode
             self.cache_manager:asyncSaveCache(self.ui.document.file, cache)
             self.book_type = (mode == "auto") and nil or mode
-            UIManager:show(InfoMessage:new{ text = self.loc:t("book_type_saved") or "Book Type saved!", timeout = 3 })
             UIManager:setDirty(nil, "ui")
-            UIManager:nextTick(function() showSettings() end)
-        end
-
-        info_dialog = ButtonDialog:new{
-            title = (self.loc:t("menu_book_mode") or "Book Type") .. "\n\n" .. (self.loc:t("book_mode_desc") or "Select the type for this book:"),
-            buttons = {
-                {
-                    { 
-                        text = (current == "auto" and "[✓] " or "[  ] ") .. (self.loc:t("book_type_auto") or "Auto-Detect"), 
-                        callback = function() setType("auto") end 
-                    },
-                    { 
-                        text = (current == "fiction" and "[✓] " or "[  ] ") .. (self.loc:t("book_type_fiction") or "Fiction"), 
-                        callback = function() setType("fiction") end 
-                    },
-                    { 
-                        text = (current == "non_fiction" and "[✓] " or "[  ] ") .. (self.loc:t("book_type_nonfiction") or "Non-Fiction"), 
-                        callback = function() setType("non_fiction") end 
-                    },
-                },
-                {
-                    { 
-                        text = self.loc:t("menu_about") or "About", 
-                        callback = function()
-                            UIManager:show(InfoMessage:new{
-                                text = self.loc:t("book_type_about") or "The Book Type determines which AI extraction strategy is used.\n\n- Fiction: Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n- Non-Fiction: Focuses on technical terms, concepts, and historical figures.\n\n'Auto-Detect' will let the AI decide after the first fetch.",
-                                timeout = 30
-                            })
-                        end
-                    },
-                    { text = self.loc:t("close") or "Close", callback = function() UIManager:close(info_dialog) end }
-                }
-            }
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+        end,
+        about_text = self.loc:t("book_type_about") or "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch.",
+    })
 end
 
 function M:showMentionsSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        
-        local current_setting = self.ai_helper.settings.mentions_enabled ~= false -- default is true
-        local enabled_text = self.loc:t("mentions_enabled") or "Enabled"
-        local disabled_text = self.loc:t("mentions_disabled") or "Disabled"
-        
-        local buttons = {
-            {
-                {
-                    text = (current_setting and "[✓] " or "[  ] ") .. enabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ mentions_enabled = true })
-                        UIManager:setDirty(nil, "ui")
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                },
-                {
-                    text = ((not current_setting) and "[✓] " or "[  ] ") .. disabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ mentions_enabled = false })
-                        UIManager:setDirty(nil, "ui")
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                }
-            },
-            {
-                {
-                    text = self.loc:t("menu_about") or "About",
-                    callback = function()
-                        UIManager:show(InfoMessage:new{
-                            text = self.loc:t("mentions_setting_desc") or "Mentions scanning allows you to find every occurrence of a character or location in the book. This happens automatically in the background to ensure the reader stays responsive.\n\nDisabling this will stop all background scanning and hide the 'Find Mentions' button.",
-                            timeout = 30
-                        })
-                    end
-                },
-                {
-                    text = self.loc:t("close") or "Close",
-                    callback = function()
-                        UIManager:close(info_dialog)
-                    end
-                }
-            }
-        }
-        
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("mentions_setting_title") or "Mentions Settings",
-            text = self.loc:t("mentions_preference_desc") or "Select your preference for character and location mentions:",
-            buttons = buttons,
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    local enabled_text = self.loc:t("mentions_enabled") or "Enabled"
+    local disabled_text = self.loc:t("mentions_disabled") or "Disabled"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("mentions_setting_title") or "Mentions Settings",
+        description = self.loc:t("mentions_preference_desc") or "Select your preference for character and location mentions:",
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings.mentions_enabled ~= false
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ mentions_enabled = val })
+            UIManager:setDirty(nil, "ui")
+        end,
+        about_text = self.loc:t("mentions_setting_desc") or "Mentions scanning allows you to find every occurrence of a character or location in the book. This happens [B]automatically[/B] in the background to ensure the reader stays responsive.\n\nDisabling this will stop all background scanning and hide the [B]Find Mentions[/B] button.",
+    })
 end
 
 function M:showAutoDupeCheckSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local InfoMessage = require("ui/widget/infomessage")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        
-        local current_setting = self.ai_helper.settings.auto_dupe_check_enabled ~= false -- default is true
-        local enabled_text = self.loc:t("auto_dupe_check_enabled") or "Enabled"
-        local disabled_text = self.loc:t("auto_dupe_check_disabled") or "Disabled"
-        
-        local buttons = {
-            {
-                {
-                    text = (current_setting and "[✓] " or "[  ] ") .. enabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ auto_dupe_check_enabled = true })
-                        UIManager:setDirty(nil, "ui")
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                },
-                {
-                    text = ((not current_setting) and "[✓] " or "[  ] ") .. disabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ auto_dupe_check_enabled = false })
-                        UIManager:setDirty(nil, "ui")
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                }
-            },
-            {
-                {
-                    text = self.loc:t("menu_about") or "About",
-                    callback = function()
-                        UIManager:show(InfoMessage:new{
-                            text = self.loc:t("auto_dupe_check_setting_desc") or "When enabled, X-Ray automatically asks the AI to check for duplicate characters and locations after every data fetch. If duplicates are detected, you will be prompted to review and merge them.\n\nDisabling this will stop all background duplicate scanning. You can still merge duplicates manually via the Characters or Locations menu.\n\nNote: each check uses one AI API call. Users on free-tier or quota-limited plans may prefer to disable this.",
-                            timeout = 30
-                        })
-                    end
-                },
-                {
-                    text = self.loc:t("close") or "Close",
-                    callback = function()
-                        UIManager:close(info_dialog)
-                    end
-                }
-            }
-        }
-        
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("auto_dupe_check_setting_title") or "AI Duplicate Check",
-            text = self.loc:t("auto_dupe_check_preference_desc") or "Select your preference for automatic AI duplicate detection:",
-            buttons = buttons,
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    local enabled_text = self.loc:t("auto_dupe_check_enabled") or "Enabled"
+    local disabled_text = self.loc:t("auto_dupe_check_disabled") or "Disabled"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("auto_dupe_check_setting_title") or "Duplicate Check",
+        description = self.loc:t("auto_dupe_check_preference_desc") or "Select your preference for automatic AI duplicate detection:",
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings.auto_dupe_check_enabled ~= false
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ auto_dupe_check_enabled = val })
+            UIManager:setDirty(nil, "ui")
+        end,
+        about_text = self.loc:t("auto_dupe_check_setting_desc") or "When enabled, X-Ray automatically asks the AI to check for duplicate characters and locations after every data fetch. If duplicates are detected, you will be prompted to review and merge them.\n\nDisabling this will stop all background duplicate scanning. You can still merge duplicates manually via the Characters or Locations menu.\n\n[B]Note:[/B] each check uses [B]one[/B] AI API call. Users on free-tier or quota-limited plans may prefer to disable this.",
+    })
 end
 
 function M:showLinkedEntriesSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local InfoMessage = require("ui/widget/infomessage")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        
-        local current_setting = self.ai_helper.settings.linked_entries_enabled ~= false -- default is true
-        local enabled_text = self.loc:t("linked_entries_enabled") or "Enabled"
-        local disabled_text = self.loc:t("linked_entries_disabled") or "Disabled"
-        
-        local buttons = {
-            {
-                {
-                    text = (current_setting and "[✓] " or "[  ] ") .. enabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ linked_entries_enabled = true })
-                        UIManager:setDirty(nil, "ui")
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                },
-                {
-                    text = ((not current_setting) and "[✓] " or "[  ] ") .. disabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ linked_entries_enabled = false })
-                        UIManager:setDirty(nil, "ui")
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                }
-            },
-            {
-                {
-                    text = self.loc:t("menu_about") or "About",
-                    callback = function()
-                        UIManager:show(InfoMessage:new{
-                            text = self.loc:t("linked_entries_setting_desc") or "Linked Entries automatically connects characters, locations, and historical figures when they are mentioned in each other's descriptions.\n\nDisabling this will hide the 'Linked Entries' button from detail dialogs.",
-                            timeout = 30
-                        })
-                    end
-                },
-                {
-                    text = self.loc:t("close") or "Close",
-                    callback = function()
-                        UIManager:close(info_dialog)
-                    end
-                }
-            }
-        }
-        
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
-            buttons = {
-                {
-                    {
-                        text = (current_setting and "[✓] " or "[  ] ") .. enabled_text,
-                        callback = function()
-                            self.ai_helper:saveSettings({ linked_entries_enabled = true })
-                            UIManager:setDirty(nil, "ui")
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    },
-                    {
-                        text = ((not current_setting) and "[✓] " or "[  ] ") .. disabled_text,
-                        callback = function()
-                            self.ai_helper:saveSettings({ linked_entries_enabled = false })
-                            UIManager:setDirty(nil, "ui")
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = self.loc:t("menu_about") or "About",
-                        callback = function()
-                            UIManager:show(InfoMessage:new{
-                                text = self.loc:t("linked_entries_setting_desc") or "Linked Entries automatically connects characters, locations, and historical figures when they are mentioned in each other's descriptions.\n\nDisabling this will hide the 'Linked Entries' button from detail dialogs.",
-                                timeout = 30
-                            })
-                        end
-                    },
-                    {
-                        text = self.loc:t("close") or "Close",
-                        callback = function()
-                            UIManager:close(info_dialog)
-                        end
-                    }
-                }
-            }
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    local enabled_text = self.loc:t("linked_entries_enabled") or "Enabled"
+    local disabled_text = self.loc:t("linked_entries_disabled") or "Disabled"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings.linked_entries_enabled ~= false
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ linked_entries_enabled = val })
+            UIManager:setDirty(nil, "ui")
+        end,
+        about_text = self.loc:t("linked_entries_setting_desc") or "Linked Entries automatically connects characters, locations, and historical figures when they are mentioned in each other's descriptions.\n\nDisabling this will hide the [B]Linked Entries[/B] button from detail dialogs.",
+    })
 end
 
 function M:filterValidDuplicatePairs(list, pairs)
@@ -2444,186 +2261,106 @@ end
 
 
 function M:showAutoUpdateSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        local is_enabled = self.auto_fetch_enabled
-        local current_cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
-        local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
-        local btn_align = self:isRTL() and "right" or "left"
-        
-        info_dialog = ButtonDialog:new{
-            title = (self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings") .. "\n\n" .. (self.loc:t("auto_update_freq_label") or "Background fetching frequency:"),
-            buttons = {
-                {
-                    {
-                        text = (is_enabled and page_interval ~= nil and page_interval > 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_ultra", page_interval or 25) or ("Ultra: checks every " .. (page_interval or 25) .. " pages")),
-                        align = btn_align,
-                        callback = function()
-                            local SpinWidget = require("ui/widget/spinwidget")
-                            local spin_dialog
-                            spin_dialog = SpinWidget:new{
-                                title_text = self.loc:t("auto_fetch_page_interval_prompt") or "Page Interval",
-                                value = page_interval or 25,
-                                value_min = 5,
-                                value_max = 200,
-                                value_step = 5,
-                                callback = function(spin)
-                                    local chosen = spin.value
-                                    self.auto_fetch_enabled = true
-                                    self.ai_helper:saveSettings({
-                                        auto_fetch_on_chapter = true,
-                                        auto_fetch_cooldown = 0,
-                                        auto_fetch_page_interval = chosen
-                                    })
-                                    UIManager:close(spin_dialog)
-                                    UIManager:nextTick(function() showSettings() end)
-                                end,
-                                cancel_callback = function()
-                                    UIManager:close(spin_dialog)
-                                end
-                            }
-                            UIManager:show(spin_dialog)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (is_enabled and page_interval == nil and current_cooldown == 0 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_aggressive") or "Aggressive: checks every new chapter"),
-                        align = btn_align,
-                        callback = function()
-                            self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 0 }, { "auto_fetch_page_interval" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (is_enabled and current_cooldown == 300 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_balanced") or "Balanced: checks at most every 5 mins"),
-                        align = btn_align,
-                        callback = function()
-                            self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 300 }, { "auto_fetch_page_interval" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (is_enabled and current_cooldown == 900 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_economical") or "Economical: checks at most every 15 mins"),
-                        align = btn_align,
-                        callback = function()
-                            self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 900 }, { "auto_fetch_page_interval" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (is_enabled and current_cooldown == 1800 and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_sparse") or "Sparse: checks at most every 30 mins"),
-                        align = btn_align,
-                        callback = function()
-                            self.auto_fetch_enabled = true
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 1800 }, { "auto_fetch_page_interval" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (not is_enabled and "[✓] " or "[  ] ") .. (self.loc:t("auto_update_disabled") or "Disabled"),
-                        align = btn_align,
-                        callback = function()
-                            self.auto_fetch_enabled = false
-                            self.ai_helper:saveSettings({ auto_fetch_on_chapter = false }, { "auto_fetch_page_interval" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = self.loc:t("menu_about") or "About",
-                        callback = function()
-                            UIManager:show(InfoMessage:new{
-                                text = self.loc:t("auto_update_freq_about") or "Auto-update checks for new chapter data in the background as you read.\n\nLIMITS & PERFORMANCE\nFrequent background requests can drain BATTERY LIFE and may hit AI PROVIDER RATE LIMITS.\n\nMODES\n• Ultra: Checks every N pages you configure (mid-chapter)\n• Aggressive: Checks every time you enter a new chapter\n• Balanced: Checks at most every 5 minutes (recommended)\n• Economical: Checks at most every 15 minutes\n• Sparse: Checks at most every 30 minutes\n• Disabled: No background requests\n\nNote: skipped chapters will be included in the next update.",
-                                timeout = 120
-                            })
-                        end
-                    },
-                    {
-                        text = self.loc:t("close") or "Close",
-                        callback = function()
-                            UIManager:close(info_dialog)
-                        end
-                    }
-                }
+    XRaySettingsCard.show(self, {
+        title = (self.loc:t("auto_update_freq_label") or "Background Fetching Frequency"):gsub(":$", ""),
+        description = self.loc:t("menu_auto_update_frequency") or "Auto X-Ray Settings",
+        options = function()
+            return {
+                { text = self.loc:t("auto_update_ultra", self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval or 25) or ("Ultra: checks every " .. (self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval or 25) .. " pages"), value = "ultra" },
+                { text = self.loc:t("auto_update_aggressive") or "Aggressive: checks every new chapter", value = "aggressive" },
+                { text = self.loc:t("auto_update_balanced") or "Balanced: checks at most every 5 mins", value = "balanced" },
+                { text = self.loc:t("auto_update_economical") or "Economical: checks at most every 15 mins", value = "economical" },
+                { text = self.loc:t("auto_update_sparse") or "Sparse: checks at most every 30 mins", value = "sparse" },
+                { text = self.loc:t("auto_update_disabled") or "Disabled", value = "disabled" },
             }
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+        end,
+        get_current_func = function()
+            local is_enabled = self.auto_fetch_enabled
+            local current_cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
+            local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
+            local current = "disabled"
+            if is_enabled then
+                if page_interval ~= nil and page_interval > 0 then
+                    current = "ultra"
+                elseif current_cooldown == 0 then
+                    current = "aggressive"
+                elseif current_cooldown == 300 then
+                    current = "balanced"
+                elseif current_cooldown == 900 then
+                    current = "economical"
+                elseif current_cooldown == 1800 then
+                    current = "sparse"
+                end
+            end
+            return current
+        end,
+        save_func = function(val, refresh_card)
+            local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
+            if val == "ultra" then
+                local SpinWidget = require("ui/widget/spinwidget")
+                local spin_dialog
+                spin_dialog = SpinWidget:new{
+                    title_text = self.loc:t("auto_fetch_page_interval_prompt") or "Page Interval",
+                    value = page_interval or 25,
+                    value_min = 5,
+                    value_max = 200,
+                    value_step = 5,
+                    callback = function(spin)
+                        local chosen = spin.value
+                        self.auto_fetch_enabled = true
+                        self.ai_helper:saveSettings({
+                            auto_fetch_on_chapter = true,
+                            auto_fetch_cooldown = 0,
+                            auto_fetch_page_interval = chosen
+                        })
+                        UIManager:close(spin_dialog)
+                        refresh_card()
+                    end,
+                    cancel_callback = function()
+                        UIManager:close(spin_dialog)
+                    end
+                }
+                UIManager:show(spin_dialog, "full")
+                return true
+            elseif val == "aggressive" then
+                self.auto_fetch_enabled = true
+                self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 0 }, { "auto_fetch_page_interval" })
+            elseif val == "balanced" then
+                self.auto_fetch_enabled = true
+                self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 300 }, { "auto_fetch_page_interval" })
+            elseif val == "economical" then
+                self.auto_fetch_enabled = true
+                self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 900 }, { "auto_fetch_page_interval" })
+            elseif val == "sparse" then
+                self.auto_fetch_enabled = true
+                self.ai_helper:saveSettings({ auto_fetch_on_chapter = true, auto_fetch_cooldown = 1800 }, { "auto_fetch_page_interval" })
+            elseif val == "disabled" then
+                self.auto_fetch_enabled = false
+                self.ai_helper:saveSettings({ auto_fetch_on_chapter = false }, { "auto_fetch_page_interval" })
+            end
+        end,
+        about_text = self.loc:t("auto_update_freq_about") or "Auto-update checks for new chapter data in the background as you read.\n\n[B]Limits & Performance[/B]\nFrequent background requests can drain [B]battery life[/B] and may hit [B]AI provider rate limits[/B].\n\n[B]Note:[/B] skipped chapters will be automatically included in the next background update.",
+    })
 end
 
 function M:showSpoilerSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        local current_setting = self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("spoiler_preference_title") or "Spoiler Settings",
-            text = self.loc:t("spoiler_preference_desc") or "Select your spoiler preference for X-Ray data:",
-            buttons = {
-                {
-                    {
-                        text = (current_setting == "spoiler_free" and "[✓] " or "[  ] ") .. (self.loc:t("spoiler_free_menu_option") or "Spoiler-free"),
-                        callback = function()
-                            self.ai_helper:saveSettings({ spoiler_setting = "spoiler_free" })
-                            UIManager:setDirty(nil, "ui")
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    },
-                    {
-                        text = (current_setting == "full_book" and "[✓] " or "[  ] ") .. (self.loc:t("full_book_option") or "Full Book Mode"),
-                        callback = function()
-                            self.ai_helper:saveSettings({ spoiler_setting = "full_book" })
-                            UIManager:setDirty(nil, "ui")
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = self.loc:t("menu_about") or "About",
-                        callback = function()
-                            UIManager:show(InfoMessage:new{
-                                text = self.loc:t("spoiler_free_about") or "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\nFull Book Mode analyzes the entire book, which may contain spoilers.",
-                                timeout = 30
-                            })
-                        end
-                    },
-                    {
-                        text = self.loc:t("close") or "Close",
-                        callback = function()
-                            UIManager:close(info_dialog)
-                        end
-                    }
-                }
-            }
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("spoiler_preference_title") or "Spoiler Settings",
+        description = self.loc:t("spoiler_preference_desc") or "Select your spoiler preference for X-Ray data:",
+        options = {
+            { text = self.loc:t("spoiler_free_menu_option") or "Spoiler-free", value = "spoiler_free" },
+            { text = self.loc:t("full_book_option") or "Full Book Mode", value = "full_book" },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ spoiler_setting = val })
+            UIManager:setDirty(nil, "ui")
+        end,
+        about_text = self.loc:t("spoiler_free_about") or "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\n[B]Full Book Mode:[/B] Analyzes the entire book, which [B]may contain spoilers[/B].",
+    })
 end
-
 
 function M:showDescriptionLengthSettings()
     local menu_items = {
@@ -2657,91 +2394,53 @@ function M:showDescriptionLengthSettings()
 end
 
 function M:showEntityLengthPresets(setting_key, entity_name, is_timeline)
-    local info_dialog
+    local defaults = {
+        char_desc_len    = 200,
+        loc_desc_len     = 100,
+        timeline_event_len = 80,
+        hist_fig_bio_len = 100,
+    }
 
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
+    local presets = {
+        { name = self.loc:t("desc_len_short"),      val = is_timeline and 50  or (setting_key == "char_desc_len" and 80  or 50)  },
+        { name = self.loc:t("desc_len_default"),    val = is_timeline and 80  or (setting_key == "char_desc_len" and 200 or 100) },
+        { name = self.loc:t("desc_len_detailed"),   val = is_timeline and 150 or (setting_key == "char_desc_len" and 350 or 200) },
+        { name = self.loc:t("desc_len_v_detailed"), val = is_timeline and 200 or (setting_key == "char_desc_len" and 500 or 300) },
+    }
 
-        local s = self.ai_helper and self.ai_helper.settings or {}
-        local defaults = {
-            char_desc_len    = 200,
-            loc_desc_len     = 100,
-            timeline_event_len = 80,
-            hist_fig_bio_len = 100,
-        }
-        local current_val = s[setting_key] or (is_timeline and 80 or defaults[setting_key] or 100)
-
-        local presets = {
-            { name = self.loc:t("desc_len_short"),      val = is_timeline and 50  or (setting_key == "char_desc_len" and 80  or 50)  },
-            { name = self.loc:t("desc_len_default"),    val = is_timeline and 80  or (setting_key == "char_desc_len" and 200 or 100) },
-            { name = self.loc:t("desc_len_detailed"),   val = is_timeline and 150 or (setting_key == "char_desc_len" and 350 or 200) },
-            { name = self.loc:t("desc_len_v_detailed"), val = is_timeline and 200 or (setting_key == "char_desc_len" and 500 or 300) },
-        }
-
-        local btn_align = self:isRTL() and "right" or "left"
-        local buttons = {}
-        for _, p in ipairs(presets) do
-            local label = (current_val == p.val and "[✓] " or "[  ] ") .. p.name
-            local pval = p.val
-            table.insert(buttons, {{
-                text = label,
-                align = btn_align,
-                callback = function()
-                    if self.ai_helper then
-                        local updates = {}
-                        updates[setting_key] = pval
-                        self.ai_helper:saveSettings(updates)
-                    end
-                    UIManager:nextTick(function() showSettings() end)
-                end,
-            }})
-        end
-
-        -- About text varies by entity type
-        local about_text
-        if is_timeline then
-            about_text = self.loc:t("desc_len_about_timeline") or
-                "TIMELINE — ONE EVENT PER CHAPTER (always)\n\nTimeline always has exactly one entry per chapter. This setting only affects how much detail is included in each summary.\n\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n• Very Detailed (~200 chars): Full narrative description.\n\nThere is no count trade-off for the timeline."
-        elseif setting_key == "char_desc_len" then
-            about_text = self.loc:t("desc_len_about_chars") or
-                "CHARACTER DESCRIPTIONS\n\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Deep analysis.\n\nTRADE-OFF\nLonger descriptions → fewer characters returned during initial/full fetches. Subsequent 'Fetch More' runs are unaffected."
-        elseif setting_key == "loc_desc_len" then
-            about_text = self.loc:t("desc_len_about_locs") or
-                "LOCATION DESCRIPTIONS\n\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Full description.\n\nTRADE-OFF\nLonger descriptions → fewer locations returned during initial/full fetches."
-        else
-            about_text = self.loc:t("desc_len_about_hist") or
-                "HISTORICAL FIGURE BIOGRAPHIES\n\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\nTRADE-OFF\nLonger biographies → fewer historical figures returned during initial/full fetches."
-        end
-
-        table.insert(buttons, {
-            {
-                text = self.loc:t("menu_about") or "About",
-                callback = function()
-                    UIManager:show(InfoMessage:new{
-                        text = about_text,
-                        timeout = 120,
-                    })
-                end,
-            },
-            {
-                text = self.loc:t("close") or "Close",
-                callback = function()
-                    UIManager:close(info_dialog)
-                end,
-            },
-        })
-
-        info_dialog = ButtonDialog:new{
-            title = entity_name .. " — " .. (self.loc:t("menu_desc_length_settings") or "Description Length"),
-            buttons = buttons,
-        }
-        UIManager:show(info_dialog)
+    local options = {}
+    for _, p in ipairs(presets) do
+        table.insert(options, { text = p.name, value = p.val })
     end
 
-    showSettings()
+    local about_text
+    if is_timeline then
+        about_text = self.loc:t("desc_len_about_timeline") or "Controls how much detail the AI includes in each summary on the book timeline.\n\n[B]Size options[/B]\n• Short (~50 chars): Brief one-phrase summary.\n• Default (~80 chars): Standard summary.\n• Detailed (~150 chars): Includes context and consequences.\n\n[B]Note:[/B] the timeline always has exactly one entry per chapter, so there is no size trade-off."
+    elseif setting_key == "char_desc_len" then
+        about_text = self.loc:t("desc_len_about_chars") or "Controls how much detail the AI includes in each character's profile.\n\n[B]Size options[/B]\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Full deep analysis.\n\n[B]Trade-off[/B]\nLonger descriptions consume more tokens, meaning [B]fewer[/B] characters are returned during initial fetches."
+    elseif setting_key == "loc_desc_len" then
+        about_text = self.loc:t("desc_len_about_locs") or "Controls how much detail the AI includes in each location's description.\n\n[B]Size options[/B]\n• Short (~50 chars): Place name and one-line context.\n• Default (~100 chars): Standard description.\n• Detailed (~200 chars): Atmosphere, significance, and events.\n• Very Detailed (~300 chars): Comprehensive description.\n\n[B]Trade-off[/B]\nLonger descriptions consume more tokens, meaning [B]fewer[/B] locations are returned during initial fetches."
+    else
+        about_text = self.loc:t("desc_len_about_hist") or "Controls how much detail the AI includes in each historical figure's biography.\n\n[B]Size options[/B]\n• Short (~50 chars): Name and primary role.\n• Default (~100 chars): Standard biography.\n• Detailed (~200 chars): Life, significance, and book context.\n• Very Detailed (~300 chars): Comprehensive biography.\n\n[B]Trade-off[/B]\nLonger biographies consume more tokens, meaning [B]fewer[/B] figures are returned during initial fetches."
+    end
+
+    XRaySettingsCard.show(self, {
+        title = entity_name .. " — " .. (self.loc:t("menu_desc_length_settings") or "Description Length"),
+        options = options,
+        get_current_func = function()
+            local current_s = self.ai_helper and self.ai_helper.settings or {}
+            return current_s[setting_key] or (is_timeline and 80 or defaults[setting_key] or 100)
+        end,
+        save_func = function(pval)
+            if self.ai_helper then
+                local updates = {}
+                updates[setting_key] = pval
+                self.ai_helper:saveSettings(updates)
+            end
+        end,
+        about_text = about_text,
+    })
 end
-
-
 
 function M:showAuthorInfo()
     if not self.author_info or not self.author_info.description or self.author_info.description == "" or self.author_info.description == (self.loc:t("msg_no_bio") or "No biography available.") then
@@ -3285,58 +2984,25 @@ function M:viewLog(page_num)
 end
 
 function M:toggleXRayMode()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("menu_xray_mode") or "X-Ray Mode Settings",
-            text = self.loc:t("xray_mode_desc"),
-            buttons = {
-                {
-                    {
-                        text = (self.xray_mode_enabled and "[✓] " or "[  ] ") .. (self.loc:t("xray_enabled_label") or "Enabled"),
-                        callback = function()
-                            self.xray_mode_enabled = true
-                            if self.ai_helper then self.ai_helper:saveSettings({ xray_mode_enabled = true }) end
-                            UIManager:setDirty(nil, "ui")
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    },
-                    {
-                        text = (not self.xray_mode_enabled and "[✓] " or "[  ] ") .. (self.loc:t("xray_disabled_label") or "Disabled"),
-                        callback = function()
-                            self.xray_mode_enabled = false
-                            if self.ai_helper then self.ai_helper:saveSettings({ xray_mode_enabled = false }) end
-                            UIManager:setDirty(nil, "ui")
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = self.loc:t("menu_about") or "About",
-                        callback = function()
-                            UIManager:show(InfoMessage:new{
-                                text = self.loc:t("xray_mode_desc"),
-                                timeout = 30
-                            })
-                        end
-                    },
-                    {
-                        text = self.loc:t("close") or "Close",
-                        callback = function()
-                            UIManager:close(info_dialog)
-                        end
-                    }
-                }
-            }
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    local enabled_text = self.loc:t("xray_enabled_label") or "Enabled"
+    local disabled_text = self.loc:t("xray_disabled_label") or "Disabled"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("menu_xray_mode") or "X-Ray Mode Settings",
+        description = self.loc:t("xray_mode_desc"),
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            return self.xray_mode_enabled == true
+        end,
+        save_func = function(val)
+            self.xray_mode_enabled = val
+            if self.ai_helper then self.ai_helper:saveSettings({ xray_mode_enabled = val }) end
+            UIManager:setDirty(nil, "ui")
+        end,
+        about_text = self.loc:t("xray_mode_desc")
+    })
 end
 
 function M:showTimeline()
@@ -4154,136 +3820,49 @@ function M:showConfigSummary()
 end
 
 function M:showReasoningEffortSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        local current = self.ai_helper.settings and self.ai_helper.settings.reasoning_effort or "none"
-        
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("menu_reasoning_effort") or "AI Model Reasoning Effort",
-            text = "Controls internal 'thinking' time for supported reasoning models.",
-            buttons = {
-                {
-                    {
-                        text = (current == "none" and "[✓] " or "[  ] ") .. (self.loc:t("reasoning_unset") or "Unset (Default)"),
-                        callback = function()
-                            self.ai_helper.settings.reasoning_effort = nil
-                            self.ai_helper:saveSettings()
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (current == "low" and "[✓] " or "[  ] ") .. (self.loc:t("reasoning_low") or "Low"),
-                        callback = function()
-                            self.ai_helper:saveSettings({ reasoning_effort = "low" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    },
-                    {
-                        text = (current == "medium" and "[✓] " or "[  ] ") .. (self.loc:t("reasoning_medium") or "Medium"),
-                        callback = function()
-                            self.ai_helper:saveSettings({ reasoning_effort = "medium" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    }
-                },
-                {
-                    {
-                        text = (current == "high" and "[✓] " or "[  ] ") .. (self.loc:t("reasoning_high") or "High"),
-                        callback = function()
-                            self.ai_helper:saveSettings({ reasoning_effort = "high" })
-                            UIManager:nextTick(function() showSettings() end)
-                        end
-                    },
-                },
-                {
-                    {
-                        text = self.loc:t("about") or "About",
-                        callback = function()
-                            UIManager:show(InfoMessage:new{
-                                text = self.loc:t("reasoning_about") or "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), and Gemini 2.5+.\n\nNote: DeepSeek V4 reasons inherently — this setting has no effect on it.",
-                                timeout = 12
-                            })
-                        end
-                    },
-                    {
-                        text = self.loc:t("close") or "Close",
-                        callback = function()
-                            UIManager:close(info_dialog)
-                        end
-                    }
-                }
-            }
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("menu_reasoning_effort") or "AI Model Reasoning Effort",
+        description = "Controls internal 'thinking' time for supported reasoning models.",
+        options = {
+            { text = self.loc:t("reasoning_unset") or "Unset (Default)", value = "none" },
+            { text = self.loc:t("reasoning_low") or "Low", value = "low" },
+            { text = self.loc:t("reasoning_medium") or "Medium", value = "medium" },
+            { text = self.loc:t("reasoning_high") or "High", value = "high" },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings and self.ai_helper.settings.reasoning_effort or "none"
+        end,
+        save_func = function(val)
+            if val == "none" then
+                self.ai_helper.settings.reasoning_effort = nil
+                self.ai_helper:saveSettings()
+            else
+                self.ai_helper:saveSettings({ reasoning_effort = val })
+            end
+        end,
+        about_text = self.loc:t("reasoning_about") or "Controls [B]thinking[/B] depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\n[B]Applies to:[/B] GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), and Gemini 2.5+.\n\n[B]Note:[/B] DeepSeek V4 reasons [B]inherently[/B] — this setting has no effect on it.",
+    })
 end
 
 function M:showBetaChannelSettings()
-    local ButtonDialog = require("ui/widget/buttondialog")
-    local info_dialog
-    
-    local function showSettings()
-        if info_dialog then UIManager:close(info_dialog) end
-        
-        local current_setting = self.ai_helper.settings.beta_channel_enabled == true
-        local enabled_text = self.loc:t("beta_enabled") or "Beta Channel Enabled"
-        local disabled_text = self.loc:t("beta_disabled") or "Stable Channel (Recommended)"
-        
-        local buttons = {
-            {
-                {
-                    text = (current_setting and "[✓] " or "[  ] ") .. enabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ beta_channel_enabled = true })
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                },
-                {
-                    text = ((not current_setting) and "[✓] " or "[  ] ") .. disabled_text,
-                    callback = function()
-                        self.ai_helper:saveSettings({ beta_channel_enabled = false })
-                        UIManager:nextTick(function() showSettings() end)
-                    end
-                }
-            },
-            {
-                {
-                    text = self.loc:t("menu_about") or "About",
-                    callback = function()
-                        UIManager:show(InfoMessage:new{
-                            text = self.loc:t("beta_channel_desc") or "The beta channel allows you to receive pre-release versions of the X-Ray plugin. These versions include the latest features and bug fixes but may be less stable than the regular release.",
-                            timeout = 30
-                        })
-                    end
-                },
-                {
-                    text = self.loc:t("close") or "Close",
-                    callback = function()
-                        UIManager:close(info_dialog)
-                    end
-                }
-            }
-        }
-        
-        info_dialog = ButtonDialog:new{
-            title = self.loc:t("menu_beta_channel") or "Beta Channel Settings",
-            text = self.loc:t("beta_preference_desc") or "Select your update channel preference:",
-            buttons = buttons,
-        }
-        UIManager:show(info_dialog)
-    end
-    
-    showSettings()
+    local enabled_text = self.loc:t("beta_enabled") or "Beta Channel Enabled"
+    local disabled_text = self.loc:t("beta_disabled") or "Stable Channel (Recommended)"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("menu_beta_channel") or "Beta Channel Settings",
+        description = self.loc:t("beta_preference_desc") or "Select your update channel preference:",
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings.beta_channel_enabled == true
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ beta_channel_enabled = val })
+        end,
+        about_text = self.loc:t("beta_channel_desc") or "The beta channel allows you to receive pre-release versions of the X-Ray plugin. These versions include the latest features and bug fixes but may be [B]less stable[/B] than the regular release.",
+    })
 end
-
-
 
 function M:toggleSeriesContextEnabled()
     if not self.ai_helper or not self.ai_helper.settings then return end

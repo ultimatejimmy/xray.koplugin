@@ -1,10 +1,9 @@
 msgid ""
 msgstr ""
+"Language-Team: De\n"
+"Language: de\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-msgid "about"
-msgstr "Über"
 
 msgid "ai_error"
 msgstr "KI-Fehler: "
@@ -113,9 +112,6 @@ msgstr "Belletristik"
 
 msgid "book_type_nonfiction"
 msgstr "Sachbuch"
-
-msgid "book_type_saved"
-msgstr "Buchtyp gespeichert!"
 
 msgid "cache_cleared"
 msgstr "Cache geleert!\n\nSie können jetzt neue Daten abrufen:\nMenü → X-Ray → KI-Daten abrufen"
@@ -825,6 +821,12 @@ msgstr "Nie"
 msgid "unit_tooltip_timeout_label"
 msgstr "Tooltip-Timeout"
 
+msgid "unit_underline_dashed"
+msgstr "Gestrichelt"
+
+msgid "unit_underline_dotted"
+msgstr "Gepunktet"
+
 msgid "unit_underline_intensity_label"
 msgstr "Unterstreichungsintensität"
 
@@ -842,12 +844,6 @@ msgstr "Unterstreichungsdicke"
 
 msgid "unit_underline_wavy"
 msgstr "Wellig"
-
-msgid "unit_underline_dotted"
-msgstr "Gepunktet"
-
-msgid "unit_underline_dashed"
-msgstr "Gestrichelt"
 
 msgid "updater_available_header"
 msgstr "X-Ray %s ist verfügbar!\nSie haben %s."
