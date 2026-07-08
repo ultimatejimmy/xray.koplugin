@@ -357,7 +357,7 @@ function M:scanBookForUnits()
     if not self.ui or not self.ui.document then return end
     
     local settings = self.ai_helper and self.ai_helper.settings or {}
-    if settings.unit_converter_enabled ~= true or settings.unit_underline_enabled == false then
+    if settings.unit_converter_enabled == false or settings.unit_underline_enabled == false then
         self:clearUnitUnderlines()
         return
     end
@@ -911,7 +911,7 @@ end
 
 function M:_handleUnitTap(ges)
     local settings = self.ai_helper and self.ai_helper.settings or {}
-    if settings.unit_converter_enabled ~= true then return false end
+    if settings.unit_converter_enabled == false then return false end
     
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then
         return false

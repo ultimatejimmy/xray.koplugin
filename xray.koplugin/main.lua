@@ -924,10 +924,10 @@ function XRayPlugin:getSubMenuItems()
                     {
                         text = self.loc:t("unit_conv_enabled") or "Enable Unit Converter",
                         checked_func = function()
-                            return self.ai_helper.settings.unit_converter_enabled == true
+                            return self.ai_helper.settings.unit_converter_enabled ~= false
                         end,
                         callback = function()
-                            local current = self.ai_helper.settings.unit_converter_enabled == true
+                            local current = self.ai_helper.settings.unit_converter_enabled ~= false
                             self.ai_helper:saveSettings({ unit_converter_enabled = not current })
                             if self.scanBookForUnits then self:scanBookForUnits() end
                         end
