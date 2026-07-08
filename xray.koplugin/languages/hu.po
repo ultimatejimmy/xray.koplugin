@@ -31,7 +31,7 @@ msgstr "%d pár sikeresen összevonva."
 
 # en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
-msgstr "AI-vizsgálat"
+msgstr "AI vizsgálat"
 
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
@@ -131,7 +131,7 @@ msgstr "Válassza ki a könyv módját."
 
 # en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_mode_fiction"
-msgstr "Fikció"
+msgstr "Szépirodalom"
 
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_mode_nonfiction"
@@ -151,7 +151,7 @@ msgstr "Automatikus felismerés"
 
 # en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_type_fiction"
-msgstr "Fikció"
+msgstr "Szépirodalom"
 
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
@@ -531,7 +531,7 @@ msgstr "Részleges egyezés – '%s' megjelenítése a lekérdezésre. Érintse 
 
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
-msgstr "Kézi választás"
+msgstr "Kézi kijelölés"
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -879,7 +879,7 @@ msgstr "OK"
 
 # en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
-msgstr "A pár nem duplikátumként lett megjelölve."
+msgstr "A párosítás elutasítva (nem duplikátum)."
 
 # en-hash: 607481fc96e754b33650eb171aac9447
 msgid "path"
@@ -903,7 +903,7 @@ msgstr "Bővebben"
 
 # en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
-msgstr "Indok"
+msgstr "Ok"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
@@ -927,7 +927,7 @@ msgstr "Nincs beállítva (Alapértelmezett)"
 
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
-msgstr "Elutasítás"
+msgstr "Elutasít"
 
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
@@ -1023,7 +1023,7 @@ msgstr "Spoiler-preferencia"
 
 # en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
-msgstr "Stop"
+msgstr "Leállítás"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

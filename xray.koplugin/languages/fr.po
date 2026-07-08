@@ -31,7 +31,7 @@ msgstr "%d paire(s) fusionnée(s) avec succès."
 
 # en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
-msgstr "Analyse IA"
+msgstr "AI Scan"
 
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
@@ -531,7 +531,7 @@ msgstr "Correspondance partielle – affichage de '%s' pour votre requête. Appu
 
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
-msgstr "Sélection manuelle"
+msgstr "Manual Pick"
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -763,7 +763,7 @@ msgstr "← Retour"
 
 # en-hash: 68be4837f6c739877233e527a996dd00
 msgid "merge_button"
-msgstr "Fusionner"
+msgstr "Merge"
 
 # en-hash: 8bb01dda315086774624ba2e7444a265
 msgid "merge_confirm"
@@ -879,7 +879,7 @@ msgstr "OK"
 
 # en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
-msgstr "Paire marquée comme non-doublon."
+msgstr "Pair marked as not a duplicate."
 
 # en-hash: 607481fc96e754b33650eb171aac9447
 msgid "path"
@@ -899,11 +899,11 @@ msgstr "Menu rapide X-Ray"
 
 # en-hash: decbe415d8accca7c2c16d48a79ee934
 msgid "read_more"
-msgstr "En savoir plus"
+msgstr "Read More"
 
 # en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
-msgstr "Raison"
+msgstr "Motif"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
@@ -927,7 +927,7 @@ msgstr "Non défini (Par défaut)"
 
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
-msgstr "Rejeter"
+msgstr "Reject"
 
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
@@ -935,7 +935,7 @@ msgstr "Nouvelle recherche pour '%s'"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"
-msgstr "Examiner"
+msgstr "Vérifier"
 
 # en-hash: c9cc8cce247e49bae79f15173ce97354
 msgid "save"
@@ -999,7 +999,7 @@ msgstr "[Précédent]"
 
 # en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
 msgid "skip"
-msgstr "Ignorer"
+msgstr "Passer"
 
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
@@ -1023,7 +1023,7 @@ msgstr "Préférence Spoiler"
 
 # en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
-msgstr "Stop"
+msgstr "Arrêter"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

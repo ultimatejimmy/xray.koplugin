@@ -1107,7 +1107,7 @@ msgstr "Интензитет подвлачења"
 
 # en-hash: 8bcda43732b0928d269955e0f09ff76f
 msgid "unit_underline_invisible"
-msgstr "Невидљива"
+msgstr "Невидива"
 
 # en-hash: e41480b6bbfbf7407974a88d3d34f4fa
 msgid "unit_underline_solid"

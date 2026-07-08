@@ -763,7 +763,7 @@ msgstr "← Kembali"
 
 # en-hash: 68be4837f6c739877233e527a996dd00
 msgid "merge_button"
-msgstr "Gabungkan"
+msgstr "Merge"
 
 # en-hash: 8bb01dda315086774624ba2e7444a265
 msgid "merge_confirm"
@@ -899,7 +899,7 @@ msgstr "Menu Cepat X-Ray"
 
 # en-hash: decbe415d8accca7c2c16d48a79ee934
 msgid "read_more"
-msgstr "Baca Selengkapnya"
+msgstr "Read More"
 
 # en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
@@ -1023,7 +1023,7 @@ msgstr "Preferensi Spoiler"
 
 # en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
-msgstr "Stop"
+msgstr "Berhenti"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

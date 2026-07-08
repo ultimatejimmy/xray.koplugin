@@ -31,7 +31,7 @@ msgstr "%d par(es) fusionado(s) con éxito."
 
 # en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
-msgstr "Escaneo con IA"
+msgstr "AI Scan"
 
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
@@ -487,7 +487,7 @@ msgstr "Idioma cambiado. Reabra el menú para ver los cambios."
 
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
-msgstr "Más tarde"
+msgstr "Later"
 
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
@@ -531,7 +531,7 @@ msgstr "Coincidencia parcial: mostrando '%s' para tu consulta. Toca abajo para b
 
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
-msgstr "Selección manual"
+msgstr "Manual Pick"
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -763,7 +763,7 @@ msgstr "← Volver"
 
 # en-hash: 68be4837f6c739877233e527a996dd00
 msgid "merge_button"
-msgstr "Combinar"
+msgstr "Merge"
 
 # en-hash: 8bb01dda315086774624ba2e7444a265
 msgid "merge_confirm"
@@ -879,7 +879,7 @@ msgstr "Aceptar"
 
 # en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
-msgstr "Pareja marcada como no duplicada."
+msgstr "Pair marked as not a duplicate."
 
 # en-hash: 607481fc96e754b33650eb171aac9447
 msgid "path"
@@ -899,11 +899,11 @@ msgstr "Menú rápido de X-Ray"
 
 # en-hash: decbe415d8accca7c2c16d48a79ee934
 msgid "read_more"
-msgstr "Leer más"
+msgstr "Read More"
 
 # en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
-msgstr "Motivo"
+msgstr "Reason"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
@@ -927,7 +927,7 @@ msgstr "Sin establecer (Predeterminado)"
 
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
-msgstr "Rechazar"
+msgstr "Reject"
 
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
@@ -935,7 +935,7 @@ msgstr "Volver a buscar '%s'"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"
-msgstr "Revisar"
+msgstr "Review"
 
 # en-hash: c9cc8cce247e49bae79f15173ce97354
 msgid "save"
@@ -999,7 +999,7 @@ msgstr "[Anterior]"
 
 # en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
 msgid "skip"
-msgstr "Omitir"
+msgstr "Skip"
 
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"

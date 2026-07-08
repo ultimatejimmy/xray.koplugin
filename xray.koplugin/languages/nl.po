@@ -487,7 +487,7 @@ msgstr "Taal gewijzigd. Open het menu opnieuw om de wijzigingen te zien."
 
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
-msgstr "Later"
+msgstr "Später"
 
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
@@ -999,7 +999,7 @@ msgstr "[Eerder]"
 
 # en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
 msgid "skip"
-msgstr "Skip"
+msgstr "Overslaan"
 
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
@@ -1023,7 +1023,7 @@ msgstr "Spoilervoorkeur"
 
 # en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
-msgstr "Stop"
+msgstr "Stoppen"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"
