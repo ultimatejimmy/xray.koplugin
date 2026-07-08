@@ -213,6 +213,30 @@ describe("xray_units", function()
             assert.are.equal(1, #res2)
             assert.are.equal("ten meters", res2[1].original)
             assert.are.equal("32.81 feet", res2[1].converted)
+
+            -- Test for "one fifty kph"
+            local res3 = xray_units.detectMeasurements("The speed limit is one fifty kph.", "to_imperial")
+            assert.are.equal(1, #res3)
+            assert.are.equal("one fifty kph", res3[1].original)
+            assert.are.equal("93.21 mph", res3[1].converted)
+
+            -- Test for "two thousand one fifty"
+            local res4 = xray_units.detectMeasurements("The altitude is two thousand one fifty meters.", "to_imperial")
+            assert.are.equal(1, #res4)
+            assert.are.equal("two thousand one fifty meters", res4[1].original)
+            assert.are.equal("7,053.81 feet", res4[1].converted)
+
+            -- Test for "quarter mile"
+            local res5 = xray_units.detectMeasurements("He ran a quarter mile.", "to_metric")
+            assert.are.equal(1, #res5)
+            assert.are.equal("a quarter mile", res5[1].original)
+            assert.are.equal("0.4 km", res5[1].converted)
+
+            -- Test for "one and a quarter miles"
+            local res6 = xray_units.detectMeasurements("It was one and a quarter miles away.", "to_metric")
+            assert.are.equal(1, #res6)
+            assert.are.equal("one and a quarter miles", res6[1].original)
+            assert.are.equal("2.01 km", res6[1].converted)
         end)
 
         it("ignores non-measurement uses of unit words", function()

@@ -2,7 +2,7 @@
 local M = {}
 
 local WRITTEN_NUMBERS = {
-    half = 0.5, zero = 0, one = 1, two = 2, three = 3, four = 4, five = 5,
+    quarter = 0.25, half = 0.5, zero = 0, one = 1, two = 2, three = 3, four = 4, five = 5,
     six = 6, seven = 7, eight = 8, nine = 9, ten = 10,
     eleven = 11, twelve = 12, thirteen = 13, fourteen = 14, fifteen = 15,
     sixteen = 16, seventeen = 17, eighteen = 18, nineteen = 19, twenty = 20,
@@ -100,25 +100,49 @@ local function parseNumberText(str)
     if num then return num end
     
     -- Try compound written numbers like "twenty three" or "twenty-three"
-    local val = 0
+    local wvals = {}
     local found = false
     for word in str:gmatch("[a-z]+") do
-        local wval = WRITTEN_NUMBERS[word]
-        if not (wval or word == "and" or word == "a" or word == "an") then
-            return nil
-        end
-        if wval then
+        if word ~= "and" and word ~= "a" and word ~= "an" then
+            local wval = WRITTEN_NUMBERS[word]
+            if not wval then return nil end
+            table.insert(wvals, wval)
             found = true
-            if wval == 100 or wval == 1000 or wval == 1000000 then
-                if val == 0 then val = 1 end
-                val = val * wval
-            else
-                val = val + wval
-            end
         end
     end
-    if found then return val end
-    return nil
+    if not found then return nil end
+
+    -- Preprocess to insert 100 between unit (1-9) and tens/teens (10-99)
+    -- E.g. "one fifty" -> {1, 50} -> {1, 100, 50}
+    local i = 1
+    while i < #wvals do
+        local v1 = wvals[i]
+        local v2 = wvals[i+1]
+        if v1 >= 1 and v1 <= 9 and v2 >= 10 and v2 <= 99 then
+            table.insert(wvals, i + 1, 100)
+            i = i + 1 -- Skip the inserted 100
+        end
+        i = i + 1
+    end
+
+    -- Standard written numbers parsing algorithm
+    local total_val = 0
+    local temp_val = 0
+    for _, wval in ipairs(wvals) do
+        if wval == 100 or wval == 1000 or wval == 1000000 then
+            if temp_val == 0 then temp_val = 1 end
+            if wval == 100 then
+                temp_val = temp_val * 100
+            else
+                temp_val = temp_val * wval
+                total_val = total_val + temp_val
+                temp_val = 0
+            end
+        else
+            temp_val = temp_val + wval
+        end
+    end
+    return total_val + temp_val
 end
 
 -- Converts one unit to another
@@ -593,10 +617,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
                                 while i_w >= 1 do
                                     local w = phrase_words[i_w]
                                     local clean_w = w:gsub("[%-,]$", "")
-                                    if clean_w == "a" and i_w > 1 and phrase_words[i_w-1]:gsub("[%-,]$", "") == "half" then
-                                        table.insert(valid_words, 1, "half a")
-                                        i_w = i_w - 2
-                                    elseif clean_w == "and" or parseNumberText(clean_w) then
+                                    if clean_w == "and" or clean_w == "a" or clean_w == "an" or parseNumberText(clean_w) then
                                         table.insert(valid_words, 1, clean_w)
                                         i_w = i_w - 1
                                     else
