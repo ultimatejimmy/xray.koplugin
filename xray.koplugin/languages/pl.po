@@ -782,8 +782,14 @@ msgstr "Ta strona"
 msgid "unit_conv_direction"
 msgstr "Kierunek konwersji"
 
+msgid "unit_conv_direction_about"
+msgstr "Kierunek konwersji jednostek określa, jak przeliczane są miary w książkach (np. długość, waga, temperatura):\n\n• [B]Automatycznie (wg urządzenia):[/B] Konwertuje automatycznie na podstawie języka urządzenia i ustawień regionalnych systemu.\n\n• [B]Na metryczne:[/B] Zawsze konwertuje jednostki imperialne (np. mile, stopnie Fahrenheita) na metryczne (np. kilometry, stopnie Celsjusza).\n\n• [B]Na imperialne:[/B] Zawsze konwertuje jednostki metryczne na ich imperialne odpowiedniki."
+
 msgid "unit_conv_direction_auto"
 msgstr "Auto (zgodnie z ust. urządzenia)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Wybierz docelowy kierunek konwersji jednostek:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Zawsze konwertuj na imperialne"

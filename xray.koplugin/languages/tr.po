@@ -782,8 +782,14 @@ msgstr "Bu Sayfa"
 msgid "unit_conv_direction"
 msgstr "Dönüştürme Yönü"
 
+msgid "unit_conv_direction_about"
+msgstr "Birim dönüştürme yönü, kitaplardaki ölçülerin (ör. uzunluk, ağırlık, sıcaklık) nasıl dönüştürüleceğini belirler:\n\n• [B]Otomatik (Cihaza Göre):[/B] Cihaz dilinize ve sistem bölgesi ayarlarınıza göre otomatik olarak dönüştürür.\n• [B]Metriğe:[/B] Emperyal birimleri (ör. mil, Fahrenheit) her zaman metrik karşılıklarına (ör. kilometre, Santigrat) dönüştürür.\n• [B]Emperyale:[/B] Metrik birimleri her zaman emperyal karşılıklarına dönüştürür."
+
 msgid "unit_conv_direction_auto"
 msgstr "Otomatik (cihaz ayarını kullan)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Birim dönüştürmeleri için hedef yönü seçin:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Her zaman emperyale dönüştür"

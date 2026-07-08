@@ -782,8 +782,14 @@ msgstr "Esta Página"
 msgid "unit_conv_direction"
 msgstr "Direção de conversão"
 
+msgid "unit_conv_direction_about"
+msgstr "A direção da conversão de unidades determina como as medidas nos livros (ex: comprimento, peso, temperatura) são traduzidas:\n\n• [B]Automático (Seguir Dispositivo):[/B] Converte automaticamente com base no idioma do seu dispositivo e nas configurações de região do sistema.\n• [B]Para Métrico:[/B] Sempre converte unidades imperiais (ex: milhas, Fahrenheit) para os equivalentes métricos (ex: quilômetros, Celsius).\n• [B]Para Imperial:[/B] Sempre converte unidades métricas para os equivalentes imperiais."
+
 msgid "unit_conv_direction_auto"
 msgstr "Automático (conforme o dispositivo)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Selecione a direção de destino para as conversões de unidades:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Sempre converter para imperial"

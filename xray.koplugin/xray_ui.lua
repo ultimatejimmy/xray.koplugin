@@ -3896,6 +3896,28 @@ function M:showReasoningEffortSettings()
     })
 end
 
+function M:showUnitConversionDirectionSettings()
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("unit_conv_direction") or "Conversion Direction",
+        description = self.loc:t("unit_conv_direction_desc") or "Select target direction for unit conversions:",
+        options = {
+            { text = self.loc:t("unit_conv_direction_auto") or "Auto (Follow Device)", value = "auto" },
+            { text = self.loc:t("unit_conv_direction_metric") or "To Metric", value = "to_metric" },
+            { text = self.loc:t("unit_conv_direction_imperial") or "To Imperial", value = "to_imperial" },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings.unit_conversion_direction or "auto"
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ unit_conversion_direction = val })
+        end,
+        on_close = function()
+            if self.scanBookForUnits then self:scanBookForUnits() end
+        end,
+        about_text = self.loc:t("unit_conv_direction_about") or "Unit conversion direction determines how measurements in books (e.g. lengths, weight, temperatures) are translated:\n\n• [B]Auto (Follow Device):[/B] Automatically converts based on the 'Dimension units' system setting of your device.\n• [B]To Metric:[/B] Always converts Imperial units (e.g. miles, Fahrenheit) to Metric equivalents (e.g. kilometers, Celsius).\n• [B]To Imperial:[/B] Always converts Metric units to Imperial equivalents.",
+    })
+end
+
 function M:showBetaChannelSettings()
     local enabled_text = self.loc:t("beta_enabled") or "Beta Channel Enabled"
     local disabled_text = self.loc:t("beta_disabled") or "Stable Channel (Recommended)"

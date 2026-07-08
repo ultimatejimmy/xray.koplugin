@@ -782,8 +782,14 @@ msgstr "Diese Seite"
 msgid "unit_conv_direction"
 msgstr "Konvertierungsrichtung"
 
+msgid "unit_conv_direction_about"
+msgstr "Die Richtung der Einheitenumrechnung bestimmt, wie Maße in Büchern (z. B. Längen, Gewicht, Temperaturen) übersetzt werden:\n\n• [B]Automatisch (wie Gerät):[/B] Konvertiert automatisch basierend auf der Gerätesprache und den Regionaleinstellungen des Systems.\n• [B]In metrische Einheiten:[/B] Konvertiert imperiale Einheiten (z. B. Meilen, Fahrenheit) immer in metrische Entsprechungen (z. B. Kilometer, Celsius).\n• [B]In imperiale Einheiten:[/B] Konvertiert metrische Einheiten immer in imperiale Entsprechungen."
+
 msgid "unit_conv_direction_auto"
 msgstr "Automatisch (Geräteeinstellung)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Zielrichtung für Einheitenumrechnung wählen:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Immer in imperial konvertieren"

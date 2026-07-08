@@ -782,8 +782,14 @@ msgstr "Ez az oldal"
 msgid "unit_conv_direction"
 msgstr "Átváltás iránya"
 
+msgid "unit_conv_direction_about"
+msgstr "A mértékegység-átváltás iránya határozza meg, hogyan alakulnak át a könyvekben szereplő mértékegységek (pl. hosszúság, súly, hőmérséklet):\n\n• [B]Auto (Eszköz követése):[/B] Automatikusan konvertál az eszköz nyelve és a rendszer területi beállításai alapján.\n• [B]Metrikusra:[/B] Mindig átváltja az angolszász mértékegységeket (pl. mérföld, Fahrenheit) metrikus megfelelőkre (pl. kilométer, Celsius).\n• [B]Angolszászra:[/B] Mindig átváltja a metrikus mértékegységeket angolszász megfelelőkre."
+
 msgid "unit_conv_direction_auto"
 msgstr "Automatikus (eszközbeállítás szerint)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Válassza ki a mértékegység-átváltás irányát:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Mindig angolszászra"

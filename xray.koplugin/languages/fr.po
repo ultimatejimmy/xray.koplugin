@@ -782,8 +782,14 @@ msgstr "Cette page"
 msgid "unit_conv_direction"
 msgstr "Sens de conversion"
 
+msgid "unit_conv_direction_about"
+msgstr "Le sens de conversion des unités détermine comment les mesures dans les livres (ex. longueurs, poids, températures) sont converties :\n\n• [B]Auto (selon l'appareil) :[/B] Convertit automatiquement en fonction de la langue de l'appareil et des paramètres régionaux du système.\n\n• [B]Vers le système métrique :[/B] Convertit toujours les unités impériales (ex. miles, Fahrenheit) en équivalents métriques (ex. kilomètres, Celsius).\n\n• [B]Vers le système impérial :[/B] Convertit toujours les unités métriques en équivalents impériaux."
+
 msgid "unit_conv_direction_auto"
 msgstr "Auto (selon l'appareil)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Sélectionnez le sens de conversion des unités :"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Toujours convertir en impérial"

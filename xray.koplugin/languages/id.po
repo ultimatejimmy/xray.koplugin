@@ -782,8 +782,14 @@ msgstr "Halaman Ini"
 msgid "unit_conv_direction"
 msgstr "Arah Konversi"
 
+msgid "unit_conv_direction_about"
+msgstr "La direciono di konverto di unesi determinas quale mezuri en libri (ex. longesi, pezo, temperaturi) tradukesas:\n\n• [B]Auto (Sequar aparato):[/B] Automate konvertas segun la linguo e regional agendi di vua aparato.\n• [B]A Metrika:[/B] Sempre konvertas imperial unesi (ex. milii, Fahrenheit) a metrika equivalanti (ex. kilometri, Celsius).\n• [B]A Imperiala:[/B] Sempre konvertas metrika unesi a imperiala equivalanti."
+
 msgid "unit_conv_direction_auto"
 msgstr "Otomatis (ikuti pengaturan perangkat)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Selektez la skopo-direciono por konverti di unesi:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Selalu konversi ke imperial"

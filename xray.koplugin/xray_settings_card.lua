@@ -192,9 +192,7 @@ function M.show(ui_instance, args)
             bordersize = xray_theme.border_btn,
             radius = xray_theme.radius_btn,
             callback = function()
-                ui_instance._current_card_offset = nil
                 UIManager:close(overlay, "ui")
-                if args.on_close then args.on_close() end
             end
         }
         table.insert(buttons, close_btn)
@@ -255,6 +253,14 @@ function M.show(ui_instance, args)
                 movable
             }
         }
+        function overlay:onClose()
+            if self._closing then return end
+            self._closing = true
+            ui_instance._current_card_offset = nil
+            UIManager:close(self, "ui")
+            if args.on_close then args.on_close() end
+            return true
+        end
         UIManager:show(overlay, "ui")
     end
 

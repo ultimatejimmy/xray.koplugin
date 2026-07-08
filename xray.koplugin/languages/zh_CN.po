@@ -782,8 +782,14 @@ msgstr "当前页"
 msgid "unit_conv_direction"
 msgstr "转换方向"
 
+msgid "unit_conv_direction_about"
+msgstr "单位转换方向决定了书中测量值（如长度、重量、温度）的转换方式：\n\n• [B]自动（跟随设备）：[/B]根据您的设备语言和系统区域设置自动进行转换。\n\n• [B]转换为公制：[/B]始终将英制单位（如英里、华氏度）转换为等效的公制单位（如千米、摄氏度）。\n\n• [B]转换为英制：[/B]始终将公制单位转换为等效的英制单位。"
+
 msgid "unit_conv_direction_auto"
 msgstr "自动（跟随设备设置）"
+
+msgid "unit_conv_direction_desc"
+msgstr "选择单位转换的目标方向："
 
 msgid "unit_conv_direction_imperial"
 msgstr "总是转换为英制"

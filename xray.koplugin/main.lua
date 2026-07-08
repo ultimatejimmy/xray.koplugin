@@ -935,38 +935,9 @@ function XRayPlugin:getSubMenuItems()
                     {
                         text = self.loc:t("unit_conv_direction") or "Conversion Direction",
                         keep_menu_open = true,
-                        sub_item_table = {
-                            {
-                                text = self.loc:t("unit_conv_direction_auto") or "Auto (Follow Device)",
-                                checked_func = function()
-                                    return self.ai_helper.settings.unit_conversion_direction == "auto" or self.ai_helper.settings.unit_conversion_direction == nil
-                                end,
-                                callback = function()
-                                    self.ai_helper:saveSettings({ unit_conversion_direction = "auto" })
-                                    if self.scanBookForUnits then self:scanBookForUnits() end
-                                end
-                            },
-                            {
-                                text = self.loc:t("unit_conv_direction_metric") or "To Metric",
-                                checked_func = function()
-                                    return self.ai_helper.settings.unit_conversion_direction == "to_metric"
-                                end,
-                                callback = function()
-                                    self.ai_helper:saveSettings({ unit_conversion_direction = "to_metric" })
-                                    if self.scanBookForUnits then self:scanBookForUnits() end
-                                end
-                            },
-                            {
-                                text = self.loc:t("unit_conv_direction_imperial") or "To Imperial",
-                                checked_func = function()
-                                    return self.ai_helper.settings.unit_conversion_direction == "to_imperial"
-                                end,
-                                callback = function()
-                                    self.ai_helper:saveSettings({ unit_conversion_direction = "to_imperial" })
-                                    if self.scanBookForUnits then self:scanBookForUnits() end
-                                end
-                            }
-                        }
+                        callback = function()
+                            self:showUnitConversionDirectionSettings()
+                        end
                     },
                     {
                         text = self.loc:t("menu_unit_categories") or "Unit Categories",

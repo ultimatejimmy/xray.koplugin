@@ -782,8 +782,14 @@ msgstr "Section"
 msgid "unit_conv_direction"
 msgstr "Conversion Direction"
 
+msgid "unit_conv_direction_about"
+msgstr "Unit conversion direction determines how measurements in books (e.g. lengths, weight, temperatures) are translated:\n\n• [B]Auto (Follow Device):[/B] Automatically converts based on the 'Dimension units' system setting of your device.\n• [B]To Metric:[/B] Always converts Imperial units (e.g. miles, Fahrenheit) to Metric equivalents (e.g. kilometers, Celsius).\n• [B]To Imperial:[/B] Always converts Metric units to Imperial equivalents."
+
 msgid "unit_conv_direction_auto"
 msgstr "Auto (Follow Device)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Select target direction for unit conversions:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "To Imperial"

@@ -782,8 +782,14 @@ msgstr "Deze pagina"
 msgid "unit_conv_direction"
 msgstr "Conversierichting"
 
+msgid "unit_conv_direction_about"
+msgstr "De conversierichting bepaalt hoe maten in boeken (bijv. lengte, gewicht, temperatuur) worden omgerekend:\n\n• [B]Automatisch (volg apparaat):[/B] Converteert automatisch op basis van de taal- en regio-instellingen van het apparaat.\n\n• [B]Naar metrisch:[/B] Converteert imperiale eenheden (bijv. mijlen, Fahrenheit) altijd naar metrische equivalenten (bijv. kilometers, Celsius).\n\n• [B]Naar imperiaal:[/B] Converteert metrische eenheden altijd naar imperiale equivalenten."
+
 msgid "unit_conv_direction_auto"
 msgstr "Automatisch (volg apparaatinstelling)"
+
+msgid "unit_conv_direction_desc"
+msgstr "Kies de conversierichting voor eenheden:"
 
 msgid "unit_conv_direction_imperial"
 msgstr "Altijd naar imperiaal converteren"
