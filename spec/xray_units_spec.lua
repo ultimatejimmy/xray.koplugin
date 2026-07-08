@@ -270,6 +270,18 @@ describe("xray_units", function()
             assert.are.equal("17.72 inches", res2[1].converted)
         end)
 
+        it("distinguishes millimeters (length) from milliliters (volume) correctly", function()
+            local res_len = xray_units.detectMeasurements("one millimeter", "to_imperial")
+            assert.are.equal(1, #res_len)
+            assert.are.equal("length", res_len[1].category)
+            assert.are.equal("0.04 inches", res_len[1].converted)
+
+            local res_vol = xray_units.detectMeasurements("one milliliter", "to_imperial")
+            assert.are.equal(1, #res_vol)
+            assert.are.equal("volume", res_vol[1].category)
+            assert.are.equal("0.03 fl oz", res_vol[1].converted)
+        end)
+
         it("handles unit pluralization correctly", function()
             local res1 = xray_units.detectMeasurements("1 meter", "to_imperial")
             assert.are.equal("3.28 feet", res1[1].converted)

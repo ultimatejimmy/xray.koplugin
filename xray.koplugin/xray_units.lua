@@ -252,7 +252,7 @@ local UNITS = {
     { category = "volume", system = "imperial", name = "quart", std_target = "l", aliases = { "quarts", "quart", "qt" } },
     { category = "volume", system = "imperial", name = "gallon", std_target = "l", aliases = { "gallons", "gallon", "gal", "gallone", "gallonen", "galón", "galones", "galloni", "galão", "galões", "galon", "galony", "galonów", "галлон", "галлона", "галлонов", "галон", "галона", "галонів", "جالون", "جالونات", "加仑" } },
 
-    { category = "volume", system = "metric", name = "ml", std_target = "fl oz", aliases = { "milliliters", "millimeter", "ml", "mL", "millilitres", "millilitre" } },
+    { category = "volume", system = "metric", name = "ml", std_target = "fl oz", aliases = { "milliliters", "milliliter", "ml", "mL", "millilitres", "millilitre" } },
     { category = "volume", system = "metric", name = "l", std_target = "gallon", aliases = { "liters", "liter", "l", "L", "litres", "litre", "litro", "litros", "litri", "litr", "litry", "litrów", "литр", "литра", "литров", "літр", "літра", "літрів", "لتر", "لترات", "升", "公升" } },
 
     -- SPEED

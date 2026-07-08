@@ -101,19 +101,27 @@ function M:_resolveHighlightBoxes()
     end
     
     local resolved = {}
+    local current_page = _getCurrentPage(self)
     for _, match in ipairs(self.unit_xp_matches) do
-        local ok, boxes = pcall(doc.getScreenBoxesFromPositions, doc, match.start_xp, match.end_xp, true)
-        if ok and boxes then
-            for _, box in ipairs(boxes) do
-                table.insert(resolved, {
-                    x = box.x,
-                    y = box.y,
-                    w = box.w,
-                    h = box.h,
-                    original = match.original,
-                    converted = match.converted,
-                    category = match.category
-                })
+        local on_current_page = true
+        if match.pageno and current_page and match.pageno ~= current_page then
+            on_current_page = false
+        end
+
+        if on_current_page then
+            local ok, boxes = pcall(doc.getScreenBoxesFromPositions, doc, match.start_xp, match.end_xp, true)
+            if ok and boxes then
+                for _, box in ipairs(boxes) do
+                    table.insert(resolved, {
+                        x = box.x,
+                        y = box.y,
+                        w = box.w,
+                        h = box.h,
+                        original = match.original,
+                        converted = match.converted,
+                        category = match.category
+                    })
+                end
             end
         end
     end
@@ -668,12 +676,21 @@ function M:scanBookForUnits()
                     original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
                 end
                 
+                local pageno
+                if doc.getPageFromXPointer then
+                    local ok_p, pg = pcall(doc.getPageFromXPointer, doc, span_start)
+                    if ok_p and pg then
+                        pageno = pg
+                    end
+                end
+
                 table.insert(xp_matches, {
                     start_xp = span_start,
                     ["end_xp"] = hit["end"],
                     original = original_text,
                     converted = conv_str,
-                    category = u.category
+                    category = u.category,
+                    pageno = pageno
                 })
             end
         end

@@ -277,7 +277,8 @@ function _G.createMockPlugin()
             document = {
                 file = "test_book.epub",
                 getToc = function() return {} end,
-                getProps = function() return { title = "Test Title", authors = "Test Author" } end
+                getProps = function() return { title = "Test Title", authors = "Test Author" } end,
+                getPageFromXPointer = function() return 10 end
             },
             paging = {
                 getCurrentPage = function() return 10 end
