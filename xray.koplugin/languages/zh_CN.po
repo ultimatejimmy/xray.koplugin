@@ -5,921 +5,1227 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+# en-hash: 1354e62b68c1d35133d396fc419901c2
 msgid "ai_error"
 msgstr "AI 错误: "
 
+# en-hash: 582a282f6b085c7665c843fb7e06e4e6
 msgid "ai_fetch_complete"
 msgstr "已成功从 %s 获取！\n\n书名：%s\n作者：%s\n\n角色数：%d\n地点数：%d\n主题数：%d\n时间线事件：%d\n历史人物：%d\n\n%s\n\n摘要：\n%s"
 
+# en-hash: 34f82d2e8250bbcf8a0395a1eb4f1833
 msgid "ai_fetch_complete_msg"
 msgstr "AI 获取完成！"
 
+# en-hash: b0fc5654248cb92282e5ece124a750bd
 msgid "ai_key_required"
 msgstr "需要配置 AI API 密钥。"
 
+# en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "AI 发现重复条目"
 
+# en-hash: adb9b4c51ae2df392591ca847017c9f8
 msgid "ai_merged_n"
 msgstr "成功合并了 %d 对重复项。"
 
+# en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
 msgstr "AI Scan"
 
+# en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "AI 正在扫描重复项..."
 
+# en-hash: bff74eab9088ad053737e6f0d424ea7e
 msgid "author_born"
 msgstr "出生: "
 
+# en-hash: 94e26ed13a62af4b3549ff9e583a0691
 msgid "author_died"
 msgstr "去世: "
 
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "auto_dupe_check_disabled"
 msgstr "已禁用"
 
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "auto_dupe_check_enabled"
 msgstr "已启用"
 
+# en-hash: e791101a1a10500d1f0727b4b8e963b5
 msgid "auto_dupe_check_preference_desc"
 msgstr "选择自动 AI 重复项检测的首选项："
 
+# en-hash: 670e2792d29f2f41e891f40c6c5b03ea
 msgid "auto_dupe_check_setting_desc"
 msgstr "启用后，X-Ray 会在每次获取数据后自动让 AI 检查重复的角色和地点。如果检测到重复项，系统将提示您进行查看和合并。\n\n禁用此功能将停止所有后台重复项扫描。您仍可以通过“角色”或“地点”菜单手动合并重复项。\n\n注意：每次检查都会使用一次 AI API 调用。免费层或配额受限计划的用户可能更愿意禁用此功能。"
 
+# en-hash: 0700ab9afc75d300e49fd3aac9c86ee8
 msgid "auto_dupe_check_setting_title"
 msgstr "重复检查"
 
+# en-hash: b7e84428c69c17c5536c4a912a191e54
 msgid "auto_fetch_page_interval_prompt"
 msgstr "页面间隔"
 
+# en-hash: 14b471ac49a5d3258cc95b0762da9834
 msgid "auto_update_aggressive"
 msgstr "激进：每章都检查"
 
+# en-hash: 6349e8d6a59311506a78bb0cd3d5b92d
 msgid "auto_update_balanced"
 msgstr "平衡：最多每 5 分钟"
 
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "auto_update_disabled"
 msgstr "已禁用"
 
+# en-hash: 9ffbf6e9ce7efcb2b5d02ca4b8554236
 msgid "auto_update_economical"
 msgstr "经济：最多每 15 分钟"
 
+# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
 msgid "auto_update_freq_about"
 msgstr "自动更新功能会在您阅读时自动在后台检查新章节的数据。\n\n限制与性能\n频繁的后台请求会消耗电池寿命，并可能触及 AI 服务商的频率限制（尤其是 Pro 模型）。\n\n模式\n• 极速：按您设置的 N 页间隔检查一次（章节中途）\n• 激进：进入新章节时即检查\n• 平衡：最多每 5 分钟检查一次（推荐）\n• 经济：最多每 15 分钟检查一次\n• 稀疏：最多每 30 分钟检查一次\n• 已禁用：不进行后台请求\n\n注意：如果因频率限制跳过了某个章节，X-Ray 将在下次后台获取时自动包含它。"
 
+# en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"
 msgstr "后台获取频率："
 
+# en-hash: c0b6e5d7b1280ea464d54bf9cbfffd37
 msgid "auto_update_sparse"
 msgstr "稀疏：最多每 30 分钟"
 
+# en-hash: 7f4cc9b44db70ed676e621f17b8228e3
 msgid "auto_update_ultra"
 msgstr "极速：每%d页检查一次"
 
+# en-hash: 0557fa923dcee4d0f86b1409f5c2167f
 msgid "back_to_reading"
 msgstr "回到阅读"
 
+# en-hash: 5fcd6ed2b6f2c21bc5c936cf44c36b37
 msgid "beta_channel_desc"
 msgstr "Beta Channel 允许您接收 X-Ray 插件的预发布版本。这些版本包含最新的功能和错误修复，但可能不如 Stable Channel 稳定。"
 
+# en-hash: 9aac8fedb45eb817ee12a885f1dedc8f
 msgid "beta_disabled"
 msgstr "Stable Channel (推荐)"
 
+# en-hash: f4bdad9b1beff62e922458298afd169e
 msgid "beta_enabled"
 msgstr "已启用 Beta Channel"
 
+# en-hash: ee4ee500762b7cab66634e1a2df9a053
 msgid "beta_preference_desc"
 msgstr "选择您的更新渠道偏好："
 
+# en-hash: 06b9281e396db002010bde1de57262eb
 msgid "book_mode_auto"
 msgstr "自动"
 
+# en-hash: c549e231df08c60006ca035f7834366e
 msgid "book_mode_desc"
 msgstr "选择此书的模式。"
 
+# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_mode_fiction"
 msgstr "虚构"
 
+# en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_mode_nonfiction"
 msgstr "非虚构"
 
+# en-hash: 272668c7f021d1ae07f88c6593527c61
 msgid "book_mode_saved"
 msgstr "书籍模式已保存！"
 
+# en-hash: b412be9a3ed27952005bf5d1a522d158
 msgid "book_type_about"
 msgstr "书籍类型决定了 AI 提取信息的侧重策略与可用功能。\n\n- 小说 (Fiction): 聚焦于叙事结构、登场角色与故事时间线。\n- 非小说 (Non-Fiction): 聚焦于专业术语、核心概念与相关历史人物。\n\n“自动检测”会在首次提取后由 AI 自动判断书籍类型。"
 
+# en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
 msgstr "自动检测"
 
+# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_type_fiction"
 msgstr "虚构"
 
+# en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "非虚构"
 
+# en-hash: cd00fdfb57dccc660b305e787262e649
 msgid "cache_cleared"
 msgstr "缓存已清除！\n\n现在可以获取新数据：\n菜单 → X-Ray → 获取 AI 数据"
 
+# en-hash: 1edc355371d87a94d024eebfed9f8815
 msgid "cache_save_failed"
 msgstr "保存缓存失败"
 
+# en-hash: c420984012423b034d0fb4544c93c663
 msgid "cache_save_success"
 msgstr "✓ 缓存已更新。"
 
+# en-hash: dd3553afd5b0b207445bf116c57a4cac
 msgid "cache_saved"
 msgstr "已保存到缓存！"
 
+# en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "cancel"
 msgstr "取消"
 
+# en-hash: 261d30af0907fa3e87d73d7719d2b4ef
 msgid "character_not_found"
 msgstr "未找到匹配“%s”的角色"
 
+# en-hash: d3d2e617335f08df83599665eef8a418
 msgid "close"
 msgstr "关闭"
 
+# en-hash: 3441bb13db3b069cccbba18579ae99f2
 msgid "config_default_gemini"
 msgstr "  默认 (Gemini)"
 
+# en-hash: 868ea5dc0202b9f02e4cf8e4a460c827
 msgid "config_status_not_set"
 msgstr "未设置"
 
+# en-hash: 8c52684db8f49511e9b44471716bf164
 msgid "config_status_set"
 msgstr "已设置"
 
+# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
 msgid "current_language"
 msgstr "zh_CN"
 
+# en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "当前模式："
 
+# en-hash: c0d9a229c4cb5183b5dd602a335c357e
 msgid "custom_api_endpoint_hint"
 msgstr "例如：https://openrouter.ai/api/v1/chat/completions"
 
+# en-hash: 210751d51c0e8e4527ae65bc6522789e
 msgid "custom_api_endpoint_title"
 msgstr "自定义 API %d — 终结点 URL"
 
+# en-hash: aa2776ae61983d0c0c97e5f7bf996ac2
 msgid "custom_api_is_reasoning"
 msgstr "是否为推理模型 (如 DeepSeek-R1)"
 
+# en-hash: 277c6375d0cacdc5445fdeb15f8158c9
 msgid "custom_api_key_title"
 msgstr "自定义 API %d — API 密钥"
 
+# en-hash: df3771ce7d40ea58977a420365a9511c
 msgid "custom_api_model_hint"
 msgstr "例如：google/gemini-2.5-flash 或 openai/gpt-4o"
 
+# en-hash: 54ed8dfd9713a5b46416c04ee0dc253c
 msgid "custom_api_model_title"
 msgstr "自定义 API %d — 默认模型"
 
+# en-hash: 6265afa1ceb063c099c3b2597670f26e
 msgid "custom_api_name"
 msgstr "自定义 API %d (OpenAI 兼容)"
 
+# en-hash: 936b30f151a3c4b39d60001a9808c93d
 msgid "custom_api_not_configured"
 msgstr "（未配置 — 点击设置）"
 
+# en-hash: b7e3710795eeb8a7e11d2c69fca00e5c
 msgid "custom_api_saved"
 msgstr "Custom API %d 配置已保存。"
 
+# en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "角色描述长度\n\n• 简短 (~80 字): 角色名称、身份与一句话简评。\n• 默认 (~200 字): 标准分析描述。\n• 详细 (~350 字): 包含性格特征与行为动机的丰富角色研究。\n• 极详细 (~500 字): 深度角色剖析。\n\n字数平衡\n描述长度越长 → 首次或全量获取时返回的角色总数可能会越少。后续运行“获取更多”不受此限制影响。"
 
+# en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
 msgstr "历史人物生平长度\n\n• 简短 (~50 字): 人名与主要生平身份。\n• 默认 (~100 字): 标准详细度传记。\n• 详细 (~200 字): 生平经历、历史意义以及与本书关联的背景。\n• 极详细 (~300 字): 详尽的完整传记。\n\n字数平衡\n传记长度越长 → 首次或全量获取时返回的历史人物总数可能会越少。"
 
+# en-hash: d5c5e27087e0c1ce183faf7725ec4851
 msgid "desc_len_about_locs"
 msgstr "地点描述长度\n\n• 简短 (~50 字): 地点名称与单行背景介绍。\n• 默认 (~100 字): 标准详细度描述。\n• 详细 (~200 字): 地点氛围、历史意义与关联事件。\n• 极详细 (~300 字): 完整的详尽描述。\n\n字数平衡\n描述长度越长 → 首次或全量获取时返回的地点总数可能会越少。"
 
+# en-hash: 9095a16f5b98ef0bf91cfa862f94123c
 msgid "desc_len_about_timeline"
 msgstr "故事时间线 — 每章固定记录一个事件（始终有效）\n\n时间线为每章严格记录一个条目。此设置仅影响每章摘要的详细程度。\n\n• 简短 (~50 字): 简短的一句话摘要。\n• 默认 (~80 字): 标准详细度的摘要。\n• 详细 (~150 字): 包含前因后果与上下文细节。\n• 极详细 (~200 字): 完整的叙事性描述。\n\n时间线的条目总数不会因长度设置而减少。"
 
+# en-hash: 7a1920d61156abc05a60135aefe8bc67
 msgid "desc_len_default"
 msgstr "默认"
 
+# en-hash: 4042fcadbe61a3300451157e2c9fe651
 msgid "desc_len_detailed"
 msgstr "详细"
 
+# en-hash: 30bb747c98bccdd11b3f89e644c4d0ad
 msgid "desc_len_short"
 msgstr "短"
 
+# en-hash: 32e4e2960890d7cbb4890166ac18d7f8
 msgid "desc_len_v_detailed"
 msgstr "非常详细"
 
+# en-hash: 7be0e84edd4626f6b7d42f1e8174f118
 msgid "dont_ask_again"
 msgstr "不再询问此书"
 
+# en-hash: 2593c7ce3ff937293feb1e61c152e551
 msgid "entity_label_characters"
 msgstr "角色"
 
+# en-hash: b4c0b6c75f651ee809fd20c087a4a533
 msgid "entity_label_locations"
 msgstr "地点"
 
+# en-hash: b972b14200d0fad941304c0b361a18f0
 msgid "entity_not_found"
 msgstr "未发现 '%s' 为角色或地点。"
 
+# en-hash: 76e73569f84e76aa9de514fea51ef9f3
 msgid "entity_ui_style_both"
 msgstr "现代弹窗 (全开启)"
 
+# en-hash: 386963b724dc569ddd1b4a480c24b826
 msgid "entity_ui_style_classic"
 msgstr "经典对话框"
 
+# en-hash: ce817225f09cf8f997decfb4619c28ef
 msgid "entity_ui_style_desc"
 msgstr "选择何时使用新的“现代弹窗”界面来替代“经典对话框”显示实体描述。"
 
+# en-hash: bb09780e4ff57e5ab2fa90f2be004cea
 msgid "entity_ui_style_in_text"
 msgstr "现代弹窗 (仅书中)"
 
+# en-hash: beae8da8a7553c33bf5d6ae7bdf91002
 msgid "entity_ui_style_menu"
 msgstr "现代弹窗 (仅菜单)"
 
+# en-hash: 68007307953d58fd56bdcd07d62f3e3f
 msgid "error_api_key_desc"
 msgstr "提供的 API Key 被拒绝。请检查您的设置并确保 Key 正确无误。"
 
+# en-hash: 4b6886b5038ca14e978a72f01df1fe6d
 msgid "error_api_key_title"
 msgstr "API Key 无效"
 
+# en-hash: 8a92a303055af14321f3cc7f644623fe
 msgid "error_extract_text"
 msgstr "错误：无法提取书籍文本。"
 
+# en-hash: 0f09bc754e4c901533fa9bcdb6e41926
 msgid "error_model_access_desc"
 msgstr "您的 API Key 没有访问所选模型的权限。您可能需要使用其他模型或提供商。"
 
+# en-hash: c4a195c14e7e5b76a6c25cf8991042a3
 msgid "error_model_access_title"
 msgstr "权限被拒绝"
 
+# en-hash: e40ae570525f73b62420a63937e3fdc5
 msgid "error_model_not_found_desc"
 msgstr "所选 AI 模型不可用或终端 URL 不正确。"
 
+# en-hash: d7d7061b1875f44ff39007aea89b505b
 msgid "error_model_not_found_title"
 msgstr "模型未找到"
 
+# en-hash: 623d63b7e802196197989d25dde5e13b
 msgid "error_no_api_key"
 msgstr "错误：未设置 API 密钥"
 
+# en-hash: e7b0af2be5bf56ed033f222a42ffd884
 msgid "error_parse_desc"
 msgstr "AI 返回了无法处理的响应。这可能是一个暂时的故障。"
 
+# en-hash: d80a250008a1d3ed31be8a53cc7e7d74
 msgid "error_parse_title"
 msgstr "数据错误"
 
+# en-hash: 8101890ac4a7cc06535730504b0e4dc6
 msgid "error_quota_desc"
 msgstr "您的 API 额度已耗尽或已达到速率限制。请检查您的账单状态或稍后再试。"
 
+# en-hash: d117d5af67a2a1d9dfc041d66d435519
 msgid "error_quota_title"
 msgstr "配额已超出"
 
+# en-hash: 54130f799248d4be121d04020d031e9b
 msgid "error_service_down_desc"
 msgstr "AI 服务暂时不可用或过载。请在几分钟后重试。"
 
+# en-hash: c95aec10ba314ea37a33cea18cf8a412
 msgid "error_service_down_title"
 msgstr "服务不可用"
 
+# en-hash: 41fd6797646e09ef2fb1024cd8a2b134
 msgid "error_timeout_desc"
 msgstr "请求耗时过长。这通常发生于内容复杂的书籍或网络连接较慢时。"
 
+# en-hash: 958768702baf0da65e8147415bc59b66
 msgid "error_timeout_title"
 msgstr "连接超时"
 
+# en-hash: 502ff43b8c190768d303036433a5fe17
 msgid "error_unknown_desc"
 msgstr "发生了一个意外错误：%s"
 
+# en-hash: 12fb24de361ff91915001561cfa9fdc8
 msgid "error_unknown_title"
 msgstr "获取失败"
 
+# en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
 msgstr "正在提取更多角色..."
 
+# en-hash: a4a9bd989f4fbd0841ad6a1e194eecac
 msgid "extracting_more_terms"
 msgstr "正在提取更多术语..."
 
+# en-hash: 4ea7755f84f02d23876d90be2f9765cf
 msgid "fetch_button"
 msgstr "获取"
 
+# en-hash: 05ab2ce95089e50db065a1bd1ed0cd85
 msgid "fetch_single_word_prompt"
 msgstr "未发现 '%s' 的 X-Ray 数据。是否要查询？"
 
+# en-hash: f003d65d2046d2fa662682cfcc61836e
 msgid "fetch_successful"
 msgstr "获取成功"
 
+# en-hash: cba18edc0f67f3912f12b0e5cff30ad5
 msgid "fetching_ai"
 msgstr "正在分析书籍以生成 X-Ray 数据..."
 
+# en-hash: cfecb2031470d0e28420642fc37ab55f
 msgid "fetching_author"
 msgstr "正在从 %s 获取作者信息..."
 
+# en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
 msgstr "正在获取系列背景：第 %d 本，共 %d 本..."
 
+# en-hash: 019511d88cae31edb42daf4d90ca9a36
 msgid "fetching_series_info"
 msgstr "识别系列图书..."
 
+# en-hash: 00deb09e5e37bd7e81c99a6bf98d8380
 msgid "fetching_wait"
 msgstr "⏳ 请稍候...\n此过程可能需要 10-50 秒。"
 
+# en-hash: c65aba36ac8b272d7e881146a6d885bc
 msgid "find_mentions"
 msgstr "查找提及"
 
+# en-hash: 68aeeb5f5f2b6deb964d2c1cebfe0e62
 msgid "full_book_option"
 msgstr "整本书模式"
 
+# en-hash: 9ab81f57823f6aeb02362291f23883e6
 msgid "label_aliases"
 msgstr "??"
 
+# en-hash: e38583f3a073fa2a86a841b672aba548
 msgid "label_category"
 msgstr "类别"
 
+# en-hash: 52f90e03a4ea208d52475028ad0250ef
 msgid "label_definition"
 msgstr "定义"
 
+# en-hash: 35ba4a2677442e210c23a00a5601aba3
 msgid "label_description"
 msgstr "描述"
 
+# en-hash: 2301836d10bf537bc0a170ebeda4a7ea
 msgid "label_expanded"
 msgstr "指代"
 
+# en-hash: 62eb33fae593edd0057718fd9eac51fc
 msgid "label_gender"
 msgstr "性别"
 
+# en-hash: ad32e604e17467fc435538334fbddf3e
 msgid "label_name"
 msgstr "名称"
 
+# en-hash: 1ee35d254c681898cb2c288faeee97c3
 msgid "label_occupation"
 msgstr "职业"
 
+# en-hash: b18ca8e369fbeb06248c9947898d7a9d
 msgid "label_reasoning"
 msgstr "AI 推理"
 
+# en-hash: 612f9988ac7994ee666d3a59dad71b28
 msgid "label_role"
 msgstr "身份/角色"
 
+# en-hash: c7f0cb0f679c956a1a39bb18f0d1ce38
 msgid "lang_follow_book"
 msgstr "自动 (跟随书籍)"
 
+# en-hash: 0eed7c5cabc42830815d5054c0bac951
 msgid "lang_follow_system"
 msgstr "自动 (跟随系统)"
 
+# en-hash: 8606ca108b0e55847f288f1c807eafd5
 msgid "lang_mismatch_title"
 msgstr "语言不匹配"
 
+# en-hash: 3d37179cdc5057a3e15be8b161522ff1
 msgid "language_changed_reopen"
 msgstr "语言已更改。重新打开菜单以查看更改。"
 
+# en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Later"
 
+# en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "链接条目"
 
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "linked_entries_disabled"
 msgstr "已禁用"
 
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "linked_entries_enabled"
 msgstr "已启用"
 
+# en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
 msgstr "“关联条目”会在角色、地点和历史人物在彼此的描述中被提到时自动建立连接。\n\n禁用此功能将隐藏详情对话框中的“关联条目”按钮。"
 
+# en-hash: db644ab64bb392cf0d28dfd9cc2c0372
 msgid "log_empty"
 msgstr "日志为空。"
 
+# en-hash: 515fba56db1da76925fb6b63f29face7
 msgid "log_loading"
 msgstr "正在加载日志..."
 
+# en-hash: 3e89a40ac0cf0ae3a671c8ddadabf81a
 msgid "log_tail_notice"
 msgstr "[... 已省略 %d 行更早的日志 ...]"
 
+# en-hash: bb3051bbc0e5ad480e29ddcfd8c19c7d
 msgid "logs_cleared"
 msgstr "日志已清除！"
 
+# en-hash: 36993852e97df8c6de1a644af20b4439
 msgid "looking_up_msg"
 msgstr "正在查询 '%s'..."
 
+# en-hash: 1485de0735ca78d3fb650e6418fd9c9c
 msgid "low_conf_match"
 msgstr "部分匹配 — 已显示“%s”的关联信息。点击下方重新获取精确词条。"
 
+# en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Manual Pick"
 
+# en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
 msgstr "✕"
 
+# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
 msgid "mention_return_btn"
 msgstr "← Back"
 
+# en-hash: 1c2fbf8b19aa215337092cba9e51979a
 msgid "mention_return_label"
 msgstr "← 返回至第 %d 页"
 
+# en-hash: 4a53c3a6c553dd59d658731018378fce
 msgid "mentions_at_location"
 msgstr "提及：%s"
 
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "mentions_disabled"
 msgstr "已禁用"
 
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "mentions_enabled"
 msgstr "已启用"
 
+# en-hash: 6089c3c5bfdda7928b8edaff7fc29d34
 msgid "mentions_none"
 msgstr "尚未找到关于 “%s” 的提及。"
 
+# en-hash: 8c8e4cc582637e842449b7dea503b5b0
 msgid "mentions_preference_desc"
 msgstr "选择您对角色和地点提及的偏好："
 
+# en-hash: c723ad634182d938da720018beb94797
 msgid "mentions_refresh"
 msgstr "刷新提及"
 
+# en-hash: 3fa85f74d71e5d7d0859e1c9ac30e6cf
 msgid "mentions_scanning"
 msgstr "扫描中... 第 %1 / %2 章"
 
+# en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
 msgstr "“提及扫描”功能允许您查找书中角色或地点的每一次出现。此过程将在后台自动运行，以确保阅读器保持响应速度。\n\n禁用此功能将隐藏“查找提及”按钮。"
 
+# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
 msgstr "提及设置"
 
+# en-hash: 795fe7b23df416a5beffd9a50873b771
 msgid "mentions_title"
 msgstr "提及：%s"
 
+# en-hash: 8f7f4c1ce7a4f933663d10543562b096
 msgid "menu_about"
 msgstr "关于"
 
+# en-hash: 92ff32056df3871303587ba7d479c47f
 msgid "menu_ai_settings"
 msgstr "AI 设置"
 
+# en-hash: 1d18bcea5f63d1761c231009ed210e11
 msgid "menu_api_keys"
 msgstr "API 密钥与服务商"
 
+# en-hash: 50ef21a8bf0bdcedbbbfd33a536a1357
 msgid "menu_author_info"
 msgstr "作者信息"
 
+# en-hash: a6c5c63c5c9be868061d03e89d246430
 msgid "menu_auto_update_frequency"
 msgstr "自动 X-Ray 设置"
 
+# en-hash: 98c609842fdba0aed4a678b1dd84a604
 msgid "menu_beta_channel"
 msgstr "Beta Channel 设置"
 
+# en-hash: a0962fa6cbceddb69f0fa5745c2ca704
 msgid "menu_book_mode"
 msgstr "Book Mode"
 
+# en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "menu_characters"
 msgstr "角色"
 
+# en-hash: 06f4f7bd90b1c8a0145d18ee55c265c4
 msgid "menu_clear_cache"
 msgstr "清除缓存"
 
+# en-hash: 67fd6c2ed402914b08701f21af350cc5
 msgid "menu_clear_logs"
 msgstr "清除日志"
 
+# en-hash: 5c4a6c4395765ab86fc49b6c957525d9
 msgid "menu_content_fetch_settings"
 msgstr "内容获取设置"
 
+# en-hash: ecfaa3fa16216e962dfb2337337df2e4
 msgid "menu_custom_model_title"
 msgstr "自定义 %s 模型"
 
+# en-hash: f82e66c60fd95d54434ed37dc81034e2
 msgid "menu_desc_length_settings"
 msgstr "描述长度"
 
+# en-hash: d7400967f844d2288239b8d7a10d7839
 msgid "menu_display_ui_settings"
 msgstr "显示与界面设置"
 
+# en-hash: bd44df2bee626fbc7db133d886c1cf63
 msgid "menu_enter_custom_model"
 msgstr "输入自定义模型..."
 
+# en-hash: c78507f1735096000bbc8f4b4ddfc289
 msgid "menu_entity_ui_mode"
 msgstr "实体描述显示样式"
 
+# en-hash: c1b19dc83bcbcf0c634af5164ac2f24f
 msgid "menu_fetch_author"
 msgstr "获取作者信息 (AI)"
 
+# en-hash: 1481c3fcb242cec4e66828697e097d65
 msgid "menu_fetch_more_chars"
 msgstr "获取更多角色"
 
+# en-hash: e28e1a3102c10986b10c3a58ebc26979
 msgid "menu_fetch_more_terms"
 msgstr "获取更多术语"
 
+# en-hash: f0d29ae92c638538610d26014bda7269
 msgid "menu_fetch_series_context"
 msgstr "获取/刷新 Series Context"
 
+# en-hash: 7cf395303ce3665a9834721d4b748e4b
 msgid "menu_frequency"
 msgstr "频率"
 
+# en-hash: 60b01aa51c38e7a952d2760bf1584915
 msgid "menu_historical_figures"
 msgstr "历史人物"
 
+# en-hash: 4994a8ffeba4ac3140beb89e8d41f174
 msgid "menu_language"
 msgstr "语言"
 
+# en-hash: 1e1459fdaf8dd012ccee18d64ebf8fe7
 msgid "menu_linked_entries_settings"
 msgstr "关联条目设置"
 
+# en-hash: eebd338ddbd547e41e4a1296de82963a
 msgid "menu_locations"
 msgstr "地点"
 
+# en-hash: 10d0de28911c5f66463b9c8783f8148a
 msgid "menu_maintenance"
 msgstr "维护"
 
+# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "menu_mentions_settings"
 msgstr "提及设置"
 
+# en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "主位 AI 模型"
 
+# en-hash: 22b189dd0fe1b07c3174e8a676a0fe3c
 msgid "menu_reasoning_effort"
 msgstr "AI 推理深度"
 
+# en-hash: 3e8a42af68c64edd3ce4f9d3d4da0147
 msgid "menu_secondary_ai_model"
 msgstr "次位 AI 模型"
 
+# en-hash: 18f3f323b19a809e90e381568c5acb51
 msgid "menu_series_context"
 msgstr "系列上下文"
 
+# en-hash: f4f70727dc34561dfde1a3c529b6205c
 msgid "menu_settings"
 msgstr "设置"
 
+# en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
 msgstr "术语表"
 
+# en-hash: 87f9f735a1d36793ceaecd4e47124b63
 msgid "menu_timeline"
 msgstr "时间线"
 
+# en-hash: 3c1fa918adf3e65fbff595ee1fd50d26
 msgid "menu_ui_popup_intext"
 msgstr "书中查询使用脚注样式"
 
+# en-hash: 575c1c5654ec32201c7eea873a1fe01b
 msgid "menu_ui_popup_menu"
 msgstr "菜单查询使用脚注样式"
 
+# en-hash: ada4a5a87032c5a246e7f76bb95f587e
 msgid "menu_unit_categories"
 msgstr "单位类别"
 
+# en-hash: 01eb258da99de69aab015959dfc528d9
 msgid "menu_unit_converter"
 msgstr "单位转换器"
 
+# en-hash: f55a01bb8237586887c0f4f6c7a56131
 msgid "menu_update_xray"
 msgstr "更新 X-Ray 数据 (合并)"
 
+# en-hash: 02c89382dc0b7f202b7d455bf88ab785
 msgid "menu_view_config"
 msgstr "查看所有配置"
 
+# en-hash: 8f96241822e718c6be629d036f586ca6
 msgid "menu_view_log"
 msgstr "查看日志"
 
+# en-hash: 0863526e514d88cd2d00b39f8dda0920
 msgid "menu_xray"
 msgstr "X-Ray"
 
+# en-hash: a805cb8f152d740dadbc6d065afb91db
 msgid "menu_xray_mode"
 msgstr "文中查找"
 
+# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
 msgid "merge_back"
 msgstr "← 返回"
 
+# en-hash: 68be4837f6c739877233e527a996dd00
 msgid "merge_button"
 msgstr "Merge"
 
+# en-hash: 8bb01dda315086774624ba2e7444a265
 msgid "merge_confirm"
 msgstr "确定将 %s 合并至 %s 吗？次要条目将被删除，其别名将被吸收。"
 
+# en-hash: f05bbbb62dd4920db1277184e3fd98ce
 msgid "merge_duplicates"
 msgstr "合并重复项..."
 
+# en-hash: 1a0eb2431b20a745a419931f2f637210
 msgid "merge_failed"
 msgstr "合并失败。"
 
+# en-hash: 975d71893cc2c5cb96e7c1e8dfad785a
 msgid "merge_pick_primary"
 msgstr "选择要保留的条目"
 
+# en-hash: 41d27b298020df5b8ec938b89b487b8d
 msgid "merge_pick_secondary"
 msgstr "选择要删除的条目"
 
+# en-hash: d0517e8f339cc45490ff9eb6d43fc981
 msgid "merge_success"
 msgstr "条目合并成功。"
 
+# en-hash: 1db7d7c3180a75c44c8edeccdfd01536
 msgid "merging_smartly"
 msgstr "正在合并..."
 
+# en-hash: aa2d6e4f578eb0cfaba23beef76c2194
 msgid "model_free"
 msgstr "免费"
 
+# en-hash: 76e084771e78c194efd0e2d5b8920bea
 msgid "model_paid"
 msgstr "付费"
 
+# en-hash: e7fa74181aff985bd6dadb3d57bb7119
 msgid "msg_added_characters"
 msgstr "已添加 %d 个新角色！"
 
+# en-hash: 3803163145663de684e7c6212832d27c
 msgid "msg_added_terms"
 msgstr "已添加 %d 个新术语！"
 
+# en-hash: 3f0246c95a38aaf04b2c550c9e1a287d
 msgid "msg_fetch_failed"
 msgstr "AI 获取失败"
 
+# en-hash: dffb8357db1ec38d1f6dffbcc270400d
 msgid "msg_no_bio"
 msgstr "暂无传记。"
 
+# en-hash: 1a99b2b1ba9babaa605eb045980477a7
 msgid "msg_suggest_lang"
 msgstr "本书语言为 %s。是否切换 X-Ray 语言以匹配？"
 
+# en-hash: 2e7e2d7f8421035f2e307aa4064d20ee
 msgid "multiple_matches"
 msgstr "找到多个“%s”的匹配项。您指的是哪一个？"
 
+# en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
 msgid "next"
 msgstr "下一页"
 
+# en-hash: bafd7322c6e97d25b6299b5d6fe8920b
 msgid "no"
 msgstr "否"
 
+# en-hash: 9b793d19e6877134f19c37c3ac6247fa
 msgid "no_api_key"
 msgstr "未设置 AI API 密钥！\n\n请在以下路径输入密钥：\n菜单 → X-Ray → AI 设置"
 
+# en-hash: 23dfd40828eb2cf5e31ad869ef4bda83
 msgid "no_author_data_fetch"
 msgstr "暂无作者信息。\n\n是否要通过 AI 获取？"
 
+# en-hash: 6cbd3b9b2bb981930fa8f38f26ca5f61
 msgid "no_character_data"
 msgstr "暂无角色数据。\n\n请先使用“获取 X-Ray 数据”。"
 
+# en-hash: 80a4905228688f8ad8ec996803f60ffb
 msgid "no_data_prompt"
 msgstr "未找到此书的 X-Ray 数据。是否现在通过 AI 获取？"
 
+# en-hash: f66eabdf2cb216138e5c20cd3f9d890d
 msgid "no_duplicates_found"
 msgstr "未发现重复项。"
 
+# en-hash: 064105ef9b1bca475059078013cc4a4b
 msgid "no_historical_data"
 msgstr "暂无历史人物数据。\n\n请先使用“获取 X-Ray 数据”。\n\nAI 将自动检测书中提及的真实历史人物。"
 
+# en-hash: 4d0e58f2c49ca238a05d2a92486d3d70
 msgid "no_location_data"
 msgstr "暂无地点数据。请先使用“获取 X-Ray 数据”。"
 
+# en-hash: 6c32701ae234f6a1c3a03e18d89bd1e1
 msgid "no_merges_performed"
 msgstr "未执行任何合并。"
 
+# en-hash: 29503d301d509e5cfea9e97daffa9e79
 msgid "no_terms_data"
 msgstr "尚无术语数据。请先使用“Fetch X-Ray Data”。"
 
+# en-hash: 0c8a85db22b4a3eadf95fe1a55f00c63
 msgid "no_timeline_data"
 msgstr "暂无时间线数据。\n\n请先使用“获取 X-Ray 数据”。\n\nAI 将按时间顺序显示关键事件。"
 
+# en-hash: e0aa021e21dddbd6d8cecec71e9cf564
 msgid "ok"
 msgstr "确定"
 
+# en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
 msgstr "Pair marked as not a duplicate."
 
+# en-hash: 607481fc96e754b33650eb171aac9447
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
+# en-hash: 046763a0d64321194477604b7751c8e4
 msgid "pending_duplicates_prompt"
 msgstr "AI 发现了上次获取的 %d 个潜在重复项。现在查看吗？"
 
+# en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "使用 AI 驱动的书籍分析提升您的阅读体验，就像 Kindle X-Ray 一样！"
 
+# en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "X-Ray 快捷菜单"
 
+# en-hash: decbe415d8accca7c2c16d48a79ee934
 msgid "read_more"
 msgstr "Read More"
 
+# en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
 msgstr "Reason"
 
+# en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
 msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x, DeepSeek Reasoner, Claude 4.5+ (extended thinking), and Gemini 2.5+."
 
+# en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
 msgstr "高"
 
+# en-hash: 28d0edd045e05cf5af64e35ae0c4c6ef
 msgid "reasoning_low"
 msgstr "低"
 
+# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
 msgid "reasoning_medium"
 msgstr "中"
 
+# en-hash: e22876a23ad77be581ada0285360983a
 msgid "reasoning_unset"
 msgstr "未设置（默认）"
 
+# en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Reject"
 
+# en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "重新查询“%s”"
 
+# en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"
 msgstr "Review"
 
+# en-hash: c9cc8cce247e49bae79f15173ce97354
 msgid "save"
 msgstr "保存"
 
+# en-hash: 13348442cc6a27032d2b4aa28b75a5d3
 msgid "search_button"
 msgstr "搜索"
 
+# en-hash: 428279a428d9f130d69840b2b73c7514
 msgid "search_character"
 msgstr "搜索角色..."
 
+# en-hash: c2380a3df7158668908b94405cbe5902
 msgid "search_character_title"
 msgstr "角色搜索"
 
+# en-hash: 828800124a2c130cc221b4d028b781a2
 msgid "search_hint"
 msgstr "输入名称"
 
+# en-hash: da83080ddaefc008f3de01b20a111043
 msgid "search_term"
 msgstr "搜索术语"
 
+# en-hash: 428da3d1fd5aaa456409aa6b30d2c4f2
 msgid "series_ask_later_msg"
 msgstr "系列剧情回顾已推迟。我们会在你下次打开/继续阅读此书时再次询问。"
 
+# en-hash: c69ce70b393414a1cdee677a96a195e4
 msgid "series_context_enabled_toggle"
 msgstr "启用 Series Context"
 
+# en-hash: cfd20c079f624acba218200220eb4a10
 msgid "series_context_loaded"
 msgstr "Series context 已加载（包含 %d 本前序书籍）。"
 
+# en-hash: 167442e30a87a00e4f109ca2361ec53a
 msgid "series_context_prompt_text"
 msgstr "这似乎是《%2$s》的第 %1$d 册。是否加载前 %3$d 册的书籍回顾？\n\n(您可以在 设置 → 系列上下文 中关闭此提示)"
 
+# en-hash: 577a96abeeaa42e4748d2189f746a05b
 msgid "series_context_prompt_title"
 msgstr "检测到系列书籍"
 
+# en-hash: ddb44dbe6c8ac2048d293e6102eb4c54
 msgid "series_disabled_msg"
 msgstr "已为本书禁用自动提示。你可以从 X-Ray 菜单手动获取剧情回顾。"
 
+# en-hash: 45038789e6aae12b35398440e65bf810
 msgid "series_no_prior_detected"
 msgstr "未检测到该系列的前序书籍。"
 
+# en-hash: 4492f89a70cb73291167d53d07868ebc
 msgid "series_prior_books_header"
 msgstr "── 前作回顾 ──"
 
+# en-hash: 38a1412b98e409d6f6a0b2464c62fa08
 msgid "series_prior_label"
 msgstr "[前序]"
 
+# en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
 msgid "skip"
 msgstr "Skip"
 
+# en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "无剧透模式将 AI 提取范围限制在您已阅读的页面（截止到当前页），防止剧透后续章节。\n\n整本书模式将分析整本书，可能包含剧透。"
 
+# en-hash: 5445912c4c35d13ae26a53a6d782d149
 msgid "spoiler_free_menu_option"
 msgstr "无剧透"
 
+# en-hash: f6bcf48f8091f8fe253489d94223ec7c
 msgid "spoiler_free_option"
 msgstr "无剧透模式（截至 %d%%）"
 
+# en-hash: 49d594b5e1f6994860fa4c0328c44977
 msgid "spoiler_preference_desc"
 msgstr "选择 X-Ray 数据的剧透偏好："
 
+# en-hash: 082822dd3aeeab538d5e399d7883d31a
 msgid "spoiler_preference_title"
 msgstr "剧透偏好"
 
+# en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
 msgstr "Stop"
 
+# en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"
 msgstr "未找到匹配“%s”的术语"
 
+# en-hash: 5d5b473a14bed6f67fdbe6c745b045a7
 msgid "this_chapter"
 msgstr "本章"
 
+# en-hash: d2c24d59e0baff4d0155fbdf62590867
 msgid "this_page"
 msgstr "当前页"
 
+# en-hash: 5b2e3a633a4d820d64aa4356495ab188
 msgid "unit_conv_direction"
 msgstr "转换方向"
 
+# en-hash: 0352baf577c778cf15e49c40b1126bc3
 msgid "unit_conv_direction_about"
 msgstr "单位转换方向决定了书中测量值（如长度、重量、温度）的转换方式：\n\n• [B]自动（跟随设备）：[/B]根据您的设备语言和系统区域设置自动进行转换。\n\n• [B]转换为公制：[/B]始终将英制单位（如英里、华氏度）转换为等效的公制单位（如千米、摄氏度）。\n\n• [B]转换为英制：[/B]始终将公制单位转换为等效的英制单位。"
 
+# en-hash: 78b12f9283363cc04ec6a9f2f8fb18c4
 msgid "unit_conv_direction_auto"
 msgstr "自动（跟随设备设置）"
 
+# en-hash: 926a5778ac523de44a7059268db8eb90
 msgid "unit_conv_direction_desc"
 msgstr "选择单位转换的目标方向："
 
+# en-hash: 16fb229accd0e21e3b01de25113a5092
 msgid "unit_conv_direction_imperial"
 msgstr "总是转换为英制"
 
+# en-hash: eb80006cda3aa58a5be2dbc9f535dc06
 msgid "unit_conv_direction_metric"
 msgstr "总是转换为公制"
 
+# en-hash: 9039461fb813111bf38dc683527be31d
 msgid "unit_conv_enabled"
 msgstr "启用单位转换器"
 
+# en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "unit_conv_style_settings"
 msgstr "样式与下划线设置"
 
+# en-hash: a18366b217ebf811ad1886e4f4f865b2
 msgid "unit_intensity_dark"
 msgstr "深"
 
+# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
 msgid "unit_intensity_light"
 msgstr "淡"
 
+# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
 msgid "unit_intensity_medium"
 msgstr "中"
 
+# en-hash: 2f59140753baa1e1e8193111db3ed7e1
 msgid "unit_style_preview_title"
 msgstr "样式预览"
 
+# en-hash: 6e7b34fa59e1bd229b207892956dc41c
 msgid "unit_timeout_never"
 msgstr "从不"
 
+# en-hash: efb97de9aae997a3dde262761bed835d
 msgid "unit_tooltip_timeout_label"
 msgstr "提示框超时"
 
+# en-hash: eb656e41b6da91494775ecf47a51da91
 msgid "unit_underline_dashed"
 msgstr "虚线"
 
+# en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "点线"
 
+# en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"
 msgstr "下划线深浅"
 
+# en-hash: 8bcda43732b0928d269955e0f09ff76f
 msgid "unit_underline_invisible"
 msgstr "不可见"
 
+# en-hash: e41480b6bbfbf7407974a88d3d34f4fa
 msgid "unit_underline_solid"
 msgstr "实线"
 
+# en-hash: 9a66725ea21264441ab1682f4739fbc2
 msgid "unit_underline_style_label"
 msgstr "下划线样式"
 
+# en-hash: 5cc1d76d86c562d334e35e4ef262ba5c
 msgid "unit_underline_thickness_label"
 msgstr "下划线粗细"
 
+# en-hash: 0e9498bd18e441969b23cb70819abc3c
 msgid "unit_underline_wavy"
 msgstr "波浪线"
 
+# en-hash: 3f50e96b2eef687f766dc7651a55ad0a
 msgid "updater_available_header"
 msgstr "X-Ray %s 已发布！\n您当前的版本是 %s。"
 
+# en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "updater_btn_cancel"
 msgstr "取消"
 
+# en-hash: 326737de1766f7c8b80a5acde0f18651
 msgid "updater_btn_download"
 msgstr "下载并安装"
 
+# en-hash: 61057a0c84605444201929bdd72014f0
 msgid "updater_btn_later"
 msgstr "稍后"
 
+# en-hash: 6175d78ff8e7f8913d4c2fa339199bfc
 msgid "updater_btn_open_browser"
 msgstr "在浏览器中打开"
 
+# en-hash: 51cfbcff36da74a9fc47f3a5140f99f2
 msgid "updater_btn_restart"
 msgstr "重启"
 
+# en-hash: 092dc0fe2a1709895d0ffb03306ab644
 msgid "updater_cancelled_check"
 msgstr "已取消更新检查。"
 
+# en-hash: 1e4112df1113e06c77e13d6614f2cd0a
 msgid "updater_cancelled_update"
 msgstr "已取消更新。"
 
+# en-hash: f77f38f684c8b974dd4a56bb321cfd5f
 msgid "updater_check"
 msgstr "检查更新"
 
+# en-hash: a07813cc05571f23ce8dd7039583d7da
 msgid "updater_checking"
 msgstr "正在检查更新..."
 
+# en-hash: 3e6aed71a195328451956394c1ba0e70
 msgid "updater_download_prompt"
 msgstr "\n\n现在下载并安装？"
 
+# en-hash: 4d7dcb1c7639337d915a10ffc18f0c5d
 msgid "updater_downloading"
 msgstr "正在下载 X-Ray %s..."
 
+# en-hash: 3ee3d18e96340272001439279cf33314
 msgid "updater_err_download"
 msgstr "下载错误：%s"
 
+# en-hash: 8080e73222237f54453a9d31947ecb53
 msgid "updater_err_extract"
 msgstr "解压错误：%s"
 
+# en-hash: bd2ab435fbc5c07d9803f63cfa2ea188
 msgid "updater_error_checking"
 msgstr "检查更新时出错。"
 
+# en-hash: 1f2460a4555c14c00a245d44c9742751
 msgid "updater_error_checking_detail"
 msgstr "检查更新时出错：%s"
 
+# en-hash: 4764ffed7fe43c5174fe97c69cb933ee
 msgid "updater_no_asset"
 msgstr "未找到自动更新文件。\n\n是否在 GitHub 上打开发布页面？"
 
+# en-hash: fa243c194c72bb2d6c10dfad7c375cf3
 msgid "updater_success_restart"
 msgstr "X-Ray %s 已成功安装。\n\n是否重启 KOReader 以应用更新？"
 
+# en-hash: 1d506d775154b17218de18195cf130b3
 msgid "updater_up_to_date"
 msgstr "X-Ray 已是最新版本 (%s)。"
 
+# en-hash: 67b3aeb4ed5299bb57c1e2de1beb0bf5
 msgid "updater_whats_new"
 msgstr "更新内容："
 
+# en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "正在更新 X-Ray 数据..."
 
+# en-hash: 0d1b08c34858921bc7c662b228acb7ba
 msgid "val"
 msgstr "???"
 
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "xray_disabled_label"
 msgstr "已禁用"
 
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "xray_enabled_label"
 msgstr "已启用"
 
+# en-hash: aa3045baed0aad489f96655b14b671ac
 msgid "xray_mode_desc"
 msgstr "在字典和选择菜单中添加“X-Ray”按钮，实现即时查询。"
 
+# en-hash: 93cba07454f06a4a960172bbd6e2a435
 msgid "yes"
 msgstr "是"
 
