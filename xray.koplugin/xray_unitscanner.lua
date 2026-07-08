@@ -292,7 +292,74 @@ local function _draw_underline(bb, box, style, grey, thickness, raw_thickness, p
     end
 end
 
+local function _checkSettingsChanged(self)
+    local settings = self.ai_helper and self.ai_helper.settings or {}
+    
+    local enabled = settings.unit_converter_enabled ~= false
+    local underline_enabled = settings.unit_underline_enabled ~= false
+    local direction = settings.unit_conversion_direction or "auto"
+    local dim_units = G_reader_settings and G_reader_settings:readSetting("dimension_units") or "mm"
+    
+    local cat_l = settings.unit_cat_length ~= false
+    local cat_w = settings.unit_cat_weight ~= false
+    local cat_t = settings.unit_cat_temp ~= false
+    local cat_v = settings.unit_cat_volume ~= false
+    local cat_s = settings.unit_cat_speed ~= false
+    local cat_a = settings.unit_cat_area ~= false
+
+    if self.last_settings_state == nil then
+        self.last_settings_state = {
+            enabled = enabled,
+            underline_enabled = underline_enabled,
+            direction = direction,
+            dim_units = dim_units,
+            cat_l = cat_l,
+            cat_w = cat_w,
+            cat_t = cat_t,
+            cat_v = cat_v,
+            cat_s = cat_s,
+            cat_a = cat_a,
+        }
+        return false
+    end
+
+    local state = self.last_settings_state
+    local changed = (state.enabled ~= enabled) or
+                    (state.underline_enabled ~= underline_enabled) or
+                    (state.direction ~= direction) or
+                    (state.dim_units ~= dim_units) or
+                    (state.cat_l ~= cat_l) or
+                    (state.cat_w ~= cat_w) or
+                    (state.cat_t ~= cat_t) or
+                    (state.cat_v ~= cat_v) or
+                    (state.cat_s ~= cat_s) or
+                    (state.cat_a ~= cat_a)
+
+    if changed then
+        self.last_settings_state = {
+            enabled = enabled,
+            underline_enabled = underline_enabled,
+            direction = direction,
+            dim_units = dim_units,
+            cat_l = cat_l,
+            cat_w = cat_w,
+            cat_t = cat_t,
+            cat_v = cat_v,
+            cat_s = cat_s,
+            cat_a = cat_a,
+        }
+    end
+
+    return changed
+end
+
 function M:_drawUnitUnderlines(bb)
+    if _checkSettingsChanged(self) then
+        log("Settings changed, refreshing unit scan")
+        self:scanBookForUnits()
+        self._box_cache_sig = nil
+    end
+
     self:_resolveHighlightBoxes()
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then return end
     

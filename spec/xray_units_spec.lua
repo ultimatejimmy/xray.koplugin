@@ -321,7 +321,7 @@ describe("xray_units", function()
     end)
 
     describe("getDefaultDirection", function()
-        it("returns to_imperial when device setting is imperial", function()
+        it("returns to_imperial when device setting is imperial (imperial)", function()
             _G.G_reader_settings = {
                 readSetting = function(_, key)
                     if key == "dimension_units" then return "imperial" end
@@ -330,10 +330,28 @@ describe("xray_units", function()
             assert.are.equal("to_imperial", xray_units.getDefaultDirection())
         end)
 
-        it("returns to_metric when device setting is metric", function()
+        it("returns to_imperial when device setting is imperial (in)", function()
+            _G.G_reader_settings = {
+                readSetting = function(_, key)
+                    if key == "dimension_units" then return "in" end
+                end
+            }
+            assert.are.equal("to_imperial", xray_units.getDefaultDirection())
+        end)
+
+        it("returns to_metric when device setting is metric (metric)", function()
             _G.G_reader_settings = {
                 readSetting = function(_, key)
                     if key == "dimension_units" then return "metric" end
+                end
+            }
+            assert.are.equal("to_metric", xray_units.getDefaultDirection())
+        end)
+
+        it("returns to_metric when device setting is metric (mm)", function()
+            _G.G_reader_settings = {
+                readSetting = function(_, key)
+                    if key == "dimension_units" then return "mm" end
                 end
             }
             assert.are.equal("to_metric", xray_units.getDefaultDirection())
@@ -344,6 +362,56 @@ describe("xray_units", function()
                 readSetting = function() return nil end
             }
             assert.are.equal("to_metric", xray_units.getDefaultDirection())
+        end)
+    end)
+
+    describe("auto direction resolution", function()
+        it("resolves auto to to_metric and only returns imperial aliases when device setting is metric", function()
+            _G.G_reader_settings = {
+                readSetting = function(_, key)
+                    if key == "dimension_units" then return "metric" end
+                end
+            }
+            local aliases = xray_units.getScanAliases("auto")
+            local has_km = false
+            for _, a in ipairs(aliases) do
+                if a == "km" then has_km = true end
+            end
+            assert.is_false(has_km)
+
+            local has_mile = false
+            for _, a in ipairs(aliases) do
+                if a == "mile" or a == "miles" then has_mile = true end
+            end
+            assert.is_true(has_mile)
+
+            local res = xray_units.detectMeasurements("The run was 5 miles and 10 km.", "auto")
+            assert.are.equal(1, #res)
+            assert.are.equal("5 miles", res[1].original)
+        end)
+
+        it("resolves auto to to_imperial and only returns metric aliases when device setting is imperial", function()
+            _G.G_reader_settings = {
+                readSetting = function(_, key)
+                    if key == "dimension_units" then return "imperial" end
+                end
+            }
+            local aliases = xray_units.getScanAliases("auto")
+            local has_mile = false
+            for _, a in ipairs(aliases) do
+                if a == "mile" or a == "miles" then has_mile = true end
+            end
+            assert.is_false(has_mile)
+
+            local has_km = false
+            for _, a in ipairs(aliases) do
+                if a == "km" then has_km = true end
+            end
+            assert.is_true(has_km)
+
+            local res = xray_units.detectMeasurements("The run was 5 miles and 10 km.", "auto")
+            assert.are.equal(1, #res)
+            assert.are.equal("10 km", res[1].original)
         end)
     end)
 end)

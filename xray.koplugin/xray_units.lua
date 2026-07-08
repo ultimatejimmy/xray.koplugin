@@ -35,7 +35,7 @@ M.NON_ENGLISH_ASCII = NON_ENGLISH_ASCII
 function M.getDefaultDirection()
     if G_reader_settings then
         local setting = G_reader_settings:readSetting("dimension_units")
-        if setting == "imperial" then
+        if setting == "in" or setting == "imperial" then
             return "to_imperial"  -- Accustomed to imperial -> convert FROM metric TO imperial
         end
     end
@@ -366,7 +366,9 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
     if not text or text == "" then return {} end
     current_lang = current_lang or "en"
     
-    direction = direction or M.getDefaultDirection()
+    if not direction or direction == "auto" then
+        direction = M.getDefaultDirection()
+    end
     enabled_categories = enabled_categories or {
         length = true, weight = true, temp = true, volume = true, speed = true, area = true
     }
@@ -753,7 +755,9 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
 end
 
 function M.getScanAliases(direction, enabled_categories, lang)
-    direction = direction or M.getDefaultDirection()
+    if not direction or direction == "auto" then
+        direction = M.getDefaultDirection()
+    end
     enabled_categories = enabled_categories or {
         length = true, weight = true, temp = true, volume = true, speed = true, area = true
     }
