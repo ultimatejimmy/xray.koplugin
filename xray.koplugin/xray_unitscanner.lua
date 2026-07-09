@@ -95,6 +95,17 @@ function M:_resolveHighlightBoxes()
     
     self._box_cache_sig = sig
     local doc = self.ui and self.ui.document
+    
+    local current_page = _getCurrentPage(self)
+    if current_page then
+        if not self.scanned_pages then self.scanned_pages = {} end
+        if not self.scanned_aliases then self.scanned_aliases = {} end
+        if not self.scanned_pages[current_page] then
+            self.scanned_pages[current_page] = true
+            self:scanPageForUnits(current_page)
+        end
+    end
+    
     if not doc or not self.unit_xp_matches or #self.unit_xp_matches == 0 then
         self.unit_conversion_boxes = {}
         return
@@ -428,20 +439,224 @@ local function extend_span_start(doc, unit_start, num_val)
 end
 
 -- Scan the entire book and cache matches
+-- Simplify to reset state and scan the current page JIT
 function M:scanBookForUnits()
-    if not self.ui or not self.ui.document then return end
+    self:clearUnitUnderlines()
+    self.scanned_pages = {}
+    self.scanned_aliases = {}
+    self.unit_xp_matches = {}
+    self.unit_conversion_boxes = {}
+    self._box_cache_sig = nil
     
+    local current_page = _getCurrentPage(self)
+    if current_page then
+        self.scanned_pages[current_page] = true
+        self:scanPageForUnits(current_page)
+    end
+end
+
+-- Process a single search hit to extract its quantity and convert it
+function M:_processSingleHit(hit, enabled_cats, lang, doc)
+    local is_range = false
+    local val, num_str
+    local val1, val2
+    local is_vague = false
+    
+    -- 1. Check for vague quantifiers (e.g. "a few hundred yards")
+    local vague = xray_units.detectVagueQuantifier(hit.prev_text)
+    if vague then
+        val1 = vague.low
+        val2 = vague.high
+        is_range = true
+        is_vague = true
+        num_str = vague.quantifier .. " " .. vague.multiplier
+    else
+        -- 2. Try prefix_word or prev_text tail
+        local p = (hit.prev_text or ""):gsub("%s+$", "")
+        p = p:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
+        
+        -- Try digit range
+        local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
+        if not r1 then
+            r1, r2 = p:match("([0-9%.%,]+)%s*[,]%s+([0-9%.%,]+)$")
+        end
+        if r1 and r2 then
+            val1 = xray_units.parseNumberText(r1)
+            val2 = xray_units.parseNumberText(r2)
+            if val1 and val2 then
+                is_range = true
+                num_str = p:match("([0-9%.%,]+%s*[%-–toor,]+%s*[0-9%.%,]+)$") or (r1 .. "-" .. r2)
+            end
+        else
+            -- Try written word range
+            local w1, w2 = p:match("([a-z%d%-]+)%s*[,]?%s*(?:to|or|%-|and)%s*([a-z%d%-]+)$")
+            if not w1 then
+                w1, w2 = p:match("([a-z%d%-]+)%s*[,]%s+([a-z%d%-]+)$")
+            end
+            if w1 and w2 then
+                local phrase_words = {}
+                for w in p:gmatch("[a-z%d%-%.%,]+") do
+                    table.insert(phrase_words, w)
+                end
+                -- A range requires two distinct parsed parts separated by a connector.
+                local is_compound = false
+                local combined_val = xray_units.parseNumberText(w1 .. " " .. w2)
+                if combined_val and not p:find("%s+to%s") and not p:find("%s+or%s") and not p:find("%s+and%s") and not p:find(",") then
+                    is_compound = true
+                end
+                
+                if not is_compound then
+                    val1 = xray_units.parseNumberText(w1)
+                    val2 = xray_units.parseNumberText(w2)
+                    if val1 and val2 then
+                        is_range = true
+                        num_str = p:match("([a-z%d%-]+%s*[,]?%s*(?:to|or|%-|and|,)%s*[a-z%d%-]+)$") or (w1 .. " to " .. w2)
+                    end
+                end
+            end
+        end
+        
+        if not is_range then
+            -- Single number or written compound (greedy backward accumulation)
+            local words = {}
+            for w in p:gmatch("[a-z%d%-%.%,]+") do
+                table.insert(words, w)
+            end
+            
+            local valid_words = {}
+            local i_w = #words
+            local saw_digit = false
+            while i_w >= 1 do
+                local w = words[i_w]
+                local clean_w = w:gsub("[%-,]$", "")
+                if clean_w == "a" and i_w > 1 and words[i_w-1]:gsub("[%-,]$", "") == "half" then
+                    if saw_digit then break end
+                    table.insert(valid_words, 1, "half a")
+                    i_w = i_w - 2
+                else
+                    local val_parsed = xray_units.parseNumberText(clean_w)
+                    if clean_w == "and" or val_parsed then
+                        if saw_digit then break end
+                        if clean_w:match("%d") then
+                            saw_digit = true
+                        end
+                        table.insert(valid_words, 1, clean_w)
+                        i_w = i_w - 1
+                    else
+                        break
+                    end
+                end
+            end
+            
+            -- Check if a minus sign was left just before the matched digit (e.g. separated by space)
+            if i_w >= 1 and words[i_w] == "-" and #valid_words > 0 and saw_digit then
+                valid_words[1] = "-" .. valid_words[1]
+                i_w = i_w - 1
+            end
+            
+            while #valid_words > 0 and valid_words[1] == "and" do
+                table.remove(valid_words, 1)
+            end
+
+            if #valid_words > 0 then
+                local phrase = table.concat(valid_words, " ")
+                local best_val = xray_units.parseNumberText(phrase)
+                if best_val then
+                    val = best_val
+                    num_str = phrase
+                end
+            end
+        end
+    end
+    
+    if val or is_range then
+        local matched_unit = (hit.matched_text or ""):lower():gsub("\194\160", " "):gsub("%s+", " ")
+        local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
+        if not u then
+            for _, unit_def in ipairs(xray_units.UNITS or {}) do
+                for _, alias in ipairs(unit_def.aliases) do
+                    if alias:lower() == matched_unit then
+                        u = unit_def
+                        break
+                    end
+                end
+                if u then break end
+            end
+        end
+        
+        if u and enabled_cats[u.category] then
+            local conv_str
+            if is_range then
+                local conv_raw1 = xray_units.convert(val1, u.category, u.name, u.std_target)
+                local conv_val1, conv_unit = xray_units.applySmartScaling(conv_raw1, u.category, u.std_target)
+                local conv_raw2 = xray_units.convert(val2, u.category, u.name, u.std_target)
+                local conv_val2 = xray_units.applySmartScaling(conv_raw2, u.category, u.std_target)
+                
+                if conv_unit == "c" then conv_unit = "°C"
+                elseif conv_unit == "f" then conv_unit = "°F" end
+                
+                conv_str = (is_vague and "≈" or "") .. xray_units.formatNumber(conv_val1, lang) .. "–" .. xray_units.formatNumber(conv_val2, lang) .. " " .. xray_units.pluralizeUnit(conv_val2, conv_unit)
+            else
+                local sign = ""
+                if u.category == "temp" then
+                    local before_num = (hit.prev_text or ""):match("([^%d]*)$") or ""
+                    if (before_num:match("%-") or before_num:match("−")) and val > 0 then
+                        val = -val
+                        sign = "-"
+                    end
+                end
+                
+                local conv_raw = xray_units.convert(val, u.category, u.name, u.std_target)
+                local conv_val, conv_unit = xray_units.applySmartScaling(conv_raw, u.category, u.std_target)
+                
+                if conv_unit == "c" then conv_unit = "°C"
+                elseif conv_unit == "f" then conv_unit = "°F" end
+
+                conv_str = xray_units.formatNumber(conv_val, lang) .. " " .. xray_units.pluralizeUnit(conv_val, conv_unit)
+            end
+            
+            -- Underline spans from beginning of match (the number) to end of match
+            local span_start = extend_span_start(doc, hit.start, is_range and val1 or val)
+            local original_text = num_str .. " " .. (hit.matched_text or "")
+            local ok_t, real_text = pcall(function()
+                return doc:getTextFromXPointers(span_start, hit["end"])
+            end)
+            if ok_t and real_text then
+                original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
+            end
+            
+            local pageno
+            if doc.getPageFromXPointer then
+                local ok_p, pg = pcall(doc.getPageFromXPointer, doc, span_start)
+                if ok_p and pg then
+                    pageno = pg
+                end
+            end
+
+            return {
+                start_xp = span_start,
+                ["end_xp"] = hit["end"],
+                original = original_text,
+                converted = conv_str,
+                category = u.category,
+                pageno = pageno
+            }
+        end
+    end
+    return nil
+end
+
+-- Scan only a single page JIT
+function M:scanPageForUnits(pageno)
+    if not self.ui or not self.ui.document then return end
+    local doc = self.ui.document
+
     local settings = self.ai_helper and self.ai_helper.settings or {}
     if settings.unit_converter_enabled == false or settings.unit_underline_enabled == false then
-        self:clearUnitUnderlines()
         return
     end
 
-    log("scanBookForUnits: starting whole book scan")
-    
     local direction = settings.unit_conversion_direction or "auto"
-    log("scanBookForUnits: direction=" .. tostring(direction))
-    
     local enabled_cats = {
         length = settings.unit_cat_length ~= false,
         weight = settings.unit_cat_weight ~= false,
@@ -454,259 +669,138 @@ function M:scanBookForUnits()
     local lang = self.loc and self.loc:getLanguage() or "en"
     local aliases = xray_units.getScanAliases(direction, enabled_cats, lang)
     if #aliases == 0 then
-        self:clearUnitUnderlines()
         return
     end
 
-    -- Escape and join aliases into a regex pattern
-    local word_aliases = {}
-    local degree_aliases = {}
+    -- 1. Get page boundaries
+    local start_xp, end_xp
+    if doc.getPageXPointer then
+        local ok1, sx = pcall(doc.getPageXPointer, doc, pageno)
+        local ok2, ex = pcall(doc.getPageXPointer, doc, pageno + 1)
+        if ok1 and sx then start_xp = sx end
+        if ok2 and ex then end_xp = ex end
+    end
+
+    if not start_xp then
+        log("scanPageForUnits JIT: getPageXPointer failed, cannot JIT scan page " .. tostring(pageno))
+        return
+    end
+
+    -- 2. Extract page text
+    local ok_t, page_text = pcall(doc.getTextFromXPointers, doc, start_xp, end_xp)
+    if not ok_t or not page_text or page_text == "" then
+        log("scanPageForUnits JIT: getTextFromXPointers failed or empty")
+        return
+    end
+
+    local lowercase_text = page_text:lower()
+
+    -- 3. Identify present but unscanned aliases
+    local present_aliases = {}
     for _, alias in ipairs(aliases) do
-        local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
-        esc = esc:gsub("%s+", "\\s+")
-        if alias:find("°") then
-            table.insert(degree_aliases, esc)
-        else
-            table.insert(word_aliases, esc)
+        if not self.scanned_aliases[alias] then
+            if lowercase_text:find(alias:lower(), 1, true) then
+                table.insert(present_aliases, alias)
+            end
         end
     end
-    -- Sort descending by length to prevent shadowing issues (e.g. "m" matching before "mm")
-    table.sort(word_aliases, function(a, b)
-        return #a > #b
-    end)
-    table.sort(degree_aliases, function(a, b)
-        return #a > #b
-    end)
-    
-    local pats = {}
-    if #word_aliases > 0 then
-        table.insert(pats, "\\b(" .. table.concat(word_aliases, "|") .. ")\\b")
-    end
-    if #degree_aliases > 0 then
-        table.insert(pats, "(" .. table.concat(degree_aliases, "|") .. ")\\b")
-    end
-    local pat = table.concat(pats, "|")
-    log("scanBookForUnits: regex pattern=[" .. pat .. "]")
-    
-    local doc = self.ui.document
-    local ok, hits = pcall(function()
-        -- Note: findAllText regex flag is true, contextWords=5, maxResults=5000, returnXPointers=true
-        return doc:findAllText(pat, true, 5, 5000, true)
-    end)
-    
-    if not ok or not hits then
-        log("scanBookForUnits: findAllText failed: " .. tostring(hits))
-        self:clearUnitUnderlines()
+
+    if #present_aliases == 0 then
         return
     end
 
-    log("scanBookForUnits: findAllText returned " .. tostring(#hits) .. " hits")
+    log("scanPageForUnits: page=" .. tostring(pageno) .. " aliases=" .. tostring(#present_aliases))
 
-    local xp_matches = {}
-    local lang = self.loc and self.loc:getLanguage() or "en"
+    self.unit_xp_matches = self.unit_xp_matches or {}
+    local xp_matches = self.unit_xp_matches
+    local found_new = false
 
-    for _, hit in ipairs(hits) do
-        local is_range = false
-        local val, num_str
-        local val1, val2
-        local is_vague = false
-        
-        -- 1. Check for vague quantifiers (e.g. "a few hundred yards")
-        local vague = xray_units.detectVagueQuantifier(hit.prev_text)
-        if vague then
-            val1 = vague.low
-            val2 = vague.high
-            is_range = true
-            is_vague = true
-            num_str = vague.quantifier .. " " .. vague.multiplier
-        else
-            -- 2. Try prefix_word or prev_text tail
-            local p = (hit.prev_text or ""):gsub("%s+$", "")
-            p = p:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
-            
-            -- Try digit range
-            -- Try digit range
-            local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
-            if not r1 then
-                r1, r2 = p:match("([0-9%.%,]+)%s*,%s+([0-9%.%,]+)$")
+    -- 4. Use findAllText with a targeted regex for ONLY the present aliases.
+    -- This avoids the infinite loop bug of findText and natively populates prev_text.
+    local is_cre = doc.findAllText and not doc.getPageTextBoxes
+    local hits = {}
+
+    if is_cre then
+        local pats = {}
+        for _, alias in ipairs(present_aliases) do
+            self.scanned_aliases[alias] = true
+            local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
+            esc = esc:gsub("%s+", "\\s+")
+            if alias:find("°") then
+                table.insert(pats, esc .. "\\b")
+            else
+                table.insert(pats, "\\b" .. esc .. "\\b")
             end
-            if r1 and r2 then
-                val1 = xray_units.parseNumberText(r1)
-                val2 = xray_units.parseNumberText(r2)
-                if val1 and val2 then
-                    is_range = true
-                    num_str = p:match("([0-9%.%,]+%s*[%-–toor,]+%s*[0-9%.%,]+)$") or (r1 .. "-" .. r2)
+        end
+        local combined_pat = "(" .. table.concat(pats, "|") .. ")"
+        local ok, cre_hits = pcall(function()
+            return doc:findAllText(combined_pat, true, 5, 5000, true)
+        end)
+        if ok and cre_hits then
+            for _, h in ipairs(cre_hits) do table.insert(hits, h) end
+        end
+    else
+        -- PDF/DjVu: KoptInterface's findAllText doesn't support regex alternation
+        for _, alias in ipairs(present_aliases) do
+            self.scanned_aliases[alias] = true
+            local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
+            esc = esc:gsub("%s+", "\\s+")
+            local ok, pdf_hits = pcall(function()
+                return doc:findAllText(esc, true, 5, 5000)
+            end)
+            if ok and pdf_hits then
+                for _, h in ipairs(pdf_hits) do table.insert(hits, h) end
+            end
+        end
+    end
+
+    -- 5. Filter hits to only those on the current page using getPageFromXPointer
+    local kept = 0
+    for _, hit in ipairs(hits) do
+        local h_start = hit.start or hit.pos0
+        local h_end = hit["end"] or hit.pos1
+
+        if h_start and h_end then
+            local is_on_page = false
+
+            -- Primary: use getPageFromXPointer for reliable cross-fragment filtering
+            if doc.getPageFromXPointer then
+                local pg_ok, pg = pcall(doc.getPageFromXPointer, doc, h_start)
+                if pg_ok and pg and pg == pageno then
+                    is_on_page = true
                 end
             else
-                -- Try written word range
-                local w1, w2 = p:match("([a-z%d%-]+)%s*[,]?%s*(?:to|or|%-|and)%s*([a-z%d%-]+)$")
-                if not w1 then
-                    w1, w2 = p:match("([a-z%d%-]+)%s*,%s+([a-z%d%-]+)$")
+                -- Fallback: compareXPointers (only works within same DocFragment)
+                is_on_page = true
+                if end_xp and doc.compareXPointers then
+                    local comp_ok, cmp = pcall(doc.compareXPointers, doc, h_start, end_xp)
+                    if comp_ok and cmp and cmp > 0 then is_on_page = false end
                 end
-                if w1 and w2 then
-                    local phrase_words = {}
-                    for w in p:gmatch("[a-z%d%-%.%,]+") do
-                        table.insert(phrase_words, w)
-                    end
-                    -- A range requires two distinct parsed parts separated by a connector.
-                    -- If the whole thing parses as a single compound (like "twenty three"), it's not a range.
-                    local is_compound = false
-                    local combined_val = xray_units.parseNumberText(w1 .. " " .. w2)
-                    if combined_val and not p:find("%s+to%s") and not p:find("%s+or%s") and not p:find("%s+and%s") and not p:find(",") then
-                        is_compound = true
-                    end
-                    
-                    if not is_compound then
-                        val1 = xray_units.parseNumberText(w1)
-                        val2 = xray_units.parseNumberText(w2)
-                        if val1 and val2 then
-                            is_range = true
-                            num_str = p:match("([a-z%d%-]+%s*[,]?%s*(?:to|or|%-|and|,)%s*[a-z%d%-]+)$") or (w1 .. " to " .. w2)
-                        end
-                    end
+                if is_on_page and start_xp and doc.compareXPointers then
+                    local comp_ok, cmp = pcall(doc.compareXPointers, doc, h_start, start_xp)
+                    if comp_ok and cmp and cmp < 0 then is_on_page = false end
                 end
             end
-            
-            if not is_range then
-                -- Single number or written compound (greedy backward accumulation)
-                local words = {}
-                for w in p:gmatch("[a-z%d%-%.%,]+") do
-                    table.insert(words, w)
-                end
-                
-                local valid_words = {}
-                local i_w = #words
-                local saw_digit = false
-                while i_w >= 1 do
-                    local w = words[i_w]
-                    local clean_w = w:gsub("[%-,]$", "")
-                    if clean_w == "a" and i_w > 1 and words[i_w-1]:gsub("[%-,]$", "") == "half" then
-                        if saw_digit then break end
-                        table.insert(valid_words, 1, "half a")
-                        i_w = i_w - 2
-                    else
-                        local val_parsed = xray_units.parseNumberText(clean_w)
-                        if clean_w == "and" or val_parsed then
-                            if saw_digit then break end
-                            if clean_w:match("%d") then
-                                saw_digit = true
-                            end
-                            table.insert(valid_words, 1, clean_w)
-                            i_w = i_w - 1
-                        else
-                            break
-                        end
-                    end
-                end
-                
-                -- Check if a minus sign was left just before the matched digit (e.g. separated by space)
-                if i_w >= 1 and words[i_w] == "-" and #valid_words > 0 and saw_digit then
-                    valid_words[1] = "-" .. valid_words[1]
-                    i_w = i_w - 1
-                end
-                
-                while #valid_words > 0 and valid_words[1] == "and" do
-                    table.remove(valid_words, 1)
-                end
 
-                if #valid_words > 0 then
-                    local phrase = table.concat(valid_words, " ")
-                    local best_val = xray_units.parseNumberText(phrase)
-                    if best_val then
-                        val = best_val
-                        num_str = phrase
-                    end
+            if is_on_page then
+                kept = kept + 1
+                hit.start = h_start
+                hit["end"] = h_end
+                local processed = self:_processSingleHit(hit, enabled_cats, lang, doc)
+                if processed then
+                    table.insert(xp_matches, processed)
+                    found_new = true
                 end
-            end
-        end
-        
-        if val or is_range then
-            local matched_unit = (hit.matched_text or ""):lower():gsub("\194\160", " "):gsub("%s+", " ")
-            local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
-            if not u then
-                for _, unit_def in ipairs(xray_units.UNITS or {}) do
-                    for _, alias in ipairs(unit_def.aliases) do
-                        if alias:lower() == matched_unit then
-                            u = unit_def
-                            break
-                        end
-                    end
-                    if u then break end
-                end
-            end
-            
-            if u and enabled_cats[u.category] then
-                local conv_str
-                if is_range then
-                    local conv_raw1 = xray_units.convert(val1, u.category, u.name, u.std_target)
-                    local conv_val1, conv_unit = xray_units.applySmartScaling(conv_raw1, u.category, u.std_target)
-                    local conv_raw2 = xray_units.convert(val2, u.category, u.name, u.std_target)
-                    local conv_val2 = xray_units.applySmartScaling(conv_raw2, u.category, u.std_target)
-                    
-                    if conv_unit == "c" then conv_unit = "°C"
-                    elseif conv_unit == "f" then conv_unit = "°F" end
-                    
-                    conv_str = (is_vague and "≈" or "") .. xray_units.formatNumber(conv_val1, lang) .. "–" .. xray_units.formatNumber(conv_val2, lang) .. " " .. xray_units.pluralizeUnit(conv_val2, conv_unit)
-                else
-                    local sign = ""
-                    if u.category == "temp" then
-                        local before_num = (hit.prev_text or ""):match("([^%d]*)$") or ""
-                        if (before_num:match("%-") or before_num:match("−")) and val > 0 then
-                            val = -val
-                            sign = "-"
-                        end
-                    end
-                    
-                    local conv_raw = xray_units.convert(val, u.category, u.name, u.std_target)
-                    local conv_val, conv_unit = xray_units.applySmartScaling(conv_raw, u.category, u.std_target)
-                    
-                    if conv_unit == "c" then conv_unit = "°C"
-                    elseif conv_unit == "f" then conv_unit = "°F" end
-
-                    conv_str = xray_units.formatNumber(conv_val, lang) .. " " .. xray_units.pluralizeUnit(conv_val, conv_unit)
-                end
-                
-                -- Underline spans from beginning of match (the number) to end of match
-                local span_start = extend_span_start(doc, hit.start, is_range and val1 or val)
-                local original_text = num_str .. " " .. (hit.matched_text or "")
-                local ok_t, real_text = pcall(function()
-                    return doc:getTextFromXPointers(span_start, hit["end"])
-                end)
-                if ok_t and real_text then
-                    original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
-                end
-                
-                local pageno
-                if doc.getPageFromXPointer then
-                    local ok_p, pg = pcall(doc.getPageFromXPointer, doc, span_start)
-                    if ok_p and pg then
-                        pageno = pg
-                    end
-                end
-
-                table.insert(xp_matches, {
-                    start_xp = span_start,
-                    ["end_xp"] = hit["end"],
-                    original = original_text,
-                    converted = conv_str,
-                    category = u.category,
-                    pageno = pageno
-                })
             end
         end
     end
+    log("scanPageForUnits: kept " .. tostring(kept) .. " of " .. tostring(#hits) .. " hits on page " .. tostring(pageno))
 
-    self.unit_xp_matches = xp_matches
-    log("scanBookForUnits: successfully parsed " .. tostring(#xp_matches) .. " unit matches")
-    if #xp_matches == 0 and #hits > 0 then
-        for j = 1, math.min(20, #hits) do
-            local hit = hits[j]
-            log("  hit " .. j .. ": matched_text=[" .. tostring(hit.matched_text) .. "] prefix_word=[" .. tostring(hit.matched_word_prefix) .. "] prev_text=[" .. tostring(hit.prev_text) .. "]")
+    if found_new then
+        self._box_cache_sig = nil
+        if self.ui and self.ui.view and self.ui.view.dialog then
+            UIManager:setDirty(self.ui.view.dialog, "ui")
         end
-    end
-    
-    if self.ui and self.ui.view and self.ui.view.dialog then
-        UIManager:setDirty(self.ui.view.dialog, "ui")
     end
 end
 

@@ -438,6 +438,12 @@ describe("xray_ui", function()
                 plugin[k] = v
             end
             
+            _G.G_reader_settings = {
+                readSetting = function(self_settings, key)
+                    if key == "dimension_units" then return "imperial" end
+                    return nil
+                end
+            }
             plugin.ai_helper = {
                 settings = {
                     unit_converter_enabled = true,
@@ -456,20 +462,27 @@ describe("xray_ui", function()
                     next_text = " today."
                 }
             }
+            local called = false
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
-                return mock_hits
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
             end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_five" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "he walked five meters" end
                 if cand == "xp_five" and unit_end == "xp2" then return "five meters" end
                 if cand == "xp_five" then return "five" end
                 return ""
             end
             
             plugin:scanBookForUnits()
+            _G.G_reader_settings = nil
             assert.are.equal(1, #plugin.unit_xp_matches)
             assert.are.equal("xp_five", plugin.unit_xp_matches[1].start_xp)
             assert.are.equal("xp2", plugin.unit_xp_matches[1].end_xp)
@@ -500,14 +513,20 @@ describe("xray_ui", function()
                     next_text = " today."
                 }
             }
+            local called = false
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
-                return mock_hits
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
             end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_80" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The liquid is at 80 degrees Celcius" end
                 if cand == "xp_80" and unit_end == "xp2" then return "80 degrees Celcius" end
                 if cand == "xp_80" then return "80" end
                 return ""
@@ -545,14 +564,20 @@ describe("xray_ui", function()
                     next_text = " bottles."
                 }
             }
+            local called = false
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
-                return mock_hits
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
             end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_25" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "He bought Two 25-liter" end
                 if cand == "xp_25" and unit_end == "xp2" then return "25-liter" end
                 if cand == "xp_25" then return "25" end
                 return ""
@@ -588,16 +613,22 @@ describe("xray_ui", function()
                     next_text = "."
                 }
             }
+            local called = false
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
                 -- Verify regex pattern allows °C matching without leading word boundary
-                assert.is_true(pat:find("°[Cc]") ~= nil)
-                return mock_hits
+                assert.is_true(pat:find("°[Cc]") ~= nil or called)
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
             end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_37" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The temperature is 37°C" end
                 if cand == "xp_37" and unit_end == "xp2" then return "37°C" end
                 if cand == "xp_37" then return "37" end
                 return ""
@@ -634,12 +665,20 @@ describe("xray_ui", function()
                     next_text = "."
                 }
             }
-            plugin.ui.document.findAllText = function() return mock_hits1 end
+            local called1 = false
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if not called1 then
+                    called1 = true
+                    return mock_hits1
+                end
+                return {}
+            end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_minus37" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The temperature is -37°C" end
                 if cand == "xp_minus37" and unit_end == "xp2" then return "-37°C" end
                 if cand == "xp_minus37" then return "-37" end
                 return ""
@@ -659,12 +698,20 @@ describe("xray_ui", function()
                     next_text = "."
                 }
             }
-            plugin.ui.document.findAllText = function() return mock_hits2 end
+            local called2 = false
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if not called2 then
+                    called2 = true
+                    return mock_hits2
+                end
+                return {}
+            end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_uni37" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The temperature is -37°C" end
                 if cand == "xp_uni37" and unit_end == "xp2" then return "−37°C" end
                 if cand == "xp_uni37" then return "−37" end
                 return ""
@@ -684,12 +731,20 @@ describe("xray_ui", function()
                     next_text = "."
                 }
             }
-            plugin.ui.document.findAllText = function() return mock_hits3 end
+            local called3 = false
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if not called3 then
+                    called3 = true
+                    return mock_hits3
+                end
+                return {}
+            end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp1" then return "xp_space37" end
                 return cand
             end
             plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The temperature is - 37°C" end
                 if cand == "xp_space37" and unit_end == "xp2" then return "- 37°C" end
                 if cand == "xp_space37" then return "- 37" end
                 return ""

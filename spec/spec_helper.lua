@@ -274,12 +274,51 @@ package.loaded["json"] = json_lib
 function _G.createMockPlugin()
     local plugin = {
         ui = {
-            document = {
-                file = "test_book.epub",
-                getToc = function() return {} end,
-                getProps = function() return { title = "Test Title", authors = "Test Author" } end,
-                getPageFromXPointer = function() return 10 end
-            },
+            document = (function()
+                local doc = {
+                    file = "test_book.epub",
+                    getToc = function() return {} end,
+                    getProps = function() return { title = "Test Title", authors = "Test Author" } end,
+                    getPageFromXPointer = function(self_doc, xp) return 10 end,
+                    getPageXPointer = function(self_doc, pageno)
+                        if pageno == 10 then return "xp_page10_start" end
+                        if pageno == 11 then return "xp_page10_end" end
+                        return nil
+                    end,
+                    findText = function(self_doc, pat, origin, direction, case_insensitive, page, regex, max_hits, search_flags)
+                        if self_doc.findAllText then
+                            return self_doc:findAllText(pat, case_insensitive, nil, max_hits, regex, search_flags)
+                        end
+                        return {}
+                    end,
+                    compareXPointers = function(self_doc, xp1, xp2)
+                        if xp1 == "xp_page10_start" and xp2 == "xp_page10_end" then return -1 end
+                        return 0
+                    end
+                }
+                doc._getTextFromXPointers = function() return "" end
+                setmetatable(doc, {
+                    __index = function(t, k)
+                        if k == "getTextFromXPointers" then
+                            return function(self_doc, cand, unit_end)
+                                if cand == "xp_page10_start" then
+                                    return "five meters, 80 degrees Celcius, 25-liter, 37°C, -37°C, −37°C"
+                                end
+                                return t._getTextFromXPointers(self_doc, cand, unit_end)
+                            end
+                        end
+                        return nil
+                    end,
+                    __newindex = function(t, k, v)
+                        if k == "getTextFromXPointers" then
+                            t._getTextFromXPointers = v
+                        else
+                            rawset(t, k, v)
+                        end
+                    end
+                })
+                return doc
+            end)(),
             paging = {
                 getCurrentPage = function() return 10 end
             },
