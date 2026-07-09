@@ -754,6 +754,234 @@ describe("xray_ui", function()
             assert.are.equal("- 37°C", plugin.unit_xp_matches[1].original)
             assert.are.equal("-34.6 °F", plugin.unit_xp_matches[1].converted)
         end)
+
+        it("should successfully JIT scan '200 g' and populate unit_xp_matches", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "g",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The ingredient weighs 200 ",
+                    next_text = "."
+                }
+            }
+            local called = false
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_200" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The ingredient weighs 200 g." end
+                if cand == "xp_200" and unit_end == "xp2" then return "200 g" end
+                if cand == "xp_200" then return "200" end
+                return ""
+            end
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("xp_200", plugin.unit_xp_matches[1].start_xp)
+            assert.are.equal("xp2", plugin.unit_xp_matches[1].end_xp)
+            assert.are.equal("200 g", plugin.unit_xp_matches[1].original)
+            assert.are.equal("7.05 oz", plugin.unit_xp_matches[1].converted)
+        end)
+        it("should successfully JIT scan unit with non-breaking space: '324.83 mm'", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "mm",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "foot = 324.83\194\160",
+                    next_text = "."
+                }
+            }
+            local called = false
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_324" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "foot = 324.83\194\160mm." end
+                if cand == "xp_324" and unit_end == "xp2" then return "324.83\194\160mm" end
+                if cand == "xp_324" then return "324.83" end
+                return ""
+            end
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("324.83 mm", plugin.unit_xp_matches[1].original)
+            assert.are.equal("12.79 inches", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should successfully JIT scan decimeters: '10 dm'", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "dm",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "The bar is 10 ",
+                    next_text = "."
+                }
+            }
+            local called = false
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_10" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" and unit_end == "xp_page10_end" then return "The bar is 10 dm." end
+                if cand == "xp_10" and unit_end == "xp2" then return "10 dm" end
+                if cand == "xp_10" then return "10" end
+                return ""
+            end
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("10 dm", plugin.unit_xp_matches[1].original)
+            assert.are.equal("39.37 inches", plugin.unit_xp_matches[1].converted)
+        end)
+        it("should successfully scan units appearing on multiple pages (caching & JIT filtering)", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_imperial",
+                }
+            }
+            
+            local mock_hits = {
+                {
+                    matched_text = "mm",
+                    start = "xp_p10_start",
+                    ["end"] = "xp_p10_end",
+                    prev_text = "It is 4 ",
+                    next_text = " wide"
+                },
+                {
+                    matched_text = "mm",
+                    start = "xp_p11_start",
+                    ["end"] = "xp_p11_end",
+                    prev_text = "It is 297 ",
+                    next_text = " long"
+                }
+            }
+            
+            local called = false
+            plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
+                if not called then
+                    called = true
+                    return mock_hits
+                end
+                error("findAllText should only be called once globally for mm unit")
+            end
+            
+            plugin.ui.document.getPageFromXPointer = function(self_doc, xp)
+                if xp == "xp_p10_start" then return 10 end
+                if xp == "xp_p11_start" then return 11 end
+                return nil
+            end
+            
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp_p10_start" then return "xp_p10_4" end
+                if cand == "xp_p11_start" then return "xp_p11_297" end
+                return cand
+            end
+            
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_page10_start" then return "It is 4 mm wide" end
+                if cand == "xp_page11_start" then return "It is 297 mm long" end
+                if cand == "xp_p10_4" and unit_end == "xp_p10_end" then return "4 mm" end
+                if cand == "xp_p10_4" then return "4" end
+                if cand == "xp_p11_297" and unit_end == "xp_p11_end" then return "297 mm" end
+                if cand == "xp_p11_297" then return "297" end
+                return ""
+            end
+            
+            -- Setup page bounds mocks
+            plugin.ui.document.getPageXPointer = function(self_doc, pageno)
+                if pageno == 10 then return "xp_page10_start" end
+                if pageno == 11 then return "xp_page11_start" end
+                if pageno == 12 then return "xp_page11_end" end
+                return nil
+            end
+            
+            plugin:scanBookForUnits() -- Clears and JIT scans current page (let's say current is 10)
+            -- Verify page 10 got matched
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("4 mm", plugin.unit_xp_matches[1].original)
+            
+            -- Turn page to 11 and scan it
+            plugin:scanPageForUnits(11)
+            -- Verify both page 10 and page 11 matches are present in plugin.unit_xp_matches
+            assert.are.equal(2, #plugin.unit_xp_matches)
+            assert.are.equal("4 mm", plugin.unit_xp_matches[1].original)
+            assert.are.equal("297 mm", plugin.unit_xp_matches[2].original)
+        end)
     end)
 
     describe("showAbout", function()

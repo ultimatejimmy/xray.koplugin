@@ -245,6 +245,20 @@ describe("xray_units", function()
             assert.are.equal(0, #res1)
         end)
 
+        it("detects single-character unit 'g' (grams): '200 g'", function()
+            local res = xray_units.detectMeasurements("The ingredient weighs 200 g.", "to_imperial")
+            assert.are.equal(1, #res)
+            assert.are.equal("200 g", res[1].original)
+            assert.are.equal("7.05 oz", res[1].converted)
+        end)
+
+        it("detects decimeters unit 'dm': '10 dm'", function()
+            local res = xray_units.detectMeasurements("The bar is 10 dm long.", "to_imperial")
+            assert.are.equal(1, #res)
+            assert.are.equal("10 dm", res[1].original)
+            assert.are.equal("39.37 inches", res[1].converted)
+        end)
+
         it("handles multiple measurements on the same line", function()
             local res = xray_units.detectMeasurements("The run was 5 miles long, and I drank 2 gallons of water.")
             assert.are.equal(2, #res)
@@ -424,6 +438,18 @@ describe("xray_units", function()
             local res = xray_units.detectMeasurements("The run was 5 miles and 10 km.", "auto")
             assert.are.equal(1, #res)
             assert.are.equal("10 km", res[1].original)
+        end)
+
+        it("includes single-character aliases like 'g' and 'm' in getScanAliases", function()
+            local aliases = xray_units.getScanAliases("to_imperial")
+            local has_g = false
+            local has_m = false
+            for _, a in ipairs(aliases) do
+                if a == "g" then has_g = true end
+                if a == "m" then has_m = true end
+            end
+            assert.is_true(has_g)
+            assert.is_true(has_m)
         end)
     end)
 end)

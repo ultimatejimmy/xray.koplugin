@@ -301,10 +301,16 @@ function _G.createMockPlugin()
                     __index = function(t, k)
                         if k == "getTextFromXPointers" then
                             return function(self_doc, cand, unit_end)
+                                if t._getTextFromXPointers then
+                                    local custom = t._getTextFromXPointers(self_doc, cand, unit_end)
+                                    if custom and custom ~= "" then
+                                        return custom
+                                    end
+                                end
                                 if cand == "xp_page10_start" then
                                     return "five meters, 80 degrees Celcius, 25-liter, 37°C, -37°C, −37°C"
                                 end
-                                return t._getTextFromXPointers(self_doc, cand, unit_end)
+                                return t._getTextFromXPointers and t._getTextFromXPointers(self_doc, cand, unit_end) or ""
                             end
                         end
                         return nil

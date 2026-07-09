@@ -169,6 +169,7 @@ function M.convert(val, category, from_unit, to_unit)
             -- Metric to meters
             ["mm"] = 0.001, ["millimeter"] = 0.001, ["millimeters"] = 0.001, ["millimetre"] = 0.001, ["millimetres"] = 0.001,
             ["cm"] = 0.01, ["centimeter"] = 0.01, ["centimeters"] = 0.01, ["centimetre"] = 0.01, ["centimetres"] = 0.01,
+            ["dm"] = 0.1, ["decimeter"] = 0.1, ["decimeters"] = 0.1,
             ["m"] = 1.0, ["meter"] = 1.0, ["meters"] = 1.0, ["metre"] = 1.0, ["metres"] = 1.0,
             ["km"] = 1000.0, ["kilometer"] = 1000.0, ["kilometers"] = 1000.0, ["kilometre"] = 1000.0, ["kilometres"] = 1000.0,
         },
@@ -205,6 +206,7 @@ function M.convert(val, category, from_unit, to_unit)
             ["sq m"] = 1.0, ["m2"] = 1.0, ["m²"] = 1.0, ["square meters"] = 1.0, ["square metres"] = 1.0,
             ["sq km"] = 1000000.0, ["km2"] = 1000000.0, ["km²"] = 1000000.0, ["square kilometers"] = 1000000.0, ["square kilometres"] = 1000000.0,
             ["ha"] = 10000.0, ["hectare"] = 10000.0, ["hectares"] = 10000.0,
+            ["sq dm"] = 0.01, ["dm2"] = 0.01, ["dm²"] = 0.01, ["square decimeter"] = 0.01, ["square decimeters"] = 0.01, ["square decimetre"] = 0.01, ["square decimetres"] = 0.01,
         }
     }
 
@@ -231,6 +233,7 @@ local UNITS = {
     
     { category = "length", system = "metric", name = "mm", std_target = "inch", aliases = { "millimeters", "millimeter", "mm", "millimetres", "millimetre" } },
     { category = "length", system = "metric", name = "cm", std_target = "inch", aliases = { "centimeters", "centimeter", "cm", "centimetres", "centimetre" } },
+    { category = "length", system = "metric", name = "dm", std_target = "inch", aliases = { "decimeters", "decimeter", "dm", "décimètres", "décimètre" } },
     { category = "length", system = "metric", name = "m", std_target = "foot", aliases = { "meters", "meter", "m", "metres", "metre", "metro", "metros", "mètre", "mètres", "metri", "metr", "metry", "metrów", "метр", "метра", "метров", "метрів", "méter", "متر", "أمتار", "米", "公尺" } },
     { category = "length", system = "metric", name = "km", std_target = "mile", aliases = { "kilometers", "kilometer", "km", "kilometres", "kilometre", "kilómetro", "kilómetros", "kilomètre", "kilomètres", "chilometro", "chilometri", "quilômetro", "quilômetros", "kilometry", "километр", "километра", "километров", "кілометр", "кілометра", "кілометрів", "kilométer", "كيلومتر", "كيلومترات", "公里", "千米" } },
 
@@ -267,6 +270,7 @@ local UNITS = {
     { category = "area", system = "metric", name = "m²", std_target = "sq ft", aliases = { "square meters", "square metres", "sq m", "m2", "m²", "qm", "quadratmeter", "metros cuadrados", "mètres carrés", "metri quadrati", "médos quadrados", "metry kwadratowe", "кв. м", "квадратных метров", "квадратних метрів", "négyzetméter", "metrekare", "متر مربع", "أمتار مربعة", "meter persegi", "平方米" } },
     { category = "area", system = "metric", name = "km²", std_target = "sq mi", aliases = { "square kilometers", "square kilometres", "sq km", "km2", "km²", "quadratkilometer", "kilómetros cuadrados", "kilomètres carrés", "chilometri quadrati", "quilômetros quadrados", "kilometry kwadratowe", "кв. км", "квадратных километров", "квадратних кілометрів", "négyzetkilométer", "kilometrekare", "كيلومتر مربع", "kilometer persegi", "平方公里" } },
     { category = "area", system = "metric", name = "ha", std_target = "acre", aliases = { "hectares", "hectare", "ha", "hektar", "hectárea", "hectáreas", "ettaro", "ettari", "hektary", "гектар", "гектара", "гектаров", "гектарів", "hektár", "هكتار", "هكتارات", "公顷" } },
+    { category = "area", system = "metric", name = "sq dm", std_target = "sq ft", aliases = { "square decimeters", "square decimeter", "sq dm", "dm2", "dm²", "square decimetres", "square decimetre", "Quadratdezimeter", "décimètres carrés", "décimètre carré" } },
 }
 
 -- Helpers to check if a word is one of our units
@@ -807,7 +811,7 @@ function M.getScanAliases(direction, enabled_categories, lang)
             if matches_direction then
                 for _, alias in ipairs(u.aliases) do
                     local alias_lower = alias:lower()
-                    if not EXCLUDED[alias_lower] and #alias_lower > 1 and not seen[alias_lower] then
+                    if not EXCLUDED[alias_lower] and #alias_lower >= 1 and not seen[alias_lower] then
                         local is_en = (lang:lower() == "en")
                         if not (is_en and NON_ENGLISH_ASCII[alias_lower]) then
                             if should_keep_alias(alias_lower, lang) then

@@ -101,7 +101,6 @@ function M:_resolveHighlightBoxes()
         if not self.scanned_pages then self.scanned_pages = {} end
         if not self.scanned_aliases then self.scanned_aliases = {} end
         if not self.scanned_pages[current_page] then
-            self.scanned_pages[current_page] = true
             self:scanPageForUnits(current_page)
         end
     end
@@ -444,13 +443,14 @@ function M:scanBookForUnits()
     self:clearUnitUnderlines()
     self.scanned_pages = {}
     self.scanned_aliases = {}
+    self.raw_unit_hits = {}
+    self.searched_units = {}
     self.unit_xp_matches = {}
     self.unit_conversion_boxes = {}
     self._box_cache_sig = nil
     
     local current_page = _getCurrentPage(self)
     if current_page then
-        self.scanned_pages[current_page] = true
         self:scanPageForUnits(current_page)
     end
 end
@@ -617,12 +617,12 @@ function M:_processSingleHit(hit, enabled_cats, lang, doc)
             
             -- Underline spans from beginning of match (the number) to end of match
             local span_start = extend_span_start(doc, hit.start, is_range and val1 or val)
-            local original_text = num_str .. " " .. (hit.matched_text or "")
+            local original_text = (num_str .. " " .. (hit.matched_text or "")):gsub("\194\160", " ")
             local ok_t, real_text = pcall(function()
                 return doc:getTextFromXPointers(span_start, hit["end"])
             end)
             if ok_t and real_text then
-                original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
+                original_text = real_text:gsub("^%s+", ""):gsub("%s+$", ""):gsub("\194\160", " ")
             end
             
             local pageno
@@ -650,6 +650,9 @@ end
 function M:scanPageForUnits(pageno)
     if not self.ui or not self.ui.document then return end
     local doc = self.ui.document
+    
+    self.scanned_pages = self.scanned_pages or {}
+    self.scanned_pages[pageno] = true
 
     local settings = self.ai_helper and self.ai_helper.settings or {}
     if settings.unit_converter_enabled == false or settings.unit_underline_enabled == false then
@@ -693,15 +696,28 @@ function M:scanPageForUnits(pageno)
         return
     end
 
-    local lowercase_text = page_text:lower()
+    local lowercase_text = page_text:lower():gsub("\194\160", " ")
 
-    -- 3. Identify present but unscanned aliases
+    -- 3. Identify present unit aliases on this page
     local present_aliases = {}
     for _, alias in ipairs(aliases) do
-        if not self.scanned_aliases[alias] then
-            if lowercase_text:find(alias:lower(), 1, true) then
-                table.insert(present_aliases, alias)
+        local alias_lower = alias:lower()
+        local matched = false
+        if #alias_lower <= 2 then
+            -- For short aliases (e.g. "g", "m", "l", "in"), require a digit prefix
+            -- to avoid matching standalone characters or common word parts.
+            local escaped = alias_lower:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
+            local pattern = "%d%s*%-?%s*" .. escaped .. "%f[%W]"
+            if lowercase_text:find(pattern) then
+                matched = true
             end
+        else
+            if lowercase_text:find(alias_lower, 1, true) then
+                matched = true
+            end
+        end
+        if matched then
+            table.insert(present_aliases, alias)
         end
     end
 
@@ -709,92 +725,142 @@ function M:scanPageForUnits(pageno)
         return
     end
 
-    log("scanPageForUnits: page=" .. tostring(pageno) .. " aliases=" .. tostring(#present_aliases))
+    log("scanPageForUnits: page=" .. tostring(pageno) .. " present_aliases=" .. table.concat(present_aliases, ", "))
 
+    -- 4. Determine which units have NOT been searched globally in this session yet
+    self.raw_unit_hits = self.raw_unit_hits or {}
+    self.searched_units = self.searched_units or {}
+
+    local units_to_search = {}
+    local present_units = {}
+    for _, alias in ipairs(present_aliases) do
+        local u = xray_units.UNIT_LOOKUP[alias:lower()]
+        if u then
+            present_units[u.name] = u
+            if not self.searched_units[u.name] then
+                table.insert(units_to_search, u)
+                self.searched_units[u.name] = true
+                self.raw_unit_hits[u.name] = {}
+            end
+        end
+    end
+
+    -- 5. If we have new units to search, compile all their aliases and call findAllText
+    if #units_to_search > 0 then
+        local search_aliases = {}
+        for _, u in ipairs(units_to_search) do
+            for _, alias in ipairs(u.aliases) do
+                table.insert(search_aliases, alias)
+            end
+        end
+
+        local hits = {}
+        local is_cre = doc.findAllText and not doc.getPageTextBoxes
+
+        if is_cre then
+            local pats = {}
+            for _, alias in ipairs(search_aliases) do
+                local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
+                esc = esc:gsub("%s+", "\\s+")
+                if alias:find("°") then
+                    table.insert(pats, esc .. "\\b")
+                else
+                    table.insert(pats, "\\b" .. esc .. "\\b")
+                end
+            end
+            local combined_pat = "(" .. table.concat(pats, "|") .. ")"
+            local ok, cre_hits = pcall(function()
+                return doc:findAllText(combined_pat, true, 5, 5000, true)
+            end)
+            log("scanPageForUnits: CRE findAllText ok=" .. tostring(ok) .. " hits=" .. tostring(ok and cre_hits and #cre_hits or "nil") .. " pat=" .. tostring(combined_pat))
+            if ok and cre_hits then
+                for _, h in ipairs(cre_hits) do table.insert(hits, h) end
+            end
+        else
+            -- PDF/DjVu: KoptInterface's findAllText doesn't support regex alternation
+            for _, alias in ipairs(search_aliases) do
+                local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
+                esc = esc:gsub("%s+", "\\s+")
+                local ok, pdf_hits = pcall(function()
+                    return doc:findAllText(esc, true, 5, 5000)
+                end)
+                if ok and pdf_hits then
+                    for _, h in ipairs(pdf_hits) do table.insert(hits, h) end
+                end
+            end
+        end
+
+        -- Classify hits into their raw unit buckets (auto-initializing if needed)
+        for _, hit in ipairs(hits) do
+            local matched_unit = (hit.matched_text or ""):lower():gsub("\194\160", " "):gsub("%s+", " ")
+            local u = xray_units.UNIT_LOOKUP[matched_unit]
+            if u then
+                self.raw_unit_hits[u.name] = self.raw_unit_hits[u.name] or {}
+                table.insert(self.raw_unit_hits[u.name], hit)
+            end
+        end
+    end
+
+    -- 6. Filter and process hits on the current page for all searched units
     self.unit_xp_matches = self.unit_xp_matches or {}
     local xp_matches = self.unit_xp_matches
     local found_new = false
-
-    -- 4. Use findAllText with a targeted regex for ONLY the present aliases.
-    -- This avoids the infinite loop bug of findText and natively populates prev_text.
-    local is_cre = doc.findAllText and not doc.getPageTextBoxes
-    local hits = {}
-
-    if is_cre then
-        local pats = {}
-        for _, alias in ipairs(present_aliases) do
-            self.scanned_aliases[alias] = true
-            local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
-            esc = esc:gsub("%s+", "\\s+")
-            if alias:find("°") then
-                table.insert(pats, esc .. "\\b")
-            else
-                table.insert(pats, "\\b" .. esc .. "\\b")
-            end
-        end
-        local combined_pat = "(" .. table.concat(pats, "|") .. ")"
-        local ok, cre_hits = pcall(function()
-            return doc:findAllText(combined_pat, true, 5, 5000, true)
-        end)
-        if ok and cre_hits then
-            for _, h in ipairs(cre_hits) do table.insert(hits, h) end
-        end
-    else
-        -- PDF/DjVu: KoptInterface's findAllText doesn't support regex alternation
-        for _, alias in ipairs(present_aliases) do
-            self.scanned_aliases[alias] = true
-            local esc = alias:gsub("[%-%+%.%?%*%^%$%(%)%[%]%%]", "%%%1")
-            esc = esc:gsub("%s+", "\\s+")
-            local ok, pdf_hits = pcall(function()
-                return doc:findAllText(esc, true, 5, 5000)
-            end)
-            if ok and pdf_hits then
-                for _, h in ipairs(pdf_hits) do table.insert(hits, h) end
-            end
-        end
-    end
-
-    -- 5. Filter hits to only those on the current page using getPageFromXPointer
     local kept = 0
-    for _, hit in ipairs(hits) do
-        local h_start = hit.start or hit.pos0
-        local h_end = hit["end"] or hit.pos1
 
-        if h_start and h_end then
-            local is_on_page = false
+    for u_name, raw_hits in pairs(self.raw_unit_hits) do
+        for _, hit in ipairs(raw_hits) do
+            local h_start = hit.start or hit.pos0
+            local h_end = hit["end"] or hit.pos1
 
-            -- Primary: use getPageFromXPointer for reliable cross-fragment filtering
-            if doc.getPageFromXPointer then
-                local pg_ok, pg = pcall(doc.getPageFromXPointer, doc, h_start)
-                if pg_ok and pg and pg == pageno then
+            if h_start and h_end then
+                local is_on_page = false
+
+                -- Primary: use getPageFromXPointer for reliable cross-fragment filtering
+                if doc.getPageFromXPointer then
+                    local pg_ok, pg = pcall(doc.getPageFromXPointer, doc, h_start)
+                    if pg_ok and pg and pg == pageno then
+                        is_on_page = true
+                    end
+                else
+                    -- Fallback: compareXPointers (only works within same DocFragment)
                     is_on_page = true
+                    if end_xp and doc.compareXPointers then
+                        local comp_ok, cmp = pcall(doc.compareXPointers, doc, h_start, end_xp)
+                        if comp_ok and cmp and cmp > 0 then is_on_page = false end
+                    end
+                    if is_on_page and start_xp and doc.compareXPointers then
+                        local comp_ok, cmp = pcall(doc.compareXPointers, doc, h_start, start_xp)
+                        if comp_ok and cmp and cmp < 0 then is_on_page = false end
+                    end
                 end
-            else
-                -- Fallback: compareXPointers (only works within same DocFragment)
-                is_on_page = true
-                if end_xp and doc.compareXPointers then
-                    local comp_ok, cmp = pcall(doc.compareXPointers, doc, h_start, end_xp)
-                    if comp_ok and cmp and cmp > 0 then is_on_page = false end
-                end
-                if is_on_page and start_xp and doc.compareXPointers then
-                    local comp_ok, cmp = pcall(doc.compareXPointers, doc, h_start, start_xp)
-                    if comp_ok and cmp and cmp < 0 then is_on_page = false end
-                end
-            end
 
-            if is_on_page then
-                kept = kept + 1
-                hit.start = h_start
-                hit["end"] = h_end
-                local processed = self:_processSingleHit(hit, enabled_cats, lang, doc)
-                if processed then
-                    table.insert(xp_matches, processed)
-                    found_new = true
+                if is_on_page then
+                    -- Check if we have already added this exact match (to avoid duplicates)
+                    local is_duplicate = false
+                    for _, match in ipairs(xp_matches) do
+                        if match.start_xp == h_start and match.end_xp == h_end then
+                            is_duplicate = true
+                            break
+                        end
+                    end
+
+                    if not is_duplicate then
+                        kept = kept + 1
+                        hit.start = h_start
+                        hit["end"] = h_end
+                        local processed = self:_processSingleHit(hit, enabled_cats, lang, doc)
+                        log("scanPageForUnits: hit processed=" .. tostring(processed ~= nil) .. " original=" .. tostring(processed and processed.original or "nil") .. " converted=" .. tostring(processed and processed.converted or "nil"))
+                        if processed then
+                            table.insert(xp_matches, processed)
+                            found_new = true
+                        end
+                    end
                 end
             end
         end
     end
-    log("scanPageForUnits: kept " .. tostring(kept) .. " of " .. tostring(#hits) .. " hits on page " .. tostring(pageno))
+
+    log("scanPageForUnits: kept " .. tostring(kept) .. " hits on page " .. tostring(pageno))
 
     if found_new then
         self._box_cache_sig = nil
