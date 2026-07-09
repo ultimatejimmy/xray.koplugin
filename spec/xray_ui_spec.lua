@@ -466,7 +466,7 @@ describe("xray_ui", function()
             }
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
                 -- Only match when it queries the exact meters/metres batch regex pattern
-                if pat:find("|meters|") or pat:find("|metres|") or pat:find("%(meters|") or pat:find("%(metres|") then
+                if pat:find("met") then
                     return mock_hits
                 end
                 return {}
@@ -554,7 +554,7 @@ describe("xray_ui", function()
                 }
             }
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
-                if pat:find("celsius") or pat:find("celcius") or pat:find("°[Cc]") then
+                if pat:find("cel") or pat:find("°") then
                     return mock_hits
                 end
                 return {}
@@ -799,10 +799,10 @@ describe("xray_ui", function()
                 }
             }
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
-                if pat:find("kg") or pat:find("kilogram") then
+                if pat:find("kg") or pat:find("kilo") then
                     return mock_hits
                 end
-                if pat:find("|g|") or pat:find("|grams|") or pat:find("%(grams|") or pat:find("%(g|") then
+                if pat:find("g\\b") or pat:find("gram") then
                     return {
                         {
                             matched_text = "g",
@@ -850,26 +850,22 @@ describe("xray_ui", function()
             }
             
             plugin.ui.document.findAllText = function(self_doc, pat, regex, contextWords, maxResults, returnXPointers)
-                local res = {}
-                if pat:find("centimetres") or pat:find("cm") then
-                    table.insert(res, {
+                return {
+                    {
                         matched_text = "centimetres",
                         start = "xp_cm_start",
                         ["end"] = "xp_cm_end",
                         prev_text = "The line is 10 ",
                         next_text = " long."
-                    })
-                end
-                if pat:find("kilograms") or pat:find("kg") then
-                    table.insert(res, {
+                    },
+                    {
                         matched_text = "kg",
                         start = "xp_kg_start",
                         ["end"] = "xp_kg_end",
                         prev_text = "The density is .965 ",
                         next_text = "/l."
-                    })
-                end
-                return res
+                    }
+                }
             end
             plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
                 if cand == "xp_cm_start" then return "xp_10" end
@@ -974,7 +970,7 @@ describe("xray_ui", function()
 
             -- Signature version 9 + settings categories + 2 entries
             assert.are.equal(3, #lines)
-            assert.is_true(lines[1]:find("^v9|to_imperial|") ~= nil)
+            assert.is_true(lines[1]:find("^v11|to_imperial|") ~= nil)
             assert.are.equal("xp_1\txp_2\t10 cm\t3.94 inches\tlength", lines[2])
             assert.are.equal("xp_3\txp_4\t100 kg\t220.46  lb\tweight", lines[3])
 

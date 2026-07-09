@@ -20,6 +20,74 @@ local function log(msg)
     XRayLogger:log("UnitScanner: " .. tostring(msg))
 end
 
+local function build_trie(words)
+    local trie = {}
+    for _, word in ipairs(words) do
+        local node = trie
+        for i = 1, #word do
+            local char = word:sub(i, i)
+            node[char] = node[char] or {}
+            node = node[char]
+        end
+        node["$"] = true
+    end
+    return trie
+end
+
+local function trie_to_regex(node)
+    local branches = {}
+    local chars = {}
+    local has_end = false
+    
+    for k, v in pairs(node) do
+        if k == "$" then
+            has_end = true
+        else
+            table.insert(chars, k)
+        end
+    end
+    
+    table.sort(chars)
+    
+    for _, k in ipairs(chars) do
+        local child_regex = trie_to_regex(node[k])
+        
+        local esc_k = k
+        if k == " " then
+            esc_k = "\\s+"
+        elseif k == "\2" then
+            esc_k = "\\b"
+        elseif k:find("^[%-%+%.%?%*%^%$%(%)%[%]%%%\\]$") then
+            esc_k = "\\" .. k
+        end
+        
+        if child_regex == "" then
+            table.insert(branches, esc_k)
+        else
+            table.insert(branches, esc_k .. child_regex)
+        end
+    end
+    
+    if #branches == 0 then
+        return ""
+    end
+    
+    local regex = ""
+    if #branches == 1 then
+        regex = branches[1]
+    else
+        regex = "(" .. table.concat(branches, "|") .. ")"
+    end
+    
+    if has_end then
+        if #branches > 0 then
+            regex = "(" .. regex .. ")?"
+        end
+    end
+    
+    return regex
+end
+
 local M = {}
 
 -- Returns current page number safely
@@ -438,7 +506,7 @@ local function _getSettingsSignature(settings)
     local cat_s = settings.unit_cat_speed ~= false
     local cat_a = settings.unit_cat_area ~= false
     return table.concat({
-        "v9",
+        "v11",
         direction,
         tostring(cat_l), tostring(cat_w), tostring(cat_t),
         tostring(cat_v), tostring(cat_s), tostring(cat_a)
@@ -574,52 +642,38 @@ function M:scanBookForUnits()
                 return
             end
 
-            -- Escape and join aliases into a regex pattern with appropriate word boundaries
-            local word_aliases_both = {}      -- gets \b at start and end
-            local word_aliases_left_only = {} -- gets \b at start only (ends in non-word char like ³)
-            local degree_aliases = {}         -- no \b at start (starts with °), gets \b at end
-            
+            -- Prepare unit aliases with boundary marker placeholder (\2) for trie
+            local prepared_aliases = {}
             for _, alias in ipairs(aliases) do
-                -- Use standard regex escapes (\) instead of Lua pattern escapes (%)
-                local esc = alias:gsub("([%-%+%.%?%*%^%$%(%)%[%]%%])", "\\%1")
-                esc = esc:gsub("%s+", "\\s+")
-                
-                if alias:find("^°") then
-                    table.insert(degree_aliases, esc)
-                else
-                    -- Check if it ends with an ASCII alphanumeric character
-                    if alias:match("[%w]$") then
-                        table.insert(word_aliases_both, esc)
-                    else
-                        table.insert(word_aliases_left_only, esc)
-                    end
+                local normalized = alias:lower():gsub("%s+", " ")
+                if normalized:match("[%w]$") then
+                    normalized = normalized .. "\2"
                 end
+                table.insert(prepared_aliases, normalized)
             end
-            
-            -- Sort descending by length to prevent shadowing issues (e.g. "m" matching before "mm")
-            table.sort(word_aliases_both, function(a, b)
-                return #a > #b
-            end)
-            table.sort(word_aliases_left_only, function(a, b)
-                return #a > #b
-            end)
-            table.sort(degree_aliases, function(a, b)
-                return #a > #b
-            end)
-            
-            local pats = {}
-            if #word_aliases_both > 0 then
-                table.insert(pats, "\\b(" .. table.concat(word_aliases_both, "|") .. ")\\b")
+            local unit_trie = build_trie(prepared_aliases)
+            local unit_trie_regex = trie_to_regex(unit_trie)
+
+            -- Prepare prefix words trie
+            local prefixes = {
+                "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+                "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+                "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+                "hundred", "thousand", "million", "billion", "half", "quarter",
+                "a", "an", "a few", "a couple", "several", "a dozen", "half a dozen", "some", "many",
+                "hundreds of", "thousands of", "millions of", "tens of", "dozens of", "couple of", "handful of"
+            }
+            local prepared_prefixes = {}
+            for _, p in ipairs(prefixes) do
+                local normalized = p:lower():gsub("%s+", " ")
+                table.insert(prepared_prefixes, normalized)
             end
-            if #word_aliases_left_only > 0 then
-                table.insert(pats, "\\b(" .. table.concat(word_aliases_left_only, "|") .. ")")
-            end
-            if #degree_aliases > 0 then
-                table.insert(pats, "(" .. table.concat(degree_aliases, "|") .. ")\\b")
-            end
-            local pat = table.concat(pats, "|")
-            log("scanBookForUnits: regex pattern=[" .. pat .. "]")
-            
+            local prefix_trie = build_trie(prepared_prefixes)
+            local prefix_trie_regex = trie_to_regex(prefix_trie)
+
+            local pat = "((\\b" .. prefix_trie_regex .. "|\\b[0-9]+[0-9\\.,]*)\\s*|\\.[0-9]+\\s*)(" .. unit_trie_regex .. ")"
+            log("scanBookForUnits: hybrid regex pattern=[" .. pat .. "]")
+
             local doc = self.ui.document
             local ok, hits = pcall(function()
                 -- Note: findAllText regex flag is true, contextWords=5, maxResults=5000, returnXPointers=true
@@ -632,10 +686,34 @@ function M:scanBookForUnits()
                 return
             end
 
+            -- Deduplicate overlapping hits by end xpointer (keeps the longest match)
+            local unique_hits = {}
+            for _, hit in ipairs(hits) do
+                local end_xp = hit["end"]
+                if not unique_hits[end_xp] or #hit.matched_text > #unique_hits[end_xp].matched_text then
+                    unique_hits[end_xp] = hit
+                end
+            end
+            
+            local deduped_hits = {}
+            for _, hit in pairs(unique_hits) do
+                table.insert(deduped_hits, hit)
+            end
+            hits = deduped_hits
+
             log("scanBookForUnits: findAllText returned " .. tostring(#hits) .. " hits")
 
             local xp_matches = {}
             local lang = self.loc and self.loc:getLanguage() or "en"
+
+            -- Sort descending by length to prevent shadowing issues (e.g. "m" matching before "mm")
+            local sorted_aliases = {}
+            for _, alias in ipairs(aliases) do
+                table.insert(sorted_aliases, alias:lower())
+            end
+            table.sort(sorted_aliases, function(a, b)
+                return #a > #b
+            end)
 
             for _, hit in ipairs(hits) do
                 local is_range = false
@@ -643,8 +721,28 @@ function M:scanBookForUnits()
                 local val1, val2
                 local is_vague = false
                 
+                local matched_text = (hit.matched_text or "")
+                local lower_matched = matched_text:lower():gsub("\194\160", " "):gsub("%s+", " ")
+                
+                -- Extract unit alias
+                local matched_alias = nil
+                for _, alias in ipairs(sorted_aliases) do
+                    local alias_lower = alias:gsub("\194\160", " "):gsub("%s+", " ")
+                    if lower_matched:sub(-#alias_lower) == alias_lower then
+                        matched_alias = alias_lower
+                        break
+                    end
+                end
+                matched_alias = matched_alias or lower_matched
+
+                -- Extract prefix part
+                local num_part = matched_text:sub(1, #matched_text - #matched_alias)
+                local p = (hit.prev_text or "") .. num_part
+                p = p:gsub("%s+$", "")
+                p = p:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
+                
                 -- 1. Check for vague quantifiers (e.g. "a few hundred yards")
-                local vague = xray_units.detectVagueQuantifier(hit.prev_text)
+                local vague = xray_units.detectVagueQuantifier(p)
                 if vague then
                     val1 = vague.low
                     val2 = vague.high
@@ -653,9 +751,6 @@ function M:scanBookForUnits()
                     num_str = vague.quantifier .. " " .. vague.multiplier
                 else
                     -- 2. Try prefix_word or prev_text tail
-                    local p = (hit.prev_text or ""):gsub("%s+$", "")
-                    p = p:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
-                    
                     -- Try digit range
                     local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
                     if not r1 then
@@ -761,7 +856,7 @@ function M:scanBookForUnits()
                 end
                 
                 if val or (val1 and val2) then
-                    local matched_unit = (hit.matched_text or ""):lower():gsub("\194\160", " "):gsub("%s+", " ")
+                    local matched_unit = matched_alias
                     local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
                     if not u then
                         for _, unit_def in ipairs(xray_units.UNITS or {}) do
