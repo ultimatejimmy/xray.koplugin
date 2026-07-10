@@ -527,6 +527,7 @@ end
 function M:_getUnitCachePath(resolved_dir)
     if not self.ui or not self.ui.document or not self.ui.document.file then return nil end
     local sidecar = DocSettings:getSidecarDir(self.ui.document.file)
+    if not sidecar then return nil end
     resolved_dir = resolved_dir or _getResolvedDirection(self)
     return sidecar .. "/xray_unit_cache_" .. resolved_dir .. ".cache"
 end
@@ -603,23 +604,28 @@ function M:saveUnitCache(resolved_dir)
     local settings = self.ai_helper and self.ai_helper.settings or {}
     local signature = _getSettingsSignature(settings)
     
-    local f, err = io.open(cache_file, "w")
-    if f then
-        f:write(signature .. "\n")
-        for _, m in ipairs(self.unit_xp_matches or {}) do
-            local original_clean = (m.original or ""):gsub("\r", " "):gsub("\n", " ")
-            local converted_clean = (m.converted or ""):gsub("\r", " "):gsub("\n", " ")
-            f:write(string.format("%s\t%s\t%s\t%s\t%s\n",
-                tostring(m.start_xp or ""),
-                tostring(m.end_xp or ""),
-                original_clean,
-                converted_clean,
-                m.category or ""))
+    local ok, err = pcall(function()
+        local f, open_err = io.open(cache_file, "w")
+        if f then
+            f:write(signature .. "\n")
+            for _, m in ipairs(self.unit_xp_matches or {}) do
+                local original_clean = (m.original or ""):gsub("\r", " "):gsub("\n", " ")
+                local converted_clean = (m.converted or ""):gsub("\r", " "):gsub("\n", " ")
+                f:write(string.format("%s\t%s\t%s\t%s\t%s\n",
+                    tostring(m.start_xp or ""),
+                    tostring(m.end_xp or ""),
+                    original_clean,
+                    converted_clean,
+                    m.category or ""))
+            end
+            f:close()
+            log("saveUnitCache: Saved cache to " .. cache_file)
+        else
+            log("saveUnitCache: Failed to open cache: " .. tostring(open_err))
         end
-        f:close()
-        log("saveUnitCache: Saved cache to " .. cache_file)
-    else
-        log("saveUnitCache: Failed to write cache: " .. tostring(err))
+    end)
+    if not ok then
+        log("saveUnitCache: Unexpected error writing cache: " .. tostring(err))
     end
 end
 
@@ -734,8 +740,7 @@ function M:scanBookForUnits(force)
                 digit_units = ambig_trie_regex
             else
                 local unambig_trie = build_trie(all_unambiguous)
-                local unambig_trie_regex = trie_to_regex(unambig_trie)
-                digit_units = unambig_trie_regex
+                digit_units = trie_to_regex(unambig_trie)
             end
 
             local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*(" .. digit_units .. "))"
@@ -743,13 +748,11 @@ function M:scanBookForUnits(force)
             local parts = {}
             if #word_unambiguous_aliases > 0 then
                 local trie = build_trie(word_unambiguous_aliases)
-                local r = trie_to_regex(trie)
-                table.insert(parts, "\\b(" .. r .. ")")
+                table.insert(parts, "\\b(" .. trie_to_regex(trie) .. ")")
             end
             if #non_word_unambiguous_aliases > 0 then
                 local trie = build_trie(non_word_unambiguous_aliases)
-                local r = trie_to_regex(trie)
-                table.insert(parts, "(" .. r .. ")")
+                table.insert(parts, "(" .. trie_to_regex(trie) .. ")")
             end
             if #parts > 0 then
                 pat_word = "(" .. table.concat(parts, "|") .. ")"
@@ -801,13 +804,12 @@ function M:scanBookForUnits(force)
             local unique_hits = {}
 
             for _, hit in ipairs(hits) do
-                log("Processing HIT: matched_text='" .. tostring(hit.matched_text) .. "' prev_text='" .. tostring(hit.prev_text) .. "'")
                 local end_xp = hit["end"]
                 if not unique_hits[end_xp] or #hit.matched_text > #unique_hits[end_xp].matched_text then
                     unique_hits[end_xp] = hit
                 end
             end
-            
+
             local deduped_hits = {}
             for _, hit in pairs(unique_hits) do
                 table.insert(deduped_hits, hit)
@@ -838,7 +840,6 @@ function M:scanBookForUnits(force)
 
 
             for _, hit in ipairs(hits) do
-                log("Processing HIT: matched_text='" .. tostring(hit.matched_text) .. "' prev_text='" .. tostring(hit.prev_text) .. "'")
                 local is_range = false
                 local val, num_str
                 local val1, val2
@@ -888,7 +889,6 @@ function M:scanBookForUnits(force)
 
                             is_range = true
                             num_str = p:match("([0-9%.%,]+%s*[%-–toor,]+%s*[0-9%.%,]+)$") or (r1 .. "-" .. r2)
-                            log("PARSED RANGE: r1=" .. tostring(r1) .. " r2=" .. tostring(r2) .. " num_str=" .. tostring(num_str))
                         end
                     else
                         -- Try written word range
@@ -1091,8 +1091,6 @@ function M:scanBookForUnits(force)
                                 converted = conv_str,
                                 category = u.category
                             })
-                        else
-                            log("scanBookForUnits: rejected false positive matching: " .. tostring(original_text or "nil"))
                         end
                     end
                 end
