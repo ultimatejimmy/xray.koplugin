@@ -141,9 +141,9 @@ msgstr "Non-fiction"
 msgid "book_mode_saved"
 msgstr "Mode de livre enregistré !"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Le type de livre détermine la stratégie d'extraction d'IA utilisée et les fonctionnalités disponibles.\n\n- Fiction : Se concentre sur le récit, les personnages et la chronologie de l'intrigue.\n- Non-fiction : Se concentre sur les termes, les concepts et les personnages historiques.\n\nLa 'Détection automatique' laissera l'IA décider après la première recherche."
+msgstr "Le type de livre détermine la stratégie d'extraction d'IA utilisée et les fonctionnalités disponibles.\n\n- Fiction : Se concentre sur le récit, les personnages et la chronologie de l'intrigue.\n- Non-fiction : Se concentre sur les termes, les concepts et les personnages historiques.\n\nLa 'Détection automatique' laissera l'IA décider après la première recherche.\n\n[B]Remarque :[/B] Ce paramètre est enregistré [B]par livre[/B]. Un choix personnalisé remplace la détection automatique ou les paramètres globaux."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Cette page"
 msgid "unit_auto_scan_about"
 msgstr "L'analyse peut prendre jusqu'à 15-20 secondes pour les gros livres. Cela ne se produit que la première fois que le livre est ouvert et les résultats sont enregistrés pour l'avenir."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Scanner automatiquement les livres pour trouver des unités :"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Désactivé"
@@ -1120,6 +1124,10 @@ msgstr "Tirets"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Pointillé"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Double"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

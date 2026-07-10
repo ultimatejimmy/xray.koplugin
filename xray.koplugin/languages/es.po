@@ -141,9 +141,9 @@ msgstr "No ficción"
 msgid "book_mode_saved"
 msgstr "¡Modo de libro guardado!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "El tipo de libro determina qué estrategia de extracción de IA se utiliza y qué funciones están disponibles.\n\n- Ficción: Se centra en la narrativa, personajes y cronología de la trama.\n- No ficción: Se centra en términos, conceptos y personajes históricos.\n\nLa 'Detección automática' dejará que la IA decida después de la primera búsqueda."
+msgstr "El tipo de libro determina qué estrategia de extracción de IA se utiliza y qué funciones están disponibles.\n\n- Ficción: Se centra en la narrativa, personajes y cronología de la trama.\n- No ficción: Se centra en términos, conceptos y personajes históricos.\n\nLa 'Detección automática' dejará que la IA decida después de la primera búsqueda.\n\n[B]Nota:[/B] Esta configuración se guarda [B]por libro[/B]. Una elección personalizada anula la detección automática o la configuración global."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Esta página"
 msgid "unit_auto_scan_about"
 msgstr "El escaneo puede tardar hasta 15-20 segundos en libros grandes. Esto solo ocurre la primera vez que se abre el libro y los resultados se guardan para el futuro."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Escanear libros automáticamente en busca de unidades:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Desactivado"
@@ -1120,6 +1124,10 @@ msgstr "Rayado"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Punteado"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Doble"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

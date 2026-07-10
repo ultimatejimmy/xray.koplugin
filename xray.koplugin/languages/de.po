@@ -141,9 +141,9 @@ msgstr "Sachbuch"
 msgid "book_mode_saved"
 msgstr "Buchmodus gespeichert!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Der Buchtyp bestimmt, welche KI-Extraktionsstrategie verwendet wird und welche Funktionen verfügbar sind.\n\n- Belletristik: Konzentriert sich auf Handlung, Charaktere und Zeitleiste.\n- Sachbuch: Konzentriert sich auf Begriffe, Konzepte und historische Persönlichkeiten.\n\n'Auto-Detect' lässt die KI nach dem ersten Abruf entscheiden."
+msgstr "Der Buchtyp bestimmt, welche KI-Extraktionsstrategie verwendet wird und welche Funktionen verfügbar sind.\n\n- Belletristik: Konzentriert sich auf Handlung, Charaktere und Zeitleiste.\n- Sachbuch: Konzentriert sich auf Begriffe, Konzepte und historische Persönlichkeiten.\n\n'Auto-Detect' lässt die KI nach dem ersten Abruf entscheiden.\n\n[B]Hinweis:[/B] Diese Einstellung wird [B]pro Buch[/B] gespeichert. Eine benutzerdefinierte Auswahl überschreibt die automatische Erkennung oder globale Standardeinstellungen."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Diese Seite"
 msgid "unit_auto_scan_about"
 msgstr "Das Scannen kann bei großen Büchern bis zu 15–20 Sekunden dauern. Dies geschieht nur beim ersten Öffnen des Buches und die Ergebnisse werden für die Zukunft gespeichert."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Bücher automatisch nach Einheiten scannen:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Deaktiviert"
@@ -1120,6 +1124,10 @@ msgstr "Gestrichelt"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Gepunktet"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Doppelt"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

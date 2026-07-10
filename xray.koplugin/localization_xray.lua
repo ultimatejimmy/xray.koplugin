@@ -405,10 +405,12 @@ function Localization:t(key, ...)
             review = "Review",
             pair_rejected = "Pair marked as not a duplicate.",
             unit_auto_scan_settings = "Auto-Scan Settings",
+            unit_auto_scan_desc = "Scan books for units automatically:",
             unit_auto_scan_enabled = "Enabled",
             unit_auto_scan_disabled = "Disabled",
             unit_auto_scan_about = "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future.",
             unit_manual_scan_button = "Scan/Rescan",
+            unit_underline_double = "Double",
         }
         translation = fallbacks[key] or key
     end

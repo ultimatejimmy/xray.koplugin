@@ -108,7 +108,7 @@ msgid "book_mode_saved"
 msgstr "Book mode saved!"
 
 msgid "book_type_about"
-msgstr "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch."
+msgstr "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch.\n\n[B]Note:[/B] This setting is saved [B]per book[/B]. A custom choice overrides default auto-detection or global settings."
 
 msgid "book_type_auto"
 msgstr "Auto-Detect"
@@ -782,6 +782,9 @@ msgstr "Section"
 msgid "unit_auto_scan_about"
 msgstr "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future."
 
+msgid "unit_auto_scan_desc"
+msgstr "Scan books for units automatically:"
+
 msgid "unit_auto_scan_disabled"
 msgstr "Disabled"
 
@@ -841,6 +844,9 @@ msgstr "Dashed"
 
 msgid "unit_underline_dotted"
 msgstr "Dotted"
+
+msgid "unit_underline_double"
+msgstr "Double"
 
 msgid "unit_underline_intensity_label"
 msgstr "Underline Intensity"

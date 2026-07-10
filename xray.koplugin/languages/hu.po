@@ -141,9 +141,9 @@ msgstr "Ismeretterjesztő"
 msgid "book_mode_saved"
 msgstr "Könyvmód mentve!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "A könyv típusa határozza meg, hogy a MI milyen kinyerési stratégiát használ, és mely funkciók érhetők el.\n\n- Szépirodalom: A történetre, a szereplőkre és a cselekmény idővonalára összpontosít.\n- Ismeretterjesztő: Kifejezésekre, fogalmakra és történelmi személyekre összpontosít.\n\nAz 'Automatikus felismerés' lehetővé teszi, hogy a MI döntsön az első lekérdezés után."
+msgstr "A könyv típusa határozza meg, hogy a MI milyen kinyerési stratégiát használ, és mely funkciók érhetők el.\n\n- Szépirodalom: A történetre, a szereplőkre és a cselekmény idővonalára összpontosít.\n- Ismeretterjesztő: Kifejezésekre, fogalmakra és történelmi személyekre összpontosít.\n\nAz 'Automatikus felismerés' lehetővé teszi, hogy a MI döntsön az első lekérdezés után.\n\n[B]Megjegyzés:[/B] Ezt a beállítást [B]könyvenként[/B] mentjük. A manuális választás felülírja az automatikus felismerést vagy a globális beállításokat."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Ez az oldal"
 msgid "unit_auto_scan_about"
 msgstr "Nagyobb könyvek esetén a beolvasás akár 15-20 másodpercig is eltarthat. Ez csak a könyv első megnyitásakor történik meg, és az eredmények mentésre kerülnek a jövőre nézve."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Könyvek automatikus vizsgálata mértékegységekre:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Letiltva"
@@ -1120,6 +1124,10 @@ msgstr "Szaggatott"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Pontozott"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Dupla"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

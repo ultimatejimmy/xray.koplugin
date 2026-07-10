@@ -344,6 +344,11 @@ local function _draw_underline(bb, box, style, grey, thickness, raw_thickness, p
 
     if style == "solid" then
         bb:paintRect(x0, y, box.w, thickness, color_val)
+    elseif style == "double" then
+        local line_h = math.max(1, math.floor(thickness / 2 + 0.5))
+        local gap = math.max(1, math.floor(thickness / 2))
+        bb:paintRect(x0, y - gap, box.w, line_h, color_val)
+        bb:paintRect(x0, y + line_h, box.w, line_h, color_val)
     elseif style == "dotted" then
         local dot_w = thickness
         local gap_w = thickness

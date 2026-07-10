@@ -124,10 +124,10 @@ def call_gemini(prompt):
                 return json.loads(text_stripped)
         except urllib.error.HTTPError as e:
             if e.code in (429, 500, 502, 503, 504) and attempt < max_retries - 1:
-                # For 429, respect Retry-After header if present, otherwise use long backoff
+                # For 429, respect Retry-After header if present, otherwise use backoff
                 if e.code == 429:
                     retry_after = e.headers.get('Retry-After')
-                    sleep_time = int(retry_after) if retry_after else 30 * (attempt + 1)
+                    sleep_time = int(retry_after) if retry_after else 10 * (attempt + 1)
                 else:
                     sleep_time = 5 * (attempt + 1)
                 print(f"  - HTTP {e.code}, waiting {sleep_time}s before retry {attempt + 1}/{max_retries - 1}...")
@@ -139,7 +139,7 @@ def call_gemini(prompt):
             # Covers socket timeouts and connection errors
             print(f"API Connection Error (timeout or network): {e}")
             if attempt < max_retries - 1:
-                time.sleep(10)
+                time.sleep(5)
             else:
                 return None
         except Exception as e:
@@ -147,66 +147,145 @@ def call_gemini(prompt):
             return None
     return None
 
-def translate_batch(untranslated, lang_name):
-    prompt = f"""You are a professional translator. Translate the following key-value pairs for a KOReader e-reader plugin UI into {lang_name}.
-Keep translations short, clear, and natural for e-reader menus.
+def translate_all_gemini(all_untranslated, lang_names, max_pairs=60):
+    """
+    Translates all untranslated keys across all languages in batches.
+    all_untranslated: {lang_code: {key: en_val}}
+    lang_names: {lang_code: lang_name}
+    """
+    # Flatten all translation targets to batch them
+    flat_pairs = []
+    for lang_code, keys in all_untranslated.items():
+        for key, en_val in keys.items():
+            flat_pairs.append((lang_code, key, en_val))
+            
+    if not flat_pairs:
+        return {}
+        
+    all_results = {} # lang_code -> {key: translated_val}
+    
+    # Process flat_pairs in chunks
+    for i in range(0, len(flat_pairs), max_pairs):
+        chunk = flat_pairs[i:i+max_pairs]
+        
+        # Group by language code within this chunk to present clean prompt input
+        batch_dict = {}
+        for lang_code, key, en_val in chunk:
+            if lang_code not in batch_dict:
+                batch_dict[lang_code] = []
+            batch_dict[lang_code].append({"key": key, "english": en_val})
+            
+        targets = []
+        for lang_code, strings in batch_dict.items():
+            name = lang_names.get(lang_code, lang_code.capitalize())
+            targets.append({
+                "language_code": lang_code,
+                "language_name": name,
+                "strings": strings
+            })
+            
+        prompt = f"""You are a professional translator and localization expert. Translate the following English key-value pairs for a KOReader e-reader plugin UI into their respective target languages.
 
-Format rules:
-1. Maintain placeholders like %s or %d exactly.
-2. Return ONLY a valid JSON object matching the format:
+For each target language, you will receive its language name, language code, and a list of key-value pairs where the values are in English. Translate the English values into the target language, keeping them short, clear, and natural for e-reader menus.
+
+CRITICAL rules:
+1. Retain all format specifiers such as %s, %d, %1$s, %2$d, etc. exactly in the translated output.
+2. Retain all literal escaped newlines (\\n) and tabs (\\t) exactly.
+3. Keep the translation concise, natural, and suited for a mobile e-reader display.
+4. Return ONLY a valid JSON object matching this exact schema:
 {{
   "translations": {{
-    "key1": "translated_val1",
-    "key2": "translated_val2"
+    "<language_code>": {{
+      "key_name": "translated_value"
+    }}
   }}
 }}
-Do not add markdown blocks or explanations.
+Do not add markdown blocks, explanations, or backticks.
 
-Keys and English values:
-{json.dumps(untranslated, indent=2)}
+Target languages and strings to translate:
+{json.dumps(targets, indent=2)}
 """
-    result = call_gemini(prompt)
-    if result and "translations" in result:
-        return result["translations"]
-    return {}
-
-def translate_with_chunking(untranslated, lang_name, chunk_size=40):
-    all_translated = {}
-    keys = list(untranslated.keys())
-    
-    for i in range(0, len(keys), chunk_size):
-        chunk_keys = keys[i:i+chunk_size]
-        chunk_dict = {k: untranslated[k] for k in chunk_keys}
-        print(f"  - Translating chunk {i//chunk_size + 1} ({len(chunk_keys)} keys) to {lang_name}...")
+        print(f"  - Requesting translations for batch {i // max_pairs + 1} ({len(chunk)} strings)...")
+        result = call_gemini(prompt)
         
-        # Call translation API
-        translated = translate_batch(chunk_dict, lang_name)
-        if translated:
-            all_translated.update(translated)
+        if result and "translations" in result:
+            translations = result["translations"]
+            for lang_code, tr_map in translations.items():
+                if lang_code not in all_results:
+                    all_results[lang_code] = {}
+                for k, v in tr_map.items():
+                    all_results[lang_code][k] = v
         else:
-            # Retry chunk split in half, with a longer wait first
-            print(f"  - Chunk failed. Waiting 15s then retrying with smaller chunks...")
-            time.sleep(15.0)
-            half = len(chunk_keys) // 2
-            if half > 0:
-                for sub_chunk_keys in [chunk_keys[:half], chunk_keys[half:]]:
-                    sub_dict = {k: chunk_dict[k] for k in sub_chunk_keys}
-                    time.sleep(5.0)
-                    sub_translated = translate_batch(sub_dict, lang_name)
-                    if sub_translated:
-                        all_translated.update(sub_translated)
-                    else:
-                        print(f"  - WARNING: Sub-chunk of {len(sub_chunk_keys)} keys failed to translate.")
-            else:
-                print(f"  - WARNING: Chunk of {len(chunk_keys)} keys failed completely.")
-        
-        # Inter-chunk delay to avoid hitting rate limits
-        if i + chunk_size < len(keys):
-            time.sleep(5.0)
+            print(f"  - WARNING: Batch {i // max_pairs + 1} failed or returned invalid response.")
             
-    return all_translated
+        # Short rate-limiting recovery sleep between batches (if multiple exist)
+        if i + max_pairs < len(flat_pairs):
+            time.sleep(2.0)
+            
+    return all_results
+
+def manual_translate_languages(all_untranslated, lang_names, all_existing_tr):
+    """
+    Prompts the user interactively in the terminal to translate keys.
+    """
+    print("\n=== Interactive Manual Translation ===")
+    print("For each language, you can type translations. Press Enter to skip a key.")
+    print("Type 'exit' to stop translating and save all progress so far.")
+    
+    for lang_code in sorted(all_untranslated.keys()):
+        keys = all_untranslated[lang_code]
+        lang_name = lang_names.get(lang_code, lang_code.capitalize())
+        
+        print(f"\n--- {lang_name} ({lang_code}) - {len(keys)} keys need translation ---")
+        try:
+            choice = input(f"Translate keys for {lang_name}? [Y/n/skip-all]: ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting manual translation mode.")
+            break
+            
+        if choice in ('skip-all', 's'):
+            print("Skipping all remaining languages.")
+            break
+        elif choice == 'n':
+            print(f"Skipping {lang_name}.")
+            continue
+            
+        existing_tr = all_existing_tr.get(lang_code, {})
+        aborted = False
+        
+        for idx, (key, en_val) in enumerate(keys.items(), 1):
+            print(f"\n[{idx}/{len(keys)}] Key: {key}")
+            print(f"      English: {en_val}")
+            curr = existing_tr.get(key, "")
+            if curr:
+                print(f"      Current: {curr}")
+            try:
+                val = input("      Translation: ").strip()
+            except (KeyboardInterrupt, EOFError):
+                print("\nExiting manual translation mode.")
+                aborted = True
+                break
+                
+            if val.lower() == 'exit':
+                print("Exiting manual translation mode.")
+                aborted = True
+                break
+                
+            if val:
+                existing_tr[key] = val
+                print(f"      Saved: {val}")
+            else:
+                print("      Skipped.")
+                
+        if aborted:
+            break
 
 def sync():
+    import argparse
+    parser = argparse.ArgumentParser(description="Synchronize and translate KOReader X-Ray plugin localizations.")
+    parser.add_argument("-m", "--mode", choices=["auto", "manual", "skip"], help="Translation mode: auto (Gemini), manual (interactive CLI), or skip.")
+    args = parser.parse_args()
+
     print("--- Starting Translation Sync ---")
     
     # 1. Scan Source for Used Keys
@@ -239,64 +318,126 @@ def sync():
     save_po(en_path, 'English', 'en', en_final.keys(), en_final, used_keys, en_final)
     print(f"Updated {MASTER_LANG}.po")
 
-    has_gemini = get_gemini_key() is not None
-    if not has_gemini:
-        print("Warning: GEMINI_API_KEY environment variable not set. New/changed keys will use English fallbacks.")
+    # 3. Read and Prepare other languages
+    lang_files = [f for f in os.listdir(LANGUAGES_DIR) if f.endswith('.po') and not f.startswith(MASTER_LANG)]
+    
+    lang_names = {}
+    all_existing_tr = {}
+    all_existing_hashes = {}
+    all_untranslated = {}
+    
+    for file in lang_files:
+        lang_code = file.split('.')[0]
+        path = os.path.join(LANGUAGES_DIR, file)
+        entries = parse_po(path)
+        
+        # Extract Language Name from header
+        lang_name = lang_code.capitalize()
+        for e in entries:
+            if e['msgid'] == '':
+                m = re.search(r'Language-Team: (.*?)\\n', e['msgstr'])
+                if m: lang_name = m.group(1)
+        
+        lang_names[lang_code] = lang_name
+        
+        existing_tr = {e['msgid']: e['msgstr'] for e in entries if e['msgid'] and e['msgstr']}
+        existing_hashes = {e['msgid']: e['en_hash'] for e in entries if e['msgid']}
+        
+        all_existing_tr[lang_code] = existing_tr
+        all_existing_hashes[lang_code] = existing_hashes
+        
+        # Find missing or untranslated/stale keys
+        untranslated = {}
+        for key in en_final:
+            if key != 'language_name' and key != "":
+                current_val = existing_tr.get(key, "")
+                en_val = en_final.get(key, "")
+                stored_hash = existing_hashes.get(key)
+                current_hash = get_md5(en_val) if en_val else None
+                
+                is_missing = (current_val == "")
+                is_fallback = (current_val == key and key not in ALLOWLIST)
+                is_stale = (stored_hash and current_hash and stored_hash != current_hash)
+                
+                if is_missing or is_fallback or is_stale:
+                    untranslated[key] = en_val
+                    
+        if untranslated:
+            all_untranslated[lang_code] = untranslated
 
-    # 3. Update Other Languages
-    for file in os.listdir(LANGUAGES_DIR):
-        if file.endswith('.po') and not file.startswith(MASTER_LANG):
-            lang_code = file.split('.')[0]
-            path = os.path.join(LANGUAGES_DIR, file)
-            entries = parse_po(path)
+    # 4. Handle Translations
+    mode = args.mode
+    has_gemini = get_gemini_key() is not None
+    is_interactive = sys.stdin.isatty()
+    
+    if all_untranslated:
+        print("\nMissing or stale translations detected:")
+        for lang_code, keys in sorted(all_untranslated.items()):
+            name = lang_names.get(lang_code, lang_code.capitalize())
+            print(f"  - {name} ({lang_code}): {len(keys)} key(s)")
             
-            # Extract Language Name from header
-            lang_name = lang_code.capitalize()
-            for e in entries:
-                if e['msgid'] == '':
-                    m = re.search(r'Language-Team: (.*?)\\n', e['msgstr'])
-                    if m: lang_name = m.group(1)
-            
-            existing_tr = {e['msgid']: e['msgstr'] for e in entries if e['msgid'] and e['msgstr']}
-            existing_hashes = {e['msgid']: e['en_hash'] for e in entries if e['msgid']}
-            
-            # Find missing or untranslated/stale keys
-            untranslated = {}
-            for key in en_final:
-                if key != 'language_name' and key != "":
-                    current_val = existing_tr.get(key, "")
-                    en_val = en_final.get(key, "")
-                    stored_hash = existing_hashes.get(key)
-                    current_hash = get_md5(en_val) if en_val else None
-                    
-                    is_missing = (current_val == "")
-                    is_fallback = (current_val == key and key not in ALLOWLIST)
-                    is_stale = (stored_hash and current_hash and stored_hash != current_hash)
-                    
-                    if is_missing or is_fallback or is_stale:
-                        untranslated[key] = en_val
-            
-            # Run auto-translation if Gemini key is available and there are untranslated keys
-            if untranslated:
-                if has_gemini:
-                    print(f"Auto-translating {len(untranslated)} keys for {lang_name} ({lang_code})...")
-                    translated = translate_with_chunking(untranslated, lang_name)
-                    for k, v in translated.items():
-                        existing_tr[k] = v
-                    # Inter-language delay to let the rate limit recover
-                    time.sleep(8.0)
+        if not mode:
+            if is_interactive:
+                print("\nChoose translation method:")
+                opt_auto = "[1] Auto-translate with Gemini API" if has_gemini else "[1] (Disabled - GEMINI_API_KEY not set) Auto-translate with Gemini"
+                print(f"  {opt_auto}")
+                print("  [2] Interactively translate in console")
+                print("  [3] Skip translations (leave as fallback/empty)")
+                try:
+                    choice = input("Enter choice [1/2/3] (default 3): ").strip()
+                except (KeyboardInterrupt, EOFError):
+                    choice = "3"
+                if choice == "1" and has_gemini:
+                    mode = "auto"
+                elif choice == "2":
+                    mode = "manual"
                 else:
-                    # If Gemini key not available, fill in default/fallback but keep their old hash if it exists
-                    pass
+                    mode = "skip"
+            else:
+                mode = "auto" if has_gemini else "skip"
+                print(f"\nNon-interactive shell. Defaulting to mode: {mode}")
+                
+        if mode == "auto":
+            if not has_gemini:
+                print("\nError: GEMINI_API_KEY environment variable is not set. Cannot run auto-translation.")
+                if is_interactive:
+                    print("Falling back to manual translation mode...")
+                    mode = "manual"
+                else:
+                    print("Skipping translation.")
+                    mode = "skip"
+                    
+        if mode == "auto":
+            print(f"\nAuto-translating using Gemini API...")
+            translations = translate_all_gemini(all_untranslated, lang_names)
+            # Apply translations
+            for lang_code, tr_map in translations.items():
+                if lang_code in all_existing_tr:
+                    for k, v in tr_map.items():
+                        all_existing_tr[lang_code][k] = v
+                        
+        elif mode == "manual":
+            manual_translate_languages(all_untranslated, lang_names, all_existing_tr)
             
-            # Save po file
-            save_po(path, lang_name, lang_code, en_final.keys(), existing_tr, en_final, en_final)
-            
-            missing_count = len([k for k in en_final if k not in existing_tr or existing_tr[k] == ""])
-            if lang_code == 'en': missing_count = 0
-            print(f"Updated {file} ({missing_count} keys need translation)")
+        elif mode == "skip":
+            print("\nSkipping translations. Saving updated keys with fallbacks.")
+    else:
+        print("\nAll translation files are up to date.")
+
+    # 5. Save all files
+    for file in lang_files:
+        lang_code = file.split('.')[0]
+        path = os.path.join(LANGUAGES_DIR, file)
+        lang_name = lang_names[lang_code]
+        existing_tr = all_existing_tr[lang_code]
+        
+        save_po(path, lang_name, lang_code, en_final.keys(), existing_tr, en_final, en_final)
+        
+        missing_count = len([k for k in en_final if k not in existing_tr or existing_tr[k] == ""])
+        print(f"Updated {file} ({missing_count} keys need translation)")
 
     print("--- Sync Complete ---")
 
 if __name__ == "__main__":
     sync()
+

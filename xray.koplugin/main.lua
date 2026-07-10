@@ -1409,6 +1409,7 @@ function XRayPlugin:showUnitStyleCard()
         }, underline_style, "unit_underline_style")
 
         local style_row_3 = option_row({
+            { text = self.loc:t("unit_underline_double") or "Double", value = "double" },
             { text = self.loc:t("unit_underline_invisible") or "Invisible", value = "invisible" }
         }, underline_style, "unit_underline_style")
 
@@ -1544,208 +1545,24 @@ function XRayPlugin:showUnitStyleCard()
 end
 
 function XRayPlugin:showUnitAutoScanCard()
-    local Screen = require("device").screen
-    local Font = require("ui/font")
-    local Geom = require("ui/geometry")
-    local Blitbuffer = require("ffi/blitbuffer")
-    local UIManager = require("ui/uimanager")
-    local FrameContainer = require("ui/widget/container/framecontainer")
-    local InputContainer = require("ui/widget/container/inputcontainer")
-    local CenterContainer = require("ui/widget/container/centercontainer")
-    local VerticalGroup = require("ui/widget/verticalgroup")
-    local HorizontalGroup = require("ui/widget/horizontalgroup")
-    local TextWidget = require("ui/widget/textwidget")
-    local TextBoxWidget = require("ui/widget/textboxwidget")
-    local Button = require("ui/widget/button")
-    local MovableContainer = require("ui/widget/container/movablecontainer")
-    local GestureRange = require("ui/gesturerange")
-    local VerticalSpan = require("ui/widget/verticalspan")
-    local WidgetContainer = require("ui/widget/container/widgetcontainer")
-    local LineWidget = require("ui/widget/linewidget")
-
-    local xray_theme = require(plugin_path .. "xray_theme")
-
-    local function sc(val)
-        return Screen:scaleBySize(val)
-    end
-
-    local sw = Screen:getWidth()
-    local sh = Screen:getHeight()
-    local dialog_w = math.min(sw - sc(20), sc(380))
-
-    local fs = 20
-    if G_reader_settings then
-        fs = G_reader_settings:readSetting("cre_font_size") or 20
-    end
-    local ui_font_size = math.max(14, math.min(fs, 24))
-    local title_font_size = math.max(10, math.min(fs - 5, 15))
-
-    local overlay
-    local refresh
-
-    refresh = function()
-        if overlay then
-            UIManager:close(overlay, "ui")
-        end
-
-        local settings = self.ai_helper.settings or {}
-        local auto_scan = settings.unit_auto_scan_enabled ~= false
-
-        local function saveSetting(key, val)
-            self.ai_helper:saveSettings({ [key] = val })
-            refresh()
-        end
-
-        local function option_row(options, current, key)
-            local row = { align = "center" }
-            for i, opt in ipairs(options) do
-                if i > 1 then
-                    table.insert(row, WidgetContainer:new{ dimen = Geom:new{ w = sc(12), h = 1 } })
-                end
-                local value = opt.value
-                local is_selected = (value == current)
-                local dot_char = is_selected and "●" or "○"
-                
-                local frame = FrameContainer:new{
-                    bordersize = is_selected and xray_theme.border_btn or sc(1),
-                    radius = xray_theme.radius_btn,
-                    padding = sc(6),
-                    color = is_selected and xray_theme.color_border or xray_theme.color_section_rule,
-                    background = xray_theme.color_bg,
-                    HorizontalGroup:new{
-                        align = "center",
-                        TextWidget:new{ text = dot_char, face = Font:getFace("cfont", ui_font_size) },
-                        WidgetContainer:new{ dimen = Geom:new{ w = sc(4), h = 1 } },
-                        TextWidget:new{ text = opt.text, face = Font:getFace("cfont", ui_font_size) },
-                    }
-                }
-                local item = InputContainer:new{ frame }
-                item.ges_events = {
-                    Tap = {
-                        GestureRange:new{
-                            ges = "tap",
-                            range = function() return frame.dimen end
-                        }
-                    }
-                }
-                item.onTap = function()
-                    saveSetting(key, value)
-                    return true
-                end
-                table.insert(row, item)
-            end
-            return HorizontalGroup:new(row)
-        end
-
-        local title_label = TextWidget:new{
-            text = (self.loc:t("unit_auto_scan_settings") or "Auto-Scan Settings"):upper(),
-            face = Font:getFace("infofont", title_font_size),
-            fgcolor = Blitbuffer.COLOR_BLACK,
-        }
-
-        local scan_row = option_row({
-            { text = self.loc:t("unit_auto_scan_enabled") or "Enabled", value = true },
-            { text = self.loc:t("unit_auto_scan_disabled") or "Disabled", value = false }
-        }, auto_scan, "unit_auto_scan_enabled")
-
-        local about_text = self.loc:t("unit_auto_scan_about") or "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future."
-        local about_box = TextBoxWidget:new{
-            text = about_text,
-            face = Font:getFace("cfont", ui_font_size - 2),
-            width = dialog_w - sc(32),
-            fgcolor = Blitbuffer.COLOR_BLACK,
-            alignment = "left",
-        }
-
-        local function span()
-            return VerticalSpan:new{ width = xray_theme.gap }
-        end
-        local function divider()
-            return LineWidget:new{
-                dimen = Geom:new{ w = dialog_w - sc(32), h = sc(1) },
-                background = xray_theme.color_section_rule,
-            }
-        end
-
-        local close_btn = Button:new{
-            text = self.loc:t("close") or "Close",
-            face = Font:getFace("cfont", ui_font_size),
-            width = dialog_w - sc(32),
-            height = sc(42),
-            bordersize = xray_theme.border_btn,
-            radius = xray_theme.radius_btn,
-            callback = function()
-                self._autoscan_offset = nil
-                UIManager:close(overlay, "ui")
-            end
-        }
-
-        local card = FrameContainer:new{
-            padding = sc(12),
-            radius = xray_theme.radius_window,
-            bordersize = sc(2),
-            color = Blitbuffer.COLOR_BLACK,
-            background = xray_theme.color_bg,
-            width = dialog_w - sc(2),
-            VerticalGroup:new{
-                align = "left",
-                title_label,
-                span(),
-                scan_row,
-                span(),
-                divider(),
-                span(),
-                about_box,
-                span(),
-                divider(),
-                span(),
-                close_btn,
-            }
-        }
-
-        local card_outer = FrameContainer:new{
-            bordersize = sc(1),
-            color = Blitbuffer.Color8(180),
-            padding = 0,
-            background = xray_theme.color_bg,
-            radius = xray_theme.radius_window,
-            width = dialog_w,
-            card
-        }
-
-        local movable = MovableContainer:new{ card_outer }
-        if self._autoscan_offset then
-            movable:setMovedOffset(self._autoscan_offset)
-        end
-
-        local orig_handleEvent = movable.handleEvent
-        movable.handleEvent = function(this, ev)
-            local res = orig_handleEvent(this, ev)
-            if ev.type == "Gesture" or ev.type == "Pan" or ev.type == "Hold" then
-                self._autoscan_offset = this.moved_offset
-            end
-            return res
-        end
-
-        overlay = InputContainer:new{
-            key_events = {
-                Close = { { "Back" } }
-            },
-            CenterContainer:new{
-                dimen = Geom:new{ w = sw, h = sh },
-                movable
-            }
-        }
-        function overlay:onClose()
-            self._autoscan_offset = nil
-            UIManager:close(overlay, "ui")
-            return true
-        end
-
-        UIManager:show(overlay, "ui")
-    end
-
-    refresh()
+    local XRaySettingsCard = require(plugin_path .. "xray_settings_card")
+    local enabled_text = self.loc:t("unit_auto_scan_enabled") or "Enabled"
+    local disabled_text = self.loc:t("unit_auto_scan_disabled") or "Disabled"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("unit_auto_scan_settings") or "Auto-Scan Settings",
+        description = self.loc:t("unit_auto_scan_desc") or "Scan books for units automatically:",
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            return self.ai_helper.settings.unit_auto_scan_enabled ~= false
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ unit_auto_scan_enabled = val })
+        end,
+        about_text = self.loc:t("unit_auto_scan_about") or "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future."
+    })
 end
 
 -- Extracted functions are now loaded via mixins (xray_data, xray_ui, xray_fetch, xray_mentions)

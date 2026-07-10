@@ -141,9 +141,9 @@ msgstr "Non-Fiksi"
 msgid "book_mode_saved"
 msgstr "Mode buku disimpan!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Jenis Buku menentukan strategi ekstraksi AI mana yang digunakan dan fitur mana yang tersedia.\n\n- Fiksi: Berfokus pada narasi, karakter, dan lini masa plot.\n- Non-Fiksi: Berfokus pada istilah, konsep, dan tokoh sejarah.\n\n'Deteksi Otomatis' akan membiarkan AI memutuskan setelah pengambilan data pertama."
+msgstr "Jenis Buku menentukan strategi ekstraksi AI mana yang digunakan dan fitur mana yang tersedia.\n\n- Fiksi: Berfokus pada narasi, karakter, dan lini masa plot.\n- Non-Fiksi: Berfokus pada istilah, konsep, dan tokoh sejarah.\n\n'Deteksi Otomatis' akan membiarkan AI memutuskan setelah pengambilan data pertama.\n\n[B]Catatan:[/B] Pengaturan ini disimpan [B]per buku[/B]. Pilihan kustom menggantikan deteksi otomatis atau pengaturan global."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Halaman Ini"
 msgid "unit_auto_scan_about"
 msgstr "Pemindaian dapat memakan waktu hingga 15-20 detik untuk buku berukuran besar. Ini hanya terjadi saat pertama kali buku dibuka, dan hasilnya disimpan untuk masa mendatang."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Pindai buku untuk satuan secara otomatis:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Nonaktif"
@@ -1120,6 +1124,10 @@ msgstr "Putus-putus"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Titik-titik"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Ganda"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

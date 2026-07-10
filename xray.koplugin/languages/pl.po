@@ -141,9 +141,9 @@ msgstr "Literatura faktu"
 msgid "book_mode_saved"
 msgstr "Zapisano tryb książki!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Typ książki określa strategię ekstrakcji AI oraz dostępne funkcje.\n\n- Fikcja: Skupia się na narracji, postaciach i osi czasu.\n- Literatura faktu: Skupia się na terminach, pojęciach i postaciach historycznych.\n\n'Automatyczne wykrywanie' pozwoli AI zdecydować po pierwszym pobraniu."
+msgstr "Typ książki określa strategię ekstrakcji AI oraz dostępne funkcje.\n\n- Fikcja: Skupia się na narracji, postaciach i osi czasu.\n- Literatura faktu: Skupia się na terminach, pojęciach i postaciach historycznych.\n\n'Automatyczne wykrywanie' pozwoli AI zdecydować po pierwszym pobraniu.\n\n[B]Uwaga:[/B] To ustawienie jest zapisywane [B]dla każdej książki osobno[/B]. Ręczny wybór zastępuje automatyczne wykrywanie lub ustawienia globalne."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Ta strona"
 msgid "unit_auto_scan_about"
 msgstr "Skanowanie dużych książek może zająć do 15–20 sekund. Dzieje się to tylko przy pierwszym otwarciu książki, a wyniki są zapisywane na przyszłość."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Automatycznie skanuj książki pod kątem jednostek:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Wyłączone"
@@ -1120,6 +1124,10 @@ msgstr "Kreskowany"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Kropkowany"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Podwójne"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

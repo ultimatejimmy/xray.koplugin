@@ -1792,7 +1792,7 @@ function M:showBookTypeSettings()
             self.book_type = (mode == "auto") and nil or mode
             UIManager:setDirty(nil, "ui")
         end,
-        about_text = self.loc:t("book_type_about") or "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch.",
+        about_text = self.loc:t("book_type_about") or "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch.\n\n[B]Note:[/B] This setting is saved [B]per book[/B]. A custom choice overrides default auto-detection or global settings.",
     })
 end
 
@@ -3046,7 +3046,6 @@ function M:toggleXRayMode()
             if self.ai_helper then self.ai_helper:saveSettings({ xray_mode_enabled = val }) end
             UIManager:setDirty(nil, "ui")
         end,
-        about_text = self.loc:t("xray_mode_desc")
     })
 end
 

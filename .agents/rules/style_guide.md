@@ -154,6 +154,10 @@ local btn_row = HorizontalGroup:new{
 }
 ```
 
+### Card Description Lengths and Detailed Explanations
+- **Short Descriptions above option buttons:** Keep card descriptions extremely concise and direct (usually one short sentence, e.g., *"Select target direction for unit conversions:"* or *"Scan books for units automatically:"*).
+- **Detailed explanations or warnings in popups:** Do not crowd settings cards with long texts. Place detailed background information, behavior guidelines, performance notes, or warning details into an "About" button/popup at the bottom of the card.
+
 ---
 
 

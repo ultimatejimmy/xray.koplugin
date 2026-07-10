@@ -141,9 +141,9 @@ msgstr "Non-fictie"
 msgid "book_mode_saved"
 msgstr "Boekmodus opgeslagen!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Het boektype bepaalt welke AI-extractiestrategie wordt gebruikt en welke functies beschikbaar zijn.\n\n- Fictie: Richt zich op verhaal, personages en tijdlijn.\n- Non-fictie: Richt zich op termen, concepten en historische personen.\n\n'Automatisch detecteren' laat de AI beslissen na de eerste ophaalactie."
+msgstr "Het boektype bepaalt welke AI-extractiestrategie wordt gebruikt en welke functies beschikbaar zijn.\n\n- Fictie: Richt zich op verhaal, personages en tijdlijn.\n- Non-fictie: Richt zich op termen, concepten en historische personen.\n\n'Automatisch detecteren' laat de AI beslissen na de eerste ophaalactie.\n\n[B]Opmerking:[/B] Deze instelling wordt [B]per boek[/B] opgeslagen. Een handmatige keuze overschrijft de automatische detectie of globale instellingen."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Deze pagina"
 msgid "unit_auto_scan_about"
 msgstr "Scannen kan tot 15-20 seconden duren voor grote boeken. Dit gebeurt alleen de eerste keer dat het boek wordt geopend en de resultaten worden opgeslagen voor de toekomst."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Boeken automatisch scannen op eenheden:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Uitgeschakeld"
@@ -1120,6 +1124,10 @@ msgstr "Streepjeslijn"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Stippellijn"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Dubbel"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

@@ -141,9 +141,9 @@ msgstr "非虚构"
 msgid "book_mode_saved"
 msgstr "书籍模式已保存！"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "书籍类型决定了 AI 提取信息的侧重策略与可用功能。\n\n- 小说 (Fiction): 聚焦于叙事结构、登场角色与故事时间线。\n- 非小说 (Non-Fiction): 聚焦于专业术语、核心概念与相关历史人物。\n\n“自动检测”会在首次提取后由 AI 自动判断书籍类型。"
+msgstr "书籍类型决定了 AI 提取信息的侧重策略与可用功能。\n\n- 小说 (Fiction): 聚焦于叙事结构、登场角色与故事时间线。\n- 非小说 (Non-Fiction): 聚焦于专业术语、核心概念与相关历史人物。\n\n“自动检测”会在首次提取后由 AI 自动判断书籍类型。\n\n[B]注意：[/B]此设置将[B]按书[/B]保存。自定义选择会覆盖自动检测或全局默认设置。"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "当前页"
 msgid "unit_auto_scan_about"
 msgstr "大书的扫描可能需要长达 15-20 秒。这仅在第一次打开书籍时发生，结果会保存下来以便将来使用。"
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "自动扫描书中的度量衡单位："
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "已禁用"
@@ -1120,6 +1124,10 @@ msgstr "虚线"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "点线"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "双线"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"

@@ -141,9 +141,9 @@ msgstr "Kurgu Dışı"
 msgid "book_mode_saved"
 msgstr "Kitap modu kaydedildi!"
 
-# en-hash: b412be9a3ed27952005bf5d1a522d158
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Kitap Türü, hangi yapay zeka çıkarma stratejisinin kullanılacağını ve hangi özelliklerin mevcut olacağını belirler.\n\n- Kurgu: Anlatıya, karakterlere ve olay zaman çizelgesine odaklanır.\n- Kurgu Dışı: Terimlere, kavramlara ve tarihi kişilere odaklanır.\n\n'Otomatik Algıla', ilk getirmeden sonra yapay zekanın karar vermesini sağlar."
+msgstr "Kitap Türü, hangi yapay zeka çıkarma stratejisinin kullanılacağını ve hangi özelliklerin mevcut olacağını belirler.\n\n- Kurgu: Anlatıya, karakterlere ve olay zaman çizelgesine odaklanır.\n- Kurgu Dışı: Terimlere, kavramlara ve tarihi kişilere odaklanır.\n\n'Otomatik Algıla', ilk getirmeden sonra yapay zekanın karar vermesini sağlar.\n\n[B]Not:[/B] Bu ayar [B]kitap başına[/B] kaydedilir. Özel bir seçim, otomatik algılamayı veya genel ayarları geçersiz kılar."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -1041,6 +1041,10 @@ msgstr "Bu Sayfa"
 msgid "unit_auto_scan_about"
 msgstr "Büyük kitaplarda tarama işlemi 15-20 saniye kadar sürebilir. Bu işlem yalnızca kitap ilk kez açıldığında gerçekleşir ve sonuçlar gelecek için kaydedilir."
 
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Kitapları otomatik olarak birimler için tara:"
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Devre Dışı"
@@ -1120,6 +1124,10 @@ msgstr "Kesikli"
 # en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Noktalı"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Çift"
 
 # en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"
