@@ -4062,6 +4062,14 @@ function M:checkSeriesContext()
         self:log("XRayPlugin: Series: checkSeriesContext: plugin destroyed, skipping")
         return
     end
+    if self._unit_scan_in_progress then
+        self:log("XRayPlugin: Series: checkSeriesContext: unit scan in progress, deferring series check")
+        UIManager:scheduleIn(5, function()
+            if self.destroyed then return end
+            self:checkSeriesContext()
+        end)
+        return
+    end
     if not self.ui or not self.ui.document then
         self:log("XRayPlugin: Series: checkSeriesContext: document/ui not available, skipping")
         return

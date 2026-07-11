@@ -273,7 +273,7 @@ local UNITS = {
     { category = "temp", system = "metric", name = "c", std_target = "f", aliases = { "celsius", "celcius", "c", "degrees celsius", "degree celsius", "degrees celcius", "degree celcius", "deg c", "°c", "°celsius", "°celcius", "ºc", "ºcelsius", "ºcelcius", "°C", "°Celsius", "°Celcius", "ºC", "ºCelsius", "ºCelcius", "oc", "oC", "0c", "0C", "deg. c", "degrees c", "degree c" } },
 
     -- VOLUME
-    { category = "volume", system = "imperial", name = "fl oz", std_target = "ml", aliases = { "fluid ounces", "fluid ounce", "fl oz", "fl%. oz%." } },
+    { category = "volume", system = "imperial", name = "fl oz", std_target = "ml", aliases = { "fluid ounces", "fluid ounce", "fl oz", "fl. oz." } },
     { category = "volume", system = "imperial", name = "cup", std_target = "ml", aliases = { "cups", "cup" } },
     { category = "volume", system = "imperial", name = "pint", std_target = "ml", aliases = { "pints", "pint", "pt" } },
     { category = "volume", system = "imperial", name = "quart", std_target = "l", aliases = { "quarts", "quart", "qt" } },

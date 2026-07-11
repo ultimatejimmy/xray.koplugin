@@ -18,6 +18,13 @@ function M:isLowPowerDevice()
     if Device:isPocketBook() or (Device:isKobo() and not Device:isKoboV2()) then
         return true
     end
+    -- Android e-ink devices are also low-powered/low-memory
+    if Device:isAndroid() then
+        local model_lower = model:lower()
+        if model_lower:find("supernote") or model_lower:find("nomad") or model_lower:find("boox") or model_lower:find("likebook") then
+            return true
+        end
+    end
     return false
 end
 

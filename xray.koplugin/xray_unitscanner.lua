@@ -15,6 +15,7 @@ local RenderText = require("ui/rendertext")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local xray_units = require(plugin_path .. "xray_units")
 local XRayLogger = require(plugin_path .. "xray_logger")
+local xray_utils = require(plugin_path .. "xray_utils")
 
 local function log(msg)
     XRayLogger:log("UnitScanner: " .. tostring(msg))
@@ -590,6 +591,13 @@ function M:scanBookForUnits(force)
         return
     end
 
+    -- Proactively cancel any running background AI processes to prioritize the unit scan
+    if self.ai_helper and self.ai_helper.cancelAsyncChild and self.ai_helper._async_child_pid then
+        log("scanBookForUnits: active background AI process detected, cancelling it to reclaim memory")
+        self.ai_helper:cancelAsyncChild()
+        self.bg_fetch_active = false
+    end
+
     log("scanBookForUnits starting. Force=" .. tostring(force))
     local resolved_dir = _getResolvedDirection(self)
     local cache_loaded = self:loadUnitCache(resolved_dir)
@@ -745,26 +753,28 @@ function M:scanBookForUnits(force)
                 log(string.format("scanBookForUnits: checkpoint D — post findAllText word (took %.2fs), %s hits", t2 - t1, tostring(ok2 and hits2 and #hits2 or 0)))
             end
 
-            if not ok1 or not hits1 then
-                log("scanBookForUnits: digit findAllText failed, aborting: " .. tostring(hits1))
-                self:clearUnitUnderlines()
-                return
+            if not ok1 then
+                log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(hits1))
+                hits1 = {}
+            elseif not hits1 then
+                hits1 = {}
             end
+
             if pat_word and (not ok2 or not hits2) then
-                log("scanBookForUnits: word findAllText failed (non-fatal, continuing with digit hits): " .. tostring(hits2))
-                hits2 = nil
+                if not ok2 then
+                    log("scanBookForUnits: word findAllText pcall failed (non-fatal): " .. tostring(hits2))
+                end
+                hits2 = {}
+            elseif not hits2 then
+                hits2 = {}
             end
 
             local hits = {}
-            if ok1 and hits1 then
-                for _, h in ipairs(hits1) do
-                    table.insert(hits, h)
-                end
+            for _, h in ipairs(hits1) do
+                table.insert(hits, h)
             end
-            if ok2 and hits2 then
-                for _, h in ipairs(hits2) do
-                    table.insert(hits, h)
-                end
+            for _, h in ipairs(hits2) do
+                table.insert(hits, h)
             end
 
             -- Deduplicate overlapping hits by end xpointer (keeps the longest match)

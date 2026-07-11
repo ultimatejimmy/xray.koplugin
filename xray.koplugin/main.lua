@@ -555,6 +555,14 @@ function XRayPlugin:onPageUpdate(pageno)
 end
 
 function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
+    if self._unit_scan_in_progress then
+        self:log("XRayPlugin: Deferring background AI fetch because unit scan is in progress")
+        UIManager:scheduleIn(5, function()
+            if self.destroyed then return end
+            self:triggerBackgroundMergeFetch(chapter_title)
+        end)
+        return
+    end
     if self.bg_fetch_active then return end
     if not self.ui or not self.ui.document then return end
 
