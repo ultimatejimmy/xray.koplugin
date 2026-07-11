@@ -35,71 +35,11 @@ local RANGE_SEPS = {
     "\227\128\156", -- Wave dash U+301C (〜)
 }
 
-local function build_trie(words)
-    local trie = {}
-    for _, word in ipairs(words) do
-        local node = trie
-        for char in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
-            node[char] = node[char] or {}
-            node = node[char]
-        end
-        node["$"] = true
-    end
-    return trie
-end
-
-local function trie_to_regex(node)
-    local branches = {}
-    local chars = {}
-    local has_end = false
-    
-    for k, v in pairs(node) do
-        if k == "$" then
-            has_end = true
-        else
-            table.insert(chars, k)
-        end
-    end
-    
-    table.sort(chars)
-    
-    for _, k in ipairs(chars) do
-        local child_regex = trie_to_regex(node[k])
-        
-        local esc_k = k
-        if k == " " then
-            esc_k = "\\s+"
-        elseif k == "\2" then
-            esc_k = "\\b"
-        elseif k:find("^[%-%+%.%?%*%^%$%(%)%[%]%%%\\]$") then
-            esc_k = "\\" .. k
-        end
-        
-        if child_regex == "" then
-            table.insert(branches, esc_k)
-        else
-            table.insert(branches, esc_k .. child_regex)
-        end
-    end
-    
-    if #branches == 0 then
-        return ""
-    end
-    
-    local regex = ""
-    if #branches == 1 then
-        regex = branches[1]
-    else
-        regex = "(" .. table.concat(branches, "|") .. ")"
-    end
-    
-    if has_end then
-        if #branches > 0 then
-            regex = "(" .. regex .. ")?"
-        end
-    end
-    
-    return regex
+local function escape_pattern(alias)
+    local esc = alias:gsub("([%-%+%.%?%*%^%$%(%)%[%]%%%\\])", "%%%1")
+    -- Replace spaces with \s+ to match any whitespace
+    esc = esc:gsub("%s+", "\\s+")
+    return esc
 end
 
 local M = {}
@@ -698,68 +638,46 @@ function M:scanBookForUnits(force)
                 return
             end
 
-            -- Split unit aliases into ambiguous and unambiguous categories
-            local ambiguous_aliases = {}
-            local word_unambiguous_aliases = {}
-            local non_word_unambiguous_aliases = {}
+            -- Set of ambiguous unit aliases
+            local is_ambig = {
+                ["in"] = true, ["m"] = true, ["l"] = true, ["g"] = true, ["f"] = true,
+                ["t"] = true, ["c"] = true, ["oc"] = true, ["0c"] = true, ["of"] = true, ["0f"] = true
+            }
+
+            -- Sort all aliases descending by length to prevent prefix shadowing
+            local sorted_aliases = {}
             for _, alias in ipairs(aliases) do
-                local normalized = alias:lower():gsub("%s+", " ")
-                local base = normalized:gsub("%.+$", "")
-                
-                if base == "in" or base == "m" or base == "l" or base == "g" or base == "f" or base == "t" or base == "c" or base == "oc" or base == "0c" or base == "of" or base == "0f" then
-                    if normalized:match("[%w]$") then
-                        normalized = normalized .. "\2"
-                    end
-                    table.insert(ambiguous_aliases, normalized)
+                table.insert(sorted_aliases, alias:lower())
+            end
+            table.sort(sorted_aliases, function(a, b)
+                return #a > #b
+            end)
+
+            -- Build pat_digit
+            local digit_alnum = {}
+            local digit_symbol = {}
+            for _, alias in ipairs(sorted_aliases) do
+                local esc = escape_pattern(alias)
+                if alias:match("[%w]$") then
+                    table.insert(digit_alnum, esc)
                 else
-                    if normalized:match("[%w]$") then
-                        normalized = normalized .. "\2"
-                    end
-                    if normalized:match("^[^%w]") then
-                        table.insert(non_word_unambiguous_aliases, normalized)
-                    else
-                        table.insert(word_unambiguous_aliases, normalized)
-                    end
+                    table.insert(digit_symbol, esc)
                 end
             end
 
-            local is_ambig = {}
-            for _, alias in ipairs(ambiguous_aliases) do
-                local clean = alias:gsub("\2", ""):lower()
-                is_ambig[clean] = true
+            local digit_parts = {}
+            if #digit_alnum > 0 then
+                table.insert(digit_parts, "(" .. table.concat(digit_alnum, "|") .. ")\\b")
             end
+            if #digit_symbol > 0 then
+                table.insert(digit_parts, "(" .. table.concat(digit_symbol, "|") .. ")")
+            end
+            local digit_units = "(" .. table.concat(digit_parts, "|") .. ")"
+            local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*" .. digit_units .. ")"
 
-            -- Combine all unambiguous aliases for digit matching
-            local all_unambiguous = {}
-            for _, a in ipairs(word_unambiguous_aliases) do
-                table.insert(all_unambiguous, a)
-            end
-            for _, a in ipairs(non_word_unambiguous_aliases) do
-                table.insert(all_unambiguous, a)
-            end
-
-            local digit_units = ""
-            if #ambiguous_aliases > 0 and #all_unambiguous > 0 then
-                local ambig_trie = build_trie(ambiguous_aliases)
-                local ambig_trie_regex = trie_to_regex(ambig_trie)
-                local unambig_trie = build_trie(all_unambiguous)
-                local unambig_trie_regex = trie_to_regex(unambig_trie)
-                digit_units = ambig_trie_regex .. "|" .. unambig_trie_regex
-            elseif #ambiguous_aliases > 0 then
-                local ambig_trie = build_trie(ambiguous_aliases)
-                local ambig_trie_regex = trie_to_regex(ambig_trie)
-                digit_units = ambig_trie_regex
-            else
-                local unambig_trie = build_trie(all_unambiguous)
-                digit_units = trie_to_regex(unambig_trie)
-            end
-
-            local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*(" .. digit_units .. "))"
-            local pat_word
-            local parts = {}
-            
+            -- Build pat_word
             local function is_abbreviation(alias)
-                local clean = alias:gsub("\2", ""):gsub("%s+", "")
+                local clean = alias:gsub("%s+", "")
                 if clean:match("%d") or clean:find("[°º/%./]") then
                     return true
                 end
@@ -769,32 +687,31 @@ function M:scanBookForUnits(force)
                 return false
             end
 
-            local filtered_word_aliases = {}
-            for _, alias in ipairs(word_unambiguous_aliases) do
+            local boundary_both = {}
+            local boundary_none = {}
+            for _, alias in ipairs(sorted_aliases) do
                 if not is_abbreviation(alias) then
-                    table.insert(filtered_word_aliases, alias)
+                    local esc = escape_pattern(alias)
+                    local start_alnum = alias:match("^[%w]")
+                    local end_alnum = alias:match("[%w]$")
+                    if start_alnum and end_alnum then
+                        table.insert(boundary_both, esc)
+                    else
+                        table.insert(boundary_none, esc)
+                    end
                 end
             end
-
-            local filtered_non_word_aliases = {}
-            for _, alias in ipairs(non_word_unambiguous_aliases) do
-                if not is_abbreviation(alias) then
-                    table.insert(filtered_non_word_aliases, alias)
-                end
+            
+            local pat_word = nil
+            local word_parts = {}
+            if #boundary_both > 0 then
+                table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
             end
-
-            if #filtered_word_aliases > 0 then
-                local trie = build_trie(filtered_word_aliases)
-                local r = trie_to_regex(trie)
-                table.insert(parts, "\\b(" .. r .. ")")
+            if #boundary_none > 0 then
+                table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
             end
-            if #filtered_non_word_aliases > 0 then
-                local trie = build_trie(filtered_non_word_aliases)
-                local r = trie_to_regex(trie)
-                table.insert(parts, "(" .. r .. ")")
-            end
-            if #parts > 0 then
-                pat_word = "(" .. table.concat(parts, "|") .. ")"
+            if #word_parts > 0 then
+                pat_word = "(" .. table.concat(word_parts, "|") .. ")"
             end
             
             log("scanBookForUnits: pat_digit=[" .. tostring(pat_digit) .. "]")
