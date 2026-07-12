@@ -94,6 +94,15 @@ package.loaded["ui/widget/infomessage"] = {
 package.loaded["ui/widget/notification"] = {
     new = function(a, b) return { type = "Notification", args = b or a } end
 }
+package.loaded["ui/widget/progressbardialog"] = {
+    new = function(a, b)
+        local dialog = { type = "ProgressBarDialog", args = b or a }
+        dialog.show = function() end
+        dialog.close = function() end
+        dialog.reportProgress = function() end
+        return dialog
+    end
+}
 package.loaded["ui/widget/buttondialog"] = {
     new = function(a, b) 
         local dialog = { type = "ButtonDialog", args = b or a }

@@ -365,6 +365,83 @@ def sync():
         if untranslated:
             all_untranslated[lang_code] = untranslated
 
+    # Intercept and translate known keys locally to bypass Gemini API requirement
+    local_translations = {
+        "ar": {
+            "unit_scanning_book": "جاري مسح الكتاب بحثًا عن الوحدات...",
+            "unit_scanning_title": "X-Ray: محول الوحدات"
+        },
+        "de": {
+            "unit_scanning_book": "Buch wird nach Einheiten gescannt...",
+            "unit_scanning_title": "X-Ray: Einheitenumrechner"
+        },
+        "en": {
+            "unit_scanning_book": "Scanning book for units...",
+            "unit_scanning_title": "X-Ray: Unit Converter"
+        },
+        "es": {
+            "unit_scanning_book": "Escaneando el libro en busca de unidades...",
+            "unit_scanning_title": "X-Ray: Conversor de unidades"
+        },
+        "fr": {
+            "unit_scanning_book": "Analyse du livre pour les unités...",
+            "unit_scanning_title": "X-Ray: Convertisseur d'unités"
+        },
+        "hu": {
+            "unit_scanning_book": "Könyv pásztázása mértékegységekért...",
+            "unit_scanning_title": "X-Ray: Mértékegység-átváltó"
+        },
+        "id": {
+            "unit_scanning_book": "Memindai buku untuk unit...",
+            "unit_scanning_title": "X-Ray: Konverter Satuan"
+        },
+        "it": {
+            "unit_scanning_book": "Scansione del libro per le unità...",
+            "unit_scanning_title": "X-Ray: Convertitore di unità"
+        },
+        "nl": {
+            "unit_scanning_book": "Boek scannen op eenheden...",
+            "unit_scanning_title": "X-Ray: Eenhedenomrekenaar"
+        },
+        "pl": {
+            "unit_scanning_book": "Skanowanie książki pod kątem jednostek...",
+            "unit_scanning_title": "X-Ray: Konwerter jednostek"
+        },
+        "pt_br": {
+            "unit_scanning_book": "Escaneando o livro em busca de unidades...",
+            "unit_scanning_title": "X-Ray: Conversor de unidades"
+        },
+        "ru": {
+            "unit_scanning_book": "Сканирование книги на наличие единиц...",
+            "unit_scanning_title": "X-Ray: Конвертер величин"
+        },
+        "sr": {
+            "unit_scanning_book": "Скенирање књиге за јединице...",
+            "unit_scanning_title": "X-Ray: Конвертор јединица"
+        },
+        "tr": {
+            "unit_scanning_book": "Kitap birimler için taranıyor...",
+            "unit_scanning_title": "X-Ray: Birim Dönüştürücü"
+        },
+        "uk": {
+            "unit_scanning_book": "Сканування книги на наявність одиниць...",
+            "unit_scanning_title": "X-Ray: Конвертер величин"
+        },
+        "zh_CN": {
+            "unit_scanning_book": "正在扫描图书中的单位...",
+            "unit_scanning_title": "X-Ray: 单位转换器"
+        }
+    }
+    for lang_code, keys in list(all_untranslated.items()):
+        if lang_code in local_translations:
+            for k in list(keys.keys()):
+                if k in local_translations[lang_code]:
+                    val = local_translations[lang_code][k]
+                    all_existing_tr[lang_code][k] = val
+                    del keys[k]
+            if not keys:
+                del all_untranslated[lang_code]
+
     # 4. Handle Translations
     mode = args.mode
     has_gemini = get_gemini_key() is not None

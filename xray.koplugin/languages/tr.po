@@ -1105,6 +1105,14 @@ msgstr "Orta"
 msgid "unit_manual_scan_button"
 msgstr "Tara/Yeniden Tara"
 
+# en-hash: 59655846df0abfca05d478f9c0a18eb4
+msgid "unit_scanning_book"
+msgstr "Kitap birimler için taranıyor..."
+
+# en-hash: 2c8c1e763a8b739446b8dcd7908f318f
+msgid "unit_scanning_title"
+msgstr "X-Ray: Birim Dönüştürücü"
+
 # en-hash: 2f59140753baa1e1e8193111db3ed7e1
 msgid "unit_style_preview_title"
 msgstr "STİL ÖNİZLEME"

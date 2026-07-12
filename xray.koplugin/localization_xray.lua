@@ -411,6 +411,8 @@ function Localization:t(key, ...)
             unit_auto_scan_about = "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future.",
             unit_manual_scan_button = "Scan/Rescan",
             unit_underline_double = "Double",
+            unit_scanning_book = "Scanning book for units...",
+            unit_scanning_title = "X-Ray: Unit Converter",
         }
         translation = fallbacks[key] or key
     end

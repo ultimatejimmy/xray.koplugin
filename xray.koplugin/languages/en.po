@@ -830,6 +830,12 @@ msgstr "Medium"
 msgid "unit_manual_scan_button"
 msgstr "Scan/Rescan"
 
+msgid "unit_scanning_book"
+msgstr "Scanning book for units..."
+
+msgid "unit_scanning_title"
+msgstr "X-Ray: Unit Converter"
+
 msgid "unit_style_preview_title"
 msgstr "STYLE PREVIEW"
 

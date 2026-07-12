@@ -3,6 +3,7 @@ local UIManager = require("ui/uimanager")
 local Screen = require("device").screen
 local Blitbuffer = require("ffi/blitbuffer")
 local InfoMessage = require("ui/widget/infomessage")
+local ProgressBarDialog = require("ui/widget/progressbardialog")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local FrameContainer = require("ui/widget/container/framecontainer")
@@ -611,11 +612,25 @@ function M:scanBookForUnits(force)
     self._unit_scan_in_progress = true
 
     local Notification = require("ui/widget/notification")
-    local progress_msg = InfoMessage:new{
-        text = "Scanning for unit conversions...",
+    -- Temporarily redirect smallffont to ffont during dialog init to make subtitle slightly larger
+    local old_getFace = Font.getFace
+    Font.getFace = function(self, name)
+        if name == "smallffont" then
+            return old_getFace(self, "ffont")
+        end
+        return old_getFace(self, name)
+    end
+
+    local progress_msg = ProgressBarDialog:new{
+        title = self.loc:t("unit_scanning_title") or "X-Ray: Unit Converter",
+        subtitle = self.loc:t("unit_scanning_book") or "Scanning book for units...",
+        progress_max = 100,
         dismissable = false,
+        refresh_time_seconds = 0.05,
     }
-    UIManager:show(progress_msg)
+
+    Font.getFace = old_getFace
+    progress_msg:show()
     UIManager:forceRePaint()
 
     UIManager:scheduleIn(0.1, function()
@@ -733,6 +748,7 @@ function M:scanBookForUnits(force)
             end
 
             log("scanBookForUnits: checkpoint A — pre findAllText digit")
+            progress_msg:reportProgress(15)
             local doc = self.ui.document
             local t0 = os.clock()
             local ok1, hits1 = pcall(function()
@@ -741,6 +757,7 @@ function M:scanBookForUnits(force)
             end)
             local t1 = os.clock()
             log(string.format("scanBookForUnits: checkpoint B — post findAllText digit (took %.2fs), %d hits", t1 - t0, ok1 and hits1 and #hits1 or 0))
+            progress_msg:reportProgress(55)
 
             local ok2, hits2
             local t2 = t1
@@ -752,6 +769,7 @@ function M:scanBookForUnits(force)
                 t2 = os.clock()
                 log(string.format("scanBookForUnits: checkpoint D — post findAllText word (took %.2fs), %s hits", t2 - t1, tostring(ok2 and hits2 and #hits2 or 0)))
             end
+            progress_msg:reportProgress(85)
 
             if not ok1 then
                 log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(hits1))
@@ -1091,6 +1109,7 @@ function M:scanBookForUnits(force)
                 UIManager:setDirty(nil, "ui")
             end
 
+            progress_msg:reportProgress(95)
             log("scanBookForUnits: checkpoint G — scheduling cache write")
             UIManager:scheduleIn(0.5, function()
                 if not self.destroyed then
@@ -1101,7 +1120,8 @@ function M:scanBookForUnits(force)
         end)
         
         self._unit_scan_in_progress = false
-        UIManager:close(progress_msg)
+        progress_msg:reportProgress(100)
+        progress_msg:close()
         
         if not ok_scan then
             log("scanBookForUnits async error: " .. tostring(err_scan))
