@@ -5,5 +5,5 @@ return {
     name = "xray",
     fullname = _("X-Ray"),
     description = _([[Transform your reading experience with AI-powered book analysis, just like Amazon Kindle X-Ray!]]),
-    version = "26.7.11.2-beta"
+    version = "26.7.12-beta"
 }
