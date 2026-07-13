@@ -28,7 +28,7 @@ def call_gemini(prompt):
         print("Error: GEMINI_API_KEY environment variable not set. Cannot run automated translations.")
         sys.exit(1)
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={key}"
     headers = {"Content-Type": "application/json"}
     data = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -397,28 +397,59 @@ English text to translate:
     else:
         print("All LUA prompts already translated.")
 
+def get_supported_languages():
+    languages = {}
+    for file in os.listdir(LANGUAGES_DIR):
+        if file.endswith('.po') and file != 'en.po':
+            lang_code = file.split('.')[0]
+            path = os.path.join(LANGUAGES_DIR, file)
+            lang_name = lang_code.capitalize()
+            entries = parse_po(path)
+            for e in entries:
+                if e['msgid'] == '':
+                    m = re.search(r'Language-Team: (.*?)\\n', e['msgstr'])
+                    if m: lang_name = m.group(1)
+            languages[lang_code] = lang_name
+    return languages
+
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print("Usage:")
-        print("  python tools/translate_all.py --audit <lang_code>")
-        print("  python tools/translate_all.py --translate <lang_code> <Language_Name>")
+        print("  python tools/translate_all.py --audit <lang_code>|all")
+        print("  python tools/translate_all.py --translate <lang_code>|all [Language_Name]")
         print("Examples:")
-        print("  python tools/translate_all.py --audit id")
+        print("  python tools/translate_all.py --audit all")
         print("  python tools/translate_all.py --translate id \"Bahasa Indonesia\"")
+        print("  python tools/translate_all.py --translate all")
         sys.exit(1)
         
     mode = sys.argv[1]
     lang = sys.argv[2]
     
     if mode == '--audit':
-        success = audit_language(lang)
-        sys.exit(0 if success else 1)
+        if lang == 'all':
+            supported = get_supported_languages()
+            all_success = True
+            for code in sorted(supported.keys()):
+                success = audit_language(code)
+                if not success:
+                    all_success = False
+            sys.exit(0 if all_success else 1)
+        else:
+            success = audit_language(lang)
+            sys.exit(0 if success else 1)
+            
     elif mode == '--translate':
-        if len(sys.argv) < 4:
-            print("Error: Language Name is required for translation.")
-            sys.exit(1)
-        name = sys.argv[3]
-        translate_language(lang, name)
+        if lang == 'all':
+            supported = get_supported_languages()
+            for code, name in sorted(supported.items()):
+                translate_language(code, name)
+        else:
+            if len(sys.argv) < 4:
+                print("Error: Language Name is required for translation of a single language.")
+                sys.exit(1)
+            name = sys.argv[3]
+            translate_language(lang, name)
     else:
         print(f"Unknown mode: {mode}")
         sys.exit(1)
