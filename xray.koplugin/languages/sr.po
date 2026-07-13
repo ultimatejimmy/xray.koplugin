@@ -5,1295 +5,975 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-# en-hash: 1354e62b68c1d35133d396fc419901c2
 msgid "ai_error"
 msgstr "АИ грешка: "
 
-# en-hash: 582a282f6b085c7665c843fb7e06e4e6
 msgid "ai_fetch_complete"
 msgstr "Успешно преузето са %s!\n\nКњига: %s\nАутор: %s\n\nЛикови: %d\nЛокације: %d\nТеме: %d\nДогађаји на хронологији: %d\nИсторијске личности: %d\n\n%s\n\nРЕЗИМЕ:\n%s"
 
-# en-hash: 34f82d2e8250bbcf8a0395a1eb4f1833
 msgid "ai_fetch_complete_msg"
 msgstr "АИ преузимање завршено!"
 
-# en-hash: b0fc5654248cb92282e5ece124a750bd
 msgid "ai_key_required"
 msgstr "Потребан је АИ АПИ кључ."
 
-# en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "АИ детектовао дупликат"
 
-# en-hash: adb9b4c51ae2df392591ca847017c9f8
 msgid "ai_merged_n"
 msgstr "Успешно спојено %d парова."
 
-# en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
 msgstr "AI Scan"
 
-# en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "АИ скенира дупликате..."
 
-# en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
 msgstr "Ask Later"
 
-# en-hash: bff74eab9088ad053737e6f0d424ea7e
 msgid "author_born"
 msgstr "Рођен: "
 
-# en-hash: 94e26ed13a62af4b3549ff9e583a0691
 msgid "author_died"
 msgstr "Преминуо: "
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "auto_dupe_check_disabled"
 msgstr "Онемогућено"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "auto_dupe_check_enabled"
 msgstr "Омогућено"
 
-# en-hash: e791101a1a10500d1f0727b4b8e963b5
 msgid "auto_dupe_check_preference_desc"
 msgstr "Изаберите подешавање за аутоматску АИ детекцију дупликата:"
 
-# en-hash: 670e2792d29f2f41e891f40c6c5b03ea
 msgid "auto_dupe_check_setting_desc"
 msgstr "Када је омогућено, X-Ray аутоматски тражи од АИ да провери дупликате ликова и локација након сваког преузимања података. Ако се открију дупликати, бићете упитани да их прегледате и спојите.\n\nОнемогућавање овога ће зауставити све позадинске провере дупликата. И даље можете ручно спојити дупликате преко менија Ликови или Локације.\n\nНапомена: свака провера користи један АИ АПИ позив. Корисници на бесплатним или ограниченим плановима можда желе ово да онемогуће."
 
-# en-hash: 0700ab9afc75d300e49fd3aac9c86ee8
 msgid "auto_dupe_check_setting_title"
 msgstr "Провера дупликата"
 
-# en-hash: b7e84428c69c17c5536c4a912a191e54
 msgid "auto_fetch_page_interval_prompt"
 msgstr "Интервал страница"
 
-# en-hash: 14b471ac49a5d3258cc95b0762da9834
 msgid "auto_update_aggressive"
 msgstr "Агресивно: проверава свако ново поглавље"
 
-# en-hash: 6349e8d6a59311506a78bb0cd3d5b92d
 msgid "auto_update_balanced"
 msgstr "Балансирано: проверава највише сваких 5 минута"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "auto_update_disabled"
 msgstr "Онемогућено"
 
-# en-hash: 9ffbf6e9ce7efcb2b5d02ca4b8554236
 msgid "auto_update_economical"
 msgstr "Економично: проверава највише сваких 15 минута"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
 msgid "auto_update_freq_about"
 msgstr "Аутоматско ажурирање проверава нове податке о поглављима у позадини док читате.\n\nОГРАНИЧЕЊА И ПЕРФОРМАНСЕ\nЧести позадински захтеви могу брже испразнити БАТЕРИЈУ и могу довести до ОГРАНИЧЕЊА БРОЈА УПИТА код АИ провајдера (посебно за Про моделе).\n\nРЕЖИМИ\n• Ултра: Проверава сваких N страница како подесите (усред поглавља)\n• Агресивно: Проверава сваки пут када уђете у ново поглавље\n• Балансирано: Проверава највише сваких 5 минута (препоручено)\n• Економично: Проверава највише сваких 15 минута\n• Ретко: Проверава највише сваких 30 минута\n• Онемогућено: Без позадинских захтева\n\nНапомена: Ако је поглавље прескочено због ограничења учесталости, X-Ray ће га аутоматски укључити у следеће позадинско преузимање."
 
-# en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"
 msgstr "Учесталост позадинског преузимања:"
 
-# en-hash: c0b6e5d7b1280ea464d54bf9cbfffd37
 msgid "auto_update_sparse"
 msgstr "Ретко: проверава највише сваких 30 минута"
 
-# en-hash: 7f4cc9b44db70ed676e621f17b8228e3
 msgid "auto_update_ultra"
 msgstr "Ултра: проверава сваких %d страница"
 
-# en-hash: 0557fa923dcee4d0f86b1409f5c2167f
 msgid "back_to_reading"
 msgstr "Назад на читање"
 
-# en-hash: 5fcd6ed2b6f2c21bc5c936cf44c36b37
 msgid "beta_channel_desc"
 msgstr "Бета канал вам омогућава да примате претпродукцијске верзије X-Ray додатка. Ове верзије садрже најновије функције и исправке грешака, али могу бити мање стабилне од званичних издања."
 
-# en-hash: 9aac8fedb45eb817ee12a885f1dedc8f
 msgid "beta_disabled"
 msgstr "Стабилан канал (Препоручено)"
 
-# en-hash: f4bdad9b1beff62e922458298afd169e
 msgid "beta_enabled"
 msgstr "Бета канал омогућен"
 
-# en-hash: ee4ee500762b7cab66634e1a2df9a053
 msgid "beta_preference_desc"
 msgstr "Изаберите подешавање за канал ажурирања:"
 
-# en-hash: 06b9281e396db002010bde1de57262eb
 msgid "book_mode_auto"
 msgstr "Аутоматски"
 
-# en-hash: c549e231df08c60006ca035f7834366e
 msgid "book_mode_desc"
 msgstr "Изаберите режим за ову књигу."
 
-# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_mode_fiction"
 msgstr "Белетристика"
 
-# en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_mode_nonfiction"
 msgstr "Стручна литература"
 
-# en-hash: 272668c7f021d1ae07f88c6593527c61
 msgid "book_mode_saved"
 msgstr "Режим књиге сачуван!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
 msgstr "Тип књиге одређује која се АИ стратегија екстракције користи и које су функције доступне.\n\n- Белетристика: Фокусира се на наратив, ликове и временску линију заплета.\n- Стручна литература: Фокусира се на термине, концепте и историјске личности.\n\n'Ауто-детекција' ће дозволити АИ-ју да одлучи након првог преузимања.\n\n[B]Напомена:[/B] Ово подешавање се чува [B]за сваку књигу[/B]. Ручни избор поништава аутоматско препознавање или глобална подешававања."
 
-# en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
 msgstr "Ауто-детекција"
 
-# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_type_fiction"
 msgstr "Белетристика"
 
-# en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "Стручна литература"
 
-# en-hash: cd00fdfb57dccc660b305e787262e649
 msgid "cache_cleared"
 msgstr "Кеш је очишћен!\n\nСада можете преузети нове податке:\nМени → X-Ray → Преузми АИ податке"
 
-# en-hash: 1edc355371d87a94d024eebfed9f8815
 msgid "cache_save_failed"
 msgstr "Неуспешно чување кеша"
 
-# en-hash: c420984012423b034d0fb4544c93c663
 msgid "cache_save_success"
 msgstr "✓ Кеш је ажуриран."
 
-# en-hash: dd3553afd5b0b207445bf116c57a4cac
 msgid "cache_saved"
 msgstr "Сачувано у кеш!"
 
-# en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "cancel"
 msgstr "Откажи"
 
-# en-hash: 261d30af0907fa3e87d73d7719d2b4ef
 msgid "character_not_found"
 msgstr "Није пронађен лик који одговара '%s'"
 
-# en-hash: d3d2e617335f08df83599665eef8a418
 msgid "close"
 msgstr "Затвори"
 
-# en-hash: 3441bb13db3b069cccbba18579ae99f2
 msgid "config_default_gemini"
 msgstr "  Подразумевано (Gemini)"
 
-# en-hash: 868ea5dc0202b9f02e4cf8e4a460c827
 msgid "config_status_not_set"
 msgstr "НИЈЕ ПОДЕШЕН"
 
-# en-hash: 8c52684db8f49511e9b44471716bf164
 msgid "config_status_set"
 msgstr "ПОДЕШЕН"
 
-# en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
 msgid "current_language"
 msgstr "sr"
 
-# en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "Тренутни: "
 
-# en-hash: c0d9a229c4cb5183b5dd602a335c357e
 msgid "custom_api_endpoint_hint"
 msgstr "нпр., https://openrouter.ai/api/v1/chat/completions"
 
-# en-hash: 210751d51c0e8e4527ae65bc6522789e
 msgid "custom_api_endpoint_title"
 msgstr "Прилагођени АПИ %d — URL ендпоинта"
 
-# en-hash: aa2776ae61983d0c0c97e5f7bf996ac2
 msgid "custom_api_is_reasoning"
 msgstr "Модел са резоновањем (нпр. DeepSeek-R1)"
 
-# en-hash: 277c6375d0cacdc5445fdeb15f8158c9
 msgid "custom_api_key_title"
 msgstr "Прилагођени АПИ %d — АПИ кључ"
 
-# en-hash: df3771ce7d40ea58977a420365a9511c
 msgid "custom_api_model_hint"
 msgstr "нпр., google/gemini-2.5-flash или openai/gpt-4o"
 
-# en-hash: 54ed8dfd9713a5b46416c04ee0dc253c
 msgid "custom_api_model_title"
 msgstr "Прилагођени АПИ %d — Подразумевани модел"
 
-# en-hash: 6265afa1ceb063c099c3b2597670f26e
 msgid "custom_api_name"
 msgstr "Прилагођени АПИ %d (OpenAI компатибилан)"
 
-# en-hash: 936b30f151a3c4b39d60001a9808c93d
 msgid "custom_api_not_configured"
 msgstr "(није конфигурисано — додирните за подешавање)"
 
-# en-hash: b7e3710795eeb8a7e11d2c69fca00e5c
 msgid "custom_api_saved"
 msgstr "Конфигурација за прилагођени АПИ %d је сачувана."
 
-# en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "ОПИСИ ЛИКОВА\n\n• Кратки (~80 карактера): Име, улога и кратка белешка.\n• Подразумевани (~200 карактера): Стандардна анализа.\n• Детаљни (~350 карактера): Богата анализа лика са особинама и мотивацијама.\n• Веома детаљни (~500 карактера): Дубока анализа.\n\nОДНОС\nДужи описи → мање ликова враћених током почетних/комплетних преузимања. Накнадна покретања 'Преузми више' су без утицаја."
 
-# en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
 msgstr "БИОГРАФИЈЕ ИСТОРИЈСКИХ ЛИЧНОСТИ\n\n• Кратки (~50 карактера): Име и примарна улога.\n• Подразумевани (~100 карактера): Стандардна биографија.\n• Детаљни (~200 карактера): Живот, значај и контекст књиге.\n• Веома детаљни (~300 карактера): Свеобухватна биографија.\n\nОДНОС\nДуже биографије → мање историјских личности враћених током почетних преузимања."
 
-# en-hash: d5c5e27087e0c1ce183faf7725ec4851
 msgid "desc_len_about_locs"
 msgstr "ОПИСИ ЛОКАЦИЈА\n\n• Кратки (~50 карактера): Назив места и једнолинијски контекст.\n• Подразумевани (~100 карактера): Стандардни опис.\n• Детаљни (~200 карактера): Атмосфера, значај и догађаји.\n• Веома детаљни (~300 карактера): Пун опис.\n\nОДНОС\nДужи описи → мање локација враћених током почетних преузимања."
 
-# en-hash: 9095a16f5b98ef0bf91cfa862f94123c
 msgid "desc_len_about_timeline"
 msgstr "ХРОНОЛОГИЈА — ЈЕДАН ДОГАЂАЈ ПО ПОГЛАВЉУ (увек)\n\nХронологија увек има тачно један унос по поглављу. Ово подешавање утиче само на то колико детаља је укључено у сваки резиме.\n\n• Кратки (~50 карактера): Кратак резиме у једној фрази.\n• Подразумевани (~80 карактера): Стандардни резиме.\n• Детаљни (~150 карактера): Укључује контекст и последице.\n• Веома детаљни (~200 карактера): Пун наративни опис.\n\nНема промене у броју уноса за хронологију."
 
-# en-hash: 7a1920d61156abc05a60135aefe8bc67
 msgid "desc_len_default"
 msgstr "Подразумевани"
 
-# en-hash: 4042fcadbe61a3300451157e2c9fe651
 msgid "desc_len_detailed"
 msgstr "Детаљни"
 
-# en-hash: 30bb747c98bccdd11b3f89e644c4d0ad
 msgid "desc_len_short"
 msgstr "Кратки"
 
-# en-hash: 32e4e2960890d7cbb4890166ac18d7f8
 msgid "desc_len_v_detailed"
 msgstr "Веома детаљни"
 
-# en-hash: 7be0e84edd4626f6b7d42f1e8174f118
 msgid "dont_ask_again"
 msgstr "Не питај поново"
 
-# en-hash: 2593c7ce3ff937293feb1e61c152e551
 msgid "entity_label_characters"
 msgstr "ликови"
 
-# en-hash: b4c0b6c75f651ee809fd20c087a4a533
 msgid "entity_label_locations"
 msgstr "локације"
 
-# en-hash: b972b14200d0fad941304c0b361a18f0
 msgid "entity_not_found"
 msgstr "'%s' није пронађен као лик или локација."
 
-# en-hash: 76e73569f84e76aa9de514fea51ef9f3
 msgid "entity_ui_style_both"
 msgstr "Модерни искачући прозор (Оба)"
 
-# en-hash: 386963b724dc569ddd1b4a480c24b826
 msgid "entity_ui_style_classic"
 msgstr "Класични дијалог"
 
-# en-hash: ce817225f09cf8f997decfb4619c28ef
 msgid "entity_ui_style_desc"
 msgstr "Изаберите када желите да користите нови модерни искачући прозор уместо класичног дијалога за описе ентитета."
 
-# en-hash: bb09780e4ff57e5ab2fa90f2be004cea
 msgid "entity_ui_style_in_text"
 msgstr "Модерни искачући прозор (Само у тексту)"
 
-# en-hash: beae8da8a7553c33bf5d6ae7bdf91002
 msgid "entity_ui_style_menu"
 msgstr "Модерни искачући прозор (Само у менију)"
 
-# en-hash: 68007307953d58fd56bdcd07d62f3e3f
 msgid "error_api_key_desc"
 msgstr "Прослеђени АПИ кључ је одбијен. Проверите подешавања и уверите се да је кључ исправан."
 
-# en-hash: 4b6886b5038ca14e978a72f01df1fe6d
 msgid "error_api_key_title"
 msgstr "Неважећи АПИ кључ"
 
-# en-hash: 8a92a303055af14321f3cc7f644623fe
 msgid "error_extract_text"
 msgstr "Грешка: Није могуће издвојити текст књиге."
 
-# en-hash: 0f09bc754e4c901533fa9bcdb6e41926
 msgid "error_model_access_desc"
 msgstr "Ваш АПИ кључ нема приступ изабраном моделу. Можда ћете морати да користите други модел или провајдера."
 
-# en-hash: c4a195c14e7e5b76a6c25cf8991042a3
 msgid "error_model_access_title"
 msgstr "Приступ одбијен"
 
-# en-hash: e40ae570525f73b62420a63937e3fdc5
 msgid "error_model_not_found_desc"
 msgstr "Изабрани АИ модел је недоступан или је URL адреса ендпоинта нетачна."
 
-# en-hash: d7d7061b1875f44ff39007aea89b505b
 msgid "error_model_not_found_title"
 msgstr "Модел није пронађен"
 
-# en-hash: 623d63b7e802196197989d25dde5e13b
 msgid "error_no_api_key"
 msgstr "АПИ кључ није подешен"
 
-# en-hash: e7b0af2be5bf56ed033f222a42ffd884
 msgid "error_parse_desc"
 msgstr "АИ је вратио одговор који није могуће обрадити. Ово може бити привремена грешка."
 
-# en-hash: d80a250008a1d3ed31be8a53cc7e7d74
 msgid "error_parse_title"
 msgstr "Грешка у подацима"
 
-# en-hash: 8101890ac4a7cc06535730504b0e4dc6
 msgid "error_quota_desc"
 msgstr "Ваш кредит за АПИ је потрошен или сте достигли ограничење брзине. Проверите статус плаћања или сачекајте мало пре поновног покушаја."
 
-# en-hash: d117d5af67a2a1d9dfc041d66d435519
 msgid "error_quota_title"
 msgstr "Квота прекорачена"
 
-# en-hash: 54130f799248d4be121d04020d031e9b
 msgid "error_service_down_desc"
 msgstr "АИ сервис је привремено недоступан или преоптерећен. Покушајте поново за неколико минута."
 
-# en-hash: c95aec10ba314ea37a33cea18cf8a412
 msgid "error_service_down_title"
 msgstr "Сервис недоступан"
 
-# en-hash: 41fd6797646e09ef2fb1024cd8a2b134
 msgid "error_timeout_desc"
 msgstr "Захтев је трајао предуго. Ово се може десити код сложених књига или споре интернет везе."
 
-# en-hash: 958768702baf0da65e8147415bc59b66
 msgid "error_timeout_title"
 msgstr "Веза је истекла"
 
-# en-hash: 502ff43b8c190768d303036433a5fe17
 msgid "error_unknown_desc"
 msgstr "Десила се неочекивана грешка: %s"
 
-# en-hash: 12fb24de361ff91915001561cfa9fdc8
 msgid "error_unknown_title"
 msgstr "Преузимање неуспело"
 
-# en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
 msgstr "Издвајање додатних ликова..."
 
-# en-hash: a4a9bd989f4fbd0841ad6a1e194eecac
 msgid "extracting_more_terms"
 msgstr "Издвајање додатних термина..."
 
-# en-hash: 4ea7755f84f02d23876d90be2f9765cf
 msgid "fetch_button"
 msgstr "Преузми"
 
-# en-hash: 05ab2ce95089e50db065a1bd1ed0cd85
 msgid "fetch_single_word_prompt"
 msgstr "Нема X-Ray података за '%s'. Желите ли да их потражите?"
 
-# en-hash: f003d65d2046d2fa662682cfcc61836e
 msgid "fetch_successful"
 msgstr "Преузимање успешно"
 
-# en-hash: cba18edc0f67f3912f12b0e5cff30ad5
 msgid "fetching_ai"
 msgstr "Анализирање књиге за генерисање X-Ray података..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
 msgid "fetching_author"
 msgstr "Преузимање информација о аутору са %s..."
 
-# en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
 msgstr "Преузимање контекста серијала: Књига %d од %d…"
 
-# en-hash: 019511d88cae31edb42daf4d90ca9a36
 msgid "fetching_series_info"
 msgstr "Идентификација књига у серијалу…"
 
-# en-hash: 00deb09e5e37bd7e81c99a6bf98d8380
 msgid "fetching_wait"
 msgstr "⏳ Молимо сачекајте...\nОвај процес може трајати 10-50 секунди."
 
-# en-hash: c65aba36ac8b272d7e881146a6d885bc
 msgid "find_mentions"
 msgstr "Пронађи помињања"
 
-# en-hash: 68aeeb5f5f2b6deb964d2c1cebfe0e62
 msgid "full_book_option"
 msgstr "Режим целе књиге"
 
-# en-hash: 9ab81f57823f6aeb02362291f23883e6
 msgid "label_aliases"
 msgstr "АЛИЈАСИ"
 
-# en-hash: e38583f3a073fa2a86a841b672aba548
 msgid "label_category"
 msgstr "КАТЕГОРИЈА"
 
-# en-hash: 52f90e03a4ea208d52475028ad0250ef
 msgid "label_definition"
 msgstr "ДЕФИНИЦИЈА"
 
-# en-hash: 35ba4a2677442e210c23a00a5601aba3
 msgid "label_description"
 msgstr "ОПИС"
 
-# en-hash: 2301836d10bf537bc0a170ebeda4a7ea
 msgid "label_expanded"
 msgstr "ЗНАЧЕЊЕ"
 
-# en-hash: 62eb33fae593edd0057718fd9eac51fc
 msgid "label_gender"
 msgstr "ПОЛ"
 
-# en-hash: ad32e604e17467fc435538334fbddf3e
 msgid "label_name"
 msgstr "ИМЕ"
 
-# en-hash: 1ee35d254c681898cb2c288faeee97c3
 msgid "label_occupation"
 msgstr "ЗАНИМАЊЕ"
 
-# en-hash: b18ca8e369fbeb06248c9947898d7a9d
 msgid "label_reasoning"
 msgstr "АИ РЕЗОНОВАЊЕ"
 
-# en-hash: 612f9988ac7994ee666d3a59dad71b28
 msgid "label_role"
 msgstr "УЛОГА"
 
-# en-hash: c7f0cb0f679c956a1a39bb18f0d1ce38
 msgid "lang_follow_book"
 msgstr "Аутоматски (Прати књигу)"
 
-# en-hash: 0eed7c5cabc42830815d5054c0bac951
 msgid "lang_follow_system"
 msgstr "Аутоматски (Прати систем)"
 
-# en-hash: 8606ca108b0e55847f288f1c807eafd5
 msgid "lang_mismatch_title"
 msgstr "Неподударање језика"
 
-# en-hash: 3d37179cdc5057a3e15be8b161522ff1
 msgid "language_changed_reopen"
 msgstr "Језик промењен. Поново отворите мени да бисте видели измене."
 
-# en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Касније"
 
-# en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Повезани уноси"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "linked_entries_disabled"
 msgstr "Онемогућено"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "linked_entries_enabled"
 msgstr "Омогућено"
 
-# en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
 msgstr "Повезани уноси аутоматски повезују ликове, локације и историјске личности када се помињу у описима једни других.\n\nОнемогућавање овога ће сакрити дугме 'Повезани уноси' из дијалога са детаљима."
 
-# en-hash: db644ab64bb392cf0d28dfd9cc2c0372
 msgid "log_empty"
 msgstr "Дневник је празан."
 
-# en-hash: 515fba56db1da76925fb6b63f29face7
 msgid "log_loading"
 msgstr "Учитавање дневника..."
 
-# en-hash: 3e89a40ac0cf0ae3a671c8ddadabf81a
 msgid "log_tail_notice"
 msgstr "[... изостављено је %d претходних редова ...]"
 
-# en-hash: bb3051bbc0e5ad480e29ddcfd8c19c7d
 msgid "logs_cleared"
 msgstr "Дневници очишћени!"
 
-# en-hash: 36993852e97df8c6de1a644af20b4439
 msgid "looking_up_msg"
 msgstr "Тражење '%s'..."
 
-# en-hash: 1485de0735ca78d3fb650e6418fd9c9c
 msgid "low_conf_match"
 msgstr "Делимично подударање — приказује се '%s' за ваш упит. Додирните испод да преузмете тачан термин."
 
-# en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Manual Pick"
 
-# en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
 msgstr "✕"
 
-# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
 msgid "mention_return_btn"
 msgstr "Назад на читање"
 
-# en-hash: 1c2fbf8b19aa215337092cba9e51979a
 msgid "mention_return_label"
 msgstr "← Назад на стр.%d"
 
-# en-hash: 4a53c3a6c553dd59d658731018378fce
 msgid "mentions_at_location"
 msgstr "Помињање: %s"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "mentions_disabled"
 msgstr "Онемогућено"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "mentions_enabled"
 msgstr "Омогућено"
 
-# en-hash: 6089c3c5bfdda7928b8edaff7fc29d34
 msgid "mentions_none"
 msgstr "Још нема пронађених помињања за '%s'."
 
-# en-hash: 8c8e4cc582637e842449b7dea503b5b0
 msgid "mentions_preference_desc"
 msgstr "Изаберите своје подешавање за помињање ликова и локација:"
 
-# en-hash: c723ad634182d938da720018beb94797
 msgid "mentions_refresh"
 msgstr "Освежи помињања"
 
-# en-hash: 3fa85f74d71e5d7d0859e1c9ac30e6cf
 msgid "mentions_scanning"
 msgstr "Скенирање... %1 од %2 поглавља"
 
-# en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
 msgstr "Скенирање помињања вам омогућава да пронађете свако појављивање лика или локације у књизи. Ово се дешава аутоматски у позадини како би читач остао брз.\n\nОнемогућавање овога ће сакрити дугме 'Пронађи помињања'."
 
-# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
 msgstr "Подешавања помињања"
 
-# en-hash: 795fe7b23df416a5beffd9a50873b771
 msgid "mentions_title"
 msgstr "Помињања: %s"
 
-# en-hash: 8f7f4c1ce7a4f933663d10543562b096
 msgid "menu_about"
 msgstr "О додатку"
 
-# en-hash: 92ff32056df3871303587ba7d479c47f
 msgid "menu_ai_settings"
 msgstr "АИ Подешавања"
 
-# en-hash: 1d18bcea5f63d1761c231009ed210e11
 msgid "menu_api_keys"
 msgstr "АПИ кључеви и провајдери"
 
-# en-hash: 50ef21a8bf0bdcedbbbfd33a536a1357
 msgid "menu_author_info"
 msgstr "Информације о аутору"
 
-# en-hash: a6c5c63c5c9be868061d03e89d246430
 msgid "menu_auto_update_frequency"
 msgstr "Подешавања за аутоматски X-Ray"
 
-# en-hash: 98c609842fdba0aed4a678b1dd84a604
 msgid "menu_beta_channel"
 msgstr "Подешавања бета канала"
 
-# en-hash: a0962fa6cbceddb69f0fa5745c2ca704
 msgid "menu_book_mode"
 msgstr "Тип књиге"
 
-# en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "menu_characters"
 msgstr "Ликови"
 
-# en-hash: 06f4f7bd90b1c8a0145d18ee55c265c4
 msgid "menu_clear_cache"
 msgstr "Очисти кеш"
 
-# en-hash: 67fd6c2ed402914b08701f21af350cc5
 msgid "menu_clear_logs"
 msgstr "Очисти дневнике"
 
-# en-hash: 5c4a6c4395765ab86fc49b6c957525d9
 msgid "menu_content_fetch_settings"
 msgstr "Подешавања садржаја и преузимања"
 
-# en-hash: ecfaa3fa16216e962dfb2337337df2e4
 msgid "menu_custom_model_title"
 msgstr "Прилагођени %s модел"
 
-# en-hash: f82e66c60fd95d54434ed37dc81034e2
 msgid "menu_desc_length_settings"
 msgstr "Дужина описа"
 
-# en-hash: d7400967f844d2288239b8d7a10d7839
 msgid "menu_display_ui_settings"
 msgstr "Подешавања приказа и интерфејса"
 
-# en-hash: bd44df2bee626fbc7db133d886c1cf63
 msgid "menu_enter_custom_model"
 msgstr "Унесите прилагођени модел..."
 
-# en-hash: c78507f1735096000bbc8f4b4ddfc289
 msgid "menu_entity_ui_mode"
 msgstr "Стил описа ентитета"
 
-# en-hash: c1b19dc83bcbcf0c634af5164ac2f24f
 msgid "menu_fetch_author"
 msgstr "Преузми информације о аутору (АИ)"
 
-# en-hash: 1481c3fcb242cec4e66828697e097d65
 msgid "menu_fetch_more_chars"
 msgstr "Преузми више ликова"
 
-# en-hash: e28e1a3102c10986b10c3a58ebc26979
 msgid "menu_fetch_more_terms"
 msgstr "Преузми више термина"
 
-# en-hash: f0d29ae92c638538610d26014bda7269
 msgid "menu_fetch_series_context"
 msgstr "Преузми / Освежи контекст серијала"
 
-# en-hash: 7cf395303ce3665a9834721d4b748e4b
 msgid "menu_frequency"
 msgstr "Учесталост"
 
-# en-hash: 60b01aa51c38e7a952d2760bf1584915
 msgid "menu_historical_figures"
 msgstr "Историјске личности"
 
-# en-hash: 4994a8ffeba4ac3140beb89e8d41f174
 msgid "menu_language"
 msgstr "Језик"
 
-# en-hash: 1e1459fdaf8dd012ccee18d64ebf8fe7
 msgid "menu_linked_entries_settings"
 msgstr "Подешавања повезаних уноса"
 
-# en-hash: eebd338ddbd547e41e4a1296de82963a
 msgid "menu_locations"
 msgstr "Локације"
 
-# en-hash: 10d0de28911c5f66463b9c8783f8148a
 msgid "menu_maintenance"
 msgstr "Одржавање"
 
-# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "menu_mentions_settings"
 msgstr "Подешавања помињања"
 
-# en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "Примарни АИ модел"
 
-# en-hash: 22b189dd0fe1b07c3174e8a676a0fe3c
 msgid "menu_reasoning_effort"
 msgstr "Напор АИ резоновања"
 
-# en-hash: 3e8a42af68c64edd3ce4f9d3d4da0147
 msgid "menu_secondary_ai_model"
 msgstr "Секундарни АИ модел"
 
-# en-hash: 18f3f323b19a809e90e381568c5acb51
 msgid "menu_series_context"
 msgstr "Контекст серијала"
 
-# en-hash: f4f70727dc34561dfde1a3c529b6205c
 msgid "menu_settings"
 msgstr "Подешавања"
 
-# en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
 msgstr "Речник"
 
-# en-hash: 87f9f735a1d36793ceaecd4e47124b63
 msgid "menu_timeline"
 msgstr "Хронологија"
 
-# en-hash: 3c1fa918adf3e65fbff595ee1fd50d26
 msgid "menu_ui_popup_intext"
 msgstr "Користи фуснота-стил за претрагу у тексту"
 
-# en-hash: 575c1c5654ec32201c7eea873a1fe01b
 msgid "menu_ui_popup_menu"
 msgstr "Користи фуснота-стил за претрагу у менију"
 
-# en-hash: ada4a5a87032c5a246e7f76bb95f587e
 msgid "menu_unit_categories"
 msgstr "Категорије јединица"
 
-# en-hash: 01eb258da99de69aab015959dfc528d9
 msgid "menu_unit_converter"
 msgstr "Претварач јединица"
 
-# en-hash: f55a01bb8237586887c0f4f6c7a56131
 msgid "menu_update_xray"
 msgstr "Ажурирај X-Ray податке"
 
-# en-hash: 02c89382dc0b7f202b7d455bf88ab785
 msgid "menu_view_config"
 msgstr "Прикажи све вредности конфигурације"
 
-# en-hash: 8f96241822e718c6be629d036f586ca6
 msgid "menu_view_log"
 msgstr "Прикажи дневник"
 
-# en-hash: 0863526e514d88cd2d00b39f8dda0920
 msgid "menu_xray"
 msgstr "X-Ray"
 
-# en-hash: a805cb8f152d740dadbc6d065afb91db
 msgid "menu_xray_mode"
 msgstr "Претрага у тексту"
 
-# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
 msgid "merge_back"
 msgstr "← Назад"
 
-# en-hash: 68be4837f6c739877233e527a996dd00
 msgid "merge_button"
 msgstr "Споји"
 
-# en-hash: 8bb01dda315086774624ba2e7444a265
 msgid "merge_confirm"
 msgstr "Спојити %s у %s? Секундарни унос ће бити обрисан, а његови алијаси припојени примарном."
 
-# en-hash: f05bbbb62dd4920db1277184e3fd98ce
 msgid "merge_duplicates"
 msgstr "Споји дупликате..."
 
-# en-hash: 1a0eb2431b20a745a419931f2f637210
 msgid "merge_failed"
 msgstr "Спајање неуспело."
 
-# en-hash: 975d71893cc2c5cb96e7c1e8dfad785a
 msgid "merge_pick_primary"
 msgstr "Изаберите унос који ЖЕЛИТЕ ДА ЗАДРЖИТЕ"
 
-# en-hash: 41d27b298020df5b8ec938b89b487b8d
 msgid "merge_pick_secondary"
 msgstr "Изаберите унос који ЖЕЛИТЕ ДА УКЛОНИТЕ"
 
-# en-hash: d0517e8f339cc45490ff9eb6d43fc981
 msgid "merge_success"
 msgstr "Уноси су успешно спојени."
 
-# en-hash: 1db7d7c3180a75c44c8edeccdfd01536
 msgid "merging_smartly"
 msgstr "Спајање..."
 
-# en-hash: aa2d6e4f578eb0cfaba23beef76c2194
 msgid "model_free"
 msgstr "бесплатно"
 
-# en-hash: 76e084771e78c194efd0e2d5b8920bea
 msgid "model_paid"
 msgstr "плаћено"
 
-# en-hash: e7fa74181aff985bd6dadb3d57bb7119
 msgid "msg_added_characters"
 msgstr "Додато %d нових ликова!"
 
-# en-hash: 3803163145663de684e7c6212832d27c
 msgid "msg_added_terms"
 msgstr "Додато %d нових термина!"
 
-# en-hash: 3f0246c95a38aaf04b2c550c9e1a287d
 msgid "msg_fetch_failed"
 msgstr "АИ преузимање неуспело"
 
-# en-hash: dffb8357db1ec38d1f6dffbcc270400d
 msgid "msg_no_bio"
 msgstr "Нема доступне биографије."
 
-# en-hash: 1a99b2b1ba9babaa605eb045980477a7
 msgid "msg_suggest_lang"
 msgstr "Ова књига је на језику %s. Желите ли да промените X-Ray језик на одговарајући?"
 
-# en-hash: 2e7e2d7f8421035f2e307aa4064d20ee
 msgid "multiple_matches"
 msgstr "Вишеструка подударања за '%s'. На шта сте мислили?"
 
-# en-hash: cafa45757baae6a9b3e4daafcc454e43
 msgid "new_feature"
 msgstr "New Feature"
 
-# en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
 msgid "next"
 msgstr "Следеће"
 
-# en-hash: bafd7322c6e97d25b6299b5d6fe8920b
 msgid "no"
 msgstr "Не"
 
-# en-hash: 9b793d19e6877134f19c37c3ac6247fa
 msgid "no_api_key"
 msgstr "АИ АПИ кључ није подешен!\n\nУнесите АПИ кључ у:\nМени → X-Ray → АИ Подешавања"
 
-# en-hash: 23dfd40828eb2cf5e31ad869ef4bda83
 msgid "no_author_data_fetch"
 msgstr "Нема доступних информација о аутору.\n\nЖелите ли да их преузмете помоћу АИ-ја?"
 
-# en-hash: 6cbd3b9b2bb981930fa8f38f26ca5f61
 msgid "no_character_data"
 msgstr "Још увек нема података о ликовима.\n\nПрво преузмите X-Ray податке."
 
-# en-hash: 80a4905228688f8ad8ec996803f60ffb
 msgid "no_data_prompt"
 msgstr "Нису пронађени X-Ray подаци за ову књигу. Желите ли да их преузмете са АИ сада?"
 
-# en-hash: f66eabdf2cb216138e5c20cd3f9d890d
 msgid "no_duplicates_found"
 msgstr "Нема пронађених дупликата."
 
-# en-hash: 064105ef9b1bca475059078013cc4a4b
 msgid "no_historical_data"
 msgstr "Још увек нема података о историјским личностима.\n\nПрво преузмите X-Ray податке.\n\nАИ ће детектовати стварне историјске\nличности поменуте у књизи."
 
-# en-hash: 4d0e58f2c49ca238a05d2a92486d3d70
 msgid "no_location_data"
 msgstr "Још увек нема података о локацијама. Прво преузмите X-Ray податке."
 
-# en-hash: 6c32701ae234f6a1c3a03e18d89bd1e1
 msgid "no_merges_performed"
 msgstr "Није извршено ниједно спајање."
 
-# en-hash: 29503d301d509e5cfea9e97daffa9e79
 msgid "no_terms_data"
 msgstr "Још увек нема података о терминима. Прво преузмите X-Ray податке."
 
-# en-hash: 0c8a85db22b4a3eadf95fe1a55f00c63
 msgid "no_timeline_data"
 msgstr "Још увек нема података о хронологији.\n\nПрво преузмите X-Ray податке.\n\nАИ ће приказати кључне догађаје у\nхронолошком редоследу."
 
-# en-hash: e0aa021e21dddbd6d8cecec71e9cf564
 msgid "ok"
 msgstr "У реду"
 
-# en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
 msgstr "Pair marked as not a duplicate."
 
-# en-hash: 607481fc96e754b33650eb171aac9447
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
-# en-hash: 046763a0d64321194477604b7751c8e4
 msgid "pending_duplicates_prompt"
 msgstr "АИ је пронашао %d потенцијалних дупликата из претходног преузимања. Прегледати сада?"
 
-# en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "Трансформишите своје искуство читања помоћу АИ анализе књига, баш као Amazon Kindle X-Ray!"
 
-# en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "Брзи мени за X-Ray"
 
-# en-hash: decbe415d8accca7c2c16d48a79ee934
 msgid "read_more"
 msgstr "Прочитај више"
 
-# en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
 msgstr "Разлог"
 
-# en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
 msgstr "Контролише дубину 'размишљања' за моделе са резоновањем:\n\n• Није подешено: Не шаље се посебно упутство; модел користи своје подразумеване вредности.\n• Низак: Брзо, економично издвајање за једноставне књиге.\n• Средњи: Балансирана дубина за већину прича.\n• Висок: Детаљна анализа за сложене мреже ликова.\n\nОдноси се на: GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku), и Gemini 2.5+.\n\nНапомена: DeepSeek V4 резонује сам по себи — ово подешавање нема утицаја на њега."
 
-# en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
 msgstr "Висок"
 
-# en-hash: 28d0edd045e05cf5af64e35ae0c4c6ef
 msgid "reasoning_low"
 msgstr "Низак"
 
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
 msgid "reasoning_medium"
 msgstr "Средњи"
 
-# en-hash: e22876a23ad77be581ada0285360983a
 msgid "reasoning_unset"
 msgstr "Није подешено (Подразумевано)"
 
-# en-hash: d98ac12774fca5c3cbaffe276840c55f
+msgid "refresh"
+msgstr "Osveži"
+
 msgid "reject_pair"
 msgstr "Reject"
 
-# en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Поново потражи '%s'"
 
-# en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"
 msgstr "Прегледај"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
 msgid "save"
 msgstr "Сачувај"
 
-# en-hash: 13348442cc6a27032d2b4aa28b75a5d3
 msgid "search_button"
 msgstr "Претражи"
 
-# en-hash: 428279a428d9f130d69840b2b73c7514
 msgid "search_character"
 msgstr "Претрага ликова..."
 
-# en-hash: c2380a3df7158668908b94405cbe5902
 msgid "search_character_title"
 msgstr "Претрага ликова"
 
-# en-hash: 828800124a2c130cc221b4d028b781a2
 msgid "search_hint"
 msgstr "Унесите име лика"
 
-# en-hash: da83080ddaefc008f3de01b20a111043
 msgid "search_term"
 msgstr "Претрага термина"
 
-# en-hash: 428da3d1fd5aaa456409aa6b30d2c4f2
 msgid "series_ask_later_msg"
 msgstr "Резиме серијала одложен. Питаћемо вас поново када отворите/наставите ову књигу."
 
-# en-hash: c69ce70b393414a1cdee677a96a195e4
 msgid "series_context_enabled_toggle"
 msgstr "Омогући контекст серијала"
 
-# en-hash: cfd20c079f624acba218200220eb4a10
 msgid "series_context_loaded"
 msgstr "Контекст серијала је учитан (%d претходних књига)."
 
-# en-hash: 167442e30a87a00e4f109ca2361ec53a
 msgid "series_context_prompt_text"
 msgstr "Изгледа да је ово Књига %d од '%s'. Учитати резиме претходних књига (%d)?\n\n(Ову опцију можете онемогућити у Подешавања → Контекст серијала)"
 
-# en-hash: 577a96abeeaa42e4748d2189f746a05b
 msgid "series_context_prompt_title"
 msgstr "Детектован серијал"
 
-# en-hash: ddb44dbe6c8ac2048d293e6102eb4c54
 msgid "series_disabled_msg"
 msgstr "Аутоматски упит је онемогућен за ову књигу. Можете ручно преузети резиме преко X-Ray менија."
 
-# en-hash: 45038789e6aae12b35398440e65bf810
 msgid "series_no_prior_detected"
 msgstr "Нису детектоване претходне књиге за овај серијал."
 
-# en-hash: 4492f89a70cb73291167d53d07868ebc
 msgid "series_prior_books_header"
 msgstr "── Претходне књиге ──"
 
-# en-hash: 38a1412b98e409d6f6a0b2464c62fa08
 msgid "series_prior_label"
 msgstr "[Претходно]"
 
-# en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
 msgid "skip"
 msgstr "Прескочи"
 
-# en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "Режим без спојлера ограничава издвајање са АИ на странице које сте већ прочитали (до ваше тренутне странице), спречавајући откривање детаља из будућих поглавља.\n\nРежим целе књиге анализира целу књигу, што може садржати спојлере."
 
-# en-hash: 5445912c4c35d13ae26a53a6d782d149
 msgid "spoiler_free_menu_option"
 msgstr "Без спојлера"
 
-# en-hash: f6bcf48f8091f8fe253489d94223ec7c
 msgid "spoiler_free_option"
 msgstr "Режим без спојлера (До %d%% књиге)"
 
-# en-hash: 49d594b5e1f6994860fa4c0328c44977
 msgid "spoiler_preference_desc"
 msgstr "Изаберите своје подешавање за спојлере у X-Ray подацима:"
 
-# en-hash: 082822dd3aeeab538d5e399d7883d31a
 msgid "spoiler_preference_title"
 msgstr "Подешавање спојлера"
 
-# en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
 msgstr "Заустави"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"
 msgstr "Није пронађен термин који одговара '%s'"
 
-# en-hash: 5d5b473a14bed6f67fdbe6c745b045a7
 msgid "this_chapter"
 msgstr "Ово поглавље"
 
-# en-hash: d2c24d59e0baff4d0155fbdf62590867
 msgid "this_page"
 msgstr "Ова страница"
 
-# en-hash: f61824b403008733ff955da48052ee04
 msgid "unit_action_configure"
 msgstr "Configure Settings..."
 
-# en-hash: 6ee50812725a7a053ed2c5742c6ebfef
 msgid "unit_action_disable"
 msgstr "Disable Feature"
 
-# en-hash: 074331092c85358cfa576b7c8424a94e
 msgid "unit_action_keep"
 msgstr "Keep Enabled (Default)"
 
-# en-hash: fd380cdfeb02e89fd87e81a03440d1a4
 msgid "unit_auto_scan_about"
 msgstr "Скенирање великих књига може потрајати до 15–20 секунди. Ово се дешава само када се књига први пут отвори, а резултати се чувају за будућност."
 
-# en-hash: cba623198fb7055516673257f1573ad8
 msgid "unit_auto_scan_desc"
 msgstr "Аутоматски скенирај књиге за мерне јединице:"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Онемогућено"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "unit_auto_scan_enabled"
 msgstr "Омогућено"
 
-# en-hash: b1c61b015abaa0f358173ae8aaf8d96e
 msgid "unit_auto_scan_settings"
 msgstr "Подешавања аутоматског скенирања"
 
-# en-hash: 5b2e3a633a4d820d64aa4356495ab188
 msgid "unit_conv_direction"
 msgstr "Смер претварања"
 
-# en-hash: 0352baf577c778cf15e49c40b1126bc3
 msgid "unit_conv_direction_about"
 msgstr "Смер конверзије јединица одређује како се преводе мере у књигама (нпр. дужина, тежина, температура):\n\n• [B]Аутоматски (према уређају):[/B] Аутоматски конвертује на основу језика уређаја и системских подешавања региона.\n\n• [B]У метричке:[/B] Увек конвертује империјалне јединице (нпр. миље, Фаренхајт) у метричке еквиваленте (нпр. километре, Целзијус).\n\n• [B]У империјалне:[/B] Увек конвертује метричке јединице у империјалне еквиваленте."
 
-# en-hash: 78b12f9283363cc04ec6a9f2f8fb18c4
 msgid "unit_conv_direction_auto"
 msgstr "Аутоматски (према подешавању уређаја)"
 
-# en-hash: 926a5778ac523de44a7059268db8eb90
 msgid "unit_conv_direction_desc"
 msgstr "Изаберите смер за конверзију јединица:"
 
-# en-hash: 16fb229accd0e21e3b01de25113a5092
 msgid "unit_conv_direction_imperial"
 msgstr "Увек претвори у империјалне"
 
-# en-hash: eb80006cda3aa58a5be2dbc9f535dc06
 msgid "unit_conv_direction_metric"
 msgstr "Увек претвори у метричке"
 
-# en-hash: 9039461fb813111bf38dc683527be31d
 msgid "unit_conv_enabled"
 msgstr "Омогући претварач јединица"
 
-# en-hash: 01eb258da99de69aab015959dfc528d9
 msgid "unit_conv_headline"
 msgstr "📏 Unit Converter"
 
-# en-hash: 63d401a64c232b43a1335ae7e02fb607
 msgid "unit_conv_new_feature_desc"
 msgstr "X-Ray сада открива мерења (дужине, тежине, температуру) у вашим књигама и истиче их суптилним подвлачењем. Додирните истакнуту јединицу да видите њену конвертовану вредност у искачућем савету.\n\nНапомена: Приликом првог отварања књиге потребно је скенирање."
 
-# en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "unit_conv_style_settings"
 msgstr "Подешавања стила и подвлачења"
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
 msgid "unit_intensity_dark"
 msgstr "Тамна"
 
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
 msgid "unit_intensity_light"
 msgstr "Светла"
 
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
 msgid "unit_intensity_medium"
 msgstr "Средња"
 
-# en-hash: 2e507ae5d58861d457e684dfe05b9593
 msgid "unit_manual_scan_button"
 msgstr "Скенирај/Поново скенирај"
 
-# en-hash: 59655846df0abfca05d478f9c0a18eb4
 msgid "unit_scanning_book"
 msgstr "Скенирање књиге за јединице..."
 
-# en-hash: 2c8c1e763a8b739446b8dcd7908f318f
 msgid "unit_scanning_title"
 msgstr "X-Ray: Конвертор јединица"
 
-# en-hash: 2f59140753baa1e1e8193111db3ed7e1
 msgid "unit_style_preview_title"
 msgstr "ПРЕГЛЕД СТИЛА"
 
-# en-hash: 6e7b34fa59e1bd229b207892956dc41c
 msgid "unit_timeout_never"
 msgstr "Никад"
 
-# en-hash: efb97de9aae997a3dde262761bed835d
 msgid "unit_tooltip_timeout_label"
 msgstr "Време објашњења"
 
-# en-hash: eb656e41b6da91494775ecf47a51da91
 msgid "unit_underline_dashed"
 msgstr "Цртичасто"
 
-# en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Тачкасто"
 
-# en-hash: d909d38d705ce75386dd86e611a82f5b
 msgid "unit_underline_double"
 msgstr "Двоструко"
 
-# en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"
 msgstr "Интензитет подвлачења"
 
-# en-hash: 8bcda43732b0928d269955e0f09ff76f
 msgid "unit_underline_invisible"
 msgstr "Невидива"
 
-# en-hash: e41480b6bbfbf7407974a88d3d34f4fa
 msgid "unit_underline_solid"
 msgstr "Непрекидна"
 
-# en-hash: 9a66725ea21264441ab1682f4739fbc2
 msgid "unit_underline_style_label"
 msgstr "Стил подвлачења"
 
-# en-hash: 5cc1d76d86c562d334e35e4ef262ba5c
 msgid "unit_underline_thickness_label"
 msgstr "Дебљина подвлачења"
 
-# en-hash: 0e9498bd18e441969b23cb70819abc3c
 msgid "unit_underline_wavy"
 msgstr "Таласаста"
 
-# en-hash: 3f50e96b2eef687f766dc7651a55ad0a
 msgid "updater_available_header"
 msgstr "X-Ray %s је доступан!\nИмате верзију %s."
 
-# en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "updater_btn_cancel"
 msgstr "Откажи"
 
-# en-hash: 326737de1766f7c8b80a5acde0f18651
 msgid "updater_btn_download"
 msgstr "Преузми и инсталирај"
 
-# en-hash: 61057a0c84605444201929bdd72014f0
 msgid "updater_btn_later"
 msgstr "Касније"
 
-# en-hash: 6175d78ff8e7f8913d4c2fa339199bfc
 msgid "updater_btn_open_browser"
 msgstr "Отвори у прегледачу"
 
-# en-hash: 51cfbcff36da74a9fc47f3a5140f99f2
 msgid "updater_btn_restart"
 msgstr "Рестартуј"
 
-# en-hash: 092dc0fe2a1709895d0ffb03306ab644
 msgid "updater_cancelled_check"
 msgstr "Провера ажурирања отказана."
 
-# en-hash: 1e4112df1113e06c77e13d6614f2cd0a
 msgid "updater_cancelled_update"
 msgstr "Ажурирање отказано."
 
-# en-hash: f77f38f684c8b974dd4a56bb321cfd5f
 msgid "updater_check"
 msgstr "Провери ажурирања"
 
-# en-hash: a07813cc05571f23ce8dd7039583d7da
 msgid "updater_checking"
 msgstr "Проверавање ажурирања..."
 
-# en-hash: 3e6aed71a195328451956394c1ba0e70
 msgid "updater_download_prompt"
 msgstr "\n\nПреузети и инсталирати сада?"
 
-# en-hash: 4d7dcb1c7639337d915a10ffc18f0c5d
 msgid "updater_downloading"
 msgstr "Преузимање X-Ray %s..."
 
-# en-hash: 3ee3d18e96340272001439279cf33314
 msgid "updater_err_download"
 msgstr "Грешка при преузимању: %s"
 
-# en-hash: 8080e73222237f54453a9d31947ecb53
 msgid "updater_err_extract"
 msgstr "Грешка при распакивању: %s"
 
-# en-hash: bd2ab435fbc5c07d9803f63cfa2ea188
 msgid "updater_error_checking"
 msgstr "Грешка при провери ажурирања."
 
-# en-hash: 1f2460a4555c14c00a245d44c9742751
 msgid "updater_error_checking_detail"
 msgstr "Грешка при провери ажурирања: %s"
 
-# en-hash: 4764ffed7fe43c5174fe97c69cb933ee
 msgid "updater_no_asset"
 msgstr "Аутоматски фајл за ажурирање није пронађен.\n\nОтворити страницу са издањима на GitHub-у?"
 
-# en-hash: fa243c194c72bb2d6c10dfad7c375cf3
 msgid "updater_success_restart"
 msgstr "X-Ray %s је успешно инсталиран.\n\nРестартовати KOReader за примену измена?"
 
-# en-hash: 1d506d775154b17218de18195cf130b3
 msgid "updater_up_to_date"
 msgstr "X-Ray је ажуран (%s)."
 
-# en-hash: 67b3aeb4ed5299bb57c1e2de1beb0bf5
 msgid "updater_whats_new"
 msgstr "Шта је ново:"
 
-# en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Ажурирање X-Ray података..."
 
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
 msgid "val"
 msgstr "???"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "xray_disabled_label"
 msgstr "Онемогућено"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "xray_enabled_label"
 msgstr "Омогућено"
 
-# en-hash: aa3045baed0aad489f96655b14b671ac
 msgid "xray_mode_desc"
 msgstr "Додаје дугме 'X-Ray' у речнике и селекционе меније за тренутну претрагу."
 
-# en-hash: 93cba07454f06a4a960172bbd6e2a435
 msgid "yes"
 msgstr "Да"
 

@@ -704,6 +704,9 @@ msgstr "Medium"
 msgid "reasoning_unset"
 msgstr "Unset (Default)"
 
+msgid "refresh"
+msgstr "Refresh"
+
 msgid "reject_pair"
 msgstr "Reject"
 

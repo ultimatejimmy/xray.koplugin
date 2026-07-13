@@ -2825,7 +2825,6 @@ function XRayLogViewer:_rebuild()
         background = Blitbuffer.COLOR_DARK_GRAY,
     }
 
-    -- Resolution of 75% of user's selected book font size
     local function _getPopupFontSize(plugin)
         local size
         if plugin and plugin.ui and plugin.ui.font and plugin.ui.font.configurable then
@@ -2858,9 +2857,9 @@ function XRayLogViewer:_rebuild()
 
     local fs
     if is_cjk then
-        fs = math.max(12, math.min(math.floor(base_fs * 0.55), 20))
+        fs = math.max(12, math.min(math.floor(base_fs * 0.55), 14))
     else
-        fs = math.max(12, math.min(math.floor(base_fs * 0.75), 20))
+        fs = math.max(12, math.min(math.floor(base_fs * 0.75), 16))
     end
 
     local content_face
@@ -2977,7 +2976,7 @@ function XRayLogViewer:_rebuild()
         pad_bottom = pad_bottom + safe_bottom
     end
 
-    local content_h = sh - title_h - separator:getSize().h - btn_h - pad_top - pad_bottom - gap * 4
+    local content_h = sh - title_h - separator:getSize().h - btn_h - pad_top - pad_bottom - gap * 3 - (fs + 4)
 
     local content_widget = TextBoxWidget:new{
         text = text,
@@ -3046,8 +3045,8 @@ function XRayLogViewer:_reloadFromDisk()
         table.insert(all_lines, line)
     end
 
-    -- Keep only the last 100 lines for display
-    local max_lines = 100
+    -- Keep only the last 50 lines for display
+    local max_lines = 50
     local display_lines = all_lines
     local skipped = 0
     if #all_lines > max_lines then
@@ -3142,6 +3141,9 @@ function M:viewLog(page_num)
         end
     end
 
+
+
+    -- Fallback to XRayLogViewer
     -- Split into pages of 25 lines backward so the last page (most recent logs) is full
     local lines_per_page = 25
     local pages = {}

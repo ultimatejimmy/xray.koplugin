@@ -5,1295 +5,975 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-# en-hash: 1354e62b68c1d35133d396fc419901c2
 msgid "ai_error"
 msgstr "Error de IA: "
 
-# en-hash: 582a282f6b085c7665c843fb7e06e4e6
 msgid "ai_fetch_complete"
 msgstr "¡Datos obtenidos exitosamente desde %s!\n\nLibro: %s\nAutor: %s\n\nPersonajes: %d\nLugares: %d\nTemas: %d\nEventos: %d\nPersonajes Históricos: %d\n\n%s\n\nRESUMEN:\n%s"
 
-# en-hash: 34f82d2e8250bbcf8a0395a1eb4f1833
 msgid "ai_fetch_complete_msg"
 msgstr "¡Obtención de IA completada!"
 
-# en-hash: b0fc5654248cb92282e5ece124a750bd
 msgid "ai_key_required"
 msgstr "Se requiere una clave API de IA."
 
-# en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "Duplicado detectado por IA"
 
-# en-hash: adb9b4c51ae2df392591ca847017c9f8
 msgid "ai_merged_n"
 msgstr "%d par(es) fusionado(s) con éxito."
 
-# en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
 msgstr "AI Scan"
 
-# en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "La IA está buscando duplicados..."
 
-# en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
 msgstr "Ask Later"
 
-# en-hash: bff74eab9088ad053737e6f0d424ea7e
 msgid "author_born"
 msgstr "Nació: "
 
-# en-hash: 94e26ed13a62af4b3549ff9e583a0691
 msgid "author_died"
 msgstr "Murió: "
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "auto_dupe_check_disabled"
 msgstr "Desactivado"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "auto_dupe_check_enabled"
 msgstr "Activado"
 
-# en-hash: e791101a1a10500d1f0727b4b8e963b5
 msgid "auto_dupe_check_preference_desc"
 msgstr "Seleccione su preferencia para la detección automática de duplicados por IA:"
 
-# en-hash: 670e2792d29f2f41e891f40c6c5b03ea
 msgid "auto_dupe_check_setting_desc"
 msgstr "Cuando está activado, X-Ray solicita automáticamente a la IA que verifique si hay personajes y ubicaciones duplicados después de cada descarga de datos. Si se detectan duplicados, se le pedirá que los revise y fusione.\n\nDesactivar esto detendrá todo el escaneo de duplicados en segundo plano. Aún puede fusionar duplicados manualmente a través del menú de Personajes o Ubicaciones.\n\nNota: cada verificación realiza una llamada a la API de IA. Los usuarios con planes gratuitos o con cuotas limitadas pueden preferir desactivar esta opción."
 
-# en-hash: 0700ab9afc75d300e49fd3aac9c86ee8
 msgid "auto_dupe_check_setting_title"
 msgstr "Verificación de duplicados"
 
-# en-hash: b7e84428c69c17c5536c4a912a191e54
 msgid "auto_fetch_page_interval_prompt"
 msgstr "Intervalo de páginas"
 
-# en-hash: 14b471ac49a5d3258cc95b0762da9834
 msgid "auto_update_aggressive"
 msgstr "Agresivo: comprueba cada nuevo capítulo"
 
-# en-hash: 6349e8d6a59311506a78bb0cd3d5b92d
 msgid "auto_update_balanced"
 msgstr "Equilibrado: comprueba cada 5 min máximo"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "auto_update_disabled"
 msgstr "Desactivado"
 
-# en-hash: 9ffbf6e9ce7efcb2b5d02ca4b8554236
 msgid "auto_update_economical"
 msgstr "Económico: comprueba cada 15 min máximo"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
 msgid "auto_update_freq_about"
 msgstr "La actualización automática busca nuevos datos de capítulos en segundo plano mientras lees.\n\nLÍMITES Y RENDIMIENTO\nLas solicitudes frecuentes en segundo plano pueden agotar la BATERÍA y alcanzar los LÍMITES DE TASA del proveedor de IA (especialmente en modelos Pro).\n\nMODOS\n• Ultra: Comprueba cada N páginas configuradas (mitad del capítulo)\n• Agresivo: Comprueba cada vez que entras en un nuevo capítulo\n• Equilibrado: Comprueba cada 5 minutos máximo (recomendado)\n• Económico: Comprueba cada 15 minutos máximo\n• Escaso: Comprueba cada 30 minutos máximo\n• Desactivado: Sin solicitudes en segundo plano\n\nNota: Si se salta un capítulo debido a los límites de frecuencia, X-Ray lo incluirá automáticamente en la siguiente búsqueda en segundo plano."
 
-# en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"
 msgstr "Frecuencia de obtención en segundo plano:"
 
-# en-hash: c0b6e5d7b1280ea464d54bf9cbfffd37
 msgid "auto_update_sparse"
 msgstr "Escaso: comprueba cada 30 min máximo"
 
-# en-hash: 7f4cc9b44db70ed676e621f17b8228e3
 msgid "auto_update_ultra"
 msgstr "Ultra: comprueba cada %d páginas"
 
-# en-hash: 0557fa923dcee4d0f86b1409f5c2167f
 msgid "back_to_reading"
 msgstr "Volver a la lectura"
 
-# en-hash: 5fcd6ed2b6f2c21bc5c936cf44c36b37
 msgid "beta_channel_desc"
 msgstr "El canal Beta te permite recibir versiones preliminares del plugin X-Ray. Estas versiones incluyen las últimas funciones y correcciones de errores, pero pueden ser menos estables que la versión regular."
 
-# en-hash: 9aac8fedb45eb817ee12a885f1dedc8f
 msgid "beta_disabled"
 msgstr "Stable Channel (Recomendado)"
 
-# en-hash: f4bdad9b1beff62e922458298afd169e
 msgid "beta_enabled"
 msgstr "Canal Beta habilitado"
 
-# en-hash: ee4ee500762b7cab66634e1a2df9a053
 msgid "beta_preference_desc"
 msgstr "Selecciona tu preferencia de canal de actualización:"
 
-# en-hash: 06b9281e396db002010bde1de57262eb
 msgid "book_mode_auto"
 msgstr "Automático"
 
-# en-hash: c549e231df08c60006ca035f7834366e
 msgid "book_mode_desc"
 msgstr "Selecciona el modo para este libro."
 
-# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_mode_fiction"
 msgstr "Ficción"
 
-# en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_mode_nonfiction"
 msgstr "No ficción"
 
-# en-hash: 272668c7f021d1ae07f88c6593527c61
 msgid "book_mode_saved"
 msgstr "¡Modo de libro guardado!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
 msgstr "El tipo de libro determina qué estrategia de extracción de IA se utiliza y qué funciones están disponibles.\n\n- Ficción: Se centra en la narrativa, personajes y cronología de la trama.\n- No ficción: Se centra en términos, conceptos y personajes históricos.\n\nLa 'Detección automática' dejará que la IA decida después de la primera búsqueda.\n\n[B]Nota:[/B] Esta configuración se guarda [B]por libro[/B]. Una elección personalizada anula la detección automática o la configuración global."
 
-# en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
 msgstr "Auto-Detectar"
 
-# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
 msgid "book_type_fiction"
 msgstr "Ficción"
 
-# en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "No ficción"
 
-# en-hash: cd00fdfb57dccc660b305e787262e649
 msgid "cache_cleared"
 msgstr "¡Caché borrada!\n\nAhora puedes obtener nuevos datos:\nMenú → X-Ray → Obtener datos de IA"
 
-# en-hash: 1edc355371d87a94d024eebfed9f8815
 msgid "cache_save_failed"
 msgstr "Error al guardar la caché"
 
-# en-hash: c420984012423b034d0fb4544c93c663
 msgid "cache_save_success"
 msgstr "✓ Caché actualizada."
 
-# en-hash: dd3553afd5b0b207445bf116c57a4cac
 msgid "cache_saved"
 msgstr "¡Guardado en la caché!"
 
-# en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "cancel"
 msgstr "Cancelar"
 
-# en-hash: 261d30af0907fa3e87d73d7719d2b4ef
 msgid "character_not_found"
 msgstr "No se encontró ningún personaje que coincida con '%s'"
 
-# en-hash: d3d2e617335f08df83599665eef8a418
 msgid "close"
 msgstr "Cerrar"
 
-# en-hash: 3441bb13db3b069cccbba18579ae99f2
 msgid "config_default_gemini"
 msgstr "  Predeterminado (Gemini)"
 
-# en-hash: 868ea5dc0202b9f02e4cf8e4a460c827
 msgid "config_status_not_set"
 msgstr "NO ESTABLECIDO"
 
-# en-hash: 8c52684db8f49511e9b44471716bf164
 msgid "config_status_set"
 msgstr "ESTABLECIDO"
 
-# en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
 msgid "current_language"
 msgstr "es"
 
-# en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "Actual: "
 
-# en-hash: c0d9a229c4cb5183b5dd602a335c357e
 msgid "custom_api_endpoint_hint"
 msgstr "ej., https://openrouter.ai/api/v1/chat/completions"
 
-# en-hash: 210751d51c0e8e4527ae65bc6522789e
 msgid "custom_api_endpoint_title"
 msgstr "API personalizada %d — URL del endpoint"
 
-# en-hash: aa2776ae61983d0c0c97e5f7bf996ac2
 msgid "custom_api_is_reasoning"
 msgstr "Es un modelo de razonamiento (ej. DeepSeek-R1)"
 
-# en-hash: 277c6375d0cacdc5445fdeb15f8158c9
 msgid "custom_api_key_title"
 msgstr "API personalizada %d — Clave API"
 
-# en-hash: df3771ce7d40ea58977a420365a9511c
 msgid "custom_api_model_hint"
 msgstr "ej., google/gemini-2.5-flash o openai/gpt-4o"
 
-# en-hash: 54ed8dfd9713a5b46416c04ee0dc253c
 msgid "custom_api_model_title"
 msgstr "API personalizada %d — Modelo predeterminado"
 
-# en-hash: 6265afa1ceb063c099c3b2597670f26e
 msgid "custom_api_name"
 msgstr "API personalizada %d (compatible con OpenAI)"
 
-# en-hash: 936b30f151a3c4b39d60001a9808c93d
 msgid "custom_api_not_configured"
 msgstr "(no configurado — toca para configurar)"
 
-# en-hash: b7e3710795eeb8a7e11d2c69fca00e5c
 msgid "custom_api_saved"
 msgstr "Configuración de Custom API %d guardada."
 
-# en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "DESCRIPCIONES DE PERSONAJES\n\n• Corto (~80 caracteres): Nombre, rol y una nota breve.\n• Predeterminado (~200 caracteres): Análisis estándar.\n• Detallado (~350 caracteres): Estudio detallado del personaje con rasgos y motivaciones.\n• Muy detallado (~500 caracteres): Análisis profundo.\n\nCOMPENSACIÓN\nDescripciones más largas → se devuelven menos personajes durante las búsquedas iniciales/completas. Las búsquedas posteriores ('Obtener más') no se ven afectadas."
 
-# en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
 msgstr "BIOGRAFÍAS DE PERSONAJES HISTÓRICOS\n\n• Corto (~50 caracteres): Nombre y rol principal.\n• Predeterminado (~100 caracteres): Biografía estándar.\n• Detallado (~200 caracteres): Vida, importancia y contexto del libro.\n• Muy detallado (~300 caracteres): Biografía completa.\n\nCOMPENSACIÓN\nBiografías más largas → se devuelven menos personajes históricos durante las búsquedas iniciales/completas."
 
-# en-hash: d5c5e27087e0c1ce183faf7725ec4851
 msgid "desc_len_about_locs"
 msgstr "DESCRIPCIONES DE LUGARES\n\n• Corto (~50 caracteres): Nombre del lugar y contexto de una línea.\n• Predeterminado (~100 caracteres): Descripción estándar.\n• Detallado (~200 caracteres): Atmósfera, importancia y eventos.\n• Muy detallado (~300 caracteres): Descripción completa.\n\nCOMPENSACIÓN\nDescripciones más largas → se devuelven menos lugares durante las búsquedas iniciales/completas."
 
-# en-hash: 9095a16f5b98ef0bf91cfa862f94123c
 msgid "desc_len_about_timeline"
 msgstr "CRONOLOGÍA — UN EVENTO POR CAPÍTULO (siempre)\n\nLa cronología siempre tiene exactamente una entrada por capítulo. Este ajuste solo afecta al nivel de detalle incluido en cada resumen.\n\n• Corto (~50 caracteres): Breve resumen de una frase.\n• Predeterminado (~80 caracteres): Resumen estándar.\n• Detallado (~150 caracteres): Incluye contexto y consecuencias.\n• Muy detallado (~200 caracteres): Descripción narrativa completa.\n\nNo hay reducción de cantidad para la cronología."
 
-# en-hash: 7a1920d61156abc05a60135aefe8bc67
 msgid "desc_len_default"
 msgstr "Predeterminado"
 
-# en-hash: 4042fcadbe61a3300451157e2c9fe651
 msgid "desc_len_detailed"
 msgstr "Detallado"
 
-# en-hash: 30bb747c98bccdd11b3f89e644c4d0ad
 msgid "desc_len_short"
 msgstr "Corto"
 
-# en-hash: 32e4e2960890d7cbb4890166ac18d7f8
 msgid "desc_len_v_detailed"
 msgstr "Muy detallado"
 
-# en-hash: 7be0e84edd4626f6b7d42f1e8174f118
 msgid "dont_ask_again"
 msgstr "No volver a preguntar"
 
-# en-hash: 2593c7ce3ff937293feb1e61c152e551
 msgid "entity_label_characters"
 msgstr "personajes"
 
-# en-hash: b4c0b6c75f651ee809fd20c087a4a533
 msgid "entity_label_locations"
 msgstr "lugares"
 
-# en-hash: b972b14200d0fad941304c0b361a18f0
 msgid "entity_not_found"
 msgstr "No se encontró '%s' como personaje o lugar."
 
-# en-hash: 76e73569f84e76aa9de514fea51ef9f3
 msgid "entity_ui_style_both"
 msgstr "Popup moderno (ambos)"
 
-# en-hash: 386963b724dc569ddd1b4a480c24b826
 msgid "entity_ui_style_classic"
 msgstr "Diálogo clásico"
 
-# en-hash: ce817225f09cf8f997decfb4619c28ef
 msgid "entity_ui_style_desc"
 msgstr "Selecciona cuándo usar la interfaz de popup moderno en lugar del diálogo clásico para las descripciones de entidades."
 
-# en-hash: bb09780e4ff57e5ab2fa90f2be004cea
 msgid "entity_ui_style_in_text"
 msgstr "Popup moderno (solo en texto)"
 
-# en-hash: beae8da8a7553c33bf5d6ae7bdf91002
 msgid "entity_ui_style_menu"
 msgstr "Popup moderno (solo menú)"
 
-# en-hash: 68007307953d58fd56bdcd07d62f3e3f
 msgid "error_api_key_desc"
 msgstr "La clave API proporcionada fue rechazada. Por favor, revisa tu configuración y asegúrate de que la clave sea correcta."
 
-# en-hash: 4b6886b5038ca14e978a72f01df1fe6d
 msgid "error_api_key_title"
 msgstr "API Key no válida"
 
-# en-hash: 8a92a303055af14321f3cc7f644623fe
 msgid "error_extract_text"
 msgstr "Error: no se pudo extraer el texto del libro."
 
-# en-hash: 0f09bc754e4c901533fa9bcdb6e41926
 msgid "error_model_access_desc"
 msgstr "Tu API key no tiene acceso al modelo seleccionado. Es posible que necesites usar un modelo o proveedor diferente."
 
-# en-hash: c4a195c14e7e5b76a6c25cf8991042a3
 msgid "error_model_access_title"
 msgstr "Permiso denegado"
 
-# en-hash: e40ae570525f73b62420a63937e3fdc5
 msgid "error_model_not_found_desc"
 msgstr "El modelo de AI seleccionado no está disponible o la URL del endpoint es incorrecta."
 
-# en-hash: d7d7061b1875f44ff39007aea89b505b
 msgid "error_model_not_found_title"
 msgstr "Modelo no encontrado"
 
-# en-hash: 623d63b7e802196197989d25dde5e13b
 msgid "error_no_api_key"
 msgstr "Falta la clave API"
 
-# en-hash: e7b0af2be5bf56ed033f222a42ffd884
 msgid "error_parse_desc"
 msgstr "La AI devolvió una respuesta que no pudo ser procesada. Esto podría ser un fallo temporal."
 
-# en-hash: d80a250008a1d3ed31be8a53cc7e7d74
 msgid "error_parse_title"
 msgstr "Error de datos"
 
-# en-hash: 8101890ac4a7cc06535730504b0e4dc6
 msgid "error_quota_desc"
 msgstr "Tus créditos de API se han agotado o has alcanzado el límite de velocidad. Por favor, verifica tu estado de facturación o espera un momento antes de volver a intentarlo."
 
-# en-hash: d117d5af67a2a1d9dfc041d66d435519
 msgid "error_quota_title"
 msgstr "Cuota excedida"
 
-# en-hash: 54130f799248d4be121d04020d031e9b
 msgid "error_service_down_desc"
 msgstr "El servicio de AI no está disponible temporalmente o está sobrecargado. Por favor, inténtalo de nuevo en unos minutos."
 
-# en-hash: c95aec10ba314ea37a33cea18cf8a412
 msgid "error_service_down_title"
 msgstr "Servicio no disponible"
 
-# en-hash: 41fd6797646e09ef2fb1024cd8a2b134
 msgid "error_timeout_desc"
 msgstr "La solicitud tomó demasiado tiempo. Esto puede ocurrir con libros complejos o conexiones de red lentas."
 
-# en-hash: 958768702baf0da65e8147415bc59b66
 msgid "error_timeout_title"
 msgstr "Tiempo de conexión agotado"
 
-# en-hash: 502ff43b8c190768d303036433a5fe17
 msgid "error_unknown_desc"
 msgstr "Ocurrió un error inesperado: %s"
 
-# en-hash: 12fb24de361ff91915001561cfa9fdc8
 msgid "error_unknown_title"
 msgstr "Error al obtener"
 
-# en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
 msgstr "Extrayendo personajes adicionales..."
 
-# en-hash: a4a9bd989f4fbd0841ad6a1e194eecac
 msgid "extracting_more_terms"
 msgstr "Extrayendo términos adicionales..."
 
-# en-hash: 4ea7755f84f02d23876d90be2f9765cf
 msgid "fetch_button"
 msgstr "Obtener"
 
-# en-hash: 05ab2ce95089e50db065a1bd1ed0cd85
 msgid "fetch_single_word_prompt"
 msgstr "No se encontraron datos de X-Ray para '%s'. ¿Desea buscarlos?"
 
-# en-hash: f003d65d2046d2fa662682cfcc61836e
 msgid "fetch_successful"
 msgstr "Éxito al obtener datos"
 
-# en-hash: cba18edc0f67f3912f12b0e5cff30ad5
 msgid "fetching_ai"
 msgstr "Analizando libro para generar datos de X-Ray..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
 msgid "fetching_author"
 msgstr "Obteniendo información del autor desde %s..."
 
-# en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
 msgstr "Obteniendo contexto de la serie: Libro %d de %d…"
 
-# en-hash: 019511d88cae31edb42daf4d90ca9a36
 msgid "fetching_series_info"
 msgstr "Identificando libros de la serie..."
 
-# en-hash: 00deb09e5e37bd7e81c99a6bf98d8380
 msgid "fetching_wait"
 msgstr "⏳ Por favor, espera...\nEste proceso puede tardar entre 10 y 50 segundos."
 
-# en-hash: c65aba36ac8b272d7e881146a6d885bc
 msgid "find_mentions"
 msgstr "Buscar menciones"
 
-# en-hash: 68aeeb5f5f2b6deb964d2c1cebfe0e62
 msgid "full_book_option"
 msgstr "Modo libro completo"
 
-# en-hash: 9ab81f57823f6aeb02362291f23883e6
 msgid "label_aliases"
 msgstr "ALIAS"
 
-# en-hash: e38583f3a073fa2a86a841b672aba548
 msgid "label_category"
 msgstr "CATEGORÍA"
 
-# en-hash: 52f90e03a4ea208d52475028ad0250ef
 msgid "label_definition"
 msgstr "DEFINICIÓN"
 
-# en-hash: 35ba4a2677442e210c23a00a5601aba3
 msgid "label_description"
 msgstr "DESCRIPCIÓN"
 
-# en-hash: 2301836d10bf537bc0a170ebeda4a7ea
 msgid "label_expanded"
 msgstr "SIGNIFICA"
 
-# en-hash: 62eb33fae593edd0057718fd9eac51fc
 msgid "label_gender"
 msgstr "GÉNERO"
 
-# en-hash: ad32e604e17467fc435538334fbddf3e
 msgid "label_name"
 msgstr "NOMBRE"
 
-# en-hash: 1ee35d254c681898cb2c288faeee97c3
 msgid "label_occupation"
 msgstr "OCUPACIÓN"
 
-# en-hash: b18ca8e369fbeb06248c9947898d7a9d
 msgid "label_reasoning"
 msgstr "RAZONAMIENTO IA"
 
-# en-hash: 612f9988ac7994ee666d3a59dad71b28
 msgid "label_role"
 msgstr "ROL"
 
-# en-hash: c7f0cb0f679c956a1a39bb18f0d1ce38
 msgid "lang_follow_book"
 msgstr "Automático (Seguir el libro)"
 
-# en-hash: 0eed7c5cabc42830815d5054c0bac951
 msgid "lang_follow_system"
 msgstr "Automático (Seguir el sistema)"
 
-# en-hash: 8606ca108b0e55847f288f1c807eafd5
 msgid "lang_mismatch_title"
 msgstr "Idioma incorrecto"
 
-# en-hash: 3d37179cdc5057a3e15be8b161522ff1
 msgid "language_changed_reopen"
 msgstr "Idioma cambiado. Reabra el menú para ver los cambios."
 
-# en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Later"
 
-# en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Entradas vinculadas"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "linked_entries_disabled"
 msgstr "Desactivado"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "linked_entries_enabled"
 msgstr "Activado"
 
-# en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
 msgstr "Linked Entries conecta automáticamente personajes, ubicaciones y figuras históricas cuando se mencionan en las descripciones de los demás.\n\nDesactivar esto ocultará el botón 'Linked Entries' de los diálogos de detalle."
 
-# en-hash: db644ab64bb392cf0d28dfd9cc2c0372
 msgid "log_empty"
 msgstr "El registro está vacío."
 
-# en-hash: 515fba56db1da76925fb6b63f29face7
 msgid "log_loading"
 msgstr "Cargando registro..."
 
-# en-hash: 3e89a40ac0cf0ae3a671c8ddadabf81a
 msgid "log_tail_notice"
 msgstr "[... %d línea(s) anterior(es) omitida(s) ...]"
 
-# en-hash: bb3051bbc0e5ad480e29ddcfd8c19c7d
 msgid "logs_cleared"
 msgstr "¡Registros limpiados!"
 
-# en-hash: 36993852e97df8c6de1a644af20b4439
 msgid "looking_up_msg"
 msgstr "Buscando '%s'..."
 
-# en-hash: 1485de0735ca78d3fb650e6418fd9c9c
 msgid "low_conf_match"
 msgstr "Coincidencia parcial: mostrando '%s' para tu consulta. Toca abajo para buscar el término exacto."
 
-# en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Manual Pick"
 
-# en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
 msgstr "✕"
 
-# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
 msgid "mention_return_btn"
 msgstr "← Back"
 
-# en-hash: 1c2fbf8b19aa215337092cba9e51979a
 msgid "mention_return_label"
 msgstr "← Volver a la p.%d"
 
-# en-hash: 4a53c3a6c553dd59d658731018378fce
 msgid "mentions_at_location"
 msgstr "Mención: %s"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "mentions_disabled"
 msgstr "Desactivado"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "mentions_enabled"
 msgstr "Activado"
 
-# en-hash: 6089c3c5bfdda7928b8edaff7fc29d34
 msgid "mentions_none"
 msgstr "Aún no se han encontrado menciones de '%s'."
 
-# en-hash: 8c8e4cc582637e842449b7dea503b5b0
 msgid "mentions_preference_desc"
 msgstr "Seleccione su preferencia para las menciones de personajes y lugares:"
 
-# en-hash: c723ad634182d938da720018beb94797
 msgid "mentions_refresh"
 msgstr "Actualizar menciones"
 
-# en-hash: 3fa85f74d71e5d7d0859e1c9ac30e6cf
 msgid "mentions_scanning"
 msgstr "Escaneando... %1 de %2 capítulos"
 
-# en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
 msgstr "El escaneo de menciones le permite encontrar cada aparición de un personaje o lugar en el libro. Esto sucede automáticamente en segundo plano para garantizar que el lector siga respondiendo.\n\nAl desactivar esto se ocultará el botón 'Buscar menciones'."
 
-# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
 msgstr "Configuración de menciones"
 
-# en-hash: 795fe7b23df416a5beffd9a50873b771
 msgid "mentions_title"
 msgstr "Menciones: %s"
 
-# en-hash: 8f7f4c1ce7a4f933663d10543562b096
 msgid "menu_about"
 msgstr "Acerca de"
 
-# en-hash: 92ff32056df3871303587ba7d479c47f
 msgid "menu_ai_settings"
 msgstr "Configuración de IA"
 
-# en-hash: 1d18bcea5f63d1761c231009ed210e11
 msgid "menu_api_keys"
 msgstr "Claves API y proveedores"
 
-# en-hash: 50ef21a8bf0bdcedbbbfd33a536a1357
 msgid "menu_author_info"
 msgstr "Información del autor"
 
-# en-hash: a6c5c63c5c9be868061d03e89d246430
 msgid "menu_auto_update_frequency"
 msgstr "Ajustes de Auto X-Ray"
 
-# en-hash: 98c609842fdba0aed4a678b1dd84a604
 msgid "menu_beta_channel"
 msgstr "Configuración del Beta Channel"
 
-# en-hash: a0962fa6cbceddb69f0fa5745c2ca704
 msgid "menu_book_mode"
 msgstr "Book Mode"
 
-# en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "menu_characters"
 msgstr "Personajes"
 
-# en-hash: 06f4f7bd90b1c8a0145d18ee55c265c4
 msgid "menu_clear_cache"
 msgstr "Borrar caché"
 
-# en-hash: 67fd6c2ed402914b08701f21af350cc5
 msgid "menu_clear_logs"
 msgstr "Limpiar registros"
 
-# en-hash: 5c4a6c4395765ab86fc49b6c957525d9
 msgid "menu_content_fetch_settings"
 msgstr "Ajustes de contenido y obtención"
 
-# en-hash: ecfaa3fa16216e962dfb2337337df2e4
 msgid "menu_custom_model_title"
 msgstr "Modelo %s personalizado"
 
-# en-hash: f82e66c60fd95d54434ed37dc81034e2
 msgid "menu_desc_length_settings"
 msgstr "Longitud de la descripción"
 
-# en-hash: d7400967f844d2288239b8d7a10d7839
 msgid "menu_display_ui_settings"
 msgstr "Ajustes de pantalla e interfaz"
 
-# en-hash: bd44df2bee626fbc7db133d886c1cf63
 msgid "menu_enter_custom_model"
 msgstr "Ingresar modelo personalizado..."
 
-# en-hash: c78507f1735096000bbc8f4b4ddfc289
 msgid "menu_entity_ui_mode"
 msgstr "Estilo de descripción de entidad"
 
-# en-hash: c1b19dc83bcbcf0c634af5164ac2f24f
 msgid "menu_fetch_author"
 msgstr "Obtener información del autor (IA)"
 
-# en-hash: 1481c3fcb242cec4e66828697e097d65
 msgid "menu_fetch_more_chars"
 msgstr "Obtener más personajes"
 
-# en-hash: e28e1a3102c10986b10c3a58ebc26979
 msgid "menu_fetch_more_terms"
 msgstr "Obtener más términos"
 
-# en-hash: f0d29ae92c638538610d26014bda7269
 msgid "menu_fetch_series_context"
 msgstr "Obtener / Actualizar contexto de la serie"
 
-# en-hash: 7cf395303ce3665a9834721d4b748e4b
 msgid "menu_frequency"
 msgstr "Frecuencia"
 
-# en-hash: 60b01aa51c38e7a952d2760bf1584915
 msgid "menu_historical_figures"
 msgstr "Personajes históricos"
 
-# en-hash: 4994a8ffeba4ac3140beb89e8d41f174
 msgid "menu_language"
 msgstr "Idioma"
 
-# en-hash: 1e1459fdaf8dd012ccee18d64ebf8fe7
 msgid "menu_linked_entries_settings"
 msgstr "Configuración de Linked Entries"
 
-# en-hash: eebd338ddbd547e41e4a1296de82963a
 msgid "menu_locations"
 msgstr "Lugares"
 
-# en-hash: 10d0de28911c5f66463b9c8783f8148a
 msgid "menu_maintenance"
 msgstr "Mantenimiento"
 
-# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "menu_mentions_settings"
 msgstr "Configuración de menciones"
 
-# en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "Modelo IA principal"
 
-# en-hash: 22b189dd0fe1b07c3174e8a676a0fe3c
 msgid "menu_reasoning_effort"
 msgstr "Esfuerzo de razonamiento IA"
 
-# en-hash: 3e8a42af68c64edd3ce4f9d3d4da0147
 msgid "menu_secondary_ai_model"
 msgstr "Modelo IA secundario"
 
-# en-hash: 18f3f323b19a809e90e381568c5acb51
 msgid "menu_series_context"
 msgstr "Contexto de saga"
 
-# en-hash: f4f70727dc34561dfde1a3c529b6205c
 msgid "menu_settings"
 msgstr "Ajustes"
 
-# en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
 msgstr "Glosario"
 
-# en-hash: 87f9f735a1d36793ceaecd4e47124b63
 msgid "menu_timeline"
 msgstr "Cronología"
 
-# en-hash: 3c1fa918adf3e65fbff595ee1fd50d26
 msgid "menu_ui_popup_intext"
 msgstr "Usar estilo de nota al pie para búsquedas en texto"
 
-# en-hash: 575c1c5654ec32201c7eea873a1fe01b
 msgid "menu_ui_popup_menu"
 msgstr "Usar estilo de nota al pie para búsquedas de menú"
 
-# en-hash: ada4a5a87032c5a246e7f76bb95f587e
 msgid "menu_unit_categories"
 msgstr "Categorías de unidades"
 
-# en-hash: 01eb258da99de69aab015959dfc528d9
 msgid "menu_unit_converter"
 msgstr "Conversor de unidades"
 
-# en-hash: f55a01bb8237586887c0f4f6c7a56131
 msgid "menu_update_xray"
 msgstr "Actualizar datos de X-Ray (Combinar)"
 
-# en-hash: 02c89382dc0b7f202b7d455bf88ab785
 msgid "menu_view_config"
 msgstr "Ver configuración"
 
-# en-hash: 8f96241822e718c6be629d036f586ca6
 msgid "menu_view_log"
 msgstr "Ver registro"
 
-# en-hash: 0863526e514d88cd2d00b39f8dda0920
 msgid "menu_xray"
 msgstr "X-Ray"
 
-# en-hash: a805cb8f152d740dadbc6d065afb91db
 msgid "menu_xray_mode"
 msgstr "Búsquedas en el texto"
 
-# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
 msgid "merge_back"
 msgstr "← Volver"
 
-# en-hash: 68be4837f6c739877233e527a996dd00
 msgid "merge_button"
 msgstr "Merge"
 
-# en-hash: 8bb01dda315086774624ba2e7444a265
 msgid "merge_confirm"
 msgstr "¿Fusionar %s en %s? La entrada secundaria será eliminada y sus alias absorbidos."
 
-# en-hash: f05bbbb62dd4920db1277184e3fd98ce
 msgid "merge_duplicates"
 msgstr "Fusionar duplicados..."
 
-# en-hash: 1a0eb2431b20a745a419931f2f637210
 msgid "merge_failed"
 msgstr "Error al fusionar."
 
-# en-hash: 975d71893cc2c5cb96e7c1e8dfad785a
 msgid "merge_pick_primary"
 msgstr "Elige la entrada a MANTENER"
 
-# en-hash: 41d27b298020df5b8ec938b89b487b8d
 msgid "merge_pick_secondary"
 msgstr "Elige la entrada a ELIMINAR"
 
-# en-hash: d0517e8f339cc45490ff9eb6d43fc981
 msgid "merge_success"
 msgstr "Entradas fusionadas con éxito."
 
-# en-hash: 1db7d7c3180a75c44c8edeccdfd01536
 msgid "merging_smartly"
 msgstr "Fusionando..."
 
-# en-hash: aa2d6e4f578eb0cfaba23beef76c2194
 msgid "model_free"
 msgstr "gratis"
 
-# en-hash: 76e084771e78c194efd0e2d5b8920bea
 msgid "model_paid"
 msgstr "pago"
 
-# en-hash: e7fa74181aff985bd6dadb3d57bb7119
 msgid "msg_added_characters"
 msgstr "¡Se añadieron %d personajes nuevos!"
 
-# en-hash: 3803163145663de684e7c6212832d27c
 msgid "msg_added_terms"
 msgstr "¡Se añadieron %d nuevos términos!"
 
-# en-hash: 3f0246c95a38aaf04b2c550c9e1a287d
 msgid "msg_fetch_failed"
 msgstr "Error al obtener datos de AI"
 
-# en-hash: dffb8357db1ec38d1f6dffbcc270400d
 msgid "msg_no_bio"
 msgstr "No hay biografía disponible."
 
-# en-hash: 1a99b2b1ba9babaa605eb045980477a7
 msgid "msg_suggest_lang"
 msgstr "Este libro está en %s. ¿Cambiar el idioma de X-Ray?"
 
-# en-hash: 2e7e2d7f8421035f2e307aa4064d20ee
 msgid "multiple_matches"
 msgstr "Varias coincidencias para '%s'. ¿Cuál quisiste decir?"
 
-# en-hash: cafa45757baae6a9b3e4daafcc454e43
 msgid "new_feature"
 msgstr "New Feature"
 
-# en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
 msgid "next"
 msgstr "Siguiente"
 
-# en-hash: bafd7322c6e97d25b6299b5d6fe8920b
 msgid "no"
 msgstr "No"
 
-# en-hash: 9b793d19e6877134f19c37c3ac6247fa
 msgid "no_api_key"
 msgstr "¡Clave API de IA no configurada!\n\nIngresa la clave API en:\nMenú → X-Ray → Configuración de IA"
 
-# en-hash: 23dfd40828eb2cf5e31ad869ef4bda83
 msgid "no_author_data_fetch"
 msgstr "No hay información del autor disponible.\n\n¿Desea obtenerla de la IA?"
 
-# en-hash: 6cbd3b9b2bb981930fa8f38f26ca5f61
 msgid "no_character_data"
 msgstr "Aún no hay datos de personajes.\n\nUsa primero 'Obtener datos de X-Ray'."
 
-# en-hash: 80a4905228688f8ad8ec996803f60ffb
 msgid "no_data_prompt"
 msgstr "No se encontraron datos de X-Ray para este libro. ¿Desea obtenerlos de la IA ahora?"
 
-# en-hash: f66eabdf2cb216138e5c20cd3f9d890d
 msgid "no_duplicates_found"
 msgstr "No se encontraron duplicados."
 
-# en-hash: 064105ef9b1bca475059078013cc4a4b
 msgid "no_historical_data"
 msgstr "Aún no hay datos de personajes históricos.\n\nUsa primero 'Obtener datos de X-Ray'.\n\nLa IA detectará personajes históricos reales mencionados en el libro."
 
-# en-hash: 4d0e58f2c49ca238a05d2a92486d3d70
 msgid "no_location_data"
 msgstr "Aún no hay datos de lugares. Usa primero 'Obtener datos de X-Ray'."
 
-# en-hash: 6c32701ae234f6a1c3a03e18d89bd1e1
 msgid "no_merges_performed"
 msgstr "No se realizaron fusiones."
 
-# en-hash: 29503d301d509e5cfea9e97daffa9e79
 msgid "no_terms_data"
 msgstr "No hay datos de términos todavía. Por favor, usa 'Fetch X-Ray Data' primero."
 
-# en-hash: 0c8a85db22b4a3eadf95fe1a55f00c63
 msgid "no_timeline_data"
 msgstr "Aún no hay datos de la cronología.\n\nUsa primero 'Obtener datos de X-Ray'.\n\nLa IA mostrará los eventos clave en orden cronológico."
 
-# en-hash: e0aa021e21dddbd6d8cecec71e9cf564
 msgid "ok"
 msgstr "Aceptar"
 
-# en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
 msgstr "Pair marked as not a duplicate."
 
-# en-hash: 607481fc96e754b33650eb171aac9447
 msgid "path"
 msgstr "plugins/xray.koplugin"
 
-# en-hash: 046763a0d64321194477604b7751c8e4
 msgid "pending_duplicates_prompt"
 msgstr "La IA encontró %d posible(s) duplicado(s) de la última búsqueda. ¿Revisar ahora?"
 
-# en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "¡Transforma tu experiencia de lectura con el análisis de libros por IA, igual que Amazon Kindle X-Ray!"
 
-# en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "Menú rápido de X-Ray"
 
-# en-hash: decbe415d8accca7c2c16d48a79ee934
 msgid "read_more"
 msgstr "Read More"
 
-# en-hash: fffcb4d1e12c96b2f571f77ad25878b8
 msgid "reason"
 msgstr "Reason"
 
-# en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
 msgstr "Controls 'thinking' depth for reasoning models:\n\n• Unset: No specific instruction sent; model uses its internal defaults.\n• Low: Fast, economical extraction for simple books.\n• Medium: Balanced depth for most narratives.\n• High: Detailed analysis for complex character webs.\n\nApplies to: GPT-5.x, DeepSeek Reasoner, Claude 4.5+ (extended thinking), and Gemini 2.5+."
 
-# en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
 msgstr "Alto"
 
-# en-hash: 28d0edd045e05cf5af64e35ae0c4c6ef
 msgid "reasoning_low"
 msgstr "Bajo"
 
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
 msgid "reasoning_medium"
 msgstr "Medio"
 
-# en-hash: e22876a23ad77be581ada0285360983a
 msgid "reasoning_unset"
 msgstr "Sin establecer (Predeterminado)"
 
-# en-hash: d98ac12774fca5c3cbaffe276840c55f
+msgid "refresh"
+msgstr "Actualizar"
+
 msgid "reject_pair"
 msgstr "Reject"
 
-# en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Volver a buscar '%s'"
 
-# en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"
 msgstr "Review"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
 msgid "save"
 msgstr "Guardar"
 
-# en-hash: 13348442cc6a27032d2b4aa28b75a5d3
 msgid "search_button"
 msgstr "Buscar"
 
-# en-hash: 428279a428d9f130d69840b2b73c7514
 msgid "search_character"
 msgstr "Buscar personajes..."
 
-# en-hash: c2380a3df7158668908b94405cbe5902
 msgid "search_character_title"
 msgstr "Búsqueda de personajes"
 
-# en-hash: 828800124a2c130cc221b4d028b781a2
 msgid "search_hint"
 msgstr "Ingrese el nombre del personaje"
 
-# en-hash: da83080ddaefc008f3de01b20a111043
 msgid "search_term"
 msgstr "Buscar términos"
 
-# en-hash: 428da3d1fd5aaa456409aa6b30d2c4f2
 msgid "series_ask_later_msg"
 msgstr "Resumen de la serie pospuesto. Preguntaremos de nuevo cuando abras/reanudes este libro."
 
-# en-hash: c69ce70b393414a1cdee677a96a195e4
 msgid "series_context_enabled_toggle"
 msgstr "Habilitar Series Context"
 
-# en-hash: cfd20c079f624acba218200220eb4a10
 msgid "series_context_loaded"
 msgstr "Contexto de la serie cargado (%d libros anteriores)."
 
-# en-hash: 167442e30a87a00e4f109ca2361ec53a
 msgid "series_context_prompt_text"
 msgstr "¿Parece ser el Libro %d de '%s'. ¿Cargar un resumen de los %d libros anteriores?\n\n(Puedes desactivar esto en Ajustes → Contexto de saga)"
 
-# en-hash: 577a96abeeaa42e4748d2189f746a05b
 msgid "series_context_prompt_title"
 msgstr "Serie detectada"
 
-# en-hash: ddb44dbe6c8ac2048d293e6102eb4c54
 msgid "series_disabled_msg"
 msgstr "Aviso automático desactivado para este libro. Puedes obtener el resumen manualmente desde el menú X-Ray."
 
-# en-hash: 45038789e6aae12b35398440e65bf810
 msgid "series_no_prior_detected"
 msgstr "No se detectaron libros anteriores para esta serie."
 
-# en-hash: 4492f89a70cb73291167d53d07868ebc
 msgid "series_prior_books_header"
 msgstr "── Libros anteriores ──"
 
-# en-hash: 38a1412b98e409d6f6a0b2464c62fa08
 msgid "series_prior_label"
 msgstr "[Anterior]"
 
-# en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
 msgid "skip"
 msgstr "Skip"
 
-# en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "El modo sin spoilers limita la extracción de IA a las páginas que ya ha leído (hasta su página actual), evitando spoilers de futuros capítulos.\n\nEl modo de libro completo analiza todo el libro, lo que puede contener spoilers."
 
-# en-hash: 5445912c4c35d13ae26a53a6d782d149
 msgid "spoiler_free_menu_option"
 msgstr "Sin spoilers"
 
-# en-hash: f6bcf48f8091f8fe253489d94223ec7c
 msgid "spoiler_free_option"
 msgstr "Modo sin spoilers (Hasta el %d%% del libro)"
 
-# en-hash: 49d594b5e1f6994860fa4c0328c44977
 msgid "spoiler_preference_desc"
 msgstr "Seleccione su preferencia de spoilers para los datos de X-Ray:"
 
-# en-hash: 082822dd3aeeab538d5e399d7883d31a
 msgid "spoiler_preference_title"
 msgstr "Preferencia de spoilers"
 
-# en-hash: 11a755d598c0c417f9a36758c3da7481
 msgid "stop"
 msgstr "Stop"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"
 msgstr "No se encontró ningún término que coincida con '%s'"
 
-# en-hash: 5d5b473a14bed6f67fdbe6c745b045a7
 msgid "this_chapter"
 msgstr "Este Capítulo"
 
-# en-hash: d2c24d59e0baff4d0155fbdf62590867
 msgid "this_page"
 msgstr "Esta página"
 
-# en-hash: f61824b403008733ff955da48052ee04
 msgid "unit_action_configure"
 msgstr "Configure Settings..."
 
-# en-hash: 6ee50812725a7a053ed2c5742c6ebfef
 msgid "unit_action_disable"
 msgstr "Disable Feature"
 
-# en-hash: 074331092c85358cfa576b7c8424a94e
 msgid "unit_action_keep"
 msgstr "Keep Enabled (Default)"
 
-# en-hash: fd380cdfeb02e89fd87e81a03440d1a4
 msgid "unit_auto_scan_about"
 msgstr "El escaneo puede tardar hasta 15-20 segundos en libros grandes. Esto solo ocurre la primera vez que se abre el libro y los resultados se guardan para el futuro."
 
-# en-hash: cba623198fb7055516673257f1573ad8
 msgid "unit_auto_scan_desc"
 msgstr "Escanear libros automáticamente en busca de unidades:"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_auto_scan_disabled"
 msgstr "Desactivado"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "unit_auto_scan_enabled"
 msgstr "Activado"
 
-# en-hash: b1c61b015abaa0f358173ae8aaf8d96e
 msgid "unit_auto_scan_settings"
 msgstr "Ajustes de escaneo automático"
 
-# en-hash: 5b2e3a633a4d820d64aa4356495ab188
 msgid "unit_conv_direction"
 msgstr "Dirección de conversión"
 
-# en-hash: 0352baf577c778cf15e49c40b1126bc3
 msgid "unit_conv_direction_about"
 msgstr "La dirección de conversión determina cómo se transforman las medidas en los libros (p. ej., longitud, peso, temperatura):\n\n• [B]Auto (según dispositivo):[/B] Convierte automáticamente según el idioma del dispositivo y la configuración regional.\n\n• [B]A métrico:[/B] Convierte siempre las unidades imperiales (p. ej., millas, Fahrenheit) a sus equivalentes métricos (p. ej., kilómetros, Celsius).\n\n• [B]A imperial:[/B] Convierte siempre las unidades métricas a sus equivalentes imperiales."
 
-# en-hash: 78b12f9283363cc04ec6a9f2f8fb18c4
 msgid "unit_conv_direction_auto"
 msgstr "Auto (según dispositivo)"
 
-# en-hash: 926a5778ac523de44a7059268db8eb90
 msgid "unit_conv_direction_desc"
 msgstr "Selecciona la dirección de conversión de unidades:"
 
-# en-hash: 16fb229accd0e21e3b01de25113a5092
 msgid "unit_conv_direction_imperial"
 msgstr "Convertir siempre a imperial"
 
-# en-hash: eb80006cda3aa58a5be2dbc9f535dc06
 msgid "unit_conv_direction_metric"
 msgstr "Convertir siempre a métrico"
 
-# en-hash: 9039461fb813111bf38dc683527be31d
 msgid "unit_conv_enabled"
 msgstr "Activar conversor de unidades"
 
-# en-hash: 01eb258da99de69aab015959dfc528d9
 msgid "unit_conv_headline"
 msgstr "📏 Unit Converter"
 
-# en-hash: 63d401a64c232b43a1335ae7e02fb607
 msgid "unit_conv_new_feature_desc"
 msgstr "X-Ray ahora detecta medidas (longitudes, pesos, temperatura) en tus libros y las resalta con un subrayado sutil. Toca cualquier unidad resaltada para ver su valor convertido en un tooltip emergente.\n\nNota: Se requiere un escaneo la primera vez que se abre un libro."
 
-# en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "unit_conv_style_settings"
 msgstr "Ajustes de estilo y subrayado"
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
 msgid "unit_intensity_dark"
 msgstr "Oscuro"
 
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
 msgid "unit_intensity_light"
 msgstr "Claro"
 
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
 msgid "unit_intensity_medium"
 msgstr "Medio"
 
-# en-hash: 2e507ae5d58861d457e684dfe05b9593
 msgid "unit_manual_scan_button"
 msgstr "Escanear/Reescanear"
 
-# en-hash: 59655846df0abfca05d478f9c0a18eb4
 msgid "unit_scanning_book"
 msgstr "Escaneando el libro en busca de unidades..."
 
-# en-hash: 2c8c1e763a8b739446b8dcd7908f318f
 msgid "unit_scanning_title"
 msgstr "X-Ray: Conversor de unidades"
 
-# en-hash: 2f59140753baa1e1e8193111db3ed7e1
 msgid "unit_style_preview_title"
 msgstr "VISTA PREVIA DE ESTILO"
 
-# en-hash: 6e7b34fa59e1bd229b207892956dc41c
 msgid "unit_timeout_never"
 msgstr "Nunca"
 
-# en-hash: efb97de9aae997a3dde262761bed835d
 msgid "unit_tooltip_timeout_label"
 msgstr "Duración del aviso"
 
-# en-hash: eb656e41b6da91494775ecf47a51da91
 msgid "unit_underline_dashed"
 msgstr "Rayado"
 
-# en-hash: 90c09393a4c0970bc9a6703ad527781c
 msgid "unit_underline_dotted"
 msgstr "Punteado"
 
-# en-hash: d909d38d705ce75386dd86e611a82f5b
 msgid "unit_underline_double"
 msgstr "Doble"
 
-# en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
 msgid "unit_underline_intensity_label"
 msgstr "Intensidad del subrayado"
 
-# en-hash: 8bcda43732b0928d269955e0f09ff76f
 msgid "unit_underline_invisible"
 msgstr "Invisible"
 
-# en-hash: e41480b6bbfbf7407974a88d3d34f4fa
 msgid "unit_underline_solid"
 msgstr "Sólido"
 
-# en-hash: 9a66725ea21264441ab1682f4739fbc2
 msgid "unit_underline_style_label"
 msgstr "Estilo de subrayado"
 
-# en-hash: 5cc1d76d86c562d334e35e4ef262ba5c
 msgid "unit_underline_thickness_label"
 msgstr "Grosor del subrayado"
 
-# en-hash: 0e9498bd18e441969b23cb70819abc3c
 msgid "unit_underline_wavy"
 msgstr "Ondulado"
 
-# en-hash: 3f50e96b2eef687f766dc7651a55ad0a
 msgid "updater_available_header"
 msgstr "¡X-Ray %s está disponible!\nTienes la %s."
 
-# en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "updater_btn_cancel"
 msgstr "Cancelar"
 
-# en-hash: 326737de1766f7c8b80a5acde0f18651
 msgid "updater_btn_download"
 msgstr "Descargar e instalar"
 
-# en-hash: 61057a0c84605444201929bdd72014f0
 msgid "updater_btn_later"
 msgstr "Más tarde"
 
-# en-hash: 6175d78ff8e7f8913d4c2fa339199bfc
 msgid "updater_btn_open_browser"
 msgstr "Abrir en el navegador"
 
-# en-hash: 51cfbcff36da74a9fc47f3a5140f99f2
 msgid "updater_btn_restart"
 msgstr "Reiniciar"
 
-# en-hash: 092dc0fe2a1709895d0ffb03306ab644
 msgid "updater_cancelled_check"
 msgstr "Búsqueda de actualizaciones cancelada."
 
-# en-hash: 1e4112df1113e06c77e13d6614f2cd0a
 msgid "updater_cancelled_update"
 msgstr "Actualización cancelada."
 
-# en-hash: f77f38f684c8b974dd4a56bb321cfd5f
 msgid "updater_check"
 msgstr "Buscar actualizaciones"
 
-# en-hash: a07813cc05571f23ce8dd7039583d7da
 msgid "updater_checking"
 msgstr "Buscando actualizaciones..."
 
-# en-hash: 3e6aed71a195328451956394c1ba0e70
 msgid "updater_download_prompt"
 msgstr "\n\n¿Descargar e instalar ahora?"
 
-# en-hash: 4d7dcb1c7639337d915a10ffc18f0c5d
 msgid "updater_downloading"
 msgstr "Descargando X-Ray %s..."
 
-# en-hash: 3ee3d18e96340272001439279cf33314
 msgid "updater_err_download"
 msgstr "Error de descarga: %s"
 
-# en-hash: 8080e73222237f54453a9d31947ecb53
 msgid "updater_err_extract"
 msgstr "Error de extracción: %s"
 
-# en-hash: bd2ab435fbc5c07d9803f63cfa2ea188
 msgid "updater_error_checking"
 msgstr "Error al buscar actualizaciones."
 
-# en-hash: 1f2460a4555c14c00a245d44c9742751
 msgid "updater_error_checking_detail"
 msgstr "Error al buscar actualizaciones: %s"
 
-# en-hash: 4764ffed7fe43c5174fe97c69cb933ee
 msgid "updater_no_asset"
 msgstr "No se encontró ningún archivo de actualización automática.\n\n¿Abrir la página de lanzamientos en GitHub?"
 
-# en-hash: fa243c194c72bb2d6c10dfad7c375cf3
 msgid "updater_success_restart"
 msgstr "X-Ray %s instalado con éxito.\n\n¿Reiniciar KOReader para aplicar?"
 
-# en-hash: 1d506d775154b17218de18195cf130b3
 msgid "updater_up_to_date"
 msgstr "X-Ray está actualizado (%s)."
 
-# en-hash: 67b3aeb4ed5299bb57c1e2de1beb0bf5
 msgid "updater_whats_new"
 msgstr "Novedades:"
 
-# en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Actualizando datos de X-Ray..."
 
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
 msgid "val"
 msgstr "???"
 
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "xray_disabled_label"
 msgstr "Desactivado"
 
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "xray_enabled_label"
 msgstr "Activado"
 
-# en-hash: aa3045baed0aad489f96655b14b671ac
 msgid "xray_mode_desc"
 msgstr "Añade un botón 'X-Ray' a los menús de diccionario y selección para consultas instantáneas."
 
-# en-hash: 93cba07454f06a4a960172bbd6e2a435
 msgid "yes"
 msgstr "Sí"
 
