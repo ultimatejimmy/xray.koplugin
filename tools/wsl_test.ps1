@@ -50,7 +50,7 @@ function Run-Workflow {
     
     # 1. Syntax Check
     Write-Host "Checking Lua syntax..." -NoNewline
-    $syntaxResult = python $SyntaxScript $PluginDir
+    $syntaxResult = python -X utf8 $SyntaxScript $PluginDir
     if ($LASTEXITCODE -ne 0) {
         Write-Host " FAILED" -ForegroundColor Red
         Write-Host $syntaxResult
@@ -60,7 +60,7 @@ function Run-Workflow {
 
     # 1.5 Translation Sync Check
     Write-Host "Checking translation sync..." -NoNewline
-    $transResult = python tools/check_translations.py
+    $transResult = python -X utf8 tools/check_translations.py
     if ($LASTEXITCODE -ne 0) {
         Write-Host " FAILED" -ForegroundColor Red
         Write-Host $transResult

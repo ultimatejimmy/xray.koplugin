@@ -32,6 +32,8 @@ local function applyMixin(target, source)
     end
 end
 
+local findUnitConverterMenuPath
+
 local function safeRequireMixin(name)
     local ok, mod = pcall(require, plugin_path .. name)
     if ok then
@@ -318,13 +320,17 @@ function XRayPlugin:onReaderReady()
         if self.destroyed then return end
         if self.mountUnderlineOverlay then self:mountUnderlineOverlay() end
         if self.mountTapHandler then self:mountTapHandler() end
-        if self.scanBookForUnits then
-            local is_auto = true
-            if self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.unit_auto_scan_enabled == false then
-                is_auto = false
-            end
-            if is_auto then
-                self:scanBookForUnits()
+        
+
+        local settings = self.ai_helper and self.ai_helper.settings or {}
+        if settings.unit_new_feature_prompt_seen ~= true then
+            self:showUnitConverterNewFeatureCard()
+        else
+            if self.scanBookForUnits and settings.unit_converter_enabled ~= false then
+                local is_auto = settings.unit_auto_scan_enabled ~= false
+                if is_auto then
+                    self:scanBookForUnits()
+                end
             end
         end
     end)
@@ -932,6 +938,7 @@ function XRayPlugin:getSubMenuItems()
                 callback = function() self:toggleXRayMode() end,
             },
             {
+                is_unit_converter = true,
                 text = self.loc:t("menu_unit_converter") or "Unit Converter",
                 keep_menu_open = true,
                 sub_item_table = {
@@ -1140,6 +1147,7 @@ end
 
 function XRayPlugin:addToMainMenu(menu_items)
     menu_items.xray = {
+        is_xray = true,
         text = _t(self, "menu_xray", "X-Ray"),
 
         sorting_hint = "tools",
@@ -1571,6 +1579,468 @@ function XRayPlugin:showUnitAutoScanCard()
         end,
         about_text = self.loc:t("unit_auto_scan_about") or "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future."
     })
+end
+
+-- Resolves the exact touch menu path (e.g. "4.1.8.6") to the Unit Converter submenu
+findUnitConverterMenuPath = function(self)
+    if not self.ui or not self.ui.menu then return nil end
+    local reader_menu = self.ui.menu
+    if not reader_menu.tab_item_table then
+        reader_menu:setUpdateItemTable()
+    end
+    local tab_item_table = reader_menu.tab_item_table
+    if not tab_item_table then return nil end
+
+    local function searchMenu(items, current_path)
+        for idx, item in ipairs(items) do
+            local path = current_path == "" and tostring(idx) or (current_path .. "." .. idx)
+            if item.is_unit_converter then
+                return path
+            end
+            local submenu = item.sub_item_table
+            if not submenu and type(item.sub_item_table_func) == "function" then
+                submenu = item.sub_item_table_func()
+            end
+            if submenu then
+                local found = searchMenu(submenu, path)
+                if found then
+                    return found
+                end
+            end
+        end
+        return nil
+    end
+
+    for tab_idx, tab_items in ipairs(tab_item_table) do
+        for item_idx, item in ipairs(tab_items) do
+            self:log(string.format("XRayPlugin: findUnitConverterMenuPath checking tab=%d item=%d id=%s text=%s", tab_idx, item_idx, tostring(item.id), tostring(item.text)))
+            -- Find the main "X-Ray" menu item by its sorted ID
+            if item.id == "xray" then
+                local submenu = item.sub_item_table
+                if not submenu and type(item.sub_item_table_func) == "function" then
+                    submenu = item.sub_item_table_func()
+                end
+                if submenu then
+                    local sub_path = searchMenu(submenu, "")
+                    if sub_path then
+                        local path = string.format("%d.%d.%s", tab_idx, item_idx, sub_path)
+                        self:log("XRayPlugin: findUnitConverterMenuPath resolved path: " .. tostring(path))
+                        return path
+                    end
+                end
+            end
+        end
+    end
+    self:log("XRayPlugin: findUnitConverterMenuPath failed to resolve path")
+    return nil
+end
+
+-- Shows the "New Feature" promotion card for the Unit Converter
+function XRayPlugin:showUnitConverterNewFeatureCard()
+    local Screen = require("device").screen
+    local Font = require("ui/font")
+    local Geom = require("ui/geometry")
+    local Blitbuffer = require("ffi/blitbuffer")
+    local UIManager = require("ui/uimanager")
+    local FrameContainer = require("ui/widget/container/framecontainer")
+    local InputContainer = require("ui/widget/container/inputcontainer")
+    local CenterContainer = require("ui/widget/container/centercontainer")
+    local VerticalGroup = require("ui/widget/verticalgroup")
+    local HorizontalGroup = require("ui/widget/horizontalgroup")
+    local TextWidget = require("ui/widget/textwidget")
+    local Button = require("ui/widget/button")
+    local GestureRange = require("ui/gesturerange")
+    local VerticalSpan = require("ui/widget/verticalspan")
+    local WidgetContainer = require("ui/widget/container/widgetcontainer")
+    local MovableContainer = require("ui/widget/container/movablecontainer")
+    local TextBoxWidget = require("ui/widget/textboxwidget")
+    local LineWidget = require("ui/widget/linewidget")
+    local xray_theme = require(plugin_path .. "xray_theme")
+
+    local function sc(val)
+        return Screen:scaleBySize(val)
+    end
+
+    local sw = Screen:getWidth()
+    local sh = Screen:getHeight()
+    local dialog_w = math.min(sw - sc(20), sc(460))
+
+    local fs = 20
+    if G_reader_settings then
+        fs = G_reader_settings:readSetting("cre_font_size") or 20
+    end
+    local ui_font_size = math.max(14, math.min(fs, 24))
+    local title_font_size = math.max(10, math.min(fs - 5, 15))
+
+    local overlay
+    local selected_action = "keep_enabled" -- Default selection
+
+    local function span()
+        return VerticalSpan:new{ width = xray_theme.gap }
+    end
+
+    -- 2. Main layout loop
+    local function renderCard()
+        if overlay then
+            UIManager:close(overlay, "ui")
+        end
+
+        local title_label = TextWidget:new{
+            text = (self.loc:t("new_feature") or "New Feature"):upper(),
+            face = Font:getFace("infofont", title_font_size),
+            fgcolor = xray_theme.color_label_dim or Blitbuffer.Color8(120),
+        }
+
+        local headline_label = TextWidget:new{
+            text = self.loc:t("unit_conv_headline") or "Unit Converter",
+            face = Font:getFace("cfont", ui_font_size + 2),
+            bold = true,
+            fgcolor = Blitbuffer.COLOR_BLACK,
+        }
+
+        local description_box = TextBoxWidget:new{
+            text = self.loc:t("unit_conv_new_feature_desc") or "X-Ray now detects measurements (lengths, weights, temperature) in your books and highlights them with a subtle underline. Tap any highlighted unit to see its converted value in a popup tooltip.",
+            face = Font:getFace("cfont", ui_font_size),
+            width = dialog_w - sc(32),
+            alignment = self:isRTL() and "right" or "left",
+        }
+
+        -- Construct live preview widget elements
+        local Widget = require("ui/widget/widget")
+        local OverlapGroup = require("ui/widget/overlapgroup")
+        local RenderText = require("ui/rendertext")
+
+        local settings = self.ai_helper and self.ai_helper.settings or {}
+        local underline_style = settings.unit_underline_style or "wavy"
+        local underline_thickness = tonumber(settings.unit_underline_thickness) or 2
+        local underline_intensity = settings.unit_underline_intensity or "light"
+
+        local UnderlinePreview = Widget:extend{
+            width = 0,
+            height = 0,
+            underline_style = underline_style,
+            underline_thickness = underline_thickness,
+            underline_color_val = nil,
+            plugin = nil,
+        }
+        function UnderlinePreview:getSize()
+            return Geom:new{ w = self.width, h = self.height }
+        end
+        function UnderlinePreview:paintTo(bb, x, y)
+            local plugin = self.plugin
+            if plugin and plugin._draw_underline then
+                local grey = 150
+                if underline_intensity == "light" then
+                    grey = 200
+                elseif underline_intensity == "dark" then
+                    grey = 30
+                end
+                local thickness = Screen:scaleBySize(self.underline_thickness)
+                local box = { x = x, y = y, w = self.width, h = self.height }
+                plugin._draw_underline(bb, box, self.underline_style, grey, thickness, self.underline_thickness, plugin.path)
+            end
+        end
+
+        local preview_face = Font:getFace("cfont", ui_font_size + 2)
+        local sample_text = TextWidget:new{
+            text = "walked 2 miles today",
+            face = preview_face,
+            alignment = "center",
+        }
+        local sample_size = sample_text:getSize()
+
+        local underline_color_val
+        if underline_intensity == "light" then
+            underline_color_val = Blitbuffer.Color8(200)
+        elseif underline_intensity == "dark" then
+            underline_color_val = Blitbuffer.Color8(30)
+        else
+            underline_color_val = Blitbuffer.Color8(120)
+        end
+
+        local w_walked = RenderText:sizeUtf8Text(0, 9999, preview_face, "walked ", false, false).x
+        local w_miles = RenderText:sizeUtf8Text(0, 9999, preview_face, "2 miles", false, false).x
+
+        local underline_widget = UnderlinePreview:new{
+            width = w_miles,
+            height = sample_size.h,
+            underline_style = underline_style,
+            underline_thickness = underline_thickness,
+            underline_color_val = underline_color_val,
+            overlap_offset = { w_walked, 0 },
+            plugin = self,
+        }
+
+        local preview_example = OverlapGroup:new{
+            dimen = sample_size,
+            sample_text,
+            underline_widget,
+        }
+
+        local tooltip_text = "3.22 km"
+        local tooltip_face = Font:getFace("cfont", fs)
+        local pad_h = 28
+        local pad_v = math.floor(fs * 0.55)
+        local text_size = RenderText:sizeUtf8Text(0, 9999, tooltip_face, tooltip_text, false, false)
+        local text_w = text_size.x
+        local tooltip_max_w = dialog_w - sc(64)
+        local popup_w = math.min(tooltip_max_w, text_w + pad_h * 2)
+
+        local tb = TextWidget:new{
+            text = tooltip_text,
+            face = tooltip_face,
+        }
+
+        local border_sz = sc(2)
+        local preview_tooltip = FrameContainer:new{
+            background = Blitbuffer.COLOR_WHITE,
+            bordersize = border_sz,
+            color = Blitbuffer.COLOR_DARK_GRAY,
+            radius = 0,
+            padding_top = pad_v,
+            padding_bottom = pad_v,
+            padding_left = pad_h,
+            padding_right = pad_h,
+            width = popup_w,
+            VerticalGroup:new{
+                align = "center",
+                tb
+            }
+        }
+
+        local card_size = preview_tooltip:getSize()
+        local card_h = card_size.h
+
+        local arrow_w = sc(16)
+        local arrow_h = sc(8)
+        local _PointerArrow = self._PointerArrow
+        local preview_arrow = _PointerArrow:new{
+            width = arrow_w,
+            height = arrow_h,
+            direction = "down",
+            apex_offset = arrow_w / 2,
+            border_size = border_sz,
+            border_color = Blitbuffer.COLOR_DARK_GRAY,
+            fill_color = Blitbuffer.COLOR_WHITE,
+        }
+        preview_arrow.overlap_offset = { math.floor((popup_w - arrow_w) / 2), card_h - border_sz }
+
+        local tooltip_with_arrow = OverlapGroup:new{
+            dimen = Geom:new{ w = popup_w, h = card_h + arrow_h - border_sz },
+            preview_tooltip,
+            preview_arrow,
+        }
+
+        local preview_panel = FrameContainer:new{
+            padding = sc(8),
+            radius = xray_theme.radius_window,
+            bordersize = xray_theme.border_preview,
+            color = xray_theme.color_border,
+            background = Blitbuffer.COLOR_WHITE,
+            width = dialog_w - sc(32),
+            VerticalGroup:new{
+                align = "center",
+                HorizontalGroup:new{
+                    align = "center",
+                    tooltip_with_arrow
+                },
+                VerticalSpan:new{ width = sc(2) },
+                CenterContainer:new{
+                    dimen = Geom:new{ w = dialog_w - sc(48), h = sample_size.h },
+                    preview_example
+                }
+            }
+        }
+
+        local content_vg = VerticalGroup:new{
+            align = "left",
+            title_label,
+            span(),
+            headline_label,
+            span(),
+            description_box,
+            span(),
+            preview_panel,
+            span(),
+        }
+
+        local choices = {
+            { text = self.loc:t("unit_action_configure") or "Configure Settings...", value = "configure" },
+            { text = self.loc:t("unit_action_keep") or "Keep Enabled (Default)", value = "keep_enabled" },
+            { text = self.loc:t("unit_action_disable") or "Disable Feature", value = "disable" },
+        }
+
+        for _, choice in ipairs(choices) do
+            local is_selected = (choice.value == selected_action)
+            local dot_char = is_selected and "●" or "○"
+
+            local row_content = HorizontalGroup:new{ align = "center" }
+            if self:isRTL() then
+                table.insert(row_content, TextBoxWidget:new{
+                    text = choice.text,
+                    face = Font:getFace("cfont", ui_font_size),
+                    fgcolor = Blitbuffer.COLOR_BLACK,
+                    width = dialog_w - sc(72),
+                    alignment = "right",
+                })
+                table.insert(row_content, WidgetContainer:new{ dimen = Geom:new{ w = sc(6), h = 1 } })
+                table.insert(row_content, TextWidget:new{
+                    text = dot_char,
+                    face = Font:getFace("cfont", ui_font_size),
+                })
+            else
+                table.insert(row_content, TextWidget:new{
+                    text = dot_char,
+                    face = Font:getFace("cfont", ui_font_size),
+                })
+                table.insert(row_content, WidgetContainer:new{ dimen = Geom:new{ w = sc(6), h = 1 } })
+                table.insert(row_content, TextBoxWidget:new{
+                    text = choice.text,
+                    face = Font:getFace("cfont", ui_font_size),
+                    fgcolor = Blitbuffer.COLOR_BLACK,
+                    width = dialog_w - sc(72),
+                    alignment = "left",
+                })
+            end
+
+            local frame = FrameContainer:new{
+                bordersize = is_selected and xray_theme.border_btn or sc(1),
+                radius = xray_theme.radius_btn,
+                padding = sc(6),
+                color = is_selected and xray_theme.color_border or xray_theme.color_section_rule,
+                background = xray_theme.color_bg,
+                width = dialog_w - sc(32),
+                row_content
+            }
+
+            local item = InputContainer:new{ frame }
+            item.ges_events = {
+                Tap = {
+                    GestureRange:new{
+                        ges = "tap",
+                        range = function()
+                            return Geom:new{
+                                x = frame.dimen.x,
+                                y = frame.dimen.y,
+                                w = dialog_w - sc(32),
+                                h = frame.dimen.h
+                            }
+                        end
+                    }
+                }
+            }
+            item.onTap = function()
+                selected_action = choice.value
+                renderCard()
+                return true
+            end
+
+            table.insert(content_vg, item)
+            table.insert(content_vg, WidgetContainer:new{ dimen = Geom:new{ w = 1, h = sc(4) } })
+        end
+
+        table.insert(content_vg, span())
+        table.insert(content_vg, LineWidget:new{
+            dimen = Geom:new{ w = dialog_w - sc(32), h = sc(1) },
+            background = xray_theme.color_section_rule,
+        })
+        table.insert(content_vg, span())
+
+        -- Action Buttons (Confirm & Ask Later)
+        local confirm_btn = Button:new{
+            text = self.loc:t("confirm") or "Confirm",
+            face = Font:getFace("cfont", ui_font_size),
+            width = (dialog_w - sc(40)) / 2,
+            height = sc(42),
+            bordersize = xray_theme.border_btn,
+            radius = xray_theme.radius_btn,
+            callback = function()
+                -- Save prompted state
+                self.ai_helper:saveSettings({ unit_new_feature_prompt_seen = true })
+                UIManager:close(overlay, "ui")
+
+                if selected_action == "configure" then
+                    self.ai_helper:saveSettings({ unit_converter_enabled = true })
+                    
+                    UIManager:scheduleIn(0.1, function()
+                        if self.ui and self.ui.menu then
+                            if not self.ui.menu.menu_container then
+                                self.ui.menu:onShowMenu()
+                            end
+                            local touch_menu = self.ui.menu.menu_container and self.ui.menu.menu_container[1]
+                            if touch_menu then
+                                local path = findUnitConverterMenuPath(self)
+                                if path then
+                                    touch_menu:openMenu(path, false)
+                                end
+                            end
+                        end
+                    end)
+                elseif selected_action == "keep_enabled" then
+                    self.ai_helper:saveSettings({ unit_converter_enabled = true })
+                    if self.scanBookForUnits then self:scanBookForUnits() end
+                elseif selected_action == "disable" then
+                    self.ai_helper:saveSettings({ unit_converter_enabled = false })
+                    self:clearUnitUnderlines()
+                end
+            end
+        }
+
+        local later_btn = Button:new{
+            text = self.loc:t("ask_later") or "Ask Later",
+            face = Font:getFace("cfont", ui_font_size),
+            width = (dialog_w - sc(40)) / 2,
+            height = sc(42),
+            bordersize = xray_theme.border_btn,
+            radius = xray_theme.radius_btn,
+            callback = function()
+                UIManager:close(overlay, "ui")
+                if self.scanBookForUnits then self:scanBookForUnits() end
+            end
+        }
+
+        local btn_row = HorizontalGroup:new{
+            align = "center",
+            later_btn,
+            WidgetContainer:new{ dimen = Geom:new{ w = sc(8), h = 1 } },
+            confirm_btn,
+        }
+        table.insert(content_vg, btn_row)
+
+        local card = FrameContainer:new{
+            padding = sc(12),
+            radius = xray_theme.radius_window,
+            bordersize = sc(2),
+            color = Blitbuffer.COLOR_BLACK,
+            background = xray_theme.color_bg,
+            width = dialog_w - sc(2),
+            content_vg
+        }
+
+        local card_outer = FrameContainer:new{
+            bordersize = sc(1),
+            color = Blitbuffer.Color8(180),
+            padding = 0,
+            background = xray_theme.color_bg,
+            radius = xray_theme.radius_window,
+            width = dialog_w,
+            card
+        }
+
+        overlay = InputContainer:new{
+            key_events = {
+                Close = { { "Back" } }
+            },
+            CenterContainer:new{
+                dimen = Geom:new{ w = sw, h = sh },
+                MovableContainer:new{ card_outer }
+            }
+        }
+
+        UIManager:show(overlay, "ui")
+    end
+
+    renderCard()
 end
 
 -- Extracted functions are now loaded via mixins (xray_data, xray_ui, xray_fetch, xray_mentions)

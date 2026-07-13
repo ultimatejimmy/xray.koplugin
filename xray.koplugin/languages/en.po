@@ -29,6 +29,9 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
 
+msgid "ask_later"
+msgstr "Ask Later"
+
 msgid "author_born"
 msgstr "Born: "
 
@@ -148,6 +151,9 @@ msgstr "NOT SET"
 
 msgid "config_status_set"
 msgstr "SET"
+
+msgid "confirm"
+msgstr "Confirm"
 
 msgid "current_language"
 msgstr "en"
@@ -620,6 +626,9 @@ msgstr "This book is in %s. Switch X-Ray language to match?"
 msgid "multiple_matches"
 msgstr "Multiple matches for '%s'. Which did you mean?"
 
+msgid "new_feature"
+msgstr "New Feature"
+
 msgid "next"
 msgstr "Next"
 
@@ -779,6 +788,15 @@ msgstr "This Chapter"
 msgid "this_page"
 msgstr "Section"
 
+msgid "unit_action_configure"
+msgstr "Configure Settings..."
+
+msgid "unit_action_disable"
+msgstr "Disable Feature"
+
+msgid "unit_action_keep"
+msgstr "Keep Enabled (Default)"
+
 msgid "unit_auto_scan_about"
 msgstr "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future."
 
@@ -814,6 +832,12 @@ msgstr "To Metric"
 
 msgid "unit_conv_enabled"
 msgstr "Enable Unit Converter"
+
+msgid "unit_conv_headline"
+msgstr "Unit Converter"
+
+msgid "unit_conv_new_feature_desc"
+msgstr "X-Ray now detects measurements (lengths, weights, temperature) in your books and highlights them with a subtle underline. Tap any highlighted unit to see its converted value in a popup tooltip."
 
 msgid "unit_conv_style_settings"
 msgstr "Style & Underline Settings"

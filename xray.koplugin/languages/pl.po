@@ -37,6 +37,10 @@ msgstr "AI Scan"
 msgid "ai_scanning_duplicates"
 msgstr "AI szuka duplikatów..."
 
+# en-hash: ad608bec35300c1dbb0180723f2f6b9f
+msgid "ask_later"
+msgstr "Ask Later"
+
 # en-hash: bff74eab9088ad053737e6f0d424ea7e
 msgid "author_born"
 msgstr "Urodzony: "
@@ -196,6 +200,10 @@ msgstr "NIEUSTAWIONY"
 # en-hash: 8c52684db8f49511e9b44471716bf164
 msgid "config_status_set"
 msgstr "USTAWIONY"
+
+# en-hash: 70d9be9b139893aa6c69b5e77e614311
+msgid "confirm"
+msgstr "Confirm"
 
 # en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
 msgid "current_language"
@@ -825,6 +833,10 @@ msgstr "Ta książka jest w języku %s. Przełączyć język X-Ray na dopasowany
 msgid "multiple_matches"
 msgstr "Wiele dopasowań dla '%s'. O które chodziło?"
 
+# en-hash: cafa45757baae6a9b3e4daafcc454e43
+msgid "new_feature"
+msgstr "New Feature"
+
 # en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
 msgid "next"
 msgstr "Dalej"
@@ -1037,6 +1049,18 @@ msgstr "Ten rozdział"
 msgid "this_page"
 msgstr "Ta strona"
 
+# en-hash: f61824b403008733ff955da48052ee04
+msgid "unit_action_configure"
+msgstr "Configure Settings..."
+
+# en-hash: 6ee50812725a7a053ed2c5742c6ebfef
+msgid "unit_action_disable"
+msgstr "Disable Feature"
+
+# en-hash: 074331092c85358cfa576b7c8424a94e
+msgid "unit_action_keep"
+msgstr "Keep Enabled (Default)"
+
 # en-hash: fd380cdfeb02e89fd87e81a03440d1a4
 msgid "unit_auto_scan_about"
 msgstr "Skanowanie dużych książek może zająć do 15–20 sekund. Dzieje się to tylko przy pierwszym otwarciu książki, a wyniki są zapisywane na przyszłość."
@@ -1084,6 +1108,14 @@ msgstr "Zawsze konwertuj na metryczne"
 # en-hash: 9039461fb813111bf38dc683527be31d
 msgid "unit_conv_enabled"
 msgstr "Włącz konwerter jednostek"
+
+# en-hash: 01eb258da99de69aab015959dfc528d9
+msgid "unit_conv_headline"
+msgstr "📏 Unit Converter"
+
+# en-hash: d613a92045b3198a1985e7ca3d468007
+msgid "unit_conv_new_feature_desc"
+msgstr "X-Ray now detects measurements (lengths, weights, temperature) in your books and highlights them with a subtle underline. Tap any highlighted unit to see its converted value in a popup tooltip."
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "unit_conv_style_settings"
