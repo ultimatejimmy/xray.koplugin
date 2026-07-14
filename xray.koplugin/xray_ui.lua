@@ -52,7 +52,7 @@ local DEFAULT_POPUP_FONT_SIZE = 22
 -- Returns true if the text contains CJK characters (U+3000–U+9FFF, etc.)
 local function _textHasCJK(text)
     if type(text) ~= "string" then return false end
-    return text:find("[\228-\234][\128-\191][\128-\191]") ~= nil
+    return text:find("[\227-\234][\128-\191][\128-\191]") ~= nil
 end
 
 -- Returns true if the font family name looks like a CJK font
@@ -571,6 +571,7 @@ function M:showLanguageSelection()
         fr = "Français",
         ru = "Русский",
         zh_CN = "简体中文",
+        ja = "日本語",
         tr = "Türkçe",
         pt_br = "Português",
         es = "Español",
@@ -614,7 +615,7 @@ function M:resolveLanguage(code)
             supported[c] = 1
         end
     else
-        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ar=1, sr=1 }
+        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, ja=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ar=1, sr=1 }
     end
     
     if code == "auto" or not code then
@@ -640,7 +641,8 @@ function M:resolveLanguage(code)
             if book_lang then
                 local lang = book_lang:sub(1, 2):lower()
                 if book_lang:lower():find("zh") then lang = "zh_CN"
-                elseif book_lang:lower():find("pt") then lang = "pt_br" end
+                elseif book_lang:lower():find("pt") then lang = "pt_br"
+                elseif book_lang:lower():find("ja") or book_lang:lower():find("jp") then lang = "ja" end
                 if supported[lang] then return lang end
             end
         end
@@ -709,7 +711,8 @@ function M:checkBookLanguageMatch()
     
     local lang = book_lang:sub(1, 2):lower()
     if book_lang:find("zh") then lang = "zh_CN"
-    elseif book_lang:find("pt") then lang = "pt_br" end
+    elseif book_lang:find("pt") then lang = "pt_br"
+    elseif book_lang:find("ja") or book_lang:find("jp") then lang = "ja" end
     
     local LANGUAGE_NAMES = {
         en = "English",
@@ -717,6 +720,7 @@ function M:checkBookLanguageMatch()
         fr = "Français",
         ru = "Русский",
         zh_CN = "简体中文",
+        ja = "日本語",
         tr = "Türkçe",
         pt_br = "Português",
         es = "Español",

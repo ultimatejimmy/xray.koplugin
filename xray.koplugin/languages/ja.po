@@ -1,0 +1,979 @@
+msgid ""
+msgstr ""
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "ai_error"
+msgstr "AIエラー: "
+
+msgid "ai_fetch_complete"
+msgstr "%sから取得しました\n\n書籍: %s\n著者: %s\n\n登場人物: %d | 場所: %d | テーマ: %d | イベント: %d | 歴史: %d\n\n%s\n\n%s"
+
+msgid "ai_fetch_complete_msg"
+msgstr "AIデータの取得が完了しました！"
+
+msgid "ai_key_required"
+msgstr "AI APIキーが必要です。"
+
+msgid "ai_merge_confirm_title"
+msgstr "AIによる重複の検出"
+
+msgid "ai_merged_n"
+msgstr "%d件のペアを統合しました。"
+
+msgid "ai_scan"
+msgstr "AIスキャン"
+
+msgid "ai_scanning_duplicates"
+msgstr "AIが重複をスキャンしています..."
+
+msgid "ask_later"
+msgstr "後で確認"
+
+msgid "author_born"
+msgstr "誕生: "
+
+msgid "author_died"
+msgstr "没: "
+
+msgid "auto_dupe_check_disabled"
+msgstr "無効"
+
+msgid "auto_dupe_check_enabled"
+msgstr "有効"
+
+msgid "auto_dupe_check_preference_desc"
+msgstr "AIによる自動重複チェックの設定を選択してください:"
+
+msgid "auto_dupe_check_setting_desc"
+msgstr "有効にすると、データ取得後にX-Rayが自動的にAIへ重複キャラクターや場所の確認を行います。重複が検出された場合、確認および統合のメッセージが表示されます。\n\n無効にすると、バックグラウンドでの重複スキャンは停止されます。重複は引き続きキャラクターや場所メニューから手動で統合可能です。\n\n[B]注意:[/B] 各チェックごとに[B]1回分[/B]のAI API呼び出しを消費します。無料枠や制限付きプランをご利用の方は、無効にすることをお勧めします。"
+
+msgid "auto_dupe_check_setting_title"
+msgstr "重複チェック"
+
+msgid "auto_fetch_page_interval_prompt"
+msgstr "ページ間隔"
+
+msgid "auto_update_aggressive"
+msgstr "高頻度: 章ごとにチェック"
+
+msgid "auto_update_balanced"
+msgstr "標準: 最大5分ごとにチェック"
+
+msgid "auto_update_disabled"
+msgstr "無効"
+
+msgid "auto_update_economical"
+msgstr "節約: 最大15分ごとにチェック"
+
+msgid "auto_update_freq_about"
+msgstr "自動更新は、読書中にバックグラウンドで新しい章のデータをチェックします。\n\n[B]制限とパフォーマンス[/B]\n頻繁なバックグラウンドリクエストは[B]バッテリーを消費[/B]し、[B]AIプロバイダーのレート制限[/B]に達する可能性があります。\n\n[B]注意:[/B] スキップされた章は、次回のバックグラウンド更新時に自動的に含まれます。"
+
+msgid "auto_update_freq_label"
+msgstr "バックグラウンド取得頻度"
+
+msgid "auto_update_sparse"
+msgstr "低頻度: 最大30分ごとにチェック"
+
+msgid "auto_update_ultra"
+msgstr "超高頻度: %dページごとにチェック"
+
+msgid "back_to_reading"
+msgstr "戻る"
+
+msgid "beta_channel_desc"
+msgstr "ベータチャンネルでは、X-Rayプラグインのプレリリース版を受け取ることができます。これには最新の機能やバグ修正が含まれますが、通常版よりも[B]安定性が低い[/B]場合があります。"
+
+msgid "beta_disabled"
+msgstr "安定版 (推奨)"
+
+msgid "beta_enabled"
+msgstr "ベータチャンネル有効"
+
+msgid "beta_preference_desc"
+msgstr "更新チャンネルを選択してください:"
+
+msgid "book_mode_auto"
+msgstr "自動"
+
+msgid "book_mode_desc"
+msgstr "この本の種類を選択してください:"
+
+msgid "book_mode_fiction"
+msgstr "フィクション"
+
+msgid "book_mode_nonfiction"
+msgstr "ノンフィクション"
+
+msgid "book_mode_saved"
+msgstr "本の種類を保存しました！"
+
+msgid "book_type_about"
+msgstr "「本の種類」により、AIによる抽出戦略が決定されます。\n\n[B]• フィクション:[/B] 登場人物、時系列、世界観の設定（派閥、呪文、伝承など）に焦点を当てます。\n[B]• ノンフィクション:[/B] 専門用語、概念、歴史上の人物に焦点を当てます。\n\n[B]自動検出[/B]に設定すると、[B]初回[/B]のデータ取得後にAIが判断します。\n\n[B]注意:[/B] この設定は[B]本ごと[/B]に保存されます。手動で選択すると、デフォルトの自動検出やグローバル設定よりも優先されます。"
+
+msgid "book_type_auto"
+msgstr "自動検出"
+
+msgid "book_type_fiction"
+msgstr "フィクション"
+
+msgid "book_type_nonfiction"
+msgstr "ノンフィクション"
+
+msgid "cache_cleared"
+msgstr "キャッシュをクリアしました！\n\n新しくデータを取得するには以下を実行してください:\nメニュー → X-Ray → AIデータを取得"
+
+msgid "cache_save_failed"
+msgstr "✗ キャッシュの保存に失敗しました。"
+
+msgid "cache_save_success"
+msgstr "✓ キャッシュを更新しました。"
+
+msgid "cache_saved"
+msgstr "[保存済み]"
+
+msgid "cancel"
+msgstr "キャンセル"
+
+msgid "character_not_found"
+msgstr "'%s' に一致する登場人物は見つかりませんでした"
+
+msgid "close"
+msgstr "閉じる"
+
+msgid "config_default_gemini"
+msgstr "デフォルト (Gemini)"
+
+msgid "config_status_not_set"
+msgstr "未設定"
+
+msgid "config_status_set"
+msgstr "設定済み"
+
+msgid "confirm"
+msgstr "確認"
+
+msgid "current_language"
+msgstr "ja"
+
+msgid "current_mode"
+msgstr "現在: "
+
+msgid "custom_api_endpoint_hint"
+msgstr "例: https://openrouter.ai/api/v1/chat/completions"
+
+msgid "custom_api_endpoint_title"
+msgstr "カスタムAPI %d — エンドポイントURL"
+
+msgid "custom_api_is_reasoning"
+msgstr "推論モデルか (例: DeepSeek-R1)"
+
+msgid "custom_api_key_title"
+msgstr "カスタムAPI %d — APIキー"
+
+msgid "custom_api_model_hint"
+msgstr "例: google/gemini-2.5-flash や openai/gpt-4o"
+
+msgid "custom_api_model_title"
+msgstr "カスタムAPI %d — デフォルトモデル"
+
+msgid "custom_api_name"
+msgstr "カスタムAPI %d (OpenAI互換)"
+
+msgid "custom_api_not_configured"
+msgstr "(未設定 — タップして設定)"
+
+msgid "custom_api_saved"
+msgstr "カスタムAPI %dの設定を保存しました。"
+
+msgid "desc_len_about_chars"
+msgstr "各キャラクターのプロフィール詳細度を設定します。\n\n[B]サイズオプション[/B]\n• 短め (~80文字): 名前、役割、簡単なメモ。\n• 標準 (~200文字): 標準的な分析。\n• 詳細 (~350文字): 特徴や動機を含む詳細なキャラクター考察。\n• かなり詳細 (~500文字): 包括的な詳細分析。\n\n[B]トレードオフ[/B]\n説明が長いほどトークンを消費するため、初期フェッチで取得できるキャラクターの数が[B]減少[/B]します。"
+
+msgid "desc_len_about_hist"
+msgstr "各歴史的人物に対する伝記の詳細度を設定します。\n\n[B]サイズオプション[/B]\n• 短め (~50文字): 名前と主な役割。\n• 標準 (~100文字): 標準的な伝記。\n• 詳細 (~200文字): 人生、重要性、本の中での文脈。\n• かなり詳細 (~300文字): 包括的な伝記。\n\n[B]トレードオフ[/B]\n伝記が長いほどトークンを消費するため、初期フェッチで取得できる人物の数が[B]減少[/B]します。"
+
+msgid "desc_len_about_locs"
+msgstr "各場所の説明の詳細度を設定します。\n\n[B]サイズオプション[/B]\n• 短め (~50文字): 地名と1行の文脈。\n• 標準 (~100文字): 標準的な説明。\n• 詳細 (~200文字): 雰囲気、重要性、イベント。\n• かなり詳細 (~300文字): 包括的な説明。\n\n[B]トレードオフ[/B]\n説明が長いほどトークンを消費するため、初期フェッチで取得できる場所の数が[B]減少[/B]します。"
+
+msgid "desc_len_about_timeline"
+msgstr "本のタイムラインにおける要約の詳細度を設定します。\n\n[B]サイズオプション[/B]\n• 短め (~50文字): 短いフレーズの要約。\n• 標準 (~80文字): 標準的な要約。\n• 詳細 (~150文字): 文脈と結末を含める。\n\n[B]注意:[/B] タイムラインは各章につき必ず1つのエントリがあるため、サイズのトレードオフはありません。"
+
+msgid "desc_len_default"
+msgstr "標準"
+
+msgid "desc_len_detailed"
+msgstr "詳細"
+
+msgid "desc_len_short"
+msgstr "短め"
+
+msgid "desc_len_v_detailed"
+msgstr "かなり詳細"
+
+msgid "dont_ask_again"
+msgstr "次回から表示しない"
+
+msgid "entity_label_characters"
+msgstr "キャラクター"
+
+msgid "entity_label_locations"
+msgstr "場所"
+
+msgid "entity_not_found"
+msgstr "'%s' はキャラクターまたは場所として見つかりませんでした。"
+
+msgid "entity_ui_style_both"
+msgstr "モダンポップアップ (両方)"
+
+msgid "entity_ui_style_classic"
+msgstr "クラシックダイアログ"
+
+msgid "entity_ui_style_desc"
+msgstr "エンティティ詳細表示に、従来のダイアログではなくモダンなポップアップUIを使用するタイミングを選択します。"
+
+msgid "entity_ui_style_in_text"
+msgstr "モダンポップアップ（本文内のみ）"
+
+msgid "entity_ui_style_menu"
+msgstr "モダンポップアップ（メニューのみ）"
+
+msgid "error_api_key_desc"
+msgstr "入力されたAPIキーは拒否されました。設定を確認し、キーが正しいか再確認してください。"
+
+msgid "error_api_key_title"
+msgstr "無効なAPIキー"
+
+msgid "error_extract_text"
+msgstr "エラー：書籍テキストを抽出できませんでした。"
+
+msgid "error_model_access_desc"
+msgstr "お使いのAPIキーは選択したモデルにアクセスできません。別のモデルまたはプロバイダーの使用が必要な場合があります。"
+
+msgid "error_model_access_title"
+msgstr "アクセス拒否"
+
+msgid "error_model_not_found_desc"
+msgstr "選択したAIモデルが利用できないか、エンドポイントURLが正しくありません。"
+
+msgid "error_model_not_found_title"
+msgstr "モデルが見つかりません"
+
+msgid "error_no_api_key"
+msgstr "APIキーが設定されていません"
+
+msgid "error_parse_desc"
+msgstr "AIから返された応答を処理できませんでした。一時的な不具合の可能性があります。"
+
+msgid "error_parse_title"
+msgstr "データエラー"
+
+msgid "error_quota_desc"
+msgstr "APIクレジットが不足しているか、レート制限に達しました。請求状況を確認するか、しばらくしてから再度試してください。"
+
+msgid "error_quota_title"
+msgstr "クォータ超過"
+
+msgid "error_service_down_desc"
+msgstr "AIサービスが一時的に利用できないか、過負荷状態です。数分後に再度試してください。"
+
+msgid "error_service_down_title"
+msgstr "サービス利用不可"
+
+msgid "error_timeout_desc"
+msgstr "リクエストに時間がかかりすぎました。複雑な書籍や通信環境が遅い場合に発生することがあります。"
+
+msgid "error_timeout_title"
+msgstr "接続タイムアウト"
+
+msgid "error_unknown_desc"
+msgstr "予期しないエラーが発生しました: %s"
+
+msgid "error_unknown_title"
+msgstr "取得失敗"
+
+msgid "extracting_more_characters"
+msgstr "キャラクターを追加抽出中..."
+
+msgid "extracting_more_terms"
+msgstr "用語を追加抽出中..."
+
+msgid "fetch_button"
+msgstr "取得"
+
+msgid "fetch_single_word_prompt"
+msgstr "'%s' のX-Rayデータが見つかりませんでした。検索しますか？"
+
+msgid "fetch_successful"
+msgstr "取得に成功しました"
+
+msgid "fetching_ai"
+msgstr "AI情報を取得中..."
+
+msgid "fetching_author"
+msgstr "著者情報を取得中..."
+
+msgid "fetching_series_context"
+msgstr "シリーズ情報を取得中: %d / %d 巻..."
+
+msgid "fetching_series_info"
+msgstr "シリーズ作品を特定中..."
+
+msgid "fetching_wait"
+msgstr "少々時間がかかります。\nキャンセルするにはタップしてください。"
+
+msgid "find_mentions"
+msgstr "言及を検索"
+
+msgid "full_book_option"
+msgstr "全編モード"
+
+msgid "label_aliases"
+msgstr "別名"
+
+msgid "label_category"
+msgstr "カテゴリ"
+
+msgid "label_definition"
+msgstr "定義"
+
+msgid "label_description"
+msgstr "説明"
+
+msgid "label_expanded"
+msgstr "正式名称"
+
+msgid "label_gender"
+msgstr "性別"
+
+msgid "label_name"
+msgstr "名前"
+
+msgid "label_occupation"
+msgstr "職業"
+
+msgid "label_reasoning"
+msgstr "AI推論"
+
+msgid "label_role"
+msgstr "役割"
+
+msgid "lang_follow_book"
+msgstr "自動（書籍に準拠）"
+
+msgid "lang_follow_system"
+msgstr "自動（システムに準拠）"
+
+msgid "lang_mismatch_title"
+msgstr "言語の不一致"
+
+msgid "language_changed_reopen"
+msgstr "言語設定を変更しました。"
+
+msgid "later"
+msgstr "後で"
+
+msgid "linked_entries"
+msgstr "関連エントリー"
+
+msgid "linked_entries_disabled"
+msgstr "無効"
+
+msgid "linked_entries_enabled"
+msgstr "有効"
+
+msgid "linked_entries_setting_desc"
+msgstr "「リンクされたエントリ」は、登場人物、場所、歴史上の人物が互いの説明の中で言及された際に、自動的にそれらを接続します。\n\n無効にすると、詳細ダイアログから[B]リンクされたエントリ[/B]ボタンが非表示になります。"
+
+msgid "log_empty"
+msgstr "ログは空です。"
+
+msgid "log_loading"
+msgstr "ログを読み込み中..."
+
+msgid "log_tail_notice"
+msgstr "[... 以前の %d 行を省略 ...]"
+
+msgid "logs_cleared"
+msgstr "ログを消去しました！"
+
+msgid "looking_up_msg"
+msgstr "'%s' を検索中..."
+
+msgid "low_conf_match"
+msgstr "部分一致 — '%s' を表示しています。正確な用語を取得するには以下をタップしてください。"
+
+msgid "manual_pick"
+msgstr "手動選択"
+
+msgid "mention_dismiss_btn"
+msgstr "✕"
+
+msgid "mention_return_btn"
+msgstr "← 戻る"
+
+msgid "mention_return_label"
+msgstr "← %d ページに戻る"
+
+msgid "mentions_at_location"
+msgstr "言及: %s"
+
+msgid "mentions_disabled"
+msgstr "無効"
+
+msgid "mentions_enabled"
+msgstr "有効"
+
+msgid "mentions_none"
+msgstr "'%s' の言及は見つかりませんでした。"
+
+msgid "mentions_preference_desc"
+msgstr "登場人物と言及場所の表示設定を選択してください:"
+
+msgid "mentions_refresh"
+msgstr "言及を再スキャン"
+
+msgid "mentions_scanning"
+msgstr "スキャン中... %1 / %2 章"
+
+msgid "mentions_setting_desc"
+msgstr "言及のスキャンを行うことで、書籍内の登場人物や場所のすべての出現箇所を特定できます。読書中のレスポンスを維持するため、[B]自動的[/B]にバックグラウンドで実行されます。\n\n無効にすると、すべてのバックグラウンドスキャンが停止し、[B]言及を探す[/B]ボタンが非表示になります。"
+
+msgid "mentions_setting_title"
+msgstr "言及の設定"
+
+msgid "mentions_title"
+msgstr "言及: %s"
+
+msgid "menu_about"
+msgstr "X-Rayについて"
+
+msgid "menu_ai_settings"
+msgstr "AI設定"
+
+msgid "menu_api_keys"
+msgstr "APIキーとプロバイダー"
+
+msgid "menu_author_info"
+msgstr "著者情報"
+
+msgid "menu_auto_update_frequency"
+msgstr "自動更新設定"
+
+msgid "menu_beta_channel"
+msgstr "ベータチャンネル設定"
+
+msgid "menu_book_mode"
+msgstr "書籍タイプ"
+
+msgid "menu_characters"
+msgstr "登場人物"
+
+msgid "menu_clear_cache"
+msgstr "キャッシュをクリア"
+
+msgid "menu_clear_logs"
+msgstr "ログをクリア"
+
+msgid "menu_content_fetch_settings"
+msgstr "コンテンツ・取得設定"
+
+msgid "menu_custom_model_title"
+msgstr "カスタム %s モデル"
+
+msgid "menu_desc_length_settings"
+msgstr "説明の長さ"
+
+msgid "menu_display_ui_settings"
+msgstr "表示・UI設定"
+
+msgid "menu_enter_custom_model"
+msgstr "カスタムモデルを入力..."
+
+msgid "menu_entity_ui_mode"
+msgstr "エンティティ説明スタイル"
+
+msgid "menu_fetch_author"
+msgstr "著者情報を取得"
+
+msgid "menu_fetch_more_chars"
+msgstr "登場人物を追加取得"
+
+msgid "menu_fetch_more_terms"
+msgstr "用語を追加取得"
+
+msgid "menu_fetch_series_context"
+msgstr "シリーズ情報を取得/更新"
+
+msgid "menu_frequency"
+msgstr "頻度"
+
+msgid "menu_historical_figures"
+msgstr "歴史上の人物"
+
+msgid "menu_language"
+msgstr "言語"
+
+msgid "menu_linked_entries_settings"
+msgstr "関連エントリー設定"
+
+msgid "menu_locations"
+msgstr "場所"
+
+msgid "menu_maintenance"
+msgstr "メンテナンス"
+
+msgid "menu_mentions_settings"
+msgstr "言及設定"
+
+msgid "menu_primary_ai_model"
+msgstr "プライマリAIモデル"
+
+msgid "menu_reasoning_effort"
+msgstr "AIモデルの推論レベル"
+
+msgid "menu_secondary_ai_model"
+msgstr "セカンダリAIモデル"
+
+msgid "menu_series_context"
+msgstr "シリーズコンテキスト"
+
+msgid "menu_settings"
+msgstr "設定"
+
+msgid "menu_terms"
+msgstr "用語集"
+
+msgid "menu_timeline"
+msgstr "出来事"
+
+msgid "menu_ui_popup_intext"
+msgstr "本文検索に脚注スタイルを使用"
+
+msgid "menu_ui_popup_menu"
+msgstr "メニュー検索に脚注スタイルを使用"
+
+msgid "menu_unit_categories"
+msgstr "単位カテゴリ"
+
+msgid "menu_unit_converter"
+msgstr "単位変換"
+
+msgid "menu_update_xray"
+msgstr "X-Rayデータを更新 (結合)"
+
+msgid "menu_view_config"
+msgstr "すべての設定値を表示"
+
+msgid "menu_view_log"
+msgstr "ログを表示"
+
+msgid "menu_xray"
+msgstr "X-Ray"
+
+msgid "menu_xray_mode"
+msgstr "X-Rayモード設定"
+
+msgid "merge_back"
+msgstr "← 戻る"
+
+msgid "merge_button"
+msgstr "結合"
+
+msgid "merge_confirm"
+msgstr "%s を %s に結合しますか？セカンダリのエントリは削除され、そのエイリアスは吸収されます。"
+
+msgid "merge_duplicates"
+msgstr "重複の結合"
+
+msgid "merge_failed"
+msgstr "結合に失敗しました。"
+
+msgid "merge_pick_primary"
+msgstr "残すエントリを選択"
+
+msgid "merge_pick_secondary"
+msgstr "削除するエントリを選択"
+
+msgid "merge_success"
+msgstr "エントリを正常に結合しました。"
+
+msgid "merging_smartly"
+msgstr "結合中..."
+
+msgid "model_free"
+msgstr "無料"
+
+msgid "model_paid"
+msgstr "有料"
+
+msgid "msg_added_characters"
+msgstr "%d人のキャラクターを追加しました！"
+
+msgid "msg_added_terms"
+msgstr "%d個の用語を追加しました！"
+
+msgid "msg_fetch_failed"
+msgstr "AIリクエストに失敗しました。接続またはAPI設定を確認してください。"
+
+msgid "msg_no_bio"
+msgstr "経歴はありません。"
+
+msgid "msg_suggest_lang"
+msgstr "この本は%sで書かれています。X-Rayの言語設定を合わせますか？"
+
+msgid "multiple_matches"
+msgstr "'%s'に複数の候補が見つかりました。どれですか？"
+
+msgid "new_feature"
+msgstr "新機能"
+
+msgid "next"
+msgstr "次へ"
+
+msgid "no"
+msgstr "いいえ"
+
+msgid "no_api_key"
+msgstr "APIキーが設定されていません！"
+
+msgid "no_author_data_fetch"
+msgstr "著者の経歴はありません。取得しますか？"
+
+msgid "no_character_data"
+msgstr "キャラクターデータがありません。\n\n先に「X-Rayデータを取得」してください。"
+
+msgid "no_data_prompt"
+msgstr "この本のX-Rayデータが見つかりません。AIから取得しますか？"
+
+msgid "no_duplicates_found"
+msgstr "重複は見つかりませんでした。"
+
+msgid "no_historical_data"
+msgstr "歴史的人物データがありません。\n\n先に「X-Rayデータを取得」してください。\n\nAIが作中に登場する実在の歴史的人物\nを検出します。"
+
+msgid "no_location_data"
+msgstr "場所データがありません。先に「X-Rayデータを取得」してください。"
+
+msgid "no_merges_performed"
+msgstr "統合は実行されませんでした。"
+
+msgid "no_terms_data"
+msgstr "用語データがありません。先に「X-Rayデータを取得」してください。"
+
+msgid "no_timeline_data"
+msgstr "タイムラインデータがありません。\n\n先に「X-Rayデータを取得」してください。\n\nAIが主要なイベントを時系列順に\n表示します。"
+
+msgid "ok"
+msgstr "OK"
+
+msgid "pair_rejected"
+msgstr "ペアは重複なしとマークされました。"
+
+msgid "path"
+msgstr "plugins/xray.koplugin"
+
+msgid "pending_duplicates_prompt"
+msgstr "前回の取得で%d件の重複の可能性がある場所が見つかりました。確認しますか？"
+
+msgid "plugin_description"
+msgstr "Amazon KindleのX-Rayのように、AIを活用した読書分析で読書体験を向上させます！"
+
+msgid "quick_menu_title"
+msgstr "X-Ray クイックメニュー"
+
+msgid "read_more"
+msgstr "続きを読む"
+
+msgid "reason"
+msgstr "推論"
+
+msgid "reasoning_about"
+msgstr "推論モデルの[B]思考[/B]深度を設定します：\n\n• 未設定: 指示を送らず、モデルのデフォルト設定を使用します。\n• 低: 高速かつ経済的。単純な書籍向け。\n• 中: バランスの取れた深度。一般的な物語向け。\n• 高: 詳細な分析。複雑な人間関係の把握向け。\n\n[B]対象:[/B] GPT-5.x (o1/o3/gpt-5)、Claude (sonnet/opus/haiku)、Gemini 2.5以降\n\n[B]注意:[/B] DeepSeek V4は[B]本質的に[/B]推論を行うため、この設定は無効です。"
+
+msgid "reasoning_high"
+msgstr "高"
+
+msgid "reasoning_low"
+msgstr "低"
+
+msgid "reasoning_medium"
+msgstr "中"
+
+msgid "reasoning_unset"
+msgstr "未設定 (デフォルト)"
+
+msgid "refresh"
+msgstr "更新"
+
+msgid "reject_pair"
+msgstr "拒否"
+
+msgid "relookup_button"
+msgstr "'%s' を再検索"
+
+msgid "review"
+msgstr "レビュー"
+
+msgid "save"
+msgstr "保存"
+
+msgid "search_button"
+msgstr "検索"
+
+msgid "search_character"
+msgstr "キャラクターを検索..."
+
+msgid "search_character_title"
+msgstr "キャラクター検索"
+
+msgid "search_hint"
+msgstr "キャラクター名を入力"
+
+msgid "search_term"
+msgstr "検索用語"
+
+msgid "series_ask_later_msg"
+msgstr "シリーズ要約の確認を延期しました。次回この本を開く/再開する際に再度尋ねます。"
+
+msgid "series_context_enabled_toggle"
+msgstr "シリーズコンテキストを有効化"
+
+msgid "series_context_loaded"
+msgstr "シリーズコンテキストを読み込みました (過去の書籍: %d冊)。"
+
+msgid "series_context_prompt_text"
+msgstr "これは「%2$s」の第%1$d巻のようです。前の %3$d 冊のあらすじを読み込みますか？\n\n(設定 → シリーズコンテキストから無効化可能です)"
+
+msgid "series_context_prompt_title"
+msgstr "シリーズを検出"
+
+msgid "series_disabled_msg"
+msgstr "この書籍の自動プロンプトは無効です。X-Rayメニューから手動で要約を取得できます。"
+
+msgid "series_no_prior_detected"
+msgstr "このシリーズの先行書籍は検出されませんでした。"
+
+msgid "series_prior_books_header"
+msgstr "── 既刊 ──"
+
+msgid "series_prior_label"
+msgstr "[既刊]"
+
+msgid "skip"
+msgstr "スキップ"
+
+msgid "spoiler_free_about"
+msgstr "ネタバレ防止モードは、AIによる抽出範囲を読了ページまでに制限し、先の内容によるネタバレを防ぎます。\n\n[B]全文解析モード:[/B] 本全体を解析しますが、[B]ネタバレが含まれる可能性があります[/B]。"
+
+msgid "spoiler_free_menu_option"
+msgstr "ネタバレ防止"
+
+msgid "spoiler_free_option"
+msgstr "ネタバレ防止モード (全体の%d%%まで)"
+
+msgid "spoiler_preference_desc"
+msgstr "X-Rayのネタバレ設定を選択してください:"
+
+msgid "spoiler_preference_title"
+msgstr "ネタバレ設定"
+
+msgid "stop"
+msgstr "停止"
+
+msgid "term_not_found"
+msgstr "用語が見つかりません。"
+
+msgid "this_chapter"
+msgstr "この章"
+
+msgid "this_page"
+msgstr "セクション"
+
+msgid "unit_action_configure"
+msgstr "設定を変更..."
+
+msgid "unit_action_disable"
+msgstr "機能を無効にする"
+
+msgid "unit_action_keep"
+msgstr "有効のままにする (デフォルト)"
+
+msgid "unit_auto_scan_about"
+msgstr "スキャンには大きな本の場合15～20秒ほどかかることがあります。これは初回起動時のみ行われ、結果は保存されます。"
+
+msgid "unit_auto_scan_desc"
+msgstr "自動スキャン:"
+
+msgid "unit_auto_scan_disabled"
+msgstr "無効"
+
+msgid "unit_auto_scan_enabled"
+msgstr "有効"
+
+msgid "unit_auto_scan_settings"
+msgstr "自動スキャン設定"
+
+msgid "unit_conv_direction"
+msgstr "単位変換の方向"
+
+msgid "unit_conv_direction_about"
+msgstr "単位変換の方向は、本の中の測定値（長さ、重さ、温度など）をどのように変換するかを決定します:\n\n• [B]自動 (端末設定に従う):[/B] デバイスの「単位設定」に基づいて自動的に変換します。\n• [B]メートル法に変換:[/B] ヤード・ポンド法（マイル、華氏など）を常にメートル法（キロメートル、摂氏など）に変換します。\n• [B]ヤード・ポンド法に変換:[/B] メートル法を常にヤード・ポンド法に変換します。"
+
+msgid "unit_conv_direction_auto"
+msgstr "自動 (端末設定に従う)"
+
+msgid "unit_conv_direction_desc"
+msgstr "単位変換のターゲットを選択してください:"
+
+msgid "unit_conv_direction_imperial"
+msgstr "ヤード・ポンド法に変換"
+
+msgid "unit_conv_direction_metric"
+msgstr "メートル法へ"
+
+msgid "unit_conv_enabled"
+msgstr "単位変換を有効にする"
+
+msgid "unit_conv_headline"
+msgstr "単位変換"
+
+msgid "unit_conv_new_feature_desc"
+msgstr "X-Rayが書籍内の計測単位（長さ、重さ、温度）を検出し、下線で強調表示できるようになりました。強調表示された単位をタップすると、ポップアップで換算値が表示されます。\n\n注意：初めて書籍を開く際にはスキャンが必要です。"
+
+msgid "unit_conv_style_settings"
+msgstr "スタイルと下線の設定"
+
+msgid "unit_intensity_dark"
+msgstr "濃い"
+
+msgid "unit_intensity_light"
+msgstr "薄い"
+
+msgid "unit_intensity_medium"
+msgstr "中間"
+
+msgid "unit_manual_scan_button"
+msgstr "スキャン/再スキャン"
+
+msgid "unit_scanning_book"
+msgstr "書籍をスキャン中..."
+
+msgid "unit_scanning_title"
+msgstr "X-Ray: 単位変換"
+
+msgid "unit_style_preview_title"
+msgstr "スタイルプレビュー"
+
+msgid "unit_timeout_never"
+msgstr "無制限"
+
+msgid "unit_tooltip_timeout_label"
+msgstr "ツールチップの表示時間"
+
+msgid "unit_underline_dashed"
+msgstr "破線"
+
+msgid "unit_underline_dotted"
+msgstr "点線"
+
+msgid "unit_underline_double"
+msgstr "二重線"
+
+msgid "unit_underline_intensity_label"
+msgstr "下線の濃さ"
+
+msgid "unit_underline_invisible"
+msgstr "非表示"
+
+msgid "unit_underline_solid"
+msgstr "実線"
+
+msgid "unit_underline_style_label"
+msgstr "下線のスタイル"
+
+msgid "unit_underline_thickness_label"
+msgstr "下線の太さ"
+
+msgid "unit_underline_wavy"
+msgstr "波線"
+
+msgid "updater_available_header"
+msgstr "X-Ray %s が利用可能です！\n現在のバージョン: %s"
+
+msgid "updater_btn_cancel"
+msgstr "キャンセル"
+
+msgid "updater_btn_download"
+msgstr "ダウンロードしてインストール"
+
+msgid "updater_btn_later"
+msgstr "後で"
+
+msgid "updater_btn_open_browser"
+msgstr "ブラウザで開く"
+
+msgid "updater_btn_restart"
+msgstr "再起動"
+
+msgid "updater_cancelled_check"
+msgstr "更新チェックをキャンセルしました。"
+
+msgid "updater_cancelled_update"
+msgstr "更新をキャンセルしました。"
+
+msgid "updater_check"
+msgstr "アップデートを確認"
+
+msgid "updater_checking"
+msgstr "アップデートを確認中..."
+
+msgid "updater_download_prompt"
+msgstr "\n\n今すぐダウンロードしてインストールしますか？"
+
+msgid "updater_downloading"
+msgstr "X-Ray %s をダウンロード中..."
+
+msgid "updater_err_download"
+msgstr "ダウンロードエラー: %s"
+
+msgid "updater_err_extract"
+msgstr "展開エラー: %s"
+
+msgid "updater_error_checking"
+msgstr "アップデート確認中にエラーが発生しました。"
+
+msgid "updater_error_checking_detail"
+msgstr "アップデート確認エラー: %s"
+
+msgid "updater_no_asset"
+msgstr "自動アップデートファイルが見つかりませんでした。\n\nGitHubのリリースページを開きますか？"
+
+msgid "updater_success_restart"
+msgstr "X-Ray %s がインストールされました。\n\n更新を適用するためにKOReaderを再起動しますか？"
+
+msgid "updater_up_to_date"
+msgstr "X-Rayは最新です (%s)。"
+
+msgid "updater_whats_new"
+msgstr "新機能:"
+
+msgid "updating_ai"
+msgstr "X-Rayを更新中..."
+
+msgid "val"
+msgstr "???"
+
+msgid "xray_disabled_label"
+msgstr "無効"
+
+msgid "xray_enabled_label"
+msgstr "有効"
+
+msgid "xray_mode_desc"
+msgstr "辞書および選択メニューに「X-Ray」ボタンを追加し、即座に検索できるようにします。"
+
+msgid "yes"
+msgstr "はい"
+

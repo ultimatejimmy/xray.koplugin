@@ -427,6 +427,10 @@ def sync():
             "unit_scanning_book": "Сканування книги на наявність одиниць...",
             "unit_scanning_title": "X-Ray: Конвертер величин"
         },
+        "ja": {
+            "unit_scanning_book": "書籍の単位をスキャン中...",
+            "unit_scanning_title": "X-Ray: 単位コンバーター"
+        },
         "zh_CN": {
             "unit_scanning_book": "正在扫描图书中的单位...",
             "unit_scanning_title": "X-Ray: 单位转换器"

@@ -821,6 +821,8 @@ function M.getScanAliases(direction, enabled_categories, lang)
             if alias:match("[\216-\219]") then return true end
         elseif l_lower:find("^zh") then
             if alias:match("[\228-\233]") then return true end
+        elseif l_lower == "ja" then
+            if alias:match("[\227-\233]") then return true end
         elseif l_lower == "pt_br" or l_lower == "fr" or l_lower == "de" or l_lower == "es" or l_lower == "it" or l_lower == "nl" or l_lower == "pl" or l_lower == "hu" or l_lower == "tr" or l_lower == "id" then
             -- Latin extension characters (accented characters like mètre, kilómetro)
             if alias:match("[\194-\197]") then return true end
