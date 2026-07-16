@@ -7,7 +7,8 @@ function M:isLowPowerDevice()
     -- PW1 (Kindle 5), Touch (Kindle 4), and older are considered low power.
     -- Most of these report as Kindle 5 or lower in the model string.
     -- PW2/3 are significantly faster but still benefit from some optimizations.
-    local model = Device:getModel() or ""
+    local get_model = Device.getModel
+    local model = get_model and Device:getModel() or Device.model or ""
     if Device:isKindle() then
         -- PW1 (K5), Touch (K4), etc.
         if model:find("K5") or model:find("K4") or model:find("K3") then
@@ -20,6 +21,22 @@ function M:isLowPowerDevice()
     end
     -- Android e-ink devices are also low-powered/low-memory
     if Device:isAndroid() then
+        local model_lower = model:lower()
+        if model_lower:find("supernote") or model_lower:find("nomad") or model_lower:find("boox") or model_lower:find("likebook") then
+            return true
+        end
+    end
+    return false
+end
+
+function M:isLowPowerForScan()
+    if Device:isKindle() or Device:isKobo() or Device:isPocketBook() then
+        return true
+    end
+    -- Android e-ink devices are also low-powered/low-memory
+    if Device:isAndroid() then
+        local get_model = Device.getModel
+        local model = get_model and Device:getModel() or Device.model or ""
         local model_lower = model:lower()
         if model_lower:find("supernote") or model_lower:find("nomad") or model_lower:find("boox") or model_lower:find("likebook") then
             return true

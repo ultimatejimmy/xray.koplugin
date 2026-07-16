@@ -23,6 +23,24 @@ describe("xray_utils", function()
         assert.is_true(utils:isLowPowerDevice())
     end)
 
+    describe("isLowPowerForScan", function()
+        it("identifies modern Kindles (K11) as low power for scanning", function()
+            device.isKindle = function() return true end
+            device.isKobo = function() return false end
+            device.isPocketBook = function() return false end
+            device.isAndroid = function() return false end
+            assert.is_true(utils:isLowPowerForScan())
+        end)
+
+        it("identifies WSL/desktop as not low power for scanning", function()
+            device.isKindle = function() return false end
+            device.isKobo = function() return false end
+            device.isPocketBook = function() return false end
+            device.isAndroid = function() return false end
+            assert.is_false(utils:isLowPowerForScan())
+        end)
+    end)
+
     describe("getFriendlyError", function()
         local loc = {
             t = function(self, key, arg)

@@ -962,6 +962,13 @@ function XRayPlugin:getSubMenuItems()
                         end
                     },
                     {
+                        text = self.loc:t("unit_scan_written_numbers") or "Scan Written Numbers (e.g. 'five miles')",
+                        keep_menu_open = true,
+                        callback = function()
+                            self:showUnitScanWrittenNumbersCard()
+                        end
+                    },
+                    {
                         text = self.loc:t("unit_auto_scan_settings") or "Auto-Scan Settings",
                         keep_menu_open = true,
                         callback = function()
@@ -1593,6 +1600,33 @@ function XRayPlugin:showUnitAutoScanCard()
             self.ai_helper:saveSettings({ unit_auto_scan_enabled = val })
         end,
         about_text = self.loc:t("unit_auto_scan_about") or "Scanning can take up to 15-20 seconds for large books. This only happens the first time the book is opened, and the results are saved for the future."
+    })
+end
+
+function XRayPlugin:showUnitScanWrittenNumbersCard()
+    local XRaySettingsCard = require(plugin_path .. "xray_settings_card")
+    local enabled_text = self.loc:t("unit_scan_written_enabled") or "Enabled"
+    local disabled_text = self.loc:t("unit_scan_written_disabled") or "Disabled"
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("unit_scan_written_numbers_title") or "Scan Written Numbers",
+        description = self.loc:t("unit_scan_written_numbers_desc") or "Scan for spelled-out numbers (e.g. 'five miles'):",
+        options = {
+            { text = enabled_text, value = true },
+            { text = disabled_text, value = false },
+        },
+        get_current_func = function()
+            local settings = self.ai_helper.settings
+            if settings.unit_scan_written_numbers ~= nil then
+                return settings.unit_scan_written_numbers == true
+            end
+            local xray_utils = require(plugin_path .. "xray_utils")
+            return not xray_utils:isLowPowerForScan()
+        end,
+        save_func = function(val)
+            self.ai_helper:saveSettings({ unit_scan_written_numbers = val })
+            if self.scanBookForUnits then self:scanBookForUnits() end
+        end,
+        about_text = self.loc:t("unit_scan_written_numbers_about") or "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."
     })
 end
 

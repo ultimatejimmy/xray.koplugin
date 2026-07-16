@@ -1361,3 +1361,27 @@ msgstr "Fügt eine 'X-Ray'-Schaltfläche zu Wörterbuch- und Auswahlmenüs für 
 msgid "yes"
 msgstr "Ja"
 
+# en-hash: f8115ed7a0bb14ce3154f12ad441b614
+msgid "unit_scan_written_numbers"
+msgstr "Geschriebene Zahlen scannen (z.B. 'fünf Meilen')"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "unit_scan_written_enabled"
+msgstr "Aktiviert"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "unit_scan_written_disabled"
+msgstr "Deaktiviert"
+
+# en-hash: 41e615cb7654281a8e431c371a92311e
+msgid "unit_scan_written_numbers_title"
+msgstr "Geschriebene Zahlen scannen"
+
+# en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
+msgid "unit_scan_written_numbers_desc"
+msgstr "Nach ausgeschriebenen Zahlen scannen (z. B. 'fünf Meilen'):"
+
+# en-hash: 984acb9f42ff774b4b3f5e00266cbd73
+msgid "unit_scan_written_numbers_about"
+msgstr "Das Scannen geschriebener Zahlen (wie 'fünf Meilen') erfordert einen zweiten Volltextdurchlauf. Das Überspringen dieses Durchlaufs auf leistungsschwächeren Geräten (Kindle, Kobo, PocketBook) beschleunigt den Scan um das 4- bis 5-fache und verhindert Startverzögerungen. Auf schnelleren Plattformen wie Android oder Desktop-Systemen gibt es keine spürbare Verzögerung."
+

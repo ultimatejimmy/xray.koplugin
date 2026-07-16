@@ -1361,3 +1361,27 @@ msgstr "Aggiunge un pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 msgid "yes"
 msgstr "SÌ"
 
+# en-hash: f8115ed7a0bb14ce3154f12ad441b614
+msgid "unit_scan_written_numbers"
+msgstr "Scansiona numeri scritti (es. 'cinque miglia')"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "unit_scan_written_enabled"
+msgstr "Abilitato"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "unit_scan_written_disabled"
+msgstr "Disabilitato"
+
+# en-hash: 41e615cb7654281a8e431c371a92311e
+msgid "unit_scan_written_numbers_title"
+msgstr "Scansiona numeri scritti"
+
+# en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
+msgid "unit_scan_written_numbers_desc"
+msgstr "Scansiona per numeri scritti (es. 'cinque miglia'):"
+
+# en-hash: 984acb9f42ff774b4b3f5e00266cbd73
+msgid "unit_scan_written_numbers_about"
+msgstr "La scansione di numeri scritti (come 'cinque miglia') richiede un secondo passaggio a testo intero. Saltare questo passaggio su dispositivi meno potenti (Kindle, Kobo, PocketBook) fornisce una scansione da 4 a 5 volte più veloce ed evita blocchi all'avvio. Su piattaforme più veloci come Android o PC, non c'è un rallentamento notevole."
+

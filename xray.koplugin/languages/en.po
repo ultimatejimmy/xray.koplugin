@@ -1022,3 +1022,21 @@ msgstr "Adds an 'X-Ray' button to dictionary and selection menus for instant loo
 msgid "yes"
 msgstr "Yes"
 
+
+msgid "unit_scan_written_numbers"
+msgstr "Scan Written Numbers (e.g. 'five miles')"
+
+msgid "unit_scan_written_enabled"
+msgstr "Enabled"
+
+msgid "unit_scan_written_disabled"
+msgstr "Disabled"
+
+msgid "unit_scan_written_numbers_title"
+msgstr "Scan Written Numbers"
+
+msgid "unit_scan_written_numbers_desc"
+msgstr "Scan for spelled-out numbers (e.g. 'five miles'):"
+
+msgid "unit_scan_written_numbers_about"
+msgstr "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."

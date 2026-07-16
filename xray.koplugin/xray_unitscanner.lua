@@ -789,43 +789,49 @@ function M:scanBookForUnits(force)
             local digit_units = "(" .. table.concat(digit_parts, "|") .. ")"
             local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*" .. digit_units .. ")"
 
-            -- Build pat_word
-            local function is_abbreviation(alias)
-                local clean = alias:gsub("%s+", "")
-                if clean:match("%d") or clean:find("[°º/%./]") then
-                    return true
-                end
-                if #clean < 4 and clean ~= "cup" then
-                    return true
-                end
-                return false
+            -- Build pat_word only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
+            local pat_word = nil
+            local scan_written = settings.unit_scan_written_numbers
+            if scan_written == nil then
+                scan_written = not xray_utils.isLowPowerForScan()
             end
+            if scan_written then
+                local function is_abbreviation(alias)
+                    local clean = alias:gsub("%s+", "")
+                    if clean:match("%d") or clean:find("[°º/%./]") then
+                        return true
+                    end
+                    if #clean < 4 and clean ~= "cup" then
+                        return true
+                    end
+                    return false
+                end
 
-            local boundary_both = {}
-            local boundary_none = {}
-            for _, alias in ipairs(sorted_aliases) do
-                if not is_abbreviation(alias) then
-                    local esc = escape_pattern(alias)
-                    local start_alnum = alias:match("^[%w]")
-                    local end_alnum = alias:match("[%w]$")
-                    if start_alnum and end_alnum then
-                        table.insert(boundary_both, esc)
-                    else
-                        table.insert(boundary_none, esc)
+                local boundary_both = {}
+                local boundary_none = {}
+                for _, alias in ipairs(sorted_aliases) do
+                    if not is_abbreviation(alias) then
+                        local esc = escape_pattern(alias)
+                        local start_alnum = alias:match("^[%w]")
+                        local end_alnum = alias:match("[%w]$")
+                        if start_alnum and end_alnum then
+                            table.insert(boundary_both, esc)
+                        else
+                            table.insert(boundary_none, esc)
+                        end
                     end
                 end
-            end
-            
-            local pat_word = nil
-            local word_parts = {}
-            if #boundary_both > 0 then
-                table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
-            end
-            if #boundary_none > 0 then
-                table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
-            end
-            if #word_parts > 0 then
-                pat_word = "(" .. table.concat(word_parts, "|") .. ")"
+                
+                local word_parts = {}
+                if #boundary_both > 0 then
+                    table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
+                end
+                if #boundary_none > 0 then
+                    table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
+                end
+                if #word_parts > 0 then
+                    pat_word = "(" .. table.concat(word_parts, "|") .. ")"
+                end
             end
             
             log("scanBookForUnits: pat_digit=[" .. tostring(pat_digit) .. "]")
