@@ -374,6 +374,7 @@ function Localization:t(key, ...)
             model_free = "free",
             model_paid = "paid",
             menu_series_context = "Series Context",
+            menu_timeline = "Timeline",
             series_context_enabled_toggle = "Enable Series Context",
             series_context_prompt_title = "Series Detected",
             series_context_prompt_text = "This appears to be Book %d of '%s'. Load a recap of the previous %d book(s)?\n\n(You can disable this in Settings → Series Context)",

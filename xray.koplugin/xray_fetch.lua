@@ -811,12 +811,12 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         local cache_fail = self.loc:t("cache_save_failed") or "✗ Cache failed."
         local label_chars = self.loc:t("entity_label_characters") or "Characters"
         local label_locs = self.loc:t("entity_label_locations") or "Locations"
-        local label_events = self.loc:t("menu_timeline") or "Events"
+        local label_timeline = self.loc:t("menu_timeline") or "Timeline"
         local summary = string.format("%s\n\n%s: %d\n%s: %d\n%s: %d\n\n%s", 
             fetch_complete,
             label_chars, #self.characters,
             label_locs, #self.locations,
-            label_events, #self.timeline,
+            label_timeline, #self.timeline,
             cache_saved and cache_success or cache_fail)
 
         local success_dialog

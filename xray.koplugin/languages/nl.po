@@ -725,7 +725,7 @@ msgstr "Instellingen"
 msgid "menu_terms"
 msgstr "Woordenlijst"
 
-# en-hash: 87f9f735a1d36793ceaecd4e47124b63
+# en-hash: 3d1f92a565d3b1a61880236e33c49bf3
 msgid "menu_timeline"
 msgstr "Tijdlijn"
 
@@ -1201,6 +1201,30 @@ msgstr "Middel"
 msgid "unit_manual_scan_button"
 msgstr "Scannen/Herscannen"
 
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "unit_scan_written_disabled"
+msgstr "Disabled"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "unit_scan_written_enabled"
+msgstr "Enabled"
+
+# en-hash: f8115ed7a0bb14ce3154f12ad441b614
+msgid "unit_scan_written_numbers"
+msgstr "Geschreven getallen scannen (bijv. 'vijf mijl')"
+
+# en-hash: 984acb9f42ff774b4b3f5e00266cbd73
+msgid "unit_scan_written_numbers_about"
+msgstr "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."
+
+# en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
+msgid "unit_scan_written_numbers_desc"
+msgstr "Scan for spelled-out numbers (e.g. 'five miles'):"
+
+# en-hash: 41e615cb7654281a8e431c371a92311e
+msgid "unit_scan_written_numbers_title"
+msgstr "Scan Written Numbers"
+
 # en-hash: 59655846df0abfca05d478f9c0a18eb4
 msgid "unit_scanning_book"
 msgstr "Boek scannen op eenheden..."
@@ -1360,28 +1384,4 @@ msgstr "Voegt een 'X-Ray'-knop toe aan woordenboek- en selectiemenu's voor direc
 # en-hash: 93cba07454f06a4a960172bbd6e2a435
 msgid "yes"
 msgstr "Ja"
-
-# en-hash: f8115ed7a0bb14ce3154f12ad441b614
-msgid "unit_scan_written_numbers"
-msgstr "Geschreven getallen scannen (bijv. 'vijf mijl')"
-
-# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
-msgid "unit_scan_written_enabled"
-msgstr "Enabled"
-
-# en-hash: b9f5c797ebbf55adccdd8539a65a0241
-msgid "unit_scan_written_disabled"
-msgstr "Disabled"
-
-# en-hash: 41e615cb7654281a8e431c371a92311e
-msgid "unit_scan_written_numbers_title"
-msgstr "Scan Written Numbers"
-
-# en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
-msgid "unit_scan_written_numbers_desc"
-msgstr "Scan for spelled-out numbers (e.g. 'five miles'):"
-
-# en-hash: 984acb9f42ff774b4b3f5e00266cbd73
-msgid "unit_scan_written_numbers_about"
-msgstr "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."
 
