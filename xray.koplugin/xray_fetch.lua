@@ -8,6 +8,11 @@ local logger = require("logger")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")
 
+local function _truncateSafe(text, limit)
+    return (utils:getTruncatedText(text, limit))
+end
+
+
 local M = {}
 
 local function sanitizeMetadata(val)
@@ -62,7 +67,7 @@ function M:fetchSingleWord(text, pos0, pos1)
         local ButtonDialog = require("ui/widget/buttondialog")
         local is_cancelled = false
         local wait_msg = ButtonDialog:new{
-            title = self.loc:t("looking_up_msg", text:sub(1, 30)),
+            title = self.loc:t("looking_up_msg", _truncateSafe(text, 30)),
             text = text,
             buttons = {{{
                 text = self.loc:t("cancel") or "Cancel",
@@ -219,7 +224,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                 -- Always show result if it's valid, even if it didn't merge into a target_list
                 self.lookup_manager:showResult(item, item_type)
             else
-                local err = result.error_message or self.loc:t("entity_not_found", text:sub(1, 20))
+                local err = result.error_message or self.loc:t("entity_not_found", _truncateSafe(text, 20))
                 UIManager:show(InfoMessage:new{ text = err, timeout = 5 })
             end
         end)

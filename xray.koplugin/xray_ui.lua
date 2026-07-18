@@ -27,6 +27,7 @@ local _ = gettext
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local xray_units = require(plugin_path .. "xray_units")
 local XRaySettingsCard = require(plugin_path .. "xray_settings_card")
+local utils = require(plugin_path .. "xray_utils")
 
 local M = {}
 
@@ -52,28 +53,14 @@ local DEFAULT_POPUP_FONT_SIZE = 22
 
 -- Returns true if the text contains CJK characters (U+3000–U+9FFF, etc.)
 local function _textHasCJK(text)
-    if type(text) ~= "string" then return false end
-    return text:find("[\227-\234][\128-\191][\128-\191]") ~= nil
+    return utils:textHasCJK(text)
 end
 
 -- Truncates a string to limit_en characters (scaled down to limit_en/3 if CJK)
 -- only if the total length exceeds threshold_en (scaled down to threshold_en/3 if CJK).
 -- Returns: truncated_text, is_truncated
 local function _getTruncatedText(text, limit_en, threshold_en)
-    if type(text) ~= "string" or text == "" then
-        return "", false
-    end
-    local is_cjk = _textHasCJK(text)
-    
-    local limit = is_cjk and math.floor(limit_en / 3) or limit_en
-    local threshold = is_cjk and math.floor((threshold_en or limit_en) / 3) or (threshold_en or limit_en)
-    
-    local chars = util.splitToChars(text)
-    if #chars > threshold then
-        return table.concat(chars, "", 1, limit), true
-    else
-        return text, false
-    end
+    return utils:getTruncatedText(text, limit_en, threshold_en)
 end
 
 
