@@ -1532,6 +1532,15 @@ function AIHelper:lookupSingleWord(text, context)
     return self:executeUnifiedRequest(prompt)
 end
 
+function AIHelper:lookupSingleWordAsync(text, context, result_file)
+    local prompt = self:createPrompt(nil, nil, context, "single_word_lookup", text)
+    local requests, error_code, error_msg = self:buildComprehensiveRequest(nil, nil, nil, prompt)
+    if not requests then return nil, error_code, error_msg end
+    
+    local pid = self:makeRequestAsync(requests, result_file)
+    return pid
+end
+
 function AIHelper:mergeDescriptionsWithAI(primary_desc, secondary_desc)
     if not self.prompts then self:loadLanguage() end
     local template = self.prompts.merge_descriptions
