@@ -64,7 +64,7 @@ function M:fetchSingleWord(text, pos0, pos1)
             title = self.loc:t("looking_up_msg", text:sub(1, 30)),
             text = text,
             progress_max = 100,
-            dismissable = false,
+            dismissable = true,
             refresh_time_seconds = 0.05,
         }
         UIManager:show(progress_msg)
@@ -193,14 +193,14 @@ function M:fetchSingleWord(text, pos0, pos1)
                 else
                     if progress_msg then
                         progress_msg:reportProgress(100)
-                        UIManager:scheduleIn(0.1, function()
+                    UIManager:scheduleIn(0.1, function()
                             UIManager:close(progress_msg)
-                            self:_processSingleWordResult(data, text, book_text, current_page)
-                        end)
+                        self:_processSingleWordResult(data, text, book_text, current_page)
+                    end)
                     else
                         self:_processSingleWordResult(data, text, book_text, current_page)
-                    end
                 end
+            end
             end
             UIManager:scheduleIn(2, poll)
             end) -- end inner scheduleIn(0.3)
@@ -310,7 +310,7 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
         self.lookup_manager:showResult(item, item_type)
     else
         local err = result.error_message or self.loc:t("entity_not_found", text:sub(1, 20))
-        UIManager:show(InfoMessage:new{ text = err, timeout = 5 })
+        UIManager:show(InfoMessage:new{ text = err })
     end
 end
 
