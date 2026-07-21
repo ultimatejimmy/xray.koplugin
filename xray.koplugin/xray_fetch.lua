@@ -59,16 +59,33 @@ function M:fetchSingleWord(text, pos0, pos1)
         local limit_percent = reading_percent
         if spoiler_setting == "full_book" then limit_percent = 100 end
 
-        local ProgressBarDialog = require("ui/widget/progressbardialog")
-        local progress_msg = ProgressBarDialog:new{
-            title = self.loc:t("looking_up_msg", text:sub(1, 30)),
-            text = text,
-            progress_max = 100,
-            dismissable = true,
-            refresh_time_seconds = 0.05,
-        }
-        UIManager:show(progress_msg)
-        UIManager:forceRePaint()
+        local Notification = require("ui/widget/notification")
+
+        local progress_notification
+
+        local function updateProgress(percent)
+            if progress_notification then
+                UIManager:close(progress_notification)
+            end
+
+            progress_notification = Notification:new{
+                text = string.format("%s (%d%%)", self.loc:t("looking_up_msg", text:sub(1, 30)), percent),
+                timeout = 9999, -- keep visible until we replace it
+                toast = true,
+            }
+
+            UIManager:show(progress_notification)
+            UIManager:forceRePaint()
+        end
+
+        local function closeProgress()
+            if progress_notification then
+                UIManager:close(progress_notification)
+                progress_notification = nil
+            end
+        end
+
+        updateProgress(0)
 
         -- First tick: just let the dialog fully render, then yield back to event loop.
         -- Second tick: start the actual work. This two-step approach ensures the progress
@@ -79,13 +96,13 @@ function M:fetchSingleWord(text, pos0, pos1)
             if self.destroyed then return end
             if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
             
-            progress_msg:reportProgress(10)
+            updateProgress(10)
             
             -- 1. Distributed chapter samples (Start/Mid/End of each chapter up to current)
             -- Restored to 100, 60000 per user request
             local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(self.ui, 100, 60000, limit_percent == 100)
             
-            progress_msg:reportProgress(30)
+            updateProgress(30)
             
             -- 2. Immediate book text (Previous and Current page for maximum context relevance)
             local end_page = current_page + 1
@@ -103,7 +120,7 @@ function M:fetchSingleWord(text, pos0, pos1)
             
             self:log("fetchSingleWord: extracted book_text length: " .. tostring(book_text and #book_text or 0))
             
-            progress_msg:reportProgress(40)
+            updateProgress(40)
             
             local context = {
                 reading_percent = limit_percent,
@@ -134,12 +151,12 @@ function M:fetchSingleWord(text, pos0, pos1)
             local result_file = settings_xray_dir .. "/sw_fetch_" .. tostring(os.time()) .. ".json"
             local started = self.ai_helper:lookupSingleWordAsync(text, context, result_file)
             if not started then
-                if progress_msg then UIManager:close(progress_msg) end
+                closeProgress()
                 self:log("XRayPlugin: Failed to start async lookup")
                 return
             end
 
-            progress_msg:reportProgress(50)
+            updateProgress(50)
 
             local poll_count = 0
             local max_polls = 150 -- 5 minutes at 2s intervals
@@ -161,9 +178,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                 -- Simulate gradual progress while waiting for AI
                 if current_progress < 95 then
                     current_progress = current_progress + 5
-                    if progress_msg then 
-                        progress_msg:reportProgress(current_progress)
-                    end
+                    updateProgress(current_progress)
                 end
                 
                 poll_count = poll_count + 1
@@ -172,7 +187,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                     if poll_count < max_polls then
                         UIManager:scheduleIn(2, poll)
                     else
-                        if progress_msg then UIManager:close(progress_msg) end
+                        closeProgress()
                         self:log("XRayPlugin: Single word lookup timed out")
                         local title, text_msg = utils:getFriendlyError("error_timeout", nil, self.loc)
                         UIManager:show(ConfirmBox:new{
@@ -182,7 +197,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                         })
                     end
                 elseif data == false then
-                    if progress_msg then UIManager:close(progress_msg) end
+                    closeProgress()
                     self:log("XRayPlugin: Single word lookup failed: " .. tostring(p_err_msg))
                     local title, text_msg = utils:getFriendlyError(p_err_code, p_err_msg, self.loc)
                     UIManager:show(ConfirmBox:new{
@@ -191,15 +206,11 @@ function M:fetchSingleWord(text, pos0, pos1)
                         cancel_text = nil
                     })
                 else
-                    if progress_msg then
-                        progress_msg:reportProgress(100)
-                    UIManager:scheduleIn(0.1, function()
-                            UIManager:close(progress_msg)
+                    updateProgress(100)
+                    UIManager:scheduleIn(0.2, function()
+                        closeProgress()
                         self:_processSingleWordResult(data, text, book_text, current_page)
                     end)
-                    else
-                        self:_processSingleWordResult(data, text, book_text, current_page)
-                end
             end
             end
             UIManager:scheduleIn(2, poll)
