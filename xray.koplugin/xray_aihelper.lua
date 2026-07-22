@@ -903,6 +903,117 @@ function AIHelper:init(path)
 end
 
 
+function AIHelper:getStoredConfigPath()
+    local ok_ds, DataStorage = pcall(require, "datastorage")
+    if ok_ds and DataStorage and DataStorage.getSettingsDir then
+        local xray_dir = DataStorage:getSettingsDir() .. "/xray"
+        return xray_dir .. "/config_backup.json"
+    end
+    return nil
+end
+
+function AIHelper:loadStoredConfig()
+    local path = self:getStoredConfigPath()
+    if not path then return {} end
+    local f = io.open(path, "r")
+    if not f then return {} end
+    local content = f:read("*a")
+    f:close()
+    if not content or #content == 0 then return {} end
+    local ok, decoded = pcall(json.decode, content)
+    if ok and type(decoded) == "table" then
+        return decoded
+    end
+    return {}
+end
+
+function AIHelper:saveStoredConfig(stored_cfg)
+    local path = self:getStoredConfigPath()
+    if not path then return end
+    
+    local ok_ds, DataStorage = pcall(require, "datastorage")
+    if ok_ds and DataStorage and DataStorage.getSettingsDir then
+        local xray_dir = DataStorage:getSettingsDir() .. "/xray"
+        local ok, lfs = pcall(require, "libs/libkoreader-lfs")
+        if not ok or type(lfs) ~= "table" then ok, lfs = pcall(require, "lfs") end
+        if ok and lfs and lfs.mkdir then
+            if lfs.attributes(xray_dir, "mode") ~= "directory" then
+                pcall(function() lfs.mkdir(xray_dir) end)
+            end
+        end
+    end
+
+    local f = io.open(path, "w")
+    if f then
+        f:write(json.encode(stored_cfg or {}))
+        f:close()
+    end
+end
+
+function AIHelper:writeConfigToFile(merged_config)
+    local config_file = self.path .. "/xray_config.lua"
+    local f = io.open(config_file, "r")
+    local text = ""
+    if f then
+        text = f:read("*a")
+        f:close()
+    end
+
+    if not text or #text == 0 then
+        text = [[-- X-Ray API Configuration
+-- Note: Config settings are automatically backed up in KOReader's persistent settings area
+-- (<settings_dir>/xray/config_backup.json) and will be restored if this file is overwritten by updates.
+
+return {
+    gemini_api_key = "",
+    chatgpt_api_key = "",
+    deepseek_api_key = "",
+    claude_api_key = "",
+    custom1_api_key  = "",
+    custom1_endpoint = "",
+    custom1_model    = "",
+    custom1_format   = "",
+    custom2_api_key  = "",
+    custom2_endpoint = "",
+    custom2_model    = "",
+    custom2_format   = "",
+}
+]]
+    end
+
+    for k, v in pairs(merged_config or {}) do
+        local val = tostring(v or "")
+        local safe_val = val:gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\n", "\\n")
+        local pat = k .. '%s*=%s*"[^"]*"'
+        if text:find(pat) then
+            text = text:gsub(pat, k .. ' = "' .. safe_val:gsub("%%", "%%%%") .. '"')
+        else
+            local replacement = string.format("    %s = \"%s\",\n}", k, safe_val:gsub("%%", "%%%%"))
+            text = text:gsub("%s*}%s*$", "\n" .. replacement)
+        end
+    end
+
+    local out_f = io.open(config_file, "w")
+    if out_f then
+        out_f:write(text)
+        out_f:close()
+        return true
+    end
+    return false
+end
+
+function AIHelper:updateConfigKey(key, value)
+    local config_file = self.path .. "/xray_config.lua"
+    local ok, config = pcall(dofile, config_file)
+    if not ok or type(config) ~= "table" then config = {} end
+    config[key] = value or ""
+    self:writeConfigToFile(config)
+    
+    local stored = self:loadStoredConfig()
+    stored[key] = value or ""
+    self:saveStoredConfig(stored)
+end
+
 function AIHelper:loadConfig()
     local new_config_file = self.path .. "/xray_config.lua"
     local old_config_file = self.path .. "/config.lua"
@@ -947,8 +1058,53 @@ function AIHelper:loadConfig()
     end
 
     local success, config = pcall(dofile, new_config_file)
+    if not success or type(config) ~= "table" then
+        config = {}
+    end
+
+    -- Bidirectional sync with stored config backup in persistent settings area
+    local stored_config = self:loadStoredConfig()
+    local restoration_needed = false
+    local backup_update_needed = false
+
+    local tracked_keys = {
+        "gemini_api_key", "chatgpt_api_key", "deepseek_api_key", "claude_api_key",
+        "custom1_api_key", "custom1_endpoint", "custom1_model", "custom1_format",
+        "custom2_api_key", "custom2_endpoint", "custom2_model", "custom2_format",
+        "gemini_primary_model", "gemini_secondary_model", "chatgpt_model", "default_provider"
+    }
+
+    -- 1. Restore missing / empty keys in config file if present in persistent stored config
+    for _, k in ipairs(tracked_keys) do
+        local stored_val = stored_config[k]
+        local current_val = config[k]
+        if stored_val and #stored_val > 0 and (current_val == nil or current_val == "") then
+            config[k] = stored_val
+            restoration_needed = true
+        end
+    end
+
+    -- 2. Update persistent stored config if config file has non-empty values that differ
+    for _, k in ipairs(tracked_keys) do
+        local current_val = config[k]
+        if current_val and #current_val > 0 and current_val ~= stored_config[k] then
+            stored_config[k] = current_val
+            backup_update_needed = true
+        end
+    end
+
+    if restoration_needed then
+        self:log("AIHelper: Restoring missing config settings from persistent settings area to xray_config.lua")
+        self:writeConfigToFile(config)
+    end
+
+    if backup_update_needed then
+        self:log("AIHelper: Updating stored config backup in persistent settings area")
+        self:saveStoredConfig(stored_config)
+    end
+
     self.config_keys = { gemini = nil, chatgpt = nil, deepseek = nil, claude = nil, custom1 = nil, custom2 = nil }
-    if success and config then
+    if config then
         if config.gemini_api_key then self.providers.gemini.api_key = config.gemini_api_key; self.config_keys.gemini = config.gemini_api_key end
         if config.gemini_primary_model then self.providers.gemini.primary_model = config.gemini_primary_model end
         if config.gemini_secondary_model then self.providers.gemini.secondary_model = config.gemini_secondary_model end

@@ -1,4 +1,6 @@
 -- X-Ray API Configuration
+-- Note: Config settings are automatically backed up in KOReader's persistent settings area
+-- (<settings_dir>/xray/config_backup.json) and will be restored if this file is overwritten by updates.
 
 return {
     -- Google Gemini API Key

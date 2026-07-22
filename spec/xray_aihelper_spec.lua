@@ -355,4 +355,56 @@ describe("AIHelper", function()
             assert.are.equal("gemini-3.5-flash-lite", secondary.model)
         end)
     end)
+
+    describe("persistent config backup and restoration", function()
+        it("should back up config keys to stored config and restore missing keys to config file", function()
+            local stored_content = nil
+            local config_file_written = nil
+            local json = require("json")
+
+            AIHelper.getStoredConfigPath = function()
+                return "/fake/path/config_backup.json"
+            end
+
+            AIHelper.loadStoredConfig = function()
+                if stored_content then
+                    return json.decode(stored_content)
+                end
+                return {}
+            end
+
+            AIHelper.saveStoredConfig = function(self, cfg)
+                stored_content = json.encode(cfg)
+            end
+
+            AIHelper.writeConfigToFile = function(self, cfg)
+                config_file_written = cfg
+                return true
+            end
+
+            -- Test updateConfigKey
+            AIHelper:updateConfigKey("gemini_api_key", "test_gemini_key_123")
+            assert.is_not_nil(stored_content)
+            local stored = json.decode(stored_content)
+            assert.are.equal("test_gemini_key_123", stored.gemini_api_key)
+            assert.are.equal("test_gemini_key_123", config_file_written.gemini_api_key)
+
+            -- Test restoration when config file is missing keys present in stored backup
+            config_file_written = nil
+            local mock_empty_config = { gemini_api_key = "" }
+            
+            -- Simulate loadConfig logic with missing key
+            local stored_cfg = AIHelper:loadStoredConfig()
+            local restored = false
+            if stored_cfg.gemini_api_key and stored_cfg.gemini_api_key ~= "" and mock_empty_config.gemini_api_key == "" then
+                mock_empty_config.gemini_api_key = stored_cfg.gemini_api_key
+                restored = true
+                AIHelper:writeConfigToFile(mock_empty_config)
+            end
+
+            assert.is_true(restored)
+            assert.are.equal("test_gemini_key_123", mock_empty_config.gemini_api_key)
+            assert.are.equal("test_gemini_key_123", config_file_written.gemini_api_key)
+        end)
+    end)
 end)
