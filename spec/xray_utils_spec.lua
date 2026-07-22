@@ -91,10 +91,12 @@ describe("xray_utils", function()
             assert.are.equal("error_model_not_found_desc", desc)
         end)
 
-        it("maps 400 API error to invalid api key", function()
-            local title, desc = utils:getFriendlyError("error_api", "HTTP 400: Bad Request", loc)
-            assert.are.equal("error_api_key_title", title)
-            assert.are.equal("error_api_key_desc", desc)
+        it("surfaces 400 API error details instead of blaming the API key", function()
+            -- Issue #86: a 400 is a malformed/rejected request (e.g. invalid
+            -- model name), not an authentication failure. Show the detail.
+            local title, desc = utils:getFriendlyError("error_api", "HTTP 400: custom1 is not a valid model ID", loc)
+            assert.are.equal("error_unknown_title", title)
+            assert.are.equal("error_unknown_desc:HTTP 400: custom1 is not a valid model ID", desc)
         end)
 
         it("handles unknown errors by returning the raw message", function()

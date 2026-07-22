@@ -3897,8 +3897,19 @@ function M:getAIModelSelectionMenu(setting_type)
         }
     }
     
-    local custom1_model = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.custom1_model or nil
-    local custom2_model = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.custom2_model or nil
+    -- Prefer the merged provider config: it covers models configured via
+    -- xray_config.lua, not only those entered in the API Keys UI (issue #86).
+    local function getCustomSlotModel(slot)
+        local model = self.ai_helper and self.ai_helper.providers
+            and self.ai_helper.providers[slot] and self.ai_helper.providers[slot].model
+        if not model or model == "" then
+            model = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings[slot .. "_model"]
+        end
+        if model == "" then model = nil end
+        return model
+    end
+    local custom1_model = getCustomSlotModel("custom1")
+    local custom2_model = getCustomSlotModel("custom2")
     
     local menu_items = {}
     

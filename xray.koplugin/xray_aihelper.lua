@@ -168,6 +168,30 @@ function AIHelper:getChatGPTTokenConfig(model)
     return "max_tokens", 16384
 end
 
+-- Resolve the effective model name for a request.
+-- The model picker historically stored the slot name ("custom1"/"custom2") as a
+-- placeholder model when the slot's model was configured in xray_config.lua
+-- rather than through the API Keys UI. Never send that placeholder to the API:
+-- fall back to the slot's configured model instead (issue #86).
+function AIHelper:resolveModel(provider_id, model)
+    if model == "" then model = nil end
+    if provider_id == "custom1" or provider_id == "custom2" then
+        if not model or model == provider_id then
+            local slot = self.providers[provider_id]
+            local slot_model = slot and slot.model
+            if slot_model and slot_model ~= "" then
+                return slot_model
+            end
+            if model then
+                self:log("AIHelper: WARNING: no model configured for " .. provider_id
+                    .. " (set " .. provider_id .. "_model in xray_config.lua or the API Keys menu)")
+                return nil
+            end
+        end
+    end
+    return model
+end
+
 function AIHelper:setTrapWidget(trap_widget) self.trap_widget = trap_widget end
 function AIHelper:resetTrapWidget() self.trap_widget = nil end
 
@@ -214,8 +238,9 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
         local config = self.providers[ai.provider]
         if config and config.api_key and config.api_key ~= "" then
             local url, headers, body
+            local resolved_model = self:resolveModel(ai.provider, ai.model)
             if ai.provider == "gemini" then
-                local model = ai.model or DEFAULT_AI.primary.model
+                local model = resolved_model or DEFAULT_AI.primary.model
                 local system_instruction_text = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
                 url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent"
                 headers = { ["Content-Type"] = "application/json", ["x-goog-api-key"] = config.api_key }
@@ -267,7 +292,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                     generationConfig = gen_config
                 })
             elseif self:isAnthropic(ai.provider, config.endpoint) then
-                local model = ai.model or "claude-3-7-sonnet-latest"
+                local model = resolved_model or "claude-3-7-sonnet-latest"
                 url = config.endpoint or "https://api.anthropic.com/v1/messages"
                 headers = {
                     ["Content-Type"] = "application/json",
@@ -283,7 +308,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 if ai.provider == "custom1" or ai.provider == "custom2" then
                     if (config.endpoint or ""):find("openrouter.ai") then
                         headers["HTTP-Referer"]      = "https://github.com/koreader/koreader-xray-plugin"
-                        headers["X-OpenRouter-Title"] = "KOReader X-Ray"
+                        headers["X-Title"] = "KOReader X-Ray"
                     end
                 end
                 
@@ -329,7 +354,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 
                 body = json.encode(req_body)
             else
-                local model = ai.model or "gpt-4o-mini"
+                local model = resolved_model or "gpt-4o-mini"
                 url = config.endpoint or "https://api.openai.com/v1/chat/completions"
                 headers = { ["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. config.api_key }
                 local system_instruction_text = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
@@ -388,7 +413,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 if ai.provider == "custom1" or ai.provider == "custom2" then
                     if (config.endpoint or ""):find("openrouter.ai") then
                         headers["HTTP-Referer"]      = "https://github.com/koreader/koreader-xray-plugin"
-                        headers["X-OpenRouter-Title"] = "KOReader X-Ray"
+                        headers["X-Title"] = "KOReader X-Ray"
                     end
                     -- Per-slot "Is Reasoning Model" setting: raise token ceiling to accommodate reasoning chains
                     local is_reasoning = self.settings and self.settings[ai.provider .. "_is_reasoning"]
@@ -400,7 +425,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 
                 body = json.encode(req_body)
             end
-            table.insert(requests, { url = url, headers = headers, body = body, provider = ai.provider, model = ai.model })
+            table.insert(requests, { url = url, headers = headers, body = body, provider = ai.provider, model = resolved_model or ai.model })
         end
     end
     
@@ -630,6 +655,9 @@ function AIHelper:makeRequestAsync(request_params, result_file)
                     end
                 else
                     self:log(string.format("AIHelper Child: Provider %s failed with code %s", req.provider, tostring(code)))
+                    if response_text and #response_text > 0 then
+                        self:log("AIHelper Child: Error response: " .. response_text:sub(1, 500))
+                    end
                     -- If it's the last one, write the error
                     if i == #requests then
                         local f = io.open(result_file, "w")
@@ -773,7 +801,17 @@ function AIHelper:checkAsyncResult(result_file)
 
     local code_num = tonumber(code_str)
     if code_num ~= 200 or not response_text or #response_text == 0 then
-        return false, "error_api", "HTTP " .. tostring(code_num)
+        -- Surface the provider's own error message (Gemini/OpenAI/OpenRouter/
+        -- Anthropic all use {"error": {"message": ...}}), so failures like an
+        -- invalid model name are not misreported as API key problems.
+        local error_detail = "HTTP " .. tostring(code_num)
+        if response_text and #response_text > 0 then
+            local s, err_data = pcall(json.decode, response_text)
+            if s and type(err_data) == "table" and type(err_data.error) == "table" and err_data.error.message then
+                error_detail = error_detail .. ": " .. tostring(err_data.error.message)
+            end
+        end
+        return false, "error_api", error_detail
     end
 
     -- Parse the response based on provider
@@ -1132,7 +1170,29 @@ function AIHelper:loadSettings()
         if settings[slot .. "_model"] then self.providers[slot].model = settings[slot .. "_model"] end
         if settings[slot .. "_format"] then self.providers[slot].format = settings[slot .. "_format"] end
     end
-    
+
+    -- Repair placeholder model names stored by older versions of the model picker:
+    -- selecting "Custom API 1/2" with the model configured only in xray_config.lua
+    -- saved the slot name itself as the model (issue #86). Must run after the
+    -- custom slot loop above so providers[slot].model holds the merged value.
+    local placeholder_repaired = false
+    for _, ai_slot in ipairs({"primary_ai", "secondary_ai"}) do
+        local ai = settings[ai_slot]
+        if type(ai) == "table" and (ai.provider == "custom1" or ai.provider == "custom2")
+            and (ai.model == nil or ai.model == "" or ai.model == ai.provider) then
+            local slot_model = self.providers[ai.provider] and self.providers[ai.provider].model
+            if slot_model and slot_model ~= "" and ai.model ~= slot_model then
+                self:log(string.format("AIHelper: Replacing %s placeholder model '%s' with configured '%s'",
+                    ai_slot, tostring(ai.model), slot_model))
+                ai.model = slot_model
+                placeholder_repaired = true
+            end
+        end
+    end
+    if placeholder_repaired then
+        self:saveSettings()
+    end
+
     self:loadLanguage()
 end
 
@@ -1475,19 +1535,20 @@ function AIHelper:executeUnifiedRequest(prompt)
     for _, ai in ipairs(models_to_try) do
         local config = self.providers[ai.provider]
         if not config or not config.api_key or config.api_key == "" then
-            self:log("AIHelper: Skipping " .. ai.provider .. " (" .. ai.model .. ") - API Key missing")
+            self:log("AIHelper: Skipping " .. ai.provider .. " (" .. tostring(ai.model) .. ") - API Key missing")
             last_err = "API Key not set for " .. (ai.provider == "gemini" and "Google Gemini" or "ChatGPT")
         else
-            self:log("AIHelper: Trying unified fallback model: " .. ai.provider .. " / " .. ai.model)
+            local model = self:resolveModel(ai.provider, ai.model)
+            self:log("AIHelper: Trying unified fallback model: " .. ai.provider .. " / " .. tostring(model))
             local result, err_code, err_msg
             if ai.provider == "gemini" then
-                result, err_code, err_msg = self:callGemini(prompt, config, ai.model)
+                result, err_code, err_msg = self:callGemini(prompt, config, model)
             elseif self:isAnthropic(ai.provider, config.endpoint) then
-                result, err_code, err_msg = self:callClaude(prompt, config, ai.model or config.model)
+                result, err_code, err_msg = self:callClaude(prompt, config, model)
             elseif ai.provider == "custom1" or ai.provider == "custom2" then
-                result, err_code, err_msg = self:callChatGPT(prompt, config, ai.model or config.model)
+                result, err_code, err_msg = self:callChatGPT(prompt, config, model)
             else
-                result, err_code, err_msg = self:callChatGPT(prompt, config, ai.model)
+                result, err_code, err_msg = self:callChatGPT(prompt, config, model)
             end
             
             if result then return result end
@@ -1623,7 +1684,7 @@ function AIHelper:callClaude(prompt, config, current_model)
     if provider_id and (provider_id == "custom1" or provider_id == "custom2") then
         if (config.endpoint or ""):find("openrouter.ai") then
             headers["HTTP-Referer"]       = "https://github.com/koreader/koreader-xray-plugin"
-            headers["X-OpenRouter-Title"] = "KOReader X-Ray"
+            headers["X-Title"] = "KOReader X-Ray"
         end
     end
     
@@ -1783,7 +1844,7 @@ function AIHelper:callChatGPT(prompt, config, current_model)
     local headers = { ["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. config.api_key }
     if (config.endpoint or ""):find("openrouter.ai") then
         headers["HTTP-Referer"]       = "https://github.com/koreader/koreader-xray-plugin"
-        headers["X-OpenRouter-Title"] = "KOReader X-Ray"
+        headers["X-Title"] = "KOReader X-Ray"
     end
     
     local ok, code, response_text = self:makeRequest(config.endpoint or "https://api.openai.com/v1/chat/completions", headers, request_body)
