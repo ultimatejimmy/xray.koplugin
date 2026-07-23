@@ -2,6 +2,8 @@
 
 ![Platform](https://img.shields.io/badge/platform-KOReader-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
+![Status](https://img.shields.io/badge/status-active-brightgreen.svg)
+![liberapay](https://img.shields.io/liberapay/patrons/ultimatejimmy.svg?logo=liberapay) 
 
 This plugin brings Kindle-style X-Ray features to KOReader. It uses AI to track characters, build plot timelines, and provide insights while you read.
 
@@ -41,7 +43,7 @@ For full setup instructions and a deep dive into features, check out the **[GitH
 
 ## Support me
 
-[liberapay](https://liberapay.com/ultimatejimmy) ![liberapay](https://img.shields.io/liberapay/patrons/ultimatejimmy.svg?logo=liberapay) 
+[liberapay](https://liberapay.com/ultimatejimmy)  
 
 [Buy me a coffee](https://www.buymeacoffee.com/ultimatejimmy)
 

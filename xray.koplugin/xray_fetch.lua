@@ -64,28 +64,33 @@ function M:fetchSingleWord(text, pos0, pos1)
         local limit_percent = reading_percent
         if spoiler_setting == "full_book" then limit_percent = 100 end
 
-        local ButtonDialog = require("ui/widget/buttondialog")
-        local is_cancelled = false
-        local wait_msg = ButtonDialog:new{
+        local ProgressBarDialog = require("ui/widget/progressbardialog")
+        local progress_msg = ProgressBarDialog:new{
             title = self.loc:t("looking_up_msg", _truncateSafe(text, 30)),
             text = text,
-            buttons = {{{
-                text = self.loc:t("cancel") or "Cancel",
-                callback = function()
-                    is_cancelled = true
-                    if wait_msg then UIManager:close(wait_msg) end
-                end
-            }}}
+            progress_max = 100,
+            dismissable = false,
+            refresh_time_seconds = 0.05,
         }
-        UIManager:show(wait_msg)
+        UIManager:show(progress_msg)
+        UIManager:forceRePaint()
 
-        UIManager:scheduleIn(0.5, function()
-            if is_cancelled or self.destroyed then return end
+        -- First tick: just let the dialog fully render, then yield back to event loop.
+        -- Second tick: start the actual work. This two-step approach ensures the progress
+        -- bar borders are fully committed to screen before the CPU starts blocking.
+        UIManager:scheduleIn(0.3, function()
+            if self.destroyed then return end
+            UIManager:scheduleIn(0.3, function()
+            if self.destroyed then return end
             if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
             
+            progress_msg:reportProgress(10)
+            
             -- 1. Distributed chapter samples (Start/Mid/End of each chapter up to current)
-            -- We use a moderate budget (60k) to balance context depth with fetch speed.
+            -- Restored to 100, 60000 per user request
             local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(self.ui, 100, 60000, limit_percent == 100)
+            
+            progress_msg:reportProgress(30)
             
             -- 2. Immediate book text (Previous and Current page for maximum context relevance)
             local end_page = current_page + 1
@@ -103,132 +108,215 @@ function M:fetchSingleWord(text, pos0, pos1)
             
             self:log("fetchSingleWord: extracted book_text length: " .. tostring(book_text and #book_text or 0))
             
+            progress_msg:reportProgress(40)
+            
             local context = {
                 reading_percent = limit_percent,
                 chapter_samples = samples,
                 book_text = book_text
             }
 
-            if wait_msg and self.ai_helper then self.ai_helper:setTrapWidget(wait_msg) end
-            local result, error_code, error_msg = self.ai_helper:lookupSingleWord(text, context)
-            if wait_msg and self.ai_helper then self.ai_helper:resetTrapWidget() end
-            if wait_msg then UIManager:close(wait_msg) end
+            local DataStorage = require("datastorage")
+            local settings_xray_dir = DataStorage:getSettingsDir() .. "/xray"
+            
+            -- Clean up orphaned fetch files
+            pcall(function()
+                local ok, lfs = pcall(require, "libs/libkoreader-lfs")
+                if not ok or type(lfs) ~= "table" then
+                    ok, lfs = pcall(require, "lfs")
+                end
+                if ok and lfs and lfs.dir then
+                    for file in lfs.dir(settings_xray_dir) do
+                        if file:find("^sw_fetch_.*%.json$") then
+                            os.remove(settings_xray_dir .. "/" .. file)
+                        end
+                    end
+                end
+            end)
 
-            if not result then
-                local title, text = utils:getFriendlyError(error_code, error_msg, self.loc)
-                UIManager:show(ConfirmBox:new{
-                    text = title .. "\n\n" .. text,
-                    ok_text = self.loc:t("ok") or "OK",
-                    cancel_text = nil
-                })
+            if self.destroyed then return end
+
+            local result_file = settings_xray_dir .. "/sw_fetch_" .. tostring(os.time()) .. ".json"
+            local started = self.ai_helper:lookupSingleWordAsync(text, context, result_file)
+            if not started then
+                if progress_msg then UIManager:close(progress_msg) end
+                self:log("XRayPlugin: Failed to start async lookup")
                 return
             end
 
-            if result.is_valid then
-                local item = result.item
-                local item_type = result.type
-                
-                -- Ensure tables exist before trying to merge
-                self.characters = self.characters or {}
-                self.locations = self.locations or {}
-                self.historical_figures = self.historical_figures or {}
-                self.terms = self.terms or {}
+            progress_msg:reportProgress(50)
 
-                -- Merge into our tables
-                local target_list
-                if item_type == "character" then
-                    target_list = self.characters
-                elseif item_type == "location" then
-                    target_list = self.locations
-                elseif item_type == "historical_figure" then
-                    target_list = self.historical_figures
-                elseif item_type == "term" then
-                    target_list = self.terms
-                end
-
-                if target_list then
-                    -- Resolve current chapter title for history tracking
-                    local chapter_title = nil
-                    if self.ui and self.ui.document and current_page then
-                        local toc = self.ui.document:getToc()
-                        if toc then
-                            for _, entry in ipairs(toc) do
-                                if entry.page and entry.page <= current_page then
-                                    chapter_title = entry.title
-                                else
-                                    break
-                                end
-                            end
-                        end
+            local poll_count = 0
+            local max_polls = 150 -- 5 minutes at 2s intervals
+            local current_progress = 50
+            local function poll()
+                if self.destroyed then
+                    if self.ai_helper and self.ai_helper.cancelAsyncChild then
+                        self.ai_helper:cancelAsyncChild()
                     end
+                    pcall(function() os.remove(result_file) end)
+                    self:log("XRayPlugin: Single word lookup cancelled or plugin destroyed")
+                    return
+                end
+                if not self.ui or not self.ui.document then
+                    pcall(function() os.remove(result_file) end)
+                    return
+                end
+                
+                -- Simulate gradual progress while waiting for AI
+                if current_progress < 95 then
+                    current_progress = current_progress + 5
+                    if progress_msg then 
+                        progress_msg:reportProgress(current_progress)
+                    end
+                end
+                
+                poll_count = poll_count + 1
+                local data, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file)
+                if data == nil then
+                    if poll_count < max_polls then
+                        UIManager:scheduleIn(2, poll)
+                    else
+                        if progress_msg then UIManager:close(progress_msg) end
+                        self:log("XRayPlugin: Single word lookup timed out")
+                        local title, text_msg = utils:getFriendlyError("error_timeout", nil, self.loc)
+                        UIManager:show(ConfirmBox:new{
+                            text = title .. "\n\n" .. text_msg,
+                            ok_text = self.loc:t("ok") or "OK",
+                            cancel_text = nil
+                        })
+                    end
+                elseif data == false then
+                    if progress_msg then UIManager:close(progress_msg) end
+                    self:log("XRayPlugin: Single word lookup failed: " .. tostring(p_err_msg))
+                    local title, text_msg = utils:getFriendlyError(p_err_code, p_err_msg, self.loc)
+                    UIManager:show(ConfirmBox:new{
+                        text = title .. "\n\n" .. text_msg,
+                        ok_text = self.loc:t("ok") or "OK",
+                        cancel_text = nil
+                    })
+                else
+                    if progress_msg then
+                        progress_msg:reportProgress(100)
+                        UIManager:scheduleIn(0.1, function()
+                            UIManager:close(progress_msg)
+                            self:_processSingleWordResult(data, text, book_text, current_page)
+                        end)
+                    else
+                        self:_processSingleWordResult(data, text, book_text, current_page)
+                    end
+                end
+            end
+            UIManager:scheduleIn(2, poll)
+            end) -- end inner scheduleIn(0.3)
+        end) -- end outer scheduleIn(0.3)
+    end)
+end
 
-                    -- Check if already exists (case-insensitive)
-                    local found = false
-                    for _, existing in ipairs(target_list) do
-                        if (existing.name or ""):lower() == (item.name or ""):lower() then
-                            -- Update description/role
-                            for k, v in pairs(item) do existing[k] = v end
-                            
-                            -- Record history for single word lookup
-                            local desc_key = item_type == "historical_figure" and "biography" or "description"
-                            if existing[desc_key] and existing[desc_key] ~= "" then
-                                existing.history = existing.history or {}
-                                local dup = false
-                                for _, entry in ipairs(existing.history) do
-                                    if entry.page == current_page then
-                                        entry[desc_key] = existing[desc_key]
-                                        entry.chapter = chapter_title or entry.chapter
-                                        dup = true; break
-                                    end
-                                end
-                                if not dup then
-                                    local hist_entry = { page = current_page, chapter = chapter_title or "" }
-                                    hist_entry[desc_key] = existing[desc_key]
-                                    table.insert(existing.history, hist_entry)
-                                end
-                            end
-                            found = true
+function M:_processSingleWordResult(result, text, book_text, current_page)
+    if result.is_valid then
+        local item = result.item
+        local item_type = result.type
+        
+        -- Ensure tables exist before trying to merge
+        self.characters = self.characters or {}
+        self.locations = self.locations or {}
+        self.historical_figures = self.historical_figures or {}
+        self.terms = self.terms or {}
+
+        -- Merge into our tables
+        local target_list
+        if item_type == "character" then
+            target_list = self.characters
+        elseif item_type == "location" then
+            target_list = self.locations
+        elseif item_type == "historical_figure" then
+            target_list = self.historical_figures
+        elseif item_type == "term" then
+            target_list = self.terms
+        end
+
+        if target_list then
+            -- Resolve current chapter title for history tracking
+            local chapter_title = nil
+            if self.ui and self.ui.document and current_page then
+                local toc = self.ui.document:getToc()
+                if toc then
+                    for _, entry in ipairs(toc) do
+                        if entry.page and entry.page <= current_page then
+                            chapter_title = entry.title
+                        else
                             break
                         end
                     end
-                    if not found then
-                        local desc_key = item_type == "historical_figure" and "biography" or "description"
-                        if item[desc_key] and item[desc_key] ~= "" then
-                            local hist_entry = { page = current_page, chapter = chapter_title or "" }
-                            hist_entry[desc_key] = item[desc_key]
-                            item.history = { hist_entry }
-                        end
-                        table.insert(target_list, item)
-                    end
-                    
-                    -- Sort and save cache
-                    self:sortDataByFrequency(target_list, book_text, "name")
-                    if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
-                    
-                    if not self.book_data then
-                        self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
-                    end
-                    local updated = self.book_data
-                    updated.characters = self.characters
-                    updated.locations = self.locations
-                    updated.historical_figures = self.historical_figures
-                    updated.terms = self.terms
-                    updated.timeline = self.timeline
-                    updated.book_type = self.book_type or updated.book_type
-                    updated.author_info = self.author_info or updated.author_info
-                    updated.last_fetch_page = updated.last_fetch_page
-                    
-                    self.cache_manager:asyncSaveCache(self.ui.document.file, updated)
                 end
-                
-                -- Always show result if it's valid, even if it didn't merge into a target_list
-                self.lookup_manager:showResult(item, item_type)
-            else
-                local err = result.error_message or self.loc:t("entity_not_found", _truncateSafe(text, 20))
-                UIManager:show(InfoMessage:new{ text = err, timeout = 5 })
             end
-        end)
-    end)
+
+            -- Check if already exists (case-insensitive)
+            local found = false
+            for _, existing in ipairs(target_list) do
+                if (existing.name or ""):lower() == (item.name or ""):lower() then
+                    -- Update description/role
+                    for k, v in pairs(item) do existing[k] = v end
+                    
+                    -- Record history for single word lookup
+                    local desc_key = item_type == "historical_figure" and "biography" or "description"
+                    if existing[desc_key] and existing[desc_key] ~= "" then
+                        existing.history = existing.history or {}
+                        local dup = false
+                        for _, entry in ipairs(existing.history) do
+                            if entry.page == current_page then
+                                entry[desc_key] = existing[desc_key]
+                                entry.chapter = chapter_title or entry.chapter
+                                dup = true; break
+                            end
+                        end
+                        if not dup then
+                            local hist_entry = { page = current_page, chapter = chapter_title or "" }
+                            hist_entry[desc_key] = existing[desc_key]
+                            table.insert(existing.history, hist_entry)
+                        end
+                    end
+                    found = true
+                    break
+                end
+            end
+            if not found then
+                local desc_key = item_type == "historical_figure" and "biography" or "description"
+                if item[desc_key] and item[desc_key] ~= "" then
+                    local hist_entry = { page = current_page, chapter = chapter_title or "" }
+                    hist_entry[desc_key] = item[desc_key]
+                    item.history = { hist_entry }
+                end
+                table.insert(target_list, item)
+            end
+            
+            -- Sort and save cache
+            self:sortDataByFrequency(target_list, book_text, "name")
+            if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
+            
+            if not self.book_data then
+                self.book_data = self.cache_manager:loadCache(self.ui.document.file) or {}
+            end
+            local updated = self.book_data
+            updated.characters = self.characters
+            updated.locations = self.locations
+            updated.historical_figures = self.historical_figures
+            updated.terms = self.terms
+            updated.timeline = self.timeline
+            updated.book_type = self.book_type or updated.book_type
+            updated.author_info = self.author_info or updated.author_info
+            updated.last_fetch_page = updated.last_fetch_page
+            
+            self.cache_manager:asyncSaveCache(self.ui.document.file, updated)
+        end
+        
+        -- Always show result if it's valid, even if it didn't merge into a target_list
+        self.lookup_manager:showResult(item, item_type)
+    else
+        local err = result.error_message or self.loc:t("entity_not_found", text:sub(1, 20))
+        UIManager:show(InfoMessage:new{ text = err, timeout = 5 })
+    end
 end
 
 function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_silent)

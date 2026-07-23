@@ -65,7 +65,7 @@ function M:getFriendlyError(error_code, error_msg, loc)
         desc_arg = nil
     elseif error_code == "error_api" then
         local msg = tostring(error_msg or ""):lower()
-        if msg:find("401") or msg:find("unauthorized") or msg:find("invalid api key") or msg:find("400") or msg:find("bad request") then
+        if msg:find("401") or msg:find("unauthorized") or msg:find("invalid api key") then
             title_key = "error_api_key_title"
             desc_key = "error_api_key_desc"
             desc_arg = nil

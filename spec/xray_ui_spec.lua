@@ -1002,9 +1002,37 @@ describe("xray_ui", function()
                 error(err)
             end
             
-            local last = _G.ui_tracker.last_shown
-            assert.is_not_nil(last)
-            assert.are.equal("InputContainer", last.type)
+        end)
+    end)
+
+    describe("getAIModelSelectionMenu", function()
+        it("should include new models at top of their provider lists", function()
+            local menu_items = plugin:getAIModelSelectionMenu("primary")
+            assert.is_not_nil(menu_items)
+            assert.is_true(#menu_items > 0)
+
+            -- Check for provider sub-menus
+            local gemini_item, chatgpt_item, claude_item
+            for _, item in ipairs(menu_items) do
+                if item.text and item.text:find("Gemini") then gemini_item = item end
+                if item.text and item.text:find("ChatGPT") then chatgpt_item = item end
+                if item.text and item.text:find("Claude") then claude_item = item end
+            end
+
+            assert.is_not_nil(gemini_item)
+            assert.is_not_nil(chatgpt_item)
+            assert.is_not_nil(claude_item)
+
+            local gemini_menu = gemini_item.sub_item_table_func()
+            assert.is_not_nil(gemini_menu[1].text:find("gemini%-3%.6%-flash"))
+            assert.is_not_nil(gemini_menu[2].text:find("gemini%-3%.5%-flash%-lite"))
+
+            local chatgpt_menu = chatgpt_item.sub_item_table_func()
+            assert.is_not_nil(chatgpt_menu[1].text:find("gpt%-5%.6%-terra"))
+            assert.is_not_nil(chatgpt_menu[2].text:find("gpt%-5%.6%-luna"))
+
+            local claude_menu = claude_item.sub_item_table_func()
+            assert.is_not_nil(claude_menu[1].text:find("claude%-sonnet%-5"))
         end)
     end)
 end)

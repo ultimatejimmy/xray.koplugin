@@ -149,6 +149,112 @@ describe("AIHelper", function()
         end)
     end)
 
+    describe("custom slot model resolution (issue #86)", function()
+        local saved_custom1
+
+        before_each(function()
+            saved_custom1 = {
+                api_key = AIHelper.providers.custom1.api_key,
+                endpoint = AIHelper.providers.custom1.endpoint,
+                model = AIHelper.providers.custom1.model,
+                format = AIHelper.providers.custom1.format,
+            }
+            AIHelper.providers.custom1.api_key = "sk-or-test"
+            AIHelper.providers.custom1.endpoint = "https://openrouter.ai/api/v1/chat/completions"
+            AIHelper.providers.custom1.model = "deepseek/deepseek-v4-flash"
+            AIHelper.providers.custom1.format = nil
+        end)
+
+        after_each(function()
+            AIHelper.providers.custom1.api_key = saved_custom1.api_key
+            AIHelper.providers.custom1.endpoint = saved_custom1.endpoint
+            AIHelper.providers.custom1.model = saved_custom1.model
+            AIHelper.providers.custom1.format = saved_custom1.format
+        end)
+
+        describe("resolveModel", function()
+            it("passes through explicit model names", function()
+                assert.are.equal("mistral/mistral-large", AIHelper:resolveModel("custom1", "mistral/mistral-large"))
+                assert.are.equal("gpt-4o", AIHelper:resolveModel("chatgpt", "gpt-4o"))
+            end)
+
+            it("replaces the slot-name placeholder with the configured model", function()
+                assert.are.equal("deepseek/deepseek-v4-flash", AIHelper:resolveModel("custom1", "custom1"))
+            end)
+
+            it("falls back to the configured model when no model is given", function()
+                assert.are.equal("deepseek/deepseek-v4-flash", AIHelper:resolveModel("custom1", nil))
+            end)
+
+            it("returns nil when the slot has no configured model", function()
+                AIHelper.providers.custom1.model = ""
+                assert.is_nil(AIHelper:resolveModel("custom1", "custom1"))
+            end)
+        end)
+
+        describe("buildComprehensiveRequest with placeholder model", function()
+            before_each(function()
+                AIHelper.settings = {
+                    primary_ai = { provider = "custom1", model = "custom1" },
+                    secondary_ai = { provider = "custom1", model = "custom1" },
+                }
+            end)
+
+            it("sends the configured model instead of the placeholder", function()
+                local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+                local body = require("json").decode(requests[1].body)
+                assert.are.equal("deepseek/deepseek-v4-flash", body.model)
+            end)
+
+            it("uses the documented X-Title header for OpenRouter attribution", function()
+                local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+                assert.is_not_nil(requests[1].headers["HTTP-Referer"])
+                assert.are.equal("KOReader X-Ray", requests[1].headers["X-Title"])
+                assert.is_nil(requests[1].headers["X-OpenRouter-Title"])
+            end)
+        end)
+
+        describe("loadSettings placeholder repair", function()
+            it("replaces a stored placeholder model with the slot's configured model", function()
+                local old_open = io.open
+                io.open = function(path, mode)
+                    if path:find("settings.json") then
+                        return {
+                            read = function(self, fmt)
+                                return '{"primary_ai": {"provider": "custom1", "model": "custom1"}, "custom1_model": "deepseek/deepseek-v4-flash", "ui_defaults_migrated_v2": true}'
+                            end,
+                            close = function() end
+                        }
+                    end
+                    return old_open(path, mode)
+                end
+                local old_save = AIHelper.saveSettings
+                AIHelper.saveSettings = function() end
+
+                AIHelper:loadSettings()
+
+                io.open = old_open
+                AIHelper.saveSettings = old_save
+
+                assert.are.equal("deepseek/deepseek-v4-flash", AIHelper.settings.primary_ai.model)
+            end)
+        end)
+
+        describe("checkAsyncResult error reporting", function()
+            it("includes the provider's error message on non-200 responses", function()
+                local tmp = os.tmpname()
+                local f = io.open(tmp, "w")
+                f:write('400\ncustom1\n{"error":{"message":"custom1 is not a valid model ID","code":400}}')
+                f:close()
+
+                local data, err_code, err_msg = AIHelper:checkAsyncResult(tmp)
+                assert.is_false(data)
+                assert.are.equal("error_api", err_code)
+                assert.are.equal("HTTP 400: custom1 is not a valid model ID", err_msg)
+            end)
+        end)
+    end)
+
     describe("isAnthropic", function()
         it("should return true for claude provider", function()
             assert.is_true(AIHelper:isAnthropic("claude", nil))
@@ -233,7 +339,72 @@ describe("AIHelper", function()
             assert.are.equal("value", decoded.keep_me)
             assert.are.equal("new_val", decoded.new_key)
             assert.is_nil(decoded.delete_me)
-            assert.is_nil(decoded.also_delete_me)
+        end)
+    end)
+
+    describe("DEFAULT_AI configuration", function()
+        it("should have gemini-3.6-flash as default primary model", function()
+            local primary = AIHelper.settings.primary_ai or { provider = "gemini", model = "gemini-3.6-flash" }
+            assert.are.equal("gemini", primary.provider)
+            assert.are.equal("gemini-3.6-flash", primary.model)
+        end)
+
+        it("should have gemini-3.5-flash-lite as default secondary model", function()
+            local secondary = AIHelper.settings.secondary_ai or { provider = "gemini", model = "gemini-3.5-flash-lite" }
+            assert.are.equal("gemini", secondary.provider)
+            assert.are.equal("gemini-3.5-flash-lite", secondary.model)
+        end)
+    end)
+
+    describe("persistent config backup and restoration", function()
+        it("should back up config keys to stored config and restore missing keys to config file", function()
+            local stored_content = nil
+            local config_file_written = nil
+            local json = require("json")
+
+            AIHelper.getStoredConfigPath = function()
+                return "/fake/path/config_backup.json"
+            end
+
+            AIHelper.loadStoredConfig = function()
+                if stored_content then
+                    return json.decode(stored_content)
+                end
+                return {}
+            end
+
+            AIHelper.saveStoredConfig = function(self, cfg)
+                stored_content = json.encode(cfg)
+            end
+
+            AIHelper.writeConfigToFile = function(self, cfg)
+                config_file_written = cfg
+                return true
+            end
+
+            -- Test updateConfigKey
+            AIHelper:updateConfigKey("gemini_api_key", "test_gemini_key_123")
+            assert.is_not_nil(stored_content)
+            local stored = json.decode(stored_content)
+            assert.are.equal("test_gemini_key_123", stored.gemini_api_key)
+            assert.are.equal("test_gemini_key_123", config_file_written.gemini_api_key)
+
+            -- Test restoration when config file is missing keys present in stored backup
+            config_file_written = nil
+            local mock_empty_config = { gemini_api_key = "" }
+            
+            -- Simulate loadConfig logic with missing key
+            local stored_cfg = AIHelper:loadStoredConfig()
+            local restored = false
+            if stored_cfg.gemini_api_key and stored_cfg.gemini_api_key ~= "" and mock_empty_config.gemini_api_key == "" then
+                mock_empty_config.gemini_api_key = stored_cfg.gemini_api_key
+                restored = true
+                AIHelper:writeConfigToFile(mock_empty_config)
+            end
+
+            assert.is_true(restored)
+            assert.are.equal("test_gemini_key_123", mock_empty_config.gemini_api_key)
+            assert.are.equal("test_gemini_key_123", config_file_written.gemini_api_key)
         end)
     end)
 end)

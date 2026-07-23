@@ -3876,6 +3876,8 @@ function M:getAIModelSelectionMenu(setting_type)
             id = "gemini",
             display_name = "Gemini",
             models = {
+                { id = "gemini-3.6-flash", cost = "free" },
+                { id = "gemini-3.5-flash-lite", cost = "free" },
                 { id = "gemini-3.5-flash", cost = "free" },
                 { id = "gemini-3.1-flash-lite", cost = "free" },
                 { id = "gemini-2.5-flash", cost = "free" },
@@ -3887,6 +3889,8 @@ function M:getAIModelSelectionMenu(setting_type)
             id = "chatgpt",
             display_name = "ChatGPT",
             models = {
+                { id = "gpt-5.6-terra", cost = "paid" },
+                { id = "gpt-5.6-luna", cost = "paid" },
                 { id = "gpt-5.5", cost = "paid" },
                 { id = "gpt-5.4-mini", cost = "paid" },
                 { id = "gpt-5.4-nano", cost = "paid" },
@@ -3904,14 +3908,26 @@ function M:getAIModelSelectionMenu(setting_type)
             id = "claude",
             display_name = "Claude",
             models = {
+                { id = "claude-sonnet-5", cost = "paid" },
                 { id = "claude-sonnet-4-6", cost = "paid" },
                 { id = "claude-haiku-4-5", cost = "paid" },
             }
         }
     }
     
-    local custom1_model = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.custom1_model or nil
-    local custom2_model = (self.ai_helper and self.ai_helper.settings) and self.ai_helper.settings.custom2_model or nil
+    -- Prefer the merged provider config: it covers models configured via
+    -- xray_config.lua, not only those entered in the API Keys UI (issue #86).
+    local function getCustomSlotModel(slot)
+        local model = self.ai_helper and self.ai_helper.providers
+            and self.ai_helper.providers[slot] and self.ai_helper.providers[slot].model
+        if not model or model == "" then
+            model = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings[slot .. "_model"]
+        end
+        if model == "" then model = nil end
+        return model
+    end
+    local custom1_model = getCustomSlotModel("custom1")
+    local custom2_model = getCustomSlotModel("custom2")
     
     local menu_items = {}
     

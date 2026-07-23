@@ -28,7 +28,7 @@ def call_gemini(prompt):
         print("Error: GEMINI_API_KEY environment variable not set. Cannot run automated translations.")
         sys.exit(1)
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={key}"
     headers = {"Content-Type": "application/json"}
     data = {
         "contents": [{"parts": [{"text": prompt}]}],
