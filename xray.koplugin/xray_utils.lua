@@ -1,5 +1,6 @@
 -- X-Ray Utility Functions
 local Device = require("device")
+local util = require("util")
 
 local M = {}
 
@@ -90,4 +91,31 @@ function M:getFriendlyError(error_code, error_msg, loc)
     return loc:t(title_key), loc:t(desc_key, desc_arg)
 end
 
+-- Returns true if the text contains CJK characters (U+3000–U+9FFF, etc.)
+function M:textHasCJK(text)
+    if type(text) ~= "string" then return false end
+    return text:find("[\227-\234][\128-\191][\128-\191]") ~= nil
+end
+
+-- Truncates a string to limit_en characters (scaled down to limit_en/3 if CJK)
+-- only if the total length exceeds threshold_en (scaled down to threshold_en/3 if CJK).
+-- Returns: truncated_text, is_truncated
+function M:getTruncatedText(text, limit_en, threshold_en)
+    if type(text) ~= "string" or text == "" then
+        return "", false
+    end
+    local is_cjk = self:textHasCJK(text)
+    
+    local limit = is_cjk and math.floor(limit_en / 2) or limit_en
+    local threshold = is_cjk and math.floor((threshold_en or limit_en) / 2) or (threshold_en or limit_en)
+    
+    local chars = util.splitToChars(text)
+    if #chars > threshold then
+        return table.concat(chars, "", 1, limit), true
+    else
+        return text, false
+    end
+end
+
 return M
+

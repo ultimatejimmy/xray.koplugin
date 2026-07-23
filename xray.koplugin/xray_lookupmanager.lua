@@ -2,6 +2,8 @@
 local logger = require("logger")
 local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
+local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
+local utils = require(plugin_path .. "xray_utils")
 
 -- Minimum score to consider a match "high confidence" and skip the re-lookup prompt.
 -- Scores 100 (exact) and 95 (alias exact) are above this; 50/40/30 are below.
@@ -9,6 +11,10 @@ local LOW_CONFIDENCE_THRESHOLD = 70
 
 local LookupManager = {}
 
+
+local function _truncateSafe(text, limit)
+    return (utils:getTruncatedText(text, limit))
+end
 
 function LookupManager:new(plugin)
     local o = {
@@ -19,12 +25,21 @@ function LookupManager:new(plugin)
     return o
 end
 
--- Clean and normalize text for comparison
+-- Clean and normalize text for comparison (Chinese & Multilingual Fixed)
 function LookupManager:normalize(text)
     if type(text) ~= "string" or text == "" then return "" end
-    -- Remove non-alphanumeric characters from start/end and lowercase
-    local clean = text:gsub("^[^%w]+", ""):gsub("[^%w]+$", ""):lower()
-    return clean
+    
+    local is_english = not utils:textHasCJK(text)
+    
+    if is_english then
+        local clean = text:gsub("^[^%w]+", ""):gsub("[^%w]+$", ""):lower()
+        return clean
+    else
+        -- Use safe ASCII punctuation classes to avoid UTF-8 byte stripping
+        local clean = text:gsub("[%s%p]+$", "")
+        clean = clean:gsub("^[%s%p]+", "")
+        return clean:lower()
+    end
 end
 
 -- Collect all matches from a category list using a test function.
@@ -223,7 +238,7 @@ function LookupManager:handleLookup(text, pos0, pos1)
     elseif #all > 1 then
         -- Multiple candidates — let the user pick
         local ButtonDialog = require("ui/widget/buttondialog")
-        local prompt = self.plugin.loc:t("multiple_matches", text:sub(1, 30))
+        local prompt = self.plugin.loc:t("multiple_matches", _truncateSafe(text, 30))
         local buttons = {}
         local dialog
 
@@ -264,7 +279,7 @@ function LookupManager:handleLookup(text, pos0, pos1)
         local ConfirmBox = require("ui/widget/confirmbox")
         local no_data_dialog
         
-        local text_to_show = text:sub(1, 30)
+        local text_to_show = _truncateSafe(text, 30)
         local prompt_text = self.plugin.loc:t("fetch_single_word_prompt", text_to_show)
         if not prompt_text or prompt_text == "fetch_single_word_prompt" then
             prompt_text = string.format("No X-Ray data found for '%s'. Would you like to look it up?", text_to_show)

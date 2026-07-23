@@ -9,6 +9,7 @@ local logger = require("logger")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local XRayLogger = require(plugin_path .. "xray_logger")
 local Trapper = require("ui/trapper")
+local utils = require(plugin_path .. "xray_utils")
 
 -- Optimization: Use rapidjson if available
 local json_ok, json = pcall(require, "json")
@@ -2128,6 +2129,9 @@ function AIHelper:validateAndCleanData(data)
     if data.is_valid ~= nil or data.duplicate_pairs ~= nil or data.DuplicatePairs ~= nil then return data end
     
     local strings = self:getFallbackStrings()
+    local function _truncateSafe(text, limit)
+        return (utils:getTruncatedText(text, limit))
+    end
     local function ensureString(v, d) return (type(v) == "string" and #v > 0) and v or d or "" end
     
     local chars = data.characters or data.Characters or {}
@@ -2136,7 +2140,7 @@ function AIHelper:validateAndCleanData(data)
         if type(c) == "table" then
             table.insert(valid_chars, {
                 name = ensureString(c.name or c.full_formal_name or c.full_name or c.formal_name or c.Name, strings.unnamed_character),
-                role = ensureString(c.role or c.Role, strings.not_specified):sub(1, 40),
+                role = _truncateSafe(ensureString(c.role or c.Role, strings.not_specified), 40),
                 description = ensureString(c.description or c.bio or c.history or c.desc, strings.no_description),
                 gender = ensureString(c.gender or c.Gender, ""),
                 occupation = ensureString(c.occupation or c.job or c.Occupation, ""),
@@ -2153,7 +2157,7 @@ function AIHelper:validateAndCleanData(data)
             table.insert(valid_hists, {
                 name = ensureString(h.name or h.Name, strings.unnamed_person),
                 biography = ensureString(h.biography or h.bio or h.description, strings.no_biography),
-                role = ensureString(h.role or h.historical_role, ""):sub(1, 40),
+                role = _truncateSafe(ensureString(h.role or h.historical_role, ""), 40),
                 importance_in_book = ensureString(h.importance_in_book or h.significance, "Mentioned"),
                 context_in_book = ensureString(h.context_in_book or h.context, "Historical")
             })

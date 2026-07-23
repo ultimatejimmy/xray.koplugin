@@ -8,6 +8,11 @@ local logger = require("logger")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")
 
+local function _truncateSafe(text, limit)
+    return (utils:getTruncatedText(text, limit))
+end
+
+
 local M = {}
 
 local function sanitizeMetadata(val)
@@ -61,7 +66,7 @@ function M:fetchSingleWord(text, pos0, pos1)
 
         local ProgressBarDialog = require("ui/widget/progressbardialog")
         local progress_msg = ProgressBarDialog:new{
-            title = self.loc:t("looking_up_msg", text:sub(1, 30)),
+            title = self.loc:t("looking_up_msg", _truncateSafe(text, 30)),
             text = text,
             progress_max = 100,
             dismissable = false,

@@ -275,6 +275,15 @@ package.loaded["ssl.https"] = {}
 package.loaded["ltn12"] = {}
 package.loaded["socket"] = {}
 package.loaded["socketutil"] = {}
+package.loaded["util"] = {
+    splitToChars = function(text)
+        local chars = {}
+        for c in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+            table.insert(chars, c)
+        end
+        return chars
+    end
+}
 local json_lib = nil
 pcall(function() json_lib = require("dkjson") end)
 if not json_lib then
