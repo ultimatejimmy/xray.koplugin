@@ -1826,9 +1826,15 @@ function M:showTerms()
             if term.source == "series_prior" then
                 name = name .. " " .. (self.loc:t("series_prior_label") or "[Prior]")
             end
+            local subtext = nil
+            if term.definition then
+                local trunc_text, is_trunc = _getTruncatedText(term.definition, 80)
+                subtext = trunc_text .. (is_trunc and "..." or "")
+            end
+
             table.insert(items, {
                 text = "• " .. name,
-                subtext = term.definition and _getTruncatedText(term.definition, 80) .. "...",
+                subtext = subtext,
                 keep_menu_open = true,
                 separator = true,
                 callback = function()

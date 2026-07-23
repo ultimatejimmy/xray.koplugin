@@ -1,5 +1,6 @@
 -- X-Ray Utility Functions
 local Device = require("device")
+local util = require("util")
 
 local M = {}
 
@@ -108,7 +109,6 @@ function M:getTruncatedText(text, limit_en, threshold_en)
     local limit = is_cjk and math.floor(limit_en / 2) or limit_en
     local threshold = is_cjk and math.floor((threshold_en or limit_en) / 2) or (threshold_en or limit_en)
     
-    local util = require("util")
     local chars = util.splitToChars(text)
     if #chars > threshold then
         return table.concat(chars, "", 1, limit), true

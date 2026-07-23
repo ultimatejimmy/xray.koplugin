@@ -29,25 +29,15 @@ end
 function LookupManager:normalize(text)
     if type(text) ~= "string" or text == "" then return "" end
     
-    local is_english = true
-    if self.plugin and self.plugin.ai_helper then
-        local lang = self.plugin.ai_helper.current_language
-        if lang and lang ~= "en" then
-            is_english = false
-        end
-    end
-    
-    if is_english and text:find("[^\1-\127]") then
-        is_english = false
-    end
+    local is_english = not utils:textHasCJK(text)
     
     if is_english then
         local clean = text:gsub("^[^%w]+", ""):gsub("[^%w]+$", ""):lower()
         return clean
     else
-        local clean = text:match("^%s*(.-)%s*$") or text
-        clean = clean:gsub("[%.,%?%!%:%\"%\'“»«”‘，。！？：、•○●□]+$", "")
-        clean = clean:gsub("^[%\"%\'“»«”‘，。！？：、•○●□]+", "")
+        -- Use safe ASCII punctuation classes to avoid UTF-8 byte stripping
+        local clean = text:gsub("[%s%p]+$", "")
+        clean = clean:gsub("^[%s%p]+", "")
         return clean:lower()
     end
 end
