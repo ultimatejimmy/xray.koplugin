@@ -134,6 +134,19 @@ function XRayBottomPopup:init()
 end
 
 function XRayBottomPopup:_rebuild()
+    if not self._font_fallback then
+        local ok, err = pcall(function() self:_rebuild() end)
+        if not ok then
+            if self.plugin and self.plugin.log then
+                self.plugin:log("XRayPlugin: XRayBottomPopup:_rebuild failed (" .. tostring(err) .. "), retrying with cfont fallback")
+            end
+            self._font_fallback = true
+            self:_rebuild()
+            self._font_fallback = nil
+        end
+        return
+    end
+
     local sw = Screen:getWidth()
     local sh = Screen:getHeight()
     local fs  = self.font_size
@@ -147,11 +160,13 @@ function XRayBottomPopup:_rebuild()
     local e = self.entity or {}
 
     local doc_family
-    if self.plugin and self.plugin.ui and self.plugin.ui.font then
-        doc_family = self.plugin.ui.font.font_face
-    end
-    if not doc_family and G_reader_settings then
-        doc_family = G_reader_settings:readSetting("cre_font_family")
+    if not self._font_fallback then
+        if self.plugin and self.plugin.ui and self.plugin.ui.font then
+            doc_family = self.plugin.ui.font.font_face
+        end
+        if not doc_family and G_reader_settings then
+            doc_family = G_reader_settings:readSetting("cre_font_family")
+        end
     end
     local Device = require("device")
 
@@ -176,7 +191,7 @@ function XRayBottomPopup:_rebuild()
     end
 
     local function getFontSafe(preferred_family, size)
-        if is_cjk or _isCJKFontFamily(preferred_family) then
+        if self._font_fallback or is_cjk or _isCJKFontFamily(preferred_family) then
             return Font:getFace("cfont", size)
         end
         if preferred_family and preferred_family ~= "" then
@@ -6754,7 +6769,7 @@ function M:showImageActions(image_entry)
         local display_title = image_entry.title or (self.loc:t("img_untitled") or "Image")
         local title_label = TextBoxWidget:new{
             text = (image_entry.is_favorite and "★ " or "") .. display_title,
-            face = Font:getFace("NotoSerif-Regular.ttf", 20),
+            face = Font:getFace("cfont", 20),
             bold = true,
             fgcolor = Blitbuffer.COLOR_BLACK,
             width = inner_w,

@@ -994,7 +994,7 @@ function ImageGallery:buildUI()
     
     local title_text = TextWidget:new{
         text = "X-Ray · " .. (p.loc:t("menu_images") or "Images & Maps"),
-        face = Font:getFace("NotoSerif-Regular.ttf", 21),
+        face = Font:getFace("cfont", 21),
         bold = true,
         fgcolor = Blitbuffer.COLOR_BLACK,
         max_width = title_max_w,
