@@ -102,11 +102,12 @@ function CacheManager:saveCache(book_path, data)
     data.cached_at = os.time()
     data.cache_version = "6.0"
     
+    local temp_file = cache_file .. ".tmp"
     local success, err = pcall(function()
-        local f, open_err = io.open(cache_file, "w")
+        local f, open_err = io.open(temp_file, "w")
         
         if not f then
-            logger.warn("CacheManager: Cannot open file for writing:", cache_file)
+            logger.warn("CacheManager: Cannot open file for writing:", temp_file)
             logger.warn("CacheManager: Error:", open_err or "unknown")
             return false
         end
@@ -123,17 +124,21 @@ function CacheManager:saveCache(book_path, data)
         f:close()
         
         if not ok2 then
+            pcall(os.remove, temp_file)
             logger.warn("CacheManager: Serialization error:", write_err or "unknown")
             AIHelper:log("CacheManager: Serialization error: " .. tostring(write_err or "unknown"))
             return false
         end
         
+        pcall(os.remove, cache_file)
+        os.rename(temp_file, cache_file)
         logger.info("CacheManager: Saved cache to:", cache_file)
         AIHelper:log("CacheManager: Saved cache to: " .. tostring(cache_file))
         return true
     end)
     
     if not success then
+        pcall(os.remove, temp_file)
         logger.warn("CacheManager: Failed to save cache:", err or "unknown error")
         AIHelper:log("CacheManager: Failed to save cache: " .. tostring(err or "unknown error"))
         return false
@@ -170,9 +175,10 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
     data.cache_version = "6.0"
 
     -- ── UIManager cooperative coroutine path (primary) ──────────────────────
+    local temp_file = cache_file .. ".tmp"
     local ok_ui, UIManager = pcall(require, "ui/uimanager")
     if ok_ui and UIManager then
-        local f, open_err = io.open(cache_file, "w")
+        local f, open_err = io.open(temp_file, "w")
         if not f then
             logger.warn("CacheManager: Cannot open cache file for async write:", open_err or "unknown")
             if on_done_cb then on_done_cb(false) end
@@ -184,7 +190,7 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
         f:write("return ")
 
         self._active_saves = self._active_saves or {}
-        local save_entry = { cancelled = false, file = f, path = cache_file }
+        local save_entry = { cancelled = false, file = f, path = temp_file }
         table.insert(self._active_saves, save_entry)
 
         local function cleanupSave()
@@ -252,6 +258,7 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
         local function resumeCoroutine()
             if save_entry.cancelled then
                 pcall(function() f:close() end)
+                pcall(os.remove, temp_file)
                 cleanupSave()
                 if on_done_cb then on_done_cb(false) end
                 return
@@ -261,6 +268,7 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
             if not ok then
                 logger.warn("CacheManager: Error during async serialization:", err or "unknown")
                 pcall(function() f:close() end)
+                pcall(os.remove, temp_file)
                 cleanupSave()
                 if on_done_cb then on_done_cb(false) end
                 return
@@ -268,6 +276,8 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
 
             if coroutine.status(co) == "dead" then
                 pcall(function() f:close() end)
+                pcall(os.remove, cache_file)
+                os.rename(temp_file, cache_file)
                 cleanupSave()
                 logger.info("CacheManager: Saved cache asynchronously (cooperative) to:", cache_file)
                 AIHelper:log("CacheManager: Saved cache asynchronously (cooperative) to: " .. tostring(cache_file))
@@ -277,6 +287,7 @@ function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
                     UIManager:scheduleIn(0.05, resumeCoroutine)
                 else
                     pcall(function() f:close() end)
+                    pcall(os.remove, temp_file)
                     cleanupSave()
                     if on_done_cb then on_done_cb(false) end
                 end
@@ -386,8 +397,8 @@ function CacheManager:loadCache(book_path)
         return dofile(cache_file)
     end)
     
-    if not success or not data then
-        logger.warn("CacheManager: Failed to load cache:", data or "unknown error")
+    if not success or not data or type(data) ~= "table" then
+        logger.warn("CacheManager: Failed to load cache:", tostring(data or "unknown error"))
         AIHelper:log("CacheManager: Failed to load cache: " .. tostring(data or "unknown error"))
         return nil
     end

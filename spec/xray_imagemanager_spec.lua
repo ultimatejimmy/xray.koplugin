@@ -308,4 +308,35 @@ describe("xray_imagemanager", function()
             assert.are.equal(488, map[4]) -- part24 is page 488
         end)
     end)
+
+    describe("extractImageToFile", function()
+        it("returns nil and does not accept empty 0-byte cached files", function()
+            local empty_file = "/tmp/koreader/empty_img.jpg"
+            local f = io.open(empty_file, "w")
+            f:close()
+
+            local img = {
+                id = "test_empty_1",
+                href = "test_empty.jpg",
+                cached_file = empty_file,
+            }
+            local result = img_mgr:extractImageToFile("/tmp/nonexistent.epub", img)
+            assert.is_nil(result)
+        end)
+
+        it("returns cached_file if non-empty file exists", function()
+            local valid_file = "/tmp/koreader/valid_img.jpg"
+            local f = io.open(valid_file, "w")
+            f:write("dummy-image-bytes")
+            f:close()
+
+            local img = {
+                id = "test_valid_1",
+                href = "test_valid.jpg",
+                cached_file = valid_file,
+            }
+            local result = img_mgr:extractImageToFile("/tmp/nonexistent.epub", img)
+            assert.are.equal(valid_file, result)
+        end)
+    end)
 end)

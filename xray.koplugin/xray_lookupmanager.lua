@@ -154,13 +154,14 @@ end
 function LookupManager:showResult(item, item_type, opts)
     opts = opts or {}
     opts.source = "in_text"
-    if item_type == "character" then
+    local norm_type = tostring(item_type or ""):lower():gsub("%s+", "_")
+    if norm_type == "character" then
         self.plugin:showCharacterDetails(item, opts)
-    elseif item_type == "historical" or item_type == "historical_figure" then
+    elseif norm_type == "historical" or norm_type == "historical_figure" or norm_type == "historicalfigure" then
         self.plugin:showHistoricalFigureDetails(item, opts)
-    elseif item_type == "location" then
+    elseif norm_type == "location" then
         self.plugin:showLocationDetails(item, opts)
-    elseif item_type == "term" then
+    elseif norm_type == "term" then
         self.plugin:showTermDetails(item, opts)
     end
 end

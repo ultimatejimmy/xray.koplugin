@@ -11,6 +11,22 @@ local function _truncateSafe(text, limit)
     return (utils:getTruncatedText(text, limit))
 end
 
+local function _getCurrentPage(plugin)
+    if not plugin or not plugin.ui then return 1 end
+    if plugin.ui.getCurrentPage then
+        local ok, p = pcall(function() return plugin.ui:getCurrentPage() end)
+        if ok and type(p) == "number" then return p end
+    end
+    if plugin.ui.paging and plugin.ui.paging.getCurrentPage then
+        local ok, p = pcall(function() return plugin.ui.paging:getCurrentPage() end)
+        if ok and type(p) == "number" then return p end
+    end
+    if plugin.ui.document and plugin.ui.document.getCurrentPage then
+        local ok, p = pcall(function() return plugin.ui.document:getCurrentPage() end)
+        if ok and type(p) == "number" then return p end
+    end
+    return 1
+end
 
 local M = {}
 
@@ -92,13 +108,13 @@ function M:fetchSingleWord(text, pos0, pos1)
     text = tostring(text or "")
 
     require("ui/network/manager"):runWhenOnline(function()
-        if self.destroyed or not self.ui or not self.ui.document or not self.ui.getCurrentPage then return end
+        if self.destroyed or not self.ui or not self.ui.document then return end
 
         if self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid) then
             self:cancelActiveAIRequest("Previous AI request replaced by single word lookup")
         end
         
-        local current_page = self.ui:getCurrentPage()
+        local current_page = _getCurrentPage(self)
         local total_pages = (type(self.ui.document.getPageCount) == "function" and self.ui.document:getPageCount()) or 1
         local reading_percent = math.floor((current_page / math.max(1, total_pages)) * 100)
         local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
@@ -114,6 +130,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                 local title, text_msg = utils:getFriendlyError("error_api", "invalid api key", self.loc)
                 local err_dlg
                 err_dlg = ButtonDialog:new{
+                    modal = true,
                     title = title,
                     text = text_msg,
                     buttons = {{{ text = self.loc:t("ok") or "OK", callback = function() if err_dlg then UIManager:close(err_dlg) end end }}}
@@ -128,7 +145,7 @@ function M:fetchSingleWord(text, pos0, pos1)
         local result_file
         local is_cancelled = false
         local progress_msg
-        local function cancelLookup(reason)
+        local function cancelLookup(reason, notify_user)
             if is_cancelled then return end
             is_cancelled = true
             if request_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
@@ -139,8 +156,12 @@ function M:fetchSingleWord(text, pos0, pos1)
             if self._active_ai_dialog == progress_msg then self._active_ai_dialog = nil end
             if self._active_ai_cancel == cancelLookup then self._active_ai_cancel = nil end
             self:log("XRayPlugin: " .. (reason or "Single word lookup cancelled"))
+            if notify_user then
+                UIManager:show(InfoMessage:new{ text = notify_user, timeout = 5 })
+            end
         end
         progress_msg = ButtonDialog:new{
+            modal = true,
             title = self.loc:t("looking_up_msg", _truncateSafe(text, 30)),
             text = text .. "\n\n" .. (self.loc:t("fetching_wait") or "This may take a moment.\nTap Cancel to stop."),
             tap_close_callback = function() cancelLookup("Single word lookup cancelled by user") end,
@@ -161,13 +182,13 @@ function M:fetchSingleWord(text, pos0, pos1)
         UIManager:scheduleIn(0.3, function()
             if is_cancelled then return end
             if self.destroyed or not self.ui or not self.ui.document then
-                cancelLookup("Single word lookup cancelled because the document or plugin is unavailable")
+                cancelLookup("Single word lookup cancelled because the document or plugin is unavailable", self.loc and self.loc:t("document_unavailable") or "Document unavailable")
                 return
             end
             UIManager:scheduleIn(0.3, function()
             if is_cancelled then return end
             if self.destroyed or not self.ui or not self.ui.document then
-                cancelLookup("Single word lookup cancelled because the document or plugin is unavailable")
+                cancelLookup("Single word lookup cancelled because the document or plugin is unavailable", self.loc and self.loc:t("document_unavailable") or "Document unavailable")
                 return
             end
             if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
@@ -217,7 +238,7 @@ function M:fetchSingleWord(text, pos0, pos1)
 
             if is_cancelled then return end
             if self.destroyed or not self.ui or not self.ui.document then
-                cancelLookup("Single word lookup cancelled because the document or plugin is unavailable")
+                cancelLookup("Single word lookup cancelled because the document or plugin is unavailable", self.loc and self.loc:t("document_unavailable") or "Document unavailable")
                 return
             end
 
@@ -227,16 +248,18 @@ function M:fetchSingleWord(text, pos0, pos1)
             end
 
             result_file = settings_xray_dir .. "/sw_fetch_" .. tostring(os.time()) .. ".json"
-            request_pid = self.ai_helper:lookupSingleWordAsync(text, context, result_file)
+            local pid, err_code, err_msg = self.ai_helper:lookupSingleWordAsync(text, context, result_file)
+            request_pid = pid
             if not request_pid then
                 if progress_msg then UIManager:close(progress_msg) end
                 if self._active_ai_dialog == progress_msg then self._active_ai_dialog = nil end
                 if self._active_ai_cancel == cancelLookup then self._active_ai_cancel = nil end
-                self:log("XRayPlugin: Failed to start async lookup")
+                self:log("XRayPlugin: Failed to start async lookup: " .. tostring(err_msg or err_code))
                 local ButtonDialog = require("ui/widget/buttondialog")
-                local title, text_msg = utils:getFriendlyError("error_api", "Failed to start background process", self.loc)
+                local title, text_msg = utils:getFriendlyError(err_code or "error_api", err_msg or "Failed to start background process", self.loc)
                 local err_dlg
                 err_dlg = ButtonDialog:new{
+                    modal = true,
                     title = title,
                     text = text_msg,
                     buttons = {{{ text = self.loc:t("ok") or "OK", callback = function() if err_dlg then UIManager:close(err_dlg) end end }}}
@@ -250,12 +273,12 @@ function M:fetchSingleWord(text, pos0, pos1)
             local function poll()
                 if is_cancelled then return end
                 if self.destroyed or not self.ui or not self.ui.document then
-                    cancelLookup("Single word lookup cancelled because the document or plugin is unavailable")
+                    cancelLookup("Single word lookup cancelled because the document or plugin is unavailable", self.loc and self.loc:t("document_unavailable") or "Document unavailable")
                     return
                 end
 
                 if not self.ai_helper or not self.ai_helper.checkAsyncResult then
-                    cancelLookup("Single word lookup stopped because the AI helper is unavailable")
+                    cancelLookup("Single word lookup stopped because the AI helper is unavailable", self.loc and self.loc:t("error_api") or "AI service unavailable")
                     return
                 end
                 local data, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file, request_pid)
@@ -268,6 +291,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                         local title, text_msg = utils:getFriendlyError("error_timeout", nil, self.loc)
                         local err_dlg
                         err_dlg = ButtonDialog:new{
+                            modal = true,
                             title = title,
                             text = text_msg,
                             buttons = {{{ text = self.loc:t("ok") or "OK", callback = function() if err_dlg then UIManager:close(err_dlg) end end }}}
@@ -283,6 +307,7 @@ function M:fetchSingleWord(text, pos0, pos1)
                     local title, text_msg = utils:getFriendlyError(p_err_code, p_err_msg, self.loc)
                     local err_dlg
                     err_dlg = ButtonDialog:new{
+                        modal = true,
                         title = title,
                         text = text_msg,
                         buttons = {{{ text = self.loc:t("ok") or "OK", callback = function() if err_dlg then UIManager:close(err_dlg) end end }}}
@@ -318,9 +343,13 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
         return
     end
 
-    if result.is_valid then
+    if result.is_valid == true or result.is_valid == "true" then
         local item = result.item
-        local item_type = result.type
+        local raw_type = tostring(result.type or ""):lower():gsub("%s+", "_")
+        local item_type = raw_type
+        if item_type == "historical" or item_type == "historicalfigure" then
+            item_type = "historical_figure"
+        end
         if type(item) ~= "table" or not item.name then
             local err = result.error_message or self.loc:t("entity_not_found", safe_text:sub(1, 20))
             UIManager:show(InfoMessage:new{ text = err, timeout = 5 })
@@ -1342,6 +1371,10 @@ function M:fetchMoreEntities(entity_type)
         local doc_file = self.ui.document.file
         if not doc_file then return end
 
+        if self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid) then
+            self:cancelActiveAIRequest("Previous AI request replaced by user fetch")
+        end
+
         if not self.ai_helper then
             local AIHelper = require(plugin_path .. "xray_aihelper")
             self.ai_helper = AIHelper
@@ -1489,8 +1522,9 @@ function M:fetchMoreEntities(entity_type)
                 exclude_terms = is_terms and table.concat(exclude_list, ", ") or nil,
             }
             
-            local pid, res_file = self.ai_helper:startAIRequest(title, author, context, section_name)
+            local pid, res_file_or_err, err_msg = self.ai_helper:startAIRequest(title, author, context, section_name)
             if not pid then
+                local err_code = res_file_or_err
                 if wait_msg then
                     local dlg = wait_msg
                     wait_msg = nil
@@ -1499,18 +1533,23 @@ function M:fetchMoreEntities(entity_type)
                 end
                 if self._active_ai_dialog == wait_msg then self._active_ai_dialog = nil end
                 if self._active_ai_cancel == cancelActiveRequest then self._active_ai_cancel = nil end
+
+                local friendly_title, friendly_text = utils:getFriendlyError(err_code, err_msg, self.loc)
+                local display_msg = friendly_title or (self.loc:t("error") or "Error")
+                if friendly_text and friendly_text ~= "" then
+                    display_msg = display_msg .. "\n\n" .. friendly_text
+                end
                 local err_dlg
                 err_dlg = ButtonDialog:new{
                     modal = true,
-                    title = self.loc:t("error") or "Error",
-                    text = res_file or (self.loc:t("error_api") or "API Error"),
+                    title = display_msg,
                     buttons = {{{ text = self.loc:t("ok") or "OK", callback = function() if err_dlg then UIManager:close(err_dlg) end end }}}
                 }
                 UIManager:show(err_dlg)
                 return
             end
             request_pid = pid
-            result_file = res_file
+            result_file = res_file_or_err
 
             local request_started_at = os.time()
             local request_timeout = 600
@@ -1685,6 +1724,10 @@ function M:fetchAuthorInfo()
     local doc_file = self.ui.document.file
     if not doc_file then return end
 
+    if self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid) then
+        self:cancelActiveAIRequest("Previous AI request replaced by author info fetch")
+    end
+
     if not self.ai_helper then
         local AIHelper = require(plugin_path .. "xray_aihelper")
         self.ai_helper = AIHelper
@@ -1762,8 +1805,9 @@ function M:fetchAuthorInfo()
         local book_text = self.chapter_analyzer:getTextForAnalysis(self.ui, 1000, nil, self.ui:getCurrentPage())
         local context = { book_text = book_text }
         
-        local pid, res_file = self.ai_helper:startAIRequest(title, author, context, "author_only")
+        local pid, res_file_or_err, err_msg = self.ai_helper:startAIRequest(title, author, context, "author_only")
         if not pid then
+            local err_code = res_file_or_err
             if wait_msg then
                 local dlg = wait_msg
                 wait_msg = nil
@@ -1772,18 +1816,23 @@ function M:fetchAuthorInfo()
             end
             if self._active_ai_dialog == wait_msg then self._active_ai_dialog = nil end
             if self._active_ai_cancel == cancelActiveRequest then self._active_ai_cancel = nil end
+
+            local friendly_title, friendly_text = utils:getFriendlyError(err_code, err_msg, self.loc)
+            local display_msg = friendly_title or (self.loc:t("error") or "Error")
+            if friendly_text and friendly_text ~= "" then
+                display_msg = display_msg .. "\n\n" .. friendly_text
+            end
             local err_dlg
             err_dlg = ButtonDialog:new{
                 modal = true,
-                title = self.loc:t("error") or "Error",
-                text = res_file or (self.loc:t("error_api") or "API Error"),
+                title = display_msg,
                 buttons = {{{ text = self.loc:t("ok") or "OK", callback = function() if err_dlg then UIManager:close(err_dlg) end end }}}
             }
             UIManager:show(err_dlg)
             return
         end
         request_pid = pid
-        result_file = res_file
+        result_file = res_file_or_err
 
         local request_started_at = os.time()
         local request_timeout = 600

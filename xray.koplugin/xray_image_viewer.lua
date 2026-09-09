@@ -177,8 +177,8 @@ end
 
 local function createIconButton(opts)
     opts = opts or {}
-    local icon_size = opts.size or sc(26)
-    local btn_w = opts.width or (icon_size + sc(12))
+    local icon_size = opts.size or sc(30)
+    local btn_w = opts.width or (icon_size + sc(18))
     local btn_h = opts.height or btn_w
     local icon_widget
     if opts.text_icon then
@@ -881,10 +881,10 @@ function ImageViewer:buildUI()
     local img = self.image_entry or {}
 
     -- ── 1. Top Controls Toolbar (Right-Aligned, Fixed Height) ─────────────────
-    local toolbar_h = sc(48)
-    local bar_content_h = sc(32)
-    local btn_size = sc(20)
-    local btn_frame_w = sc(32)
+    local toolbar_h = sc(64)
+    local bar_content_h = sc(48)
+    local btn_size = sc(30)
+    local btn_frame_w = sc(48)
     local btn_gap = sc(6)
     local num_btns = 7
     local actions_total_w = (btn_frame_w * num_btns) + (btn_gap * (num_btns - 1))
@@ -1072,15 +1072,25 @@ function ImageViewer:buildUI()
     self._base_x = base_x
     self._base_y = base_y
 
-    local image_widget = ImageWidget:new{
-        file = self.file_path,
-        width = img_box_w,
-        height = img_box_h,
-        rotation_angle = self.rotation_angle,
-        scale_factor = 0,
-        invert = self.inverted,
-        alpha = true,
-    }
+    local ok_img, image_widget = pcall(function()
+        return ImageWidget:new{
+            file = self.file_path,
+            width = img_box_w,
+            height = img_box_h,
+            rotation_angle = self.rotation_angle,
+            scale_factor = 0,
+            invert = self.inverted,
+            alpha = true,
+            file_do_cache = false,
+        }
+    end)
+    if not ok_img or not image_widget then
+        image_widget = TextWidget:new{
+            text = "Failed to load image",
+            face = Font:getFace("cfont", 16),
+            bold = true,
+        }
+    end
 
     self.canvas_container = CanvasContainer:new{
         width = vp_w,

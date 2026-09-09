@@ -82,5 +82,29 @@ describe("xray_cachemanager", function()
             cm:cancelAsyncSaves()
             assert.are.equal(0, #cm._active_saves)
         end)
+
+        it("safely handles truncated or corrupted cache files with syntax error", function()
+            -- Write a corrupted cache file that only has 'return ' (as from an interrupted save)
+            local f = io.open(test_cache, "w")
+            f:write("-- X-Ray Cache v6.0\n-- Generated: 2026-09-08 12:00:00\n\nreturn \n")
+            f:close()
+
+            local loaded = cache_manager:loadCache(test_book)
+            assert.is_nil(loaded)
+        end)
+
+        it("performs atomic writes so temp files are cleaned up", function()
+            local data = { characters = { { name = "Charlie" } } }
+            local success = cache_manager:saveCache(test_book, data)
+            assert.is_true(success)
+
+            local tmp_file = test_cache .. ".tmp"
+            local f_tmp = io.open(tmp_file, "r")
+            assert.is_nil(f_tmp) -- tmp file should not linger after successful save
+
+            local loaded = cache_manager:loadCache(test_book)
+            assert.is_not_nil(loaded)
+            assert.are.equal("Charlie", loaded.characters[1].name)
+        end)
     end)
 end)

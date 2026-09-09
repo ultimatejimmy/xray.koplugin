@@ -193,4 +193,37 @@ describe("xray_lookupmanager", function()
             assert.are.equal("Родион Раскольников", shown_item.name)
         end)
     end)
+
+    describe("showResult normalization", function()
+        local called
+        before_each(function()
+            called = {}
+            plugin.showCharacterDetails = function(self, item, opts) called.character = { item = item, opts = opts } end
+            plugin.showHistoricalFigureDetails = function(self, item, opts) called.historical = { item = item, opts = opts } end
+            plugin.showLocationDetails = function(self, item, opts) called.location = { item = item, opts = opts } end
+            plugin.showTermDetails = function(self, item, opts) called.term = { item = item, opts = opts } end
+        end)
+
+        it("dispatches correctly for capitalized and whitespace-formatted item types", function()
+            local item = { name = "Test Entity" }
+
+            lm:showResult(item, "Character")
+            assert.is_not_nil(called.character)
+            assert.are.equal(item, called.character.item)
+            assert.are.equal("in_text", called.character.opts.source)
+
+            lm:showResult(item, "Historical Figure")
+            assert.is_not_nil(called.historical)
+            assert.are.equal(item, called.historical.item)
+
+            lm:showResult(item, "historical")
+            assert.is_not_nil(called.historical)
+
+            lm:showResult(item, "LOCATION")
+            assert.is_not_nil(called.location)
+
+            lm:showResult(item, "Term")
+            assert.is_not_nil(called.term)
+        end)
+    end)
 end)

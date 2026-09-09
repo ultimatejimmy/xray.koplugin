@@ -233,6 +233,9 @@ msgstr "Short"
 msgid "desc_len_v_detailed"
 msgstr "Very Detailed"
 
+msgid "document_unavailable"
+msgstr "Document unavailable"
+
 msgid "dont_ask_again"
 msgstr "Don't ask again"
 
@@ -264,13 +267,22 @@ msgid "error"
 msgstr "Error"
 
 msgid "error_api"
-msgstr "API Error"
+msgstr "AI service unavailable"
 
 msgid "error_api_key_desc"
 msgstr "The API key provided was rejected. Please check your settings and ensure the key is correct."
 
 msgid "error_api_key_title"
 msgstr "Invalid API Key"
+
+msgid "error_busy_author"
+msgstr "Another AI request is already running.\n\nCancel it and fetch author info instead?"
+
+msgid "error_busy_desc"
+msgstr "Another AI request is already running in the background. Please wait for it to finish or try again shortly."
+
+msgid "error_busy_title"
+msgstr "Request in Progress"
 
 msgid "error_extract_text"
 msgstr "Error: Could not extract book text."
@@ -289,6 +301,9 @@ msgstr "Model Not Found"
 
 msgid "error_no_api_key"
 msgstr "API Key Required"
+
+msgid "error_opening_gallery"
+msgstr "Failed to open image gallery"
 
 msgid "error_parse_desc"
 msgstr "The AI returned a response that could not be processed. This might be a temporary glitch."

@@ -244,64 +244,28 @@ local function createDotMenuBadge(size, is_plain)
     }
 end
 
--- Storefront / Libbee style cover thumbnail scaler (cover crop, edge-to-edge)
-local function createCoverImageWidget(file_path, target_w, target_h)
+-- Robust thumbnail widget for gallery cards and list rows.
+-- Uses KOReader's native ImageWidget with scale_factor = 0 to decode and scale
+-- images at their natural aspect ratio without stretching, cropping, or static noise.
+-- file_do_cache = false avoids exhausting the 8 MB LRU ImageCache on large book illustrations.
+local function createGalleryThumbnailWidget(file_path, target_w, target_h)
     if not file_path or not target_w or not target_h then return nil end
-
-    local ok, orig_bb = pcall(function()
-        return RenderImage:renderImageFile(file_path, false)
-    end)
-
-    if not ok or not orig_bb then
+    local ok, widget = pcall(function()
         return ImageWidget:new{
             file = file_path,
             width = target_w,
             height = target_h,
             scale_factor = 0,
             alpha = true,
+            file_do_cache = false,
         }
-    end
-
-    local orig_w = orig_bb:getWidth()
-    local orig_h = orig_bb:getHeight()
-
-    if not orig_w or not orig_h or orig_w <= 0 or orig_h <= 0 then
-        if orig_bb.free then pcall(function() orig_bb:free() end) end
-        return nil
-    end
-
-    local scale = math.max(target_w / orig_w, target_h / orig_h)
-    local scaled_w = math.max(1, math.ceil(orig_w * scale))
-    local scaled_h = math.max(1, math.ceil(orig_h * scale))
-
-    local ok_scale, scaled_bb = pcall(function()
-        return RenderImage:scaleBlitBuffer(orig_bb, scaled_w, scaled_h, false)
     end)
-    if orig_bb.free then pcall(function() orig_bb:free() end) end
-    if not ok_scale or not scaled_bb then return nil end
-
-    local crop_x = math.max(0, math.floor((scaled_bb:getWidth() - target_w) / 2))
-    local crop_y = math.max(0, math.floor((scaled_bb:getHeight() - target_h) / 2))
-
-    local bb_type = (scaled_bb.getType and scaled_bb:getType()) or Blitbuffer.TYPE_BPP24
-    local dest_bb = Blitbuffer.new(target_w, target_h, bb_type)
-    pcall(function() dest_bb:fill(Blitbuffer.COLOR_WHITE) end)
-
-    pcall(function()
-        dest_bb:blitFrom(scaled_bb, 0, 0, crop_x, crop_y, target_w, target_h)
-    end)
-
-    if scaled_bb.free then
-        pcall(function() scaled_bb:free() end)
-    end
-
-    return ImageWidget:new{
-        image = dest_bb,
-        image_disposable = true,
-        width = target_w,
-        height = target_h,
-    }
+    return ok and widget or nil
 end
+
+local createCoverImageWidget = createGalleryThumbnailWidget
+local createMosaicImageWidget = createGalleryThumbnailWidget
+
 
 local function createButton(opts)
     opts = opts or {}
@@ -1240,16 +1204,22 @@ function ImageGallery:buildUI()
                 elseif img.width and img.height and tonumber(img.width) and tonumber(img.height) and tonumber(img.width) > 0 then
                     aspect_ratio = tonumber(img.height) / tonumber(img.width)
                     img.aspect_ratio = aspect_ratio
-                elseif img.cached_file then
-                    local nat_w, nat_h = getImageDimensions(img.cached_file)
-                    if nat_w and nat_h and nat_w > 0 and nat_h > 0 then
-                        aspect_ratio = nat_h / nat_w
-                        img.aspect_ratio = aspect_ratio
-                        img.width = nat_w
-                        img.height = nat_h
+                else
+                    local local_file = img.cached_file
+                    if not local_file and book_path and not img.is_spoiler then
+                        local_file = p.image_manager:extractImageToFile(book_path, img)
+                    end
+                    if local_file then
+                        local nat_w, nat_h = getImageDimensions(local_file)
+                        if nat_w and nat_h and nat_w > 0 and nat_h > 0 then
+                            aspect_ratio = nat_h / nat_w
+                            img.aspect_ratio = aspect_ratio
+                            img.width = nat_w
+                            img.height = nat_h
+                        end
                     end
                 end
-                aspect_ratio = math.max(0.35, math.min(1.85, aspect_ratio))
+                aspect_ratio = math.max(0.15, math.min(1.85, aspect_ratio))
                 local thumb_h = math.min(math.floor(cell_w * aspect_ratio), avail_content_h)
                 local est_h = thumb_h + grid_gap_v
 
@@ -1633,7 +1603,7 @@ function ImageGallery:renderMosaicCard(img, cell_w, is_focused_or_idx, opt_idx)
         end
     end
 
-    aspect_ratio = math.max(0.35, math.min(1.85, aspect_ratio))
+    aspect_ratio = math.max(0.15, math.min(1.85, aspect_ratio))
     local avail_h = self.avail_content_h or (self.sh and (self.sh - sc(140))) or 500
     local thumb_h = math.min(math.floor(thumb_w * aspect_ratio), avail_h)
 
@@ -1667,14 +1637,9 @@ function ImageGallery:renderMosaicCard(img, cell_w, is_focused_or_idx, opt_idx)
     else
         if local_file then
             -- Full uncropped natural aspect ratio display (zero pixels cropped)
-            image_widget = ImageWidget:new{
-                file = local_file,
-                width = thumb_w,
-                height = thumb_h,
-                scale_factor = 0,
-                alpha = true,
-            }
-        else
+            image_widget = createMosaicImageWidget(local_file, thumb_w, thumb_h)
+        end
+        if not image_widget then
             local placeholder_txt = TextWidget:new{
                 text = "🖼 " .. (img.category or "Image"):upper(),
                 face = Font:getFace("cfont", 13),
@@ -1896,15 +1861,20 @@ function ImageGallery:renderGridCard(img, cell_w, is_focused_or_idx, opt_idx)
     elseif local_file then
         img_widget = createCoverImageWidget(local_file, inner_w, img_h)
         if not img_widget then
-            img_widget = ImageWidget:new{
-                file = local_file,
-                width = inner_w,
-                height = img_h,
-                scale_factor = 0,
-                alpha = true,
-            }
+            local ok_fb, fb = pcall(function()
+                return ImageWidget:new{
+                    file = local_file,
+                    width = inner_w,
+                    height = img_h,
+                    scale_factor = 0,
+                    alpha = true,
+                    file_do_cache = false,
+                }
+            end)
+            img_widget = ok_fb and fb or nil
         end
-    else
+    end
+    if not img_widget then
         img_widget = CenterContainer:new{
             dimen = Geom:new{ w = inner_w, h = img_h },
             TextWidget:new{ text = "🖼", face = Font:getFace("cfont", 16) },
@@ -2122,15 +2092,20 @@ function ImageGallery:renderListRow(img, content_w, is_focused_or_idx, opt_idx)
     elseif local_file then
         thumb_widget = createCoverImageWidget(local_file, thumb_w, thumb_h)
         if not thumb_widget then
-            thumb_widget = ImageWidget:new{
-                file = local_file,
-                width = thumb_w,
-                height = thumb_h,
-                scale_factor = 0,
-                alpha = true,
-            }
+            local ok_fb, fb = pcall(function()
+                return ImageWidget:new{
+                    file = local_file,
+                    width = thumb_w,
+                    height = thumb_h,
+                    scale_factor = 0,
+                    alpha = true,
+                    file_do_cache = false,
+                }
+            end)
+            thumb_widget = ok_fb and fb or nil
         end
-    else
+    end
+    if not thumb_widget then
         thumb_widget = CenterContainer:new{
             dimen = Geom:new{ w = thumb_w, h = thumb_h },
             TextWidget:new{ text = "🖼", face = Font:getFace("cfont", 18) }

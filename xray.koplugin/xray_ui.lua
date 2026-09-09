@@ -134,19 +134,26 @@ function XRayBottomPopup:init()
 end
 
 function XRayBottomPopup:_rebuild()
-    if not self._font_fallback then
-        local ok, err = pcall(function() self:_rebuild() end)
-        if not ok then
-            if self.plugin and self.plugin.log then
-                self.plugin:log("XRayPlugin: XRayBottomPopup:_rebuild failed (" .. tostring(err) .. "), retrying with cfont fallback")
-            end
-            self._font_fallback = true
-            self:_rebuild()
-            self._font_fallback = nil
-        end
+    if self._font_fallback then
+        self:_buildContent()
         return
     end
 
+    local ok, err = pcall(function() self:_buildContent() end)
+    if not ok then
+        if self.plugin and self.plugin.log then
+            self.plugin:log("XRayPlugin: XRayBottomPopup:_rebuild failed (" .. tostring(err) .. "), retrying with cfont fallback")
+        end
+        self._font_fallback = true
+        local ok2, err2 = pcall(function() self:_buildContent() end)
+        if not ok2 and self.plugin and self.plugin.log then
+            self.plugin:log("XRayPlugin: XRayBottomPopup fallback rebuild also failed: " .. tostring(err2))
+        end
+        self._font_fallback = nil
+    end
+end
+
+function XRayBottomPopup:_buildContent()
     local sw = Screen:getWidth()
     local sh = Screen:getHeight()
     local fs  = self.font_size
@@ -6411,15 +6418,24 @@ function M:showImages(opts)
     end
 
     local ImageGallery = require(plugin_path .. "xray_image_gallery")
-    local gallery = ImageGallery:new{
-        plugin = self,
-        current_page = opts.current_page or 1,
-        view_mode = self.image_view_mode,
-        tab = self.image_tab,
-        filter_mode = self.image_filter_mode,
-    }
-    self.image_gallery_overlay = gallery
-    UIManager:show(gallery, "ui")
+    local ok_gallery, gallery = pcall(function()
+        return ImageGallery:new{
+            plugin = self,
+            current_page = opts.current_page or 1,
+            view_mode = self.image_view_mode,
+            tab = self.image_tab,
+            filter_mode = self.image_filter_mode,
+        }
+    end)
+    if ok_gallery and gallery then
+        self.image_gallery_overlay = gallery
+        UIManager:show(gallery, "ui")
+    else
+        logger.warn("XRayPlugin: Failed to open image gallery:", tostring(gallery))
+        if self.notify then
+            self:notify(self.loc and self.loc:t("error_opening_gallery") or "Failed to open image gallery", 3)
+        end
+    end
 end
 
 function M:renameImageDialog(image_entry, on_success)

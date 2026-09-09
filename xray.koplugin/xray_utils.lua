@@ -69,7 +69,11 @@ function M:getFriendlyError(error_code, error_msg, loc)
     local desc_key = "error_unknown_desc"
     local desc_arg = error_msg or "Unknown"
 
-    if error_code == "error_quota" then
+    if error_code == "error_busy" then
+        title_key = "error_busy_title"
+        desc_key = "error_busy_desc"
+        desc_arg = nil
+    elseif error_code == "error_quota" then
         title_key = "error_quota_title"
         desc_key = "error_quota_desc"
         desc_arg = nil

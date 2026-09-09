@@ -147,7 +147,7 @@ msgstr "Modalità libro salvata!"
 
 # en-hash: 9ea3cd79552afa39d886f96f4b101991
 msgid "book_type_about"
-msgstr "Il tipo di libro determina quale strategia di estrazione dell'IA viene utilizzata e quali funzionalità sono disponibili.\n\n- Narrativa: si concentra su narrativa, personaggi e sequenza temporale della trama.\n- Saggistica: si concentra su termini, concetti e figure storiche.\n\n\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Rilevamento automatico\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" consentirà all'IA di decidere dopo il primo recupero.\n\n[B]Nota:[/B] Questa impostazione è salvata [B]per libro[/B]. Una scelta personalizzata prevale sul rilevamento automatico o sulle impostazioni globali."
+msgstr "Il tipo di libro determina quale strategia di estrazione dell'IA viene utilizzata e quali funzionalità sono disponibili.\n\n- Narrativa: si concentra su narrativa, personaggi e sequenza temporale della trama.\n- Saggistica: si concentra su termini, concetti e figure storiche.\n\n\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Rilevamento automatico\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" consentirà all'IA di decidere dopo il primo recupero.\n\n[B]Nota:[/B] Questa impostazione è salvata [B]per libro[/B]. Una scelta personalizzata prevale sul rilevamento automatico o sulle impostazioni globali."
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -279,7 +279,7 @@ msgstr "Configurazione API personalizzata %d salvata."
 
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
-msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
+msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
 
 # en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
@@ -308,6 +308,10 @@ msgstr "Breve"
 # en-hash: 32e4e2960890d7cbb4890166ac18d7f8
 msgid "desc_len_v_detailed"
 msgstr "Molto dettagliata"
+
+# en-hash: 2896e8f581f9181834e98580adf8cfff
+msgid "document_unavailable"
+msgstr "Documento non disponibile"
 
 # en-hash: 7be0e84edd4626f6b7d42f1e8174f118
 msgid "dont_ask_again"
@@ -349,9 +353,9 @@ msgstr "Popup moderno (solo nel menu)"
 msgid "error"
 msgstr "Errore"
 
-# en-hash: fba0f8a108268b90efc2ccf92a27a646
+# en-hash: 6b844e936008c2aafa83c80176622884
 msgid "error_api"
-msgstr "Errore API"
+msgstr "Servizio IA non disponibile"
 
 # en-hash: 68007307953d58fd56bdcd07d62f3e3f
 msgid "error_api_key_desc"
@@ -360,6 +364,18 @@ msgstr "La chiave API fornita è stata rifiutata. Controlla le tue impostazioni 
 # en-hash: 4b6886b5038ca14e978a72f01df1fe6d
 msgid "error_api_key_title"
 msgstr "Chiave API non valida"
+
+# en-hash: d1345ddd7c09ae874feee020dcdb908f
+msgid "error_busy_author"
+msgstr "Un'altra richiesta IA è già in corso.\n\nAnnullarla e recuperare invece le informazioni sull'autore?"
+
+# en-hash: 97b2ecd6aa810d21be9204847d173957
+msgid "error_busy_desc"
+msgstr "Un'alta richiesta IA è già in esecuzione in background. Attendi il completamento o riprova a breve."
+
+# en-hash: 1838029eb098962dd8f401b27abd347c
+msgid "error_busy_title"
+msgstr "Richiesta in corso"
 
 # en-hash: 8a92a303055af14321f3cc7f644623fe
 msgid "error_extract_text"
@@ -384,6 +400,10 @@ msgstr "Modello non trovato"
 # en-hash: 52f3d028dbfc9859df0fd3417eb58d75
 msgid "error_no_api_key"
 msgstr "Chiave API richiesta"
+
+# en-hash: 64a497eb7dda1c38fdb732a8ea236bae
+msgid "error_opening_gallery"
+msgstr "Impossibile aprire la galleria immagini"
 
 # en-hash: e7b0af2be5bf56ed033f222a42ffd884
 msgid "error_parse_desc"
@@ -643,7 +663,7 @@ msgstr "Abilitato"
 
 # en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
-msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
+msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
 
 # en-hash: 08ea860427184895725e398c5ef821b1
 msgid "local_setup_title"
@@ -719,7 +739,7 @@ msgstr "Scansione in corso... %1 di %2 capitoli"
 
 # en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
-msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
+msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
 
 # en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
@@ -1131,7 +1151,7 @@ msgstr "Motivo"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
-msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
+msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
 
 # en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
@@ -1724,3 +1744,4 @@ msgstr "Aggiunge un pulsante 'X-Ray' ai menu del dizionario e di selezione per c
 # en-hash: 93cba07454f06a4a960172bbd6e2a435
 msgid "yes"
 msgstr "SÌ"
+

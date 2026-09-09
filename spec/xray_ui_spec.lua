@@ -1879,6 +1879,79 @@ describe("xray_ui", function()
             assert.is_true(found_series_pill)
         end)
     end)
+
+    describe("XRayBottomPopup rebuild & font fallback resilience", function()
+        it("constructs and rebuilds cleanly without recursion or C stack overflow", function()
+            plugin.ai_helper = {
+                settings = { ui_popup_intext = true }
+            }
+            local log_count = 0
+            plugin.log = function(self, msg)
+                log_count = log_count + 1
+            end
+
+            local item = {
+                name = "Harry Potter",
+                description = "The boy who lived.",
+                role = "Protagonist",
+            }
+            local ok, err = pcall(function()
+                plugin:showCharacterDetails(item, { source = "in_text" })
+            end)
+            assert.is_true(ok)
+            assert.is_nil(err)
+            assert.is_not_nil(plugin.active_details_dialog)
+            assert.are.equal(0, log_count)
+
+            -- Test next/prev button navigation rebuilds without error
+            local popup = plugin.active_details_dialog
+            if popup.onNextButton then
+                local next_ok = pcall(function() popup:onNextButton() end)
+                assert.is_true(next_ok)
+            end
+            if popup.onPrevButton then
+                local prev_ok = pcall(function() popup:onPrevButton() end)
+                assert.is_true(prev_ok)
+            end
+        end)
+
+        it("gracefully falls back to cfont if font lookup fails during rebuild", function()
+            plugin.ai_helper = {
+                settings = { ui_popup_intext = true }
+            }
+            local log_messages = {}
+            plugin.log = function(self, msg)
+                table.insert(log_messages, msg)
+            end
+
+            -- Simulate font failure on first attempt by making Font:getFace throw an error once
+            local Font = require("ui/font")
+            local old_getFace = Font.getFace
+            local fail_first = true
+            Font.getFace = function(self, face, size, index)
+                if fail_first then
+                    fail_first = false
+                    error("Mocked font file missing")
+                end
+                return old_getFace(self, face, size, index)
+            end
+
+            local item = {
+                name = "Hermione Granger",
+                description = "Clever witch",
+            }
+            local ok, err = pcall(function()
+                plugin:showCharacterDetails(item, { source = "in_text" })
+            end)
+
+            Font.getFace = old_getFace
+            assert.is_true(ok)
+            assert.is_nil(err)
+            assert.is_not_nil(plugin.active_details_dialog)
+            assert.is_true(#log_messages >= 1)
+            assert.is_true(log_messages[1]:find("retrying with cfont fallback") ~= nil)
+        end)
+    end)
 end)
 
 

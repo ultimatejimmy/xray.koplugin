@@ -625,6 +625,102 @@ describe("xray_fetch", function()
             assert.is_true(ok)
             assert.is_nil(err)
         end)
+
+        it("ensures progress dialog has modal = true", function()
+            local UIManager = require("ui/uimanager")
+            local old_schedule = UIManager.scheduleIn
+            UIManager.scheduleIn = function(self, delay, cb) end
+
+            plugin.ui.getCurrentPage = function() return 1 end
+            plugin.ai_helper = {
+                hasApiKey = function() return true end,
+            }
+            plugin:fetchSingleWord("TestTerm", 1, 2)
+            assert.is_not_nil(plugin._active_ai_dialog)
+            assert.are.equal("ButtonDialog", plugin._active_ai_dialog.type)
+            assert.is_true(plugin._active_ai_dialog.args.modal)
+            plugin:cancelActiveAIRequest("Test cleanup")
+            UIManager.scheduleIn = old_schedule
+        end)
+
+        it("resolves current page via ui.paging or ui.document when ui.getCurrentPage is nil", function()
+            local UIManager = require("ui/uimanager")
+            local old_schedule = UIManager.scheduleIn
+            UIManager.scheduleIn = function(self, delay, cb) end
+
+            plugin.ui.getCurrentPage = nil
+            plugin.ui.paging = {
+                getCurrentPage = function() return 42 end,
+            }
+            plugin.ai_helper = {
+                hasApiKey = function() return true end,
+            }
+            local ok, err = pcall(function()
+                plugin:fetchSingleWord("TestTerm", 1, 2)
+            end)
+            assert.is_true(ok)
+            assert.is_nil(err)
+            assert.is_not_nil(plugin._active_ai_dialog)
+            plugin:cancelActiveAIRequest("Test cleanup")
+            UIManager.scheduleIn = old_schedule
+        end)
+
+        it("correctly normalizes capitalized and aliased types in _processSingleWordResult", function()
+            local shown_type = nil
+            local shown_item = nil
+            plugin.lookup_manager = {
+                showResult = function(self, item, item_type)
+                    shown_item = item
+                    shown_type = item_type
+                end
+            }
+            plugin.characters = {}
+            plugin.locations = {}
+            plugin.historical_figures = {}
+            plugin.terms = {}
+
+            -- Test capitalized "Character"
+            plugin:_processSingleWordResult({
+                is_valid = true,
+                type = "Character",
+                item = { name = "Alanna of Trebond", description = "A knight" }
+            }, "Alanna", "book text", 10)
+
+            assert.are.equal("character", shown_type)
+            assert.are.equal(1, #plugin.characters)
+            assert.are.equal("Alanna of Trebond", plugin.characters[1].name)
+
+            -- Test capitalized "Historical Figure"
+            plugin:_processSingleWordResult({
+                is_valid = true,
+                type = "Historical Figure",
+                item = { name = "Napoleon", biography = "Emperor of France", role = "Emperor" }
+            }, "Napoleon", "book text", 10)
+
+            assert.are.equal("historical_figure", shown_type)
+            assert.are.equal(1, #plugin.historical_figures)
+            assert.are.equal("Napoleon", plugin.historical_figures[1].name)
+
+            -- Test "Location"
+            plugin:_processSingleWordResult({
+                is_valid = true,
+                type = "Location",
+                item = { name = "Camelot", description = "A castle" }
+            }, "Camelot", "book text", 10)
+
+            assert.are.equal("location", shown_type)
+            assert.are.equal(1, #plugin.locations)
+
+            -- Test "Term"
+            plugin:_processSingleWordResult({
+                is_valid = true,
+                type = "Term",
+                item = { name = "System 1", definition = "Fast thinking" }
+            }, "System 1", "book text", 10)
+
+            assert.are.equal("term", shown_type)
+            assert.are.equal(1, #plugin.terms)
+        end)
     end)
 
     describe("fetchMoreEntities modal behavior", function()

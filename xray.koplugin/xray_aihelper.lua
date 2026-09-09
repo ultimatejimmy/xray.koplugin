@@ -673,7 +673,7 @@ end
 function AIHelper:makeRequestAsync(request_params, result_file)
     if self._async_child_pid and not self:_reapAsyncChild(self._async_child_pid) then
         self:log("AIHelper: Cannot start async request while PID " .. tostring(self._async_child_pid) .. " is still active")
-        return false
+        return nil, "error_busy", "Another AI request is already in progress. Please wait for it to finish."
     end
 
     if result_file then
@@ -2105,7 +2105,10 @@ function AIHelper:startAIRequest(title, author, context, section_name, targeted_
     
     local unique_id = tostring(os.time()) .. "_" .. tostring(math.random(1000, 9999))
     local result_file = self.path .. "/tmp_ai_res_" .. unique_id .. ".json"
-    local pid = self:makeRequestAsync(requests, result_file)
+    local pid, err_code, err_msg = self:makeRequestAsync(requests, result_file)
+    if not pid then
+        return nil, err_code or "error_start", err_msg or "Failed to start background process"
+    end
     return pid, result_file
 end
 

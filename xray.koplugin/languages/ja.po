@@ -309,6 +309,10 @@ msgstr "短め"
 msgid "desc_len_v_detailed"
 msgstr "かなり詳細"
 
+# en-hash: 2896e8f581f9181834e98580adf8cfff
+msgid "document_unavailable"
+msgstr "ドキュメントは利用できません"
+
 # en-hash: 7be0e84edd4626f6b7d42f1e8174f118
 msgid "dont_ask_again"
 msgstr "次回から表示しない"
@@ -349,9 +353,9 @@ msgstr "モダンポップアップ（メニューのみ）"
 msgid "error"
 msgstr "エラー"
 
-# en-hash: fba0f8a108268b90efc2ccf92a27a646
+# en-hash: 6b844e936008c2aafa83c80176622884
 msgid "error_api"
-msgstr "APIエラー"
+msgstr "AIサービスを利用できません"
 
 # en-hash: 68007307953d58fd56bdcd07d62f3e3f
 msgid "error_api_key_desc"
@@ -360,6 +364,18 @@ msgstr "入力されたAPIキーは拒否されました。設定を確認し、
 # en-hash: 4b6886b5038ca14e978a72f01df1fe6d
 msgid "error_api_key_title"
 msgstr "無効なAPIキー"
+
+# en-hash: d1345ddd7c09ae874feee020dcdb908f
+msgid "error_busy_author"
+msgstr "別のAIリクエストが既に実行中です。\n\nキャンセルして、代わりに著者情報を取得しますか？"
+
+# en-hash: 97b2ecd6aa810d21be9204847d173957
+msgid "error_busy_desc"
+msgstr "別のAIリクエストが既にバックグラウンドで実行中です。終了するまでお待ちいただくか、しばらくしてからもう一度お試しください。"
+
+# en-hash: 1838029eb098962dd8f401b27abd347c
+msgid "error_busy_title"
+msgstr "リクエスト処理中"
 
 # en-hash: 8a92a303055af14321f3cc7f644623fe
 msgid "error_extract_text"
@@ -384,6 +400,10 @@ msgstr "モデルが見つかりません"
 # en-hash: 52f3d028dbfc9859df0fd3417eb58d75
 msgid "error_no_api_key"
 msgstr "APIキーが必要です"
+
+# en-hash: 64a497eb7dda1c38fdb732a8ea236bae
+msgid "error_opening_gallery"
+msgstr "画像ギャラリーを開けませんでした"
 
 # en-hash: e7b0af2be5bf56ed033f222a42ffd884
 msgid "error_parse_desc"

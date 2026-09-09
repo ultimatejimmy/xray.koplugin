@@ -36,6 +36,12 @@ function ImageManager:getImageDir(book_path)
     if not book_path then return nil end
     local sidecar_dir = DocSettings:getSidecarDir(book_path)
     local image_dir = sidecar_dir .. "/xray/images"
+    pcall(function()
+        local util = require("util")
+        if util and util.makePath then
+            util.makePath(image_dir)
+        end
+    end)
     if lfs then
         pcall(function()
             lfs.mkdir(sidecar_dir)
@@ -108,8 +114,11 @@ function ImageManager:extractImageToFile(book_path, image)
     if image.cached_file then
         local f = io.open(image.cached_file, "rb")
         if f then
+            local sz = f:seek("end")
             f:close()
-            return image.cached_file
+            if sz and sz > 0 then
+                return image.cached_file
+            end
         end
     end
     if not book_path or not image.href then return nil end
@@ -131,9 +140,12 @@ function ImageManager:extractImageToFile(book_path, image)
     else
         local f = io.open(target_path, "rb")
         if f then
+            local sz = f:seek("end")
             f:close()
-            image.cached_file = target_path
-            return target_path
+            if sz and sz > 0 then
+                image.cached_file = target_path
+                return target_path
+            end
         end
     end
     
@@ -152,6 +164,15 @@ function ImageManager:extractImageToFile(book_path, image)
             image.cached_file = target_path
             return target_path
         end
+        local f = io.open(target_path, "rb")
+        if f then
+            local sz = f:seek("end")
+            f:close()
+            if sz and sz > 0 then
+                image.cached_file = target_path
+                return target_path
+            end
+        end
     end
     
     -- Fallback: try case-insensitive or base filename match in archive
@@ -164,8 +185,19 @@ function ImageManager:extractImageToFile(book_path, image)
             image.cached_file = target_path
             return target_path
         end
+        local f = io.open(target_path, "rb")
+        if f then
+            local sz = f:seek("end")
+            f:close()
+            if sz and sz > 0 then
+                image.cached_file = target_path
+                return target_path
+            end
+        end
     end
     
+    -- Clean up any 0-byte or empty file left behind by shell redirect
+    pcall(os.remove, target_path)
     return nil
 end
 
