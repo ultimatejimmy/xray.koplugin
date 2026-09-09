@@ -133,6 +133,7 @@ function XRayPlugin:init()
     self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
+    self:clearPendingBackgroundFetch()
     self.auto_fetch_enabled = not (self.ai_helper.settings and
         self.ai_helper.settings.auto_fetch_on_chapter == false)
 
@@ -269,6 +270,7 @@ function XRayPlugin:destroy()
 
     self.bg_fetch_active = false
     self.bg_fetch_pending = false
+    self:clearPendingBackgroundFetch()
     self._unit_scan_in_progress = false
 
     self:closeAllMenus()
@@ -407,6 +409,7 @@ function XRayPlugin:onReaderReady()
     self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
+    self:clearPendingBackgroundFetch()
 
     local settings = self.ai_helper and self.ai_helper.settings or {}
 
@@ -493,6 +496,73 @@ function XRayPlugin:onNetworkConnected()
         if self.destroyed or not self.ui or not self.ui.document then return end
         self:checkSeriesContext()
     end)
+    self:scheduleBackgroundCatchUp(2)
+end
+
+function XRayPlugin:clearPendingBackgroundFetch()
+    self.pending_background_fetch = false
+    if self._background_catch_up_callback then
+        UIManager:unschedule(self._background_catch_up_callback)
+        self._background_catch_up_callback = nil
+    end
+end
+
+function XRayPlugin:scheduleBackgroundCatchUp(delay)
+    if not self.pending_background_fetch or self._background_catch_up_callback then return end
+    if self.destroyed or not self.ui or not self.ui.document then return end
+    local document = self.ui.document
+    local callback
+    callback = function()
+        if self._background_catch_up_callback ~= callback then return end
+        self._background_catch_up_callback = nil
+        if self.destroyed or not self.ui or self.ui.document ~= document then return end
+        if not self.pending_background_fetch then return end
+        if not self.auto_fetch_enabled then
+            self:clearPendingBackgroundFetch()
+            return
+        end
+
+        local current_page = self.ui:getCurrentPage()
+        local last_fetch_page = self.book_data and self.book_data.last_fetch_page
+        if last_fetch_page and current_page <= last_fetch_page then
+            self:clearPendingBackgroundFetch()
+            return
+        end
+        if not self.ai_helper or not self.ai_helper:hasApiKey() then return end
+
+        -- Keep the deferred update, but do not poll while offline.
+        local NetworkMgr = require("ui/network/manager")
+        if not NetworkMgr:isConnected() or not NetworkMgr:isOnline() then return end
+        if self.bg_fetch_pending or self.bg_fetch_active or self._unit_scan_in_progress
+                or self._active_ai_cancel or self.ai_helper._async_child_pid then
+            self:scheduleBackgroundCatchUp(5)
+            return
+        end
+
+        local cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
+        local remaining = (self.last_bg_fetch_time or 0) + cooldown - os.time()
+        if self.last_bg_fetch_time and remaining > 0 then
+            self:scheduleBackgroundCatchUp(remaining)
+            return
+        end
+
+        local chapter_title = nil
+        local max_p = -1
+        for _, entry in ipairs(self:_getFlatToc() or {}) do
+            local p = tonumber(entry.page)
+            if p and p <= current_page and p >= max_p then
+                max_p = p
+                chapter_title = entry.title
+            end
+        end
+        chapter_title = chapter_title or ("Page " .. tostring(current_page))
+        self:triggerBackgroundMergeFetch(chapter_title)
+        if not self.pending_background_fetch then
+            self.last_bg_fetch_page = current_page
+        end
+    end
+    self._background_catch_up_callback = callback
+    UIManager:scheduleIn(delay, callback)
 end
 
 function XRayPlugin:onPageUpdate(pageno)
@@ -515,7 +585,10 @@ function XRayPlugin:onPageUpdate(pageno)
             self:closeAllMenus()
         end
     end
-    if not self.auto_fetch_enabled then return end
+    if not self.auto_fetch_enabled then
+        self:clearPendingBackgroundFetch()
+        return
+    end
     
     if not self.ui or not self.ui.document then return end
 
@@ -688,16 +761,23 @@ end
 
 function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
     if self.destroyed or not self.ui or not self.ui.document then return end
+    if not self.auto_fetch_enabled then
+        self:clearPendingBackgroundFetch()
+        return
+    end
     if self._unit_scan_in_progress then
+        if self.bg_fetch_pending then return end
         self:log("XRayPlugin: Deferring background AI fetch because unit scan is in progress")
+        self.bg_fetch_pending = true
         UIManager:scheduleIn(5, function()
             if self.destroyed or not self.ui or not self.ui.document then return end
+            self.bg_fetch_pending = false
             self:triggerBackgroundMergeFetch(chapter_title)
         end)
         return
     end
     if self.bg_fetch_active then return end
-    if not self.ui or not self.ui.document then return end
+    if not self.ui.document.file then return end
 
 
     -- SILENT NETWORK CHECK: use isOnline() instead of runWhenOnline to avoid "white box" connecting dialogs
@@ -722,8 +802,6 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
         if self.last_bg_fetch_time and (now - self.last_bg_fetch_time) < cooldown then
             return
         end
-        self.last_bg_fetch_time = now
-
         local current_page = self.ui:getCurrentPage()
         local total_pages = self.ui.document:getPageCount()
         if not total_pages or total_pages == 0 then return end
@@ -746,9 +824,12 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
         
         self.fetch_attempts = self.fetch_attempts or {}
         self.fetch_attempts[chapter_title] = (self.fetch_attempts[chapter_title] or 0) + 1
+        self.last_bg_fetch_time = now
+        self:clearPendingBackgroundFetch()
         self:continueWithFetch(reading_percent, is_update, last_fetch_page, true) -- is_silent=true
     else
-        -- Silently skip if offline
+        -- Remember one deferred update, regardless of how many intervals are missed.
+        self.pending_background_fetch = true
     end
 end
 
