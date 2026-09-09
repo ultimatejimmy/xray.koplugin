@@ -2,36 +2,36 @@ require("spec/spec_helper")
 
 local UIManager = require("ui/uimanager")
 local XRayPlugin = dofile("xray.koplugin/main.lua")
+local utils = require("xray_utils")
+local Analyzer = require("xray_chapteranalyzer")
 
-describe("X-Ray Background Catch-Up", function()
-    local plugin, requests, scheduled
-    local now, current_page, connected, online, has_key, total_pages
+describe("persistent background catch-up", function()
+    local plugin, now, page, connected, online, scheduled, requests, disk
     local original_time, original_schedule, original_unschedule, original_network
+    local response, failure, fail_start, fail_save, hold_result, save_delay
 
     local function advance(seconds)
-        local target = now + seconds
-        local count = 0
+        local target, count = now + seconds, 0
         while true do
-            local next_index
+            local index
             for i, task in ipairs(scheduled) do
-                if task.time <= target and (not next_index or task.time < scheduled[next_index].time) then
-                    next_index = i
-                end
+                if task.time <= target and (not index or task.time < scheduled[index].time) then index = i end
             end
-            if not next_index then break end
-            local task = table.remove(scheduled, next_index)
+            if not index then break end
+            local task = table.remove(scheduled, index)
             now = task.time
             task.callback()
             count = count + 1
-            assert.is_true(count < 100, "Scheduled callbacks did not settle")
+            assert.is_true(count < 500, "Background callbacks did not settle")
         end
         now = target
     end
 
-    local function skipOfflineFetch()
+    local function offline()
         connected, online = false, false
-        plugin:triggerBackgroundMergeFetch("Chapter 2")
-        assert.is_true(plugin.pending_background_fetch)
+        plugin:triggerBackgroundMergeFetch("Chapter 3")
+        advance(1)
+        assert.is_table(plugin.background_fetch_queue)
         assert.are.equal(0, #requests)
     end
 
@@ -41,16 +41,17 @@ describe("X-Ray Background Catch-Up", function()
     end
 
     before_each(function()
-        now, current_page, total_pages = 1000, 165, 300
-        connected, online, has_key = true, true, true
-        requests, scheduled = {}, {}
-        original_time = os.time
-        original_schedule = UIManager.scheduleIn
-        original_unschedule = UIManager.unschedule
+        now, page, connected, online = 1000, 165, true, true
+        scheduled, requests, disk = {}, {}, {}
+        failure, fail_start, fail_save, hold_result = nil, false, false, false
+        save_delay = 0.1
+        response = { locations = {}, historical_figures = {}, terms = {}, characters = {{ name = "Alice", description = "New knowledge" }},
+            timeline = {{ chapter = "Chapter 3", page = 150, event = "An event" }} }
+        original_time, original_schedule, original_unschedule = os.time, UIManager.scheduleIn, UIManager.unschedule
         original_network = package.loaded["ui/network/manager"]
         os.time = function() return now end
         UIManager.scheduleIn = function(_, delay, callback)
-            table.insert(scheduled, { time = now + delay, callback = callback })
+            scheduled[#scheduled + 1] = { time = now + delay, callback = callback }
         end
         UIManager.unschedule = function(_, callback)
             for i = #scheduled, 1, -1 do
@@ -58,394 +59,363 @@ describe("X-Ray Background Catch-Up", function()
             end
         end
         package.loaded["ui/network/manager"] = {
-            isConnected = function() return connected end,
-            isOnline = function() return online end,
+            isConnected = function() return connected end, isOnline = function() return online end,
         }
-
-        plugin = setmetatable({
-            destroyed = false,
-            auto_fetch_enabled = true,
-            bg_fetch_pending = false,
-            bg_fetch_active = false,
-            pending_background_fetch = false,
-            last_bg_fetch_page = 100,
-            chapters_fetched = {},
-            timeline = { { chapter = "Chapter 1", page = 1 } },
-            book_data = { last_fetch_page = 100 },
-            ai_helper = {
-                settings = { auto_fetch_page_interval = 20, auto_fetch_cooldown = 0 },
-                hasApiKey = function() return has_key end,
-            },
-            ui = {
-                getCurrentPage = function() return current_page end,
-                document = {
-                    file = "catch-up.epub",
-                    getPageCount = function() return total_pages end,
-                    getToc = function()
-                        return {
-                            { title = "Chapter 1", page = 1 },
-                            { title = "Chapter 2", page = 100 },
-                            { title = "Chapter 3", page = 150 },
-                        }
-                    end,
-                },
-            },
-            log = function() end,
-            checkSeriesContext = function(self)
-                self.series_checks = (self.series_checks or 0) + 1
+        plugin = setmetatable(createMockPlugin(), { __index = XRayPlugin })
+        plugin.auto_fetch_enabled = true
+        plugin.chapters_fetched = {}
+        plugin.last_bg_fetch_page = 100
+        plugin.timeline = {{ chapter = "Chapter 1", page = 1 }}
+        plugin.book_data = { last_fetch_page = 100, timeline = utils:copyTable(plugin.timeline) }
+        plugin.chapter_analyzer = Analyzer:new()
+        plugin.ui.getCurrentPage = function() return page end
+        plugin.ui.document.getPageCount = function() return 300 end
+        plugin.ui.document.getToc = function()
+            return {{ title = "Chapter 1", page = 1 }, { title = "Chapter 2", page = 100 },
+                { title = "Chapter 3", page = 150 }}
+        end
+        plugin.ui.document.getPageText = function(_, p) return string.rep("Page " .. tostring(p) .. " Alice. ", 20) end
+        plugin.cache_manager = {
+            loadCache = function() return utils:copyTable(disk) end,
+            saveCache = function(_, _, data) disk = utils:copyTable(data); return true end,
+            asyncSaveCache = function(_, _, data, callback)
+                local snapshot, cancelled = utils:copyTable(data), false
+                UIManager:scheduleIn(save_delay, function()
+                    if cancelled then return end
+                    if not fail_save then disk = snapshot end
+                    if callback then callback(not fail_save) end
+                end)
+                return true, function() cancelled = true; if callback then callback(false) end end
             end,
-            continueWithFetch = function(self, reading_percent, is_update, last_fetch_page, is_silent)
-                table.insert(requests, {
-                    page = current_page,
-                    reading_percent = reading_percent,
-                    is_update = is_update,
-                    last_fetch_page = last_fetch_page,
-                    is_silent = is_silent,
-                })
-                self.bg_fetch_active = true
-            end,
-            cancelActiveAIRequest = function() end,
-            closeAllMenus = function() end,
-            clearHighlightOverlay = function() end,
-            clearUnitUnderlines = function() end,
-            clearTileCaches = function() end,
-        }, { __index = XRayPlugin })
+        }
+        plugin.ai_helper.settings = { auto_fetch_page_interval = 20, auto_fetch_cooldown = 0,
+            spoiler_setting = "spoiler_free", auto_dupe_check_enabled = false,
+            unit_converter_enabled = false, unit_new_feature_prompt_seen = true, language = "book" }
+        plugin.ai_helper.hasApiKey = function() return true end
+        plugin.ai_helper.buildComprehensiveRequest = function(_, _, _, context)
+            requests[#requests + 1] = utils:copyTable(context)
+            return {{ url = "https://example.invalid" }}
+        end
+        plugin.ai_helper.makeRequestAsync = function(self)
+            if fail_start then return false end
+            self._async_child_pid = 42
+            return 42
+        end
+        plugin.ai_helper.checkAsyncResult = function(self)
+            if hold_result then return nil end
+            self._async_child_pid = nil
+            if failure then return false, failure, "injected failure" end
+            return utils:copyTable(response)
+        end
+        plugin.ai_helper.cancelAsyncChild = function(self) self._async_child_pid = nil end
+        plugin.runPostFetchDuplicateCheck = function(self) self.duplicate_checks = (self.duplicate_checks or 0) + 1 end
+        plugin.checkSeriesContext = function(self) self.series_checks = (self.series_checks or 0) + 1 end
+        plugin.closeAllMenus = function() end
+        plugin.clearHighlightOverlay = function() end
+        plugin.clearUnitUnderlines = function() end
+        plugin.clearTileCaches = function() end
     end)
 
     after_each(function()
-        os.time = original_time
-        UIManager.scheduleIn = original_schedule
-        UIManager.unschedule = original_unschedule
+        os.time, UIManager.scheduleIn, UIManager.unschedule = original_time, original_schedule, original_unschedule
         package.loaded["ui/network/manager"] = original_network
     end)
 
-    it("catches up several missed page intervals with one silent incremental fetch", function()
-        connected, online = false, false
-        for _, page in ipairs({ 120, 140, 160 }) do
-            current_page = page
-            plugin:onPageUpdate(page)
-            advance(2)
-            assert.is_true(plugin.pending_background_fetch)
-            assert.is_false(plugin.bg_fetch_pending)
-        end
-        assert.are.equal(0, #requests)
-        assert.is_nil(plugin.fetch_attempts)
-        assert.is_nil(plugin.last_bg_fetch_time)
-
-        current_page = 165
+    it("runs the real extraction, merge and completion path across a 65-page backlog", function()
+        offline()
         reconnect()
-        advance(2)
-
-        assert.are.same({ {
-            page = 165,
-            reading_percent = 55,
-            is_update = true,
-            last_fetch_page = 100,
-            is_silent = true,
-        } }, requests)
-        assert.are.equal(1, plugin.fetch_attempts["Chapter 3"])
-        assert.are.equal(165, plugin.last_bg_fetch_page)
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
+        advance(5)
+        assert.are.equal(160, disk.last_fetch_page)
+        assert.are.equal(165, disk.background_fetch_queue.target.page)
+        advance(5)
+        assert.are.equal(2, #requests)
+        assert.are.equal(165, disk.last_fetch_page)
+        assert.is_nil(disk.background_fetch_queue)
+        assert.is_nil(plugin.background_fetch_queue)
+        assert.are.equal(1, plugin.duplicate_checks)
+        assert.are.equal("Alice", requests[2].existing_characters[1].name)
     end)
 
-    it("also catches up missed chapter-based updates", function()
+    it("coalesces missed intervals and repeated reconnect events", function()
+        connected, online = false, false
+        for _, p in ipairs({120, 140, 165}) do page = p; plugin:onPageUpdate(p); advance(2) end
+        reconnect(); reconnect(); reconnect()
+        advance(15)
+        assert.are.equal(2, #requests)
+        assert.are.equal(3, plugin.series_checks)
+    end)
+
+    it("handles chapter-based triggers", function()
         plugin.ai_helper.settings.auto_fetch_page_interval = nil
         connected, online = false, false
-        for _, page in ipairs({ 120, 160 }) do
-            current_page = page
-            plugin:onPageUpdate(page)
-            advance(2)
-        end
-        assert.is_true(plugin.pending_background_fetch)
-        current_page = 165
-        reconnect()
+        plugin:onPageUpdate(page)
         advance(2)
-        assert.are.equal(1, #requests)
-        assert.are.equal(100, requests[1].last_fetch_page)
+        reconnect(); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
     end)
 
-    it("coalesces repeated reconnect events and preserves series context checks", function()
-        skipOfflineFetch()
-        reconnect()
-        local callback = plugin._background_catch_up_callback
-        reconnect()
-        reconnect()
-        assert.are.equal(callback, plugin._background_catch_up_callback)
-        advance(2)
-        assert.are.equal(1, #requests)
-        assert.are.equal(3, plugin.series_checks)
-
-        plugin.bg_fetch_active = false
-        reconnect()
-        advance(10)
-        assert.are.equal(1, #requests)
-        assert.are.equal(4, plugin.series_checks)
-    end)
-
-    it("does not fetch on reconnect without an offline skip", function()
-        reconnect()
-        advance(10)
+    it("does not fetch on reconnect without work", function()
+        reconnect(); advance(20)
         assert.are.equal(0, #requests)
         assert.are.equal(1, plugin.series_checks)
-        assert.is_nil(plugin._background_catch_up_callback)
     end)
 
-    it("waits for the remaining cooldown without another page turn", function()
+    it("honors cooldown between batches without page turns", function()
         plugin.ai_helper.settings.auto_fetch_cooldown = 30
         plugin.last_bg_fetch_time = now
-        skipOfflineFetch()
-        reconnect()
-        advance(2)
-        assert.are.equal(1000, plugin.last_bg_fetch_time)
-        assert.is_true(plugin.pending_background_fetch)
-        advance(27)
+        offline(); reconnect(); advance(28)
         assert.are.equal(0, #requests)
-        advance(1)
-        assert.are.equal(1, #requests)
-        assert.are.equal(1030, plugin.last_bg_fetch_time)
+        advance(2); assert.are.equal(1, #requests)
+        advance(30); assert.are.equal(2, #requests)
     end)
 
-    for _, busy_field in ipairs({
-        "bg_fetch_pending", "bg_fetch_active", "_unit_scan_in_progress", "_active_ai_cancel", "_async_child_pid",
-    }) do
-        it("waits for " .. busy_field .. " without another page turn", function()
-            skipOfflineFetch()
-            local owner = busy_field == "_async_child_pid" and plugin.ai_helper or plugin
-            owner[busy_field] = true
-            reconnect()
-            advance(7)
+    for _, field in ipairs({ "bg_fetch_pending", "bg_fetch_active", "_unit_scan_in_progress", "_active_ai_cancel", "_async_child_pid" }) do
+        it("waits while " .. field .. " owns the reader", function()
+            offline()
+            local owner = field == "_async_child_pid" and plugin.ai_helper or plugin
+            owner[field] = true
+            reconnect(); advance(7)
             assert.are.equal(0, #requests)
-            assert.is_true(plugin.pending_background_fetch)
-            assert.is_nil(plugin.last_bg_fetch_time)
-
-            owner[busy_field] = nil
-            current_page = 170
-            advance(5)
-            assert.are.equal(1, #requests)
-            assert.are.equal(170, requests[1].page)
+            owner[field] = nil
+            advance(15)
+            assert.are.equal(165, disk.last_fetch_page)
         end)
     end
 
-    it("lets a scheduled normal fetch satisfy the pending catch-up", function()
-        skipOfflineFetch()
-        reconnect()
-        current_page = 180
-        plugin:onPageUpdate(current_page)
-        advance(2)
-        assert.are.equal(1, #requests)
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-
-        plugin.bg_fetch_active = false
-        advance(10)
-        assert.are.equal(1, #requests)
+    it("retains offline work without polling", function()
+        offline(); advance(120)
+        assert.are.equal(0, #scheduled)
+        assert.is_table(disk.background_fetch_queue)
     end)
 
-    it("does not turn an online busy skip into deferred offline work", function()
-        plugin._active_ai_cancel = function() end
-        plugin:triggerBackgroundMergeFetch("Chapter 3")
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin.last_bg_fetch_time)
-        plugin._active_ai_cancel = nil
-        reconnect()
-        advance(2)
+    it("retries internet readiness after Wi-Fi connects", function()
+        offline(); reconnect(); online = false
+        advance(3); online = true
+        advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
+    end)
+
+    it("bounds readiness retries and wakes again on resume", function()
+        offline(); reconnect(); online = false
+        advance(65)
+        assert.are.equal(0, #scheduled)
+        online = true; plugin:onResume(); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
+    end)
+
+    it("pauses without credentials and resumes after settings change", function()
+        offline(); plugin.ai_helper.hasApiKey = function() return false end
+        reconnect(); advance(15)
         assert.are.equal(0, #requests)
+        plugin.ai_helper.hasApiKey = function() return true end
+        plugin:onXRaySettingsChanged(); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
     end)
 
-    it("does not race a normal fetch deferred by a unit scan", function()
-        skipOfflineFetch()
-        plugin._unit_scan_in_progress = true
-        reconnect()
-        advance(2)
-        current_page = 180
-        plugin:onPageUpdate(current_page)
-        advance(2)
-        assert.is_true(plugin.bg_fetch_pending)
-
-        plugin._unit_scan_in_progress = false
-        advance(3)
+    it("retains work while disabled", function()
+        offline(); plugin.ai_helper.settings.auto_fetch_on_chapter = false
+        plugin:onXRaySettingsChanged(); reconnect(); advance(15)
         assert.are.equal(0, #requests)
-        advance(2)
-        assert.are.equal(1, #requests)
-        assert.is_false(plugin.bg_fetch_pending)
-        assert.is_false(plugin.pending_background_fetch)
-        plugin.bg_fetch_active = false
-        advance(5)
-        assert.are.equal(1, #requests)
+        assert.is_table(disk.background_fetch_queue)
+        plugin.ai_helper.settings.auto_fetch_on_chapter = true
+        plugin:onXRaySettingsChanged(); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
     end)
 
-    for _, state in ipairs({ "disconnected", "connected without internet" }) do
-        it("retains pending work without polling when " .. state, function()
-            skipOfflineFetch()
-            reconnect()
-            connected = state ~= "disconnected"
-            online = false
-            advance(60)
-            assert.are.equal(0, #requests)
-            assert.is_true(plugin.pending_background_fetch)
-            assert.is_nil(plugin._background_catch_up_callback)
-            assert.are.equal(0, #scheduled)
-
-            reconnect()
-            advance(2)
-            assert.are.equal(1, #requests)
-        end)
-    end
-
-    it("stops waiting if connectivity disappears during cooldown", function()
-        plugin.ai_helper.settings.auto_fetch_cooldown = 10
-        plugin.last_bg_fetch_time = now
-        skipOfflineFetch()
-        reconnect()
-        advance(2)
-        connected, online = false, false
-        advance(8)
-        assert.are.equal(0, #requests)
-        assert.is_true(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-        reconnect()
-        advance(2)
-        assert.are.equal(1, #requests)
+    it("defers ranges past the current spoiler boundary", function()
+        offline(); page = 130; reconnect(); advance(15)
+        assert.are.equal(130, disk.last_fetch_page)
+        assert.are.equal(165, disk.background_fetch_queue.target.page)
+        page = 165; plugin:onPageUpdate(page); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
     end)
 
-    it("clears deferred work when automatic fetching is disabled", function()
-        skipOfflineFetch()
-        reconnect()
-        plugin.auto_fetch_enabled = false
-        advance(2)
-        assert.are.equal(0, #requests)
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-    end)
-
-    it("rechecks enablement before a delayed normal background fetch", function()
-        current_page = 120
-        plugin:onPageUpdate(current_page)
-        plugin.auto_fetch_enabled = false
-        connected, online = false, false
-        advance(2)
-        assert.are.equal(0, #requests)
-        assert.is_false(plugin.pending_background_fetch)
-    end)
-
-    it("cancels catch-up on a page update after automatic fetching is disabled", function()
-        skipOfflineFetch()
-        reconnect()
-        plugin.auto_fetch_enabled = false
-        plugin:onPageUpdate(current_page)
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-        advance(2)
-        assert.are.equal(0, #requests)
-    end)
-
-    it("does not consume pending work or schedule retries without credentials", function()
-        skipOfflineFetch()
-        reconnect()
-        has_key = false
-        advance(10)
-        assert.are.equal(0, #requests)
-        assert.is_true(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-        assert.is_nil(plugin.last_bg_fetch_time)
-    end)
-
-    for _, page in ipairs({ 100, 90 }) do
-        it("clears deferred work when the current page is already covered: " .. page, function()
-            skipOfflineFetch()
-            reconnect()
-            current_page = page
-            advance(2)
-            assert.are.equal(0, #requests)
-            assert.is_false(plugin.pending_background_fetch)
-        end)
-    end
-
-    it("discards catch-up when a manual fetch covers the current position while waiting", function()
-        skipOfflineFetch()
-        plugin._active_ai_cancel = function() end
-        reconnect()
-        advance(2)
-        plugin.book_data.last_fetch_page = current_page
-        plugin._active_ai_cancel = nil
-        advance(5)
-        assert.are.equal(0, #requests)
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-    end)
-
-    it("uses an initial fetch and a page label when there is no cache or TOC", function()
-        plugin.book_data = nil
-        plugin.timeline = {}
-        plugin.last_bg_fetch_page = nil
-        plugin.ui.document.getToc = function() return {} end
-        connected, online = false, false
-        plugin:onPageUpdate(current_page)
-        advance(2)
-        assert.is_true(plugin.pending_background_fetch)
-        reconnect()
-        advance(2)
-        assert.are.equal(1, #requests)
-        assert.is_false(requests[1].is_update)
-        assert.is_nil(requests[1].last_fetch_page)
-        assert.are.equal(1, plugin.fetch_attempts["Page 165"])
-    end)
-
-    it("preserves the full-book spoiler setting", function()
+    it("keeps the full-book target across sequential requests", function()
         plugin.ai_helper.settings.spoiler_setting = "full_book"
-        skipOfflineFetch()
-        reconnect()
-        advance(2)
-        assert.are.equal(100, requests[1].reading_percent)
+        offline(); reconnect(); advance(30)
+        assert.are.equal(300, disk.last_fetch_page)
+        for _, request in ipairs(requests) do assert.are.equal(100, request.reading_percent) end
+        assert.are.equal(1, plugin.duplicate_checks)
     end)
 
-    it("does not consume deferred work when page count is unavailable", function()
-        skipOfflineFetch()
-        reconnect()
-        total_pages = 0
-        advance(2)
-        assert.are.equal(0, #requests)
-        assert.is_true(plugin.pending_background_fetch)
-        assert.is_nil(plugin.last_bg_fetch_time)
+    it("initializes without a timeline and merges later batches", function()
+        plugin.timeline, plugin.book_data = {}, nil
+        plugin.ui.document.getToc = function() return {} end
+        offline(); reconnect(); advance(25)
+        assert.is_nil(requests[1].existing_characters)
+        assert.are.equal("Alice", requests[2].existing_characters[1].name)
+        assert.are.equal(165, disk.last_fetch_page)
     end)
 
-    it("cancels catch-up when the document closes", function()
-        skipOfflineFetch()
-        reconnect()
-        local callback = plugin._background_catch_up_callback
-        plugin:onCloseDocument()
-        assert.is_true(plugin.destroyed)
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-        callback()
+    for _, code in ipairs({ "error_api", "error_empty", "error_start", "error_extract" }) do
+        it("retains and retries " .. code .. " without advancing", function()
+            offline()
+            if code == "error_empty" then response = {}
+            elseif code == "error_start" then fail_start = true
+            elseif code == "error_extract" then plugin.chapter_analyzer.getTextForAnalysis = function() error("extraction failed") end
+            else failure = code end
+            reconnect(); advance(10)
+            assert.are.equal(100, disk.last_fetch_page)
+            assert.are.equal(100, plugin.background_fetch_queue.cursor.page)
+            assert.are.equal(1, plugin.background_fetch_queue.retries)
+        end)
+    end
+
+    it("waits for the cache callback before advancing", function()
+        offline(); save_delay = 10; reconnect(); advance(5)
+        assert.are.equal(100, disk.last_fetch_page)
+        assert.are.equal(100, plugin.background_fetch_queue.cursor.page)
+        assert.is_true(plugin.bg_fetch_active)
         advance(10)
-        assert.are.equal(0, #requests)
-        assert.is_nil(plugin.series_checks)
+        assert.are.equal(160, disk.last_fetch_page)
     end)
 
-    it("resets catch-up when the reader becomes ready for a document", function()
-        skipOfflineFetch()
-        reconnect()
-        local callback = plugin._background_catch_up_callback
-        plugin.autoLoadCache = function() end
+    it("rolls back merged data and progress if the cache write fails", function()
+        offline(); fail_save = true; reconnect(); advance(5)
+        assert.are.equal(100, disk.last_fetch_page)
+        assert.are.equal(100, plugin.book_data.last_fetch_page)
+        assert.are.equal(0, #plugin.characters)
+        assert.are.equal(100, plugin.background_fetch_queue.cursor.page)
+    end)
+
+    it("limits transient failures to three retries", function()
+        offline(); failure = "error_api"; reconnect(); advance(300)
+        assert.are.equal(4, #requests)
+        assert.are.equal("retry", plugin.background_fetch_queue.paused)
+    end)
+
+    for _, code in ipairs({ "error_auth", "error_config" }) do
+        it("pauses " .. code .. " until settings change", function()
+            offline(); failure = code; reconnect(); advance(120)
+            assert.are.equal(1, #requests)
+            reconnect(); advance(10); assert.are.equal(1, #requests)
+            failure = nil; plugin:onXRaySettingsChanged(); advance(15)
+            assert.are.equal(165, disk.last_fetch_page)
+        end)
+    end
+
+    it("splits oversized batches and pauses an irreducible request", function()
+        offline(); failure = "error_context"; reconnect(); advance(80)
+        assert.are.equal(100, disk.last_fetch_page)
+        assert.are.equal(1, plugin.background_fetch_queue.window_pages)
+        assert.are.equal(1, plugin.background_fetch_queue.chapter_limit)
+        assert.are.equal("context", plugin.background_fetch_queue.paused)
+    end)
+
+    it("suspends an active request and resumes its unfinished batch", function()
+        offline(); hold_result = true; reconnect(); advance(3)
+        plugin:onSuspend()
+        assert.is_nil(plugin.ai_helper._async_child_pid)
+        assert.are.equal(100, disk.background_fetch_queue.cursor.page)
+        hold_result = false; plugin:onResume(); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
+    end)
+
+    it("cancels a pending result save on suspend", function()
+        offline(); save_delay = 10; reconnect(); advance(5)
+        plugin:onSuspend(); advance(12)
+        assert.are.equal(100, disk.last_fetch_page)
+        assert.are.equal(100, disk.background_fetch_queue.cursor.page)
+    end)
+
+    it("restores per-book work and ignores a different document identity", function()
+        offline()
+        plugin.background_fetch_queue = nil
+        plugin.book_data = utils:copyTable(disk)
+        plugin:restoreBackgroundQueue()
+        assert.are.equal(165, plugin.background_fetch_queue.target.page)
+        plugin.ui.document.file = "other.epub"
+        plugin:restoreBackgroundQueue()
+        assert.is_nil(plugin.background_fetch_queue)
+    end)
+
+    it("remaps persisted XPointers after repagination", function()
+        plugin.ui.rolling = {}
+        plugin.ui.document.getPageXPointer = function(_, p) return "xp" .. p end
+        offline()
+        plugin.ui.document.getPageCount = function() return 600 end
+        plugin.ui.document.getPageFromXPointer = function(_, xp) return tonumber(xp:match("%d+")) * 2 end
+        plugin:restoreBackgroundQueue()
+        assert.are.equal(199, plugin.background_fetch_queue.cursor.page)
+        assert.are.equal(330, plugin.background_fetch_queue.target.page)
+    end)
+
+    it("ignores delayed callbacks after the document changes", function()
+        offline(); reconnect()
+        plugin.ui.document = { file = "other.epub" }
+        advance(15)
+        assert.are.equal(0, #requests)
+    end)
+
+    it("retains eligible reading added while a request runs", function()
+        offline(); hold_result = true; reconnect(); advance(3)
+        page = 220; plugin:onPageUpdate(page)
+        hold_result = false; advance(30)
+        assert.are.equal(220, disk.last_fetch_page)
+    end)
+
+    it("extends pending catch-up to the reconnect position without another interval", function()
+        page = 160; offline()
+        page = 165; reconnect(); advance(20)
+        assert.are.equal(165, disk.last_fetch_page)
+    end)
+
+    it("lets a manual request cancel a batch and resumes after manual completion", function()
+        offline(); hold_result = true; reconnect(); advance(3)
+        plugin:continueWithFetch(55, true, 100, false)
+        assert.is_false(plugin._background_inflight)
+        hold_result = false; advance(25)
+        assert.are.equal(165, disk.last_fetch_page)
+        assert.is_nil(plugin.background_fetch_queue)
+    end)
+
+    it("flushes queued work on close and restores it after reader-ready", function()
+        offline(); plugin:onCloseDocument()
+        assert.are.equal(165, disk.background_fetch_queue.target.page)
+        plugin.destroyed = false
+        plugin.autoLoadCache = function(self) self.book_data = utils:copyTable(disk) end
         plugin.applyLanguageLogic = function() end
         plugin:onReaderReady()
-        assert.is_false(plugin.pending_background_fetch)
-        assert.is_nil(plugin._background_catch_up_callback)
-        callback()
-        assert.are.equal(0, #requests)
+        reconnect(); advance(15)
+        assert.are.equal(165, disk.last_fetch_page)
     end)
 
-    it("ignores catch-up callbacks after the document changes or disappears", function()
-        skipOfflineFetch()
-        reconnect()
-        plugin.ui.document = { file = "another-book.epub" }
-        advance(2)
-        assert.are.equal(0, #requests)
-        reconnect()
-        plugin.ui.document = nil
-        advance(2)
-        assert.are.equal(0, #requests)
+    it("ignores malformed queue metadata", function()
+        plugin.book_data.background_fetch_queue = { version = 1, cursor = { page = "wrong" }, target = {} }
+        plugin:restoreBackgroundQueue()
+        assert.is_nil(plugin.background_fetch_queue)
+    end)
+
+    it("merges later batches even when the first response has no timeline", function()
+        plugin.timeline, plugin.book_data = {}, nil
+        response.timeline = {}
+        offline(); reconnect(); advance(5)
+        assert.are.equal("Alice", plugin.characters[1].name)
+        response.characters = {{ name = "Bob", description = "Later knowledge" }}
+        advance(20)
+        assert.are.equal("Alice", requests[2].existing_characters[1].name)
+        local names = {}
+        for _, character in ipairs(plugin.characters) do names[character.name] = true end
+        assert.is_true(names.Alice)
+        assert.is_true(names.Bob)
+    end)
+
+    it("commits the final result and removes its queue in the same snapshot", function()
+        page = 130; offline()
+        local result_snapshot
+        local save = plugin.cache_manager.asyncSaveCache
+        plugin.cache_manager.asyncSaveCache = function(self, file, data, callback)
+            if data.last_fetch_page == 130 then result_snapshot = utils:copyTable(data) end
+            return save(self, file, data, callback)
+        end
+        reconnect(); advance(5)
+        assert.are.equal(130, result_snapshot.last_fetch_page)
+        assert.is_nil(result_snapshot.background_fetch_queue)
+    end)
+
+    it("uses title and chapter page as the retry identity", function()
+        offline(); reconnect(); advance(3)
+        assert.are.equal(1, plugin.fetch_attempts["Chapter 3_150"])
+        assert.is_nil(plugin.fetch_attempts["Chapter 3"])
     end)
 end)

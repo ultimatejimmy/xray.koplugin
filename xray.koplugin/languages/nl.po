@@ -89,9 +89,9 @@ msgstr "Uitgeschakeld"
 msgid "auto_update_economical"
 msgstr "Zuinig: controleert maximaal elke 15 min"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "Automatisch bijwerken controleert op de achtergrond naar nieuwe hoofdstukinformatie terwijl u leest.\n\nLIMIETEN & PRESTATIES\nFrequente achtergrondaanzeken kunnen de BATTERIJSDUUR verkorten en kunnen AI-PROVIDER RATE-LIMIETEN overschrijden (vooral bij Pro-modellen).\n\nMODI\n• Ultra: Controleert elke door u ingestelde N pagina's (midden in het hoofdstuk)\n• Agressief: Controleert elke keer als u een nieuw hoofdstuk binnengaat\n• Gebalanceerd: Controleert maximaal elke 5 minuten (aanbevolen)\n• Zuinig: Controleert maximaal elke 15 minuten\n• Sparing: Controleert maximaal elke 30 minuten\n• Uitgeschakeld: Geen achtergrondaanzeken\n\nOpmerking: Als een hoofdstuk wordt overgeslagen vanwege frequentielimieten, zal X-Ray dit automatisch opnemen in de volgende achtergrondaanzek."
+msgstr "Automatische updates zoeken naar nieuwe hoofdstukgegevens volgens de gekozen frequentie en spoilerinstellingen.\n\nOnvoltooide updates worden per boek opgeslagen en hervat wanneer het boek opnieuw wordt geopend met internettoegang. Grote updates worden in kleinere delen uitgevoerd, met de gekozen wachttijd tussen verzoeken. Het uitschakelen van automatische updates pauzeert het werk in de wachtrij.\n\nVeelvuldige verzoeken kunnen de batterij leegmaken en de limieten van de AI-provider bereiken."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

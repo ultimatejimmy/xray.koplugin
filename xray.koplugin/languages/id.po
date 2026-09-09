@@ -89,9 +89,9 @@ msgstr "Nonaktif"
 msgid "auto_update_economical"
 msgstr "Ekonomis: periksa paling banyak setiap 15 menit"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "Pembaruan otomatis memeriksa data bab baru di latar belakang saat Anda membaca.\n\nBATAS & KINERJA\nPermintaan latar belakang yang sering dapat menguras DAYA BATERAI dan dapat mencapai BATAS HARGAPenyedia AI (terutama pada model Pro).\n\nMODE\n• Ultra: Memeriksa setiap N halaman yang Anda konfigurasikan (tengah bab)\n• Agresif: Memeriksa setiap kali Anda memasuki bab baru\n• Seimbang: Memeriksa paling banyak setiap 5 menit (direkomendasikan)\n• Ekonomis: Memeriksa paling banyak setiap 15 menit\n• Jarang: Memeriksa paling banyak setiap 30 menit\n• Nonaktif: Tidak ada permintaan latar belakang\n\nCatatan: Jika bab terlewat karena batas frekuensi, X-Ray akan secara otomatis menyertakannya dalam pengambilan latar belakang berikutnya."
+msgstr "Pembaruan otomatis memeriksa data bab baru sesuai frekuensi dan pengaturan spoiler yang dipilih.\n\nPembaruan yang belum selesai disimpan untuk setiap buku dan dilanjutkan saat buku dibuka kembali dengan akses internet. Pembaruan besar dijalankan dalam kelompok lebih kecil, dengan jeda pilihan Anda di antara permintaan. Menonaktifkan Pembaruan Otomatis menjeda pekerjaan dalam antrean.\n\nPermintaan yang sering dapat menguras baterai dan mencapai batas penyedia AI."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

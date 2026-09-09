@@ -89,9 +89,9 @@ msgstr "Kikapcsolva"
 msgid "auto_update_economical"
 msgstr "Takarékos: legfeljebb 15 percenként ellenőrzi"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "Az automatikus frissítés a háttérben ellenőrzi az új fejezetadatokat olvasás közben.\n\nKORLÁTOK ÉS TELJESÍTMÉNY\nA gyakori háttérben futó kérések meríthetik az AKKUMULÁTORT, és elérhetik az AI SZOLGÁLTATÓ KORLÁTAIT (különösen a Pro modelleknél).\n\nMÓDOK\n• Ultra: Az Ön által beállított N oldalanként ellenőriz (fejezet közben)\n• Agresszív: Minden alkalommal ellenőrzi, amikor új fejezetbe lép\n• Kiegyensúlyozott: Legfeljebb 5 percenként ellenőrzi (ajánlott)\n• Takarékos: Legfeljebb 15 percenként ellenőrzi\n• Ritka: Legfeljebb 30 percenként ellenőrzi\n• Kikapcsolva: Nincsenek háttérkérések\n\nMegjegyzés: Ha egy fejezet kimarad a gyakorisági korlátok miatt, az X-Ray automatikusan tartalmazni fogja azt a következő háttérbeli lekérdezésnél."
+msgstr "Az automatikus frissítés a kiválasztott gyakoriság és spoilerbeállítások szerint keresi az új fejezetadatokat.\n\nA befejezetlen frissítések könyvenként mentésre kerülnek, és a könyv internetkapcsolattal történő újbóli megnyitásakor folytatódnak. A nagy frissítések kisebb részletekben futnak, a kérések között a kiválasztott várakozási idővel. Az automatikus frissítés kikapcsolása szünetelteti a sorban álló feladatokat.\n\nA gyakori kérések meríthetik az akkumulátort, és elérhetik az AI-szolgáltató korlátait."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

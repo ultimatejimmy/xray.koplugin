@@ -89,9 +89,9 @@ msgstr "Devre Dışı"
 msgid "auto_update_economical"
 msgstr "Ekonomik: en fazla 15 dk'da bir kontrol eder"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "Otomatik güncelleme, siz okurken arka planda yeni bölüm verilerini kontrol eder.\n\nSINIRLAR VE PERFORMANS\nSık arka plan istekleri PİL ÖMRÜNÜ tüketebilir ve AI SAĞLAYICI HIZ SINIRLARINA takılabilir (özellikle Pro modellerde).\n\nMODLAR\n• Ultra: Yapılandırdığınız her N sayfada bir kontrol eder (bölüm ortası)\n• Agresif: Her yeni bölüme girdiğinizde kontrol eder\n• Dengeli: En fazla 5 dakikada bir kontrol eder (önerilen)\n• Ekonomik: En fazla 15 dakikada bir kontrol eder\n• Seyrek: En fazla 30 dakikada bir kontrol eder\n• Devre Dışı: Arka plan isteği yapılmaz\n\nNot: Frekans sınırları nedeniyle bir bölüm atlanırsa, X-Ray bir sonraki arka plan çekiminde onu otomatik olarak dahil edecektir."
+msgstr "Otomatik güncelleme, seçtiğiniz sıklık ve spoiler ayarlarına göre yeni bölüm verilerini denetler.\n\nTamamlanmamış güncellemeler her kitap için kaydedilir ve kitap internet erişimiyle yeniden açıldığında sürdürülür. Büyük güncellemeler, istekler arasında seçtiğiniz bekleme süresiyle daha küçük gruplar halinde çalışır. Otomatik Güncellemeyi kapatmak kuyruktaki işleri duraklatır.\n\nSık istekler pili tüketebilir ve yapay zekâ sağlayıcısının istek sınırlarına ulaşabilir."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

@@ -434,16 +434,25 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
     end
 end
 
-function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_silent)
-    if self.destroyed or not self.ui or not self.ui.document then return end
+function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_silent, options)
+    options = options or {}
+    local completed = false
+    local function complete(success, code, message)
+        if completed then return end
+        completed = true
+        if options.on_done then options.on_done(success, code, message) end
+    end
+    if self.destroyed or not self.ui or not self.ui.document then complete(false, "cancelled"); return end
     local doc_file = self.ui.document.file
-    if not doc_file then return end
+    if not doc_file then complete(false, "cancelled"); return end
+    local document = self.ui.document
 
     local has_active_request = self._active_ai_cancel
         or (self.ai_helper and self.ai_helper._async_child_pid)
     if is_silent and has_active_request then
         self.bg_fetch_pending = false
         self:log("XRayPlugin: Skipping background fetch because another AI request is active")
+        complete(false, "cancelled")
         return
     elseif not is_silent and has_active_request then
         self:cancelActiveAIRequest("Previous AI request replaced by manual fetch")
@@ -495,6 +504,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
     local result_file
     local request_pid
     local cancelActiveRequest
+    local cancel_save
 
     local function finishActiveRequest()
         request_pid = nil
@@ -507,6 +517,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
     cancelActiveRequest = function(reason)
         if is_cancelled then return end
         is_cancelled = true
+        if cancel_save then cancel_save() end
         if request_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
             self.ai_helper:cancelAsyncChild(request_pid)
         end
@@ -518,6 +529,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         end
         finishActiveRequest()
         self:log("XRayPlugin: " .. reason)
+        complete(false, reason == "Fetch timed out" and "error_timeout" or "cancelled", reason)
     end
 
     self._active_ai_cancel = cancelActiveRequest
@@ -547,7 +559,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
     end
 
     UIManager:scheduleIn(0.5, function()
-        if is_cancelled or self.destroyed or not self.ui or not self.ui.document then
+        if is_cancelled or self.destroyed or not self.ui or self.ui.document ~= document then
             clearFetchState()
             cancelActiveRequest(self.destroyed
                 and "Fetch stopped because plugin was destroyed"
@@ -556,9 +568,9 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         end
         if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
 
-        local current_page = self.ui:getCurrentPage()
+        local current_page = options.batch and options.batch.end_page or self.ui:getCurrentPage()
         local first_missing_page = last_fetch_page
-        if is_update then
+        if is_update and not options.batch then
             local toc = utils:flattenTOC(self.ui.document:getToc())
             local candidate_chapters = {}
             for i = #toc, 1, -1 do
@@ -589,7 +601,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
 
         local end_page_analysis = current_page
         local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        if spoiler_setting ~= "full_book" then
+        if spoiler_setting ~= "full_book" or options.batch then
             end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page)
         end
 
@@ -604,7 +616,14 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
             first_missing_page = nil
         end
 
-        local book_text = self.chapter_analyzer:getTextForAnalysis(self.ui, 20000, nil, end_page_analysis, first_missing_page)
+        local extracted, book_text = pcall(function()
+            return self.chapter_analyzer:getTextForAnalysis(self.ui, 20000, nil, end_page_analysis, first_missing_page)
+        end)
+        if not extracted then
+            finishActiveRequest()
+            complete(false, "error_extract", tostring(book_text))
+            return
+        end
         local known_chapters = {}
         if is_update and self.timeline then
             for _, ev in ipairs(self.timeline) do
@@ -613,7 +632,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         end
 
         UIManager:scheduleIn(0, function()
-            if is_cancelled or self.destroyed or not self.ui or not self.ui.document then
+            if is_cancelled or self.destroyed or not self.ui or self.ui.document ~= document then
                 clearFetchState()
                 cancelActiveRequest(self.destroyed
                     and "Fetch stopped because plugin was destroyed"
@@ -621,9 +640,18 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 return
             end
 
-            local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(
-                self.ui, 200, 150000, reading_percent == 100, first_missing_page, known_chapters, current_page)
-            local annots = self.chapter_analyzer:getAnnotationsForAnalysis(self.ui)
+            local sampled, samples, chapter_titles, annots = pcall(function()
+                local text, titles = self.chapter_analyzer:getDetailedChapterSamples(
+                    self.ui, options.batch and (options.batch.last_chapter - options.batch.first_chapter + 1) or 200,
+                    150000, reading_percent == 100 and not options.batch, first_missing_page,
+                    known_chapters, current_page, options.batch)
+                return text, titles, self.chapter_analyzer:getAnnotationsForAnalysis(self.ui)
+            end)
+            if not sampled then
+                finishActiveRequest()
+                complete(false, "error_extract", tostring(samples))
+                return
+            end
 
             if (not book_text or #book_text < 10) and not samples then
                 if wait_msg then UIManager:close(wait_msg) end
@@ -636,11 +664,13 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 if not is_silent then UIManager:show(InfoMessage:new{ text = message, timeout = 5 }) end
                 self:log("XRayPlugin: Text extraction failed" .. (is_silent and " (silent)" or ""))
                 finishActiveRequest()
+                complete(false, "error_extract", message)
                 return
             end
 
             local context = {
                 reading_percent = reading_percent,
+                background_batch = options.batch ~= nil,
                 spoiler_free = reading_percent < 100,
                 filename = self.ui.document.file:match("([^/\\]+)$"),
                 series = props.series or props.Series,
@@ -659,6 +689,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 if wait_msg then UIManager:close(wait_msg) end
                 self:log("XRayPlugin: Failed to build request: " .. tostring(err_msg))
                 finishActiveRequest()
+                complete(false, err_code, err_msg)
                 if not is_silent then
                     if not self.ai_helper:hasApiKey() and self.showWelcomeCard then
                         self:showWelcomeCard()
@@ -703,6 +734,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 pcall(function() os.remove(result_file) end)
                 result_file = nil
                 finishActiveRequest()
+                complete(false, "error_start")
                 return
             end
             request_pid = started
@@ -715,7 +747,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     cancelActiveRequest("Fetch stopped because plugin was destroyed")
                     return
                 end
-                if not self.ui or not self.ui.document then
+                if not self.ui or self.ui.document ~= document then
                     cancelActiveRequest("Fetch stopped because the document was closed")
                     return
                 end
@@ -742,6 +774,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     if wait_msg then UIManager:close(wait_msg) end
                     finishActiveRequest()
                     self:log("XRayPlugin: Fetch failed: " .. tostring(p_err_msg))
+                    complete(false, p_err_code, p_err_msg)
                     if not is_silent then
                         local ButtonDialog = require("ui/widget/buttondialog")
                         local title, text = utils:getFriendlyError(p_err_code, p_err_msg, self.loc)
@@ -756,8 +789,24 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     end
                 else
                     if wait_msg then UIManager:close(wait_msg) end
-                    finishActiveRequest()
-                    self:finalizeXRayData(data, title, author, book_text, is_update, is_silent, current_page)
+                    local finalize_options = {
+                        checkpoint = options.checkpoint,
+                        register_save_cancel = function(cancel) cancel_save = cancel end,
+                        defer_duplicates = options.defer_duplicates,
+                        is_current = function()
+                            return not is_cancelled and not self.destroyed and self.ui and self.ui.document == document
+                        end,
+                        on_done = function(success, code, message)
+                            finishActiveRequest()
+                            complete(success, code, message)
+                        end,
+                    }
+                    local ok, err = pcall(self.finalizeXRayData, self, data, title, author, book_text,
+                        is_update, is_silent, current_page, finalize_options)
+                    if not ok then
+                        finishActiveRequest()
+                        complete(false, "error_parse", tostring(err))
+                    end
                 end
             end
             UIManager:scheduleIn(2, poll)
@@ -766,7 +815,13 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
 end
 
 
-function M:finalizeXRayData(final_book_data, title, author, book_text, is_update, is_silent, current_page)
+function M:finalizeXRayData(final_book_data, title, author, book_text, is_update, is_silent, current_page, options)
+    options = options or {}
+    local previous = {}
+    local fields = { "characters", "historical_figures", "locations", "terms", "timeline", "book_data", "book_type" }
+    if options.on_done then
+        for _, field in ipairs(fields) do previous[field] = utils:copyTable(self[field]) end
+    end
     if self.destroyed or not self.ui or not self.ui.document then return end
     final_book_data.book_title = title
     final_book_data.author = author
@@ -805,6 +860,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
             UIManager:show(InfoMessage:new{ text = msg, timeout = 8 })
         end
         self.bg_fetch_active = false
+        if options.on_done then options.on_done(false, "error_empty") end
         return  -- do NOT touch self.characters / self.locations / cache
     end
 
@@ -1109,7 +1165,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         local doc_file = (self.ui and self.ui.document) and self.ui.document.file
         self.book_data = (doc_file and self.cache_manager:loadCache(doc_file)) or {}
     end
-    local updated_data = self.book_data
+    local updated_data = utils:copyTable(self.book_data)
     updated_data.book_title = title
     updated_data.author = author
     updated_data.characters = self.characters
@@ -1124,87 +1180,113 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     local s = self.ai_helper and self.ai_helper.settings or {}
     updated_data.timeline_event_len = s.timeline_event_len or 80
 
+    if options.checkpoint then options.checkpoint(updated_data) end
     self.book_data = updated_data
 
     if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
     local doc_file = (self.ui and self.ui.document) and self.ui.document.file
-    local cache_saved = doc_file and self.cache_manager:asyncSaveCache(doc_file, updated_data)
+    local finished = false
+    local function afterSave(cache_saved)
+        if finished then return end
+        finished = true
+        if options.is_current and not options.is_current() then return end
+        if not cache_saved and options.on_done then
+            for _, field in ipairs(fields) do self[field] = previous[field] end
+            options.on_done(false, "error_cache")
+            return
+        end
+        if options.on_done then options.on_done(cache_saved) end
+        if not options.checkpoint and self.background_fetch_queue and self.scheduleBackgroundCatchUp then
+            self:scheduleBackgroundCatchUp(2)
+        end
 
-    -- If book is part of a series, update this book's entry in SeriesCache
-    if self.series_manager and (updated_data.series_slug or (self.ui and self.ui.document)) then
-        pcall(function()
-            local props = self.ui and self.ui.document and self.ui.document:getProps() or {}
-            local series_info = self.series_manager:detectSeries(props, title, author, nil)
-            local slug = updated_data.series_slug or (series_info and series_info.slug)
-            local index = series_info and series_info.index
-            if slug and index then
-                self.series_manager:syncBookToSeriesCache(slug, index, {
-                    title = title,
-                    author = author,
-                    characters = self.characters,
-                    locations = self.locations,
-                    terms = self.terms,
-                    timeline = self.timeline,
-                }, doc_file)
+        -- If book is part of a series, update this book's entry in SeriesCache
+        if self.series_manager and (updated_data.series_slug or (self.ui and self.ui.document)) then
+            pcall(function()
+                local props = self.ui and self.ui.document and self.ui.document:getProps() or {}
+                local series_info = self.series_manager:detectSeries(props, title, author, nil)
+                local slug = updated_data.series_slug or (series_info and series_info.slug)
+                local index = series_info and series_info.index
+                if slug and index then
+                    self.series_manager:syncBookToSeriesCache(slug, index, {
+                        title = title,
+                        author = author,
+                        characters = self.characters,
+                        locations = self.locations,
+                        terms = self.terms,
+                        timeline = self.timeline,
+                    }, doc_file)
 
-                local cache_data = self.series_manager:loadSeriesCache(slug)
-                local s_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.series_context_enabled
-                if s_setting ~= false and index > 1 and cache_data and cache_data.books then
-                    local all_priors_cached = true
-                    for p_idx = 1, index - 1 do
-                        if not cache_data.books[p_idx] then
-                            all_priors_cached = false
-                            break
+                    local cache_data = self.series_manager:loadSeriesCache(slug)
+                    local s_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.series_context_enabled
+                    if s_setting ~= false and index > 1 and cache_data and cache_data.books then
+                        local all_priors_cached = true
+                        for p_idx = 1, index - 1 do
+                            if not cache_data.books[p_idx] then
+                                all_priors_cached = false
+                                break
+                            end
+                        end
+                        if all_priors_cached then
+                            self:log("XRayPlugin: Series: Post-fetch auto-restoring cached series context for " .. tostring(slug))
+                            self:mergeSeriesContext(cache_data, series_info)
                         end
                     end
-                    if all_priors_cached then
-                        self:log("XRayPlugin: Series: Post-fetch auto-restoring cached series context for " .. tostring(slug))
-                        self:mergeSeriesContext(cache_data, series_info)
-                    end
+                end
+            end)
+        end
+
+        if not options.defer_duplicates then UIManager:scheduleIn(1, function()
+            if self.destroyed or not self.ui or not self.ui.document then return end
+            local reading_percent = 100
+            if self.ui and self.ui.document and self.ui.document.getPageCount and current_page then
+                local page_count = self.ui.document:getPageCount()
+                if page_count and page_count > 0 then
+                    reading_percent = math.floor((current_page / page_count) * 100)
                 end
             end
+            local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+            if spoiler_setting == "full_book" then reading_percent = 100 end
+            self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
+        end) end
+
+        if is_silent then
+            self:log(string.format("XRayPlugin: Silent merge complete - Chars: %d, Locs: %d, Events: %d, Cache: %s",
+                #self.characters, #self.locations, #self.timeline,
+                cache_saved and "saved" or "failed"))
+        else
+            local fetch_complete = self.loc:t("ai_fetch_complete_msg") or "AI Fetch Complete!"
+            local cache_success = self.loc:t("cache_save_success") or "✓ Cache updated."
+            local cache_fail = self.loc:t("cache_save_failed") or "✗ Cache failed."
+            local label_chars = self.loc:t("entity_label_characters") or "Characters"
+            local label_locs = self.loc:t("entity_label_locations") or "Locations"
+            local label_timeline = self.loc:t("menu_timeline") or "Timeline"
+            local summary = string.format("%s\n\n%s: %d\n%s: %d\n%s: %d\n\n%s",
+                fetch_complete,
+                label_chars, #self.characters,
+                label_locs, #self.locations,
+                label_timeline, #self.timeline,
+                cache_saved and cache_success or cache_fail)
+
+            local success_dialog
+            local ButtonDialog = require("ui/widget/buttondialog")
+            success_dialog = ButtonDialog:new{ modal = true, title = (self.loc:t("fetch_successful") or "Fetch successful") .. "\n\n" .. summary, buttons = {{{ text = self.loc:t("ok"), callback = function()
+                UIManager:close(success_dialog)
+            end }}} }
+            UIManager:show(success_dialog)
+        end
+
+    end
+    local accepted, cancel
+    if doc_file then accepted, cancel = self.cache_manager:asyncSaveCache(doc_file, updated_data, afterSave) end
+    if options.register_save_cancel and cancel then
+        options.register_save_cancel(function()
+            if finished then return end
+            cancel()
+            for _, field in ipairs(fields) do self[field] = previous[field] end
         end)
     end
-
-    UIManager:scheduleIn(1, function()
-        if self.destroyed or not self.ui or not self.ui.document then return end
-        local reading_percent = 100
-        if self.ui and self.ui.document and self.ui.document.getPageCount and current_page then
-            local page_count = self.ui.document:getPageCount()
-            if page_count and page_count > 0 then
-                reading_percent = math.floor((current_page / page_count) * 100)
-            end
-        end
-        local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        if spoiler_setting == "full_book" then reading_percent = 100 end
-        self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
-    end)
-
-    if is_silent then
-        self:log(string.format("XRayPlugin: Silent merge complete - Chars: %d, Locs: %d, Events: %d, Cache: %s",
-            #self.characters, #self.locations, #self.timeline,
-            cache_saved and "saved" or "failed"))
-    else
-        local fetch_complete = self.loc:t("ai_fetch_complete_msg") or "AI Fetch Complete!"
-        local cache_success = self.loc:t("cache_save_success") or "✓ Cache updated."
-        local cache_fail = self.loc:t("cache_save_failed") or "✗ Cache failed."
-        local label_chars = self.loc:t("entity_label_characters") or "Characters"
-        local label_locs = self.loc:t("entity_label_locations") or "Locations"
-        local label_timeline = self.loc:t("menu_timeline") or "Timeline"
-        local summary = string.format("%s\n\n%s: %d\n%s: %d\n%s: %d\n\n%s", 
-            fetch_complete,
-            label_chars, #self.characters,
-            label_locs, #self.locations,
-            label_timeline, #self.timeline,
-            cache_saved and cache_success or cache_fail)
-
-        local success_dialog
-        local ButtonDialog = require("ui/widget/buttondialog")
-        success_dialog = ButtonDialog:new{ modal = true, title = (self.loc:t("fetch_successful") or "Fetch successful") .. "\n\n" .. summary, buttons = {{{ text = self.loc:t("ok"), callback = function() 
-            UIManager:close(success_dialog) 
-        end }}} }
-        UIManager:show(success_dialog)
-    end
+    if not accepted then afterSave(false) end
 
 end
 

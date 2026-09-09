@@ -2846,7 +2846,7 @@ function M:showAutoUpdateSettings()
                 self.ai_helper:saveSettings({ auto_fetch_on_chapter = false }, { "auto_fetch_page_interval" })
             end
         end,
-        about_text = self.loc:t("auto_update_freq_about") or "Auto-update checks for new chapter data in the background as you read.\n\n[B]Limits & Performance[/B]\nFrequent background requests can drain [B]battery life[/B] and may hit [B]AI provider rate limits[/B].\n\n[B]Note:[/B] skipped chapters will be automatically included in the next background update.",
+        about_text = self.loc:t("auto_update_freq_about") or "Auto-update checks for new chapter data using your selected frequency and spoiler settings.\n\nUnfinished updates are saved for each book and resume when it is reopened with internet access. Large updates run in smaller batches, with your selected delay between requests. Disabling Auto-Update pauses queued work.\n\nFrequent requests can drain battery life and may hit AI provider rate limits.",
     })
 end
 

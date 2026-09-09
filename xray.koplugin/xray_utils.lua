@@ -81,7 +81,7 @@ function M:getFriendlyError(error_code, error_msg, loc)
         title_key = "error_parse_title"
         desc_key = "error_parse_desc"
         desc_arg = nil
-    elseif error_code == "error_api" then
+    elseif error_code == "error_api" or error_code == "error_auth" or error_code == "error_config" or error_code == "error_context" then
         local msg = tostring(error_msg or ""):lower()
         if msg:find("401") or msg:find("unauthorized") or msg:find("invalid api key") then
             title_key = "error_api_key_title"
@@ -364,6 +364,17 @@ function M:getLocalIP()
     end
 
     return sock_ip or "127.0.0.1"
+end
+
+-- Snapshot mutable cache/queue data before cooperative work yields.
+function M:copyTable(value, seen)
+    if type(value) ~= "table" then return value end
+    seen = seen or {}
+    if seen[value] then return seen[value] end
+    local copy = {}
+    seen[value] = copy
+    for k, v in pairs(value) do copy[k] = self:copyTable(v, seen) end
+    return copy
 end
 
 return M

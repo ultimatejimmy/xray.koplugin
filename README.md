@@ -24,7 +24,7 @@ This plugin brings Kindle-style X-Ray features to KOReader. It uses AI to track 
 - **Historical Context**: Pulls real-world info for historical figures and locations.
 - **Mention Scanning**: Find every occurrence of a character or location throughout the book, complete with page numbers and context snippets for quick navigation.
 - **Spoiler Protection**: "Spoiler-free" mode only reads up to your current page so future twists aren't ruined.
-- **Auto Fetching while you read**: Automatically fetches data in the background when you get to a new chapter.
+- **Auto Fetching while you read**: Automatically fetches data using your selected chapter or page interval. Unfinished updates are saved per book and resume after reconnecting or reopening. Large backlogs run in smaller batches while respecting cooldown and spoiler settings.
 - **X-Ray Mode & Inline Fetching**: Get instant lookups by tapping the "X-Ray" button in dictionary or selection popups. If an entity is missing, the plugin can fetch it on-the-fly using AI without requiring a full book scan.
 - **Silent Weekly Updates**: Automatically checks for new plugin versions in the background once a week.
 - **Offline First**: You only need internet to fetch the data. After that, it's saved locally.
@@ -49,3 +49,20 @@ For full setup instructions and a deep dive into features, check out the **[GitH
 
 [Buy me a coffee](https://www.buymeacoffee.com/ultimatejimmy)
 
+
+### Background request limits
+
+Background catch-up retains chapter sampling and uses bounded page windows;
+800,000 tokens is the maximum combined book-excerpt budget, not a target size.
+The complete prompt is checked separately for both primary and fallback models,
+with space reserved for output. Gemini and Claude token counts run in the
+background request process; unavailable counters use conservative byte estimates.
+Context-size rejections split the pending batch without advancing saved progress.
+
+For models with different context windows, the persistent X-Ray `settings.json`
+can include `"model_context_limits": { "your-model-id": 128000 }` (total tokens).
+Defaults are 1,048,576 for Gemini, 200,000 for Claude, and 128,000 for other
+providers; these are budgeting defaults, not guarantees of a model's capacity.
+An irreducible request or a credentials/configuration error pauses the queue
+until settings change. Transient failures get up to three retries; reconnecting
+or resuming the reader can restart an exhausted retry cycle.

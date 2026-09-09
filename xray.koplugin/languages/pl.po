@@ -89,9 +89,9 @@ msgstr "Wyłączone"
 msgid "auto_update_economical"
 msgstr "Ekonomiczny: sprawdza maksymalnie co 15 min"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "Automatyczna aktualizacja sprawdza w tle dane o nowych rozdziałach podczas czytania.\n\nLIMITU I WYDAJNOŚĆ\nCzęste zapytania w tle mogą rozładowywać BATERIĘ i przekroczyć LIMITY ZAPYTAŃ DOSTAWCY AI (szczególnie w modelach Pro).\n\nTRYBY\n• Ultra: Sprawdza co skonfigurowane N stron (w środku rozdziału)\n• Agresywny: Sprawdza przy każdym wejściu do nowego rozdziału\n• Zrównoważony: Sprawdza maksymalnie co 5 minut (zalecane)\n• Ekonomiczny: Sprawdza maksymalnie co 15 minut\n• Rzadki: Sprawdza maksymalnie co 30 minut\n• Wyłączone: Brak zapytań w tle\n\nUwaga: Jeśli rozdział zostanie pominięty ze względu na limity częstotliwości, X-Ray automatycznie uwzględni go przy następnym pobieraniu w tle."
+msgstr "Automatyczne aktualizacje sprawdzają nowe dane rozdziałów zgodnie z wybraną częstotliwością i ustawieniami spoilerów.\n\nNiedokończone aktualizacje są zapisywane dla każdej książki i wznawiane po jej ponownym otwarciu z dostępem do internetu. Duże aktualizacje są dzielone na mniejsze partie, z wybraną przerwą między żądaniami. Wyłączenie automatycznych aktualizacji wstrzymuje zadania w kolejce.\n\nCzęste żądania mogą wyczerpywać baterię i osiągać limity dostawcy AI."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

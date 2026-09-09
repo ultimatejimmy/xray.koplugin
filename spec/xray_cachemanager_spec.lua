@@ -84,3 +84,69 @@ describe("xray_cachemanager", function()
         end)
     end)
 end)
+
+describe("atomic cooperative cache writes", function()
+    local UIManager = require("ui/uimanager")
+    local cm, tasks, original_schedule, path
+    before_each(function()
+        path = "/tmp/atomic_book.epub"
+        os.execute("mkdir -p /tmp/atomic_book.epub.sdr")
+        cm = require("xray_cachemanager"):new()
+        tasks = {}
+        original_schedule = UIManager.scheduleIn
+        UIManager.scheduleIn = function(_, _, callback) tasks[#tasks + 1] = callback end
+        assert.is_true(cm:saveCache(path, { last_fetch_page = 10 }))
+        tasks = {}
+    end)
+    after_each(function()
+        cm:cancelAsyncSaves()
+        UIManager.scheduleIn = original_schedule
+        os.execute("rm -rf /tmp/atomic_book.epub.sdr")
+    end)
+    local function drain()
+        while #tasks > 0 do table.remove(tasks, 1)() end
+    end
+    it("keeps the previous cache readable until rename and snapshots mutable data", function()
+        local data = { last_fetch_page = 20, characters = {} }
+        for i = 1, 200 do data.characters[i] = { name = "Character " .. i } end
+        local done = false
+        cm:asyncSaveCache(path, data, function(success) done = success end)
+        data.last_fetch_page = 99
+        table.remove(tasks, 1)()
+        assert.is_false(done)
+        assert.are.equal(10, cm:loadCache(path).last_fetch_page)
+        drain()
+        assert.is_true(done)
+        assert.are.equal(20, cm:loadCache(path).last_fetch_page)
+    end)
+    it("reports failed rename and preserves the previous checkpoint", function()
+        local original_rename, result = os.rename
+        os.rename = function() return nil, "injected failure" end
+        local ok, err = pcall(function()
+            cm:asyncSaveCache(path, { last_fetch_page = 20 }, function(success) result = success end)
+            drain()
+            assert.is_false(result)
+            assert.are.equal(10, cm:loadCache(path).last_fetch_page)
+        end)
+        os.rename = original_rename
+        if not ok then error(err) end
+    end)
+    it("serializes different manager instances writing the same book", function()
+        local second = require("xray_cachemanager"):new()
+        cm:asyncSaveCache(path, { last_fetch_page = 20 })
+        second:asyncSaveCache(path, { last_fetch_page = 30 })
+        drain()
+        assert.are.equal(30, cm:loadCache(path).last_fetch_page)
+    end)
+    it("cancels partial writes without truncating the live cache", function()
+        local data = { last_fetch_page = 50, characters = {} }
+        for i = 1, 200 do data.characters[i] = { name = "Character " .. i } end
+        local result
+        cm:asyncSaveCache(path, data, function(success) result = success end)
+        table.remove(tasks, 1)()
+        cm:cancelAsyncSaves()
+        drain()
+        assert.is_false(result)
+        assert.are.equal(10, cm:loadCache(path).last_fetch_page)
+    end)
+end)

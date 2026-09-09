@@ -89,9 +89,9 @@ msgstr "Desativado"
 msgid "auto_update_economical"
 msgstr "Econômico: verifica a cada 15 min no máximo"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "A atualização automática verifica novos dados de capítulos em segundo plano enquanto você lê.\n\nLIMITES E DESEMPENHO\nSolicitações frequentes em segundo plano podem esgotar a BATERIA e atingir os LIMITES de taxa do provedor de IA (especialmente em modelos Pro).\n\nMODOS\n• Ultra: Verifica a cada N páginas que você configurar (meio do capítulo)\n• Agressivo: Verifica toda vez que você entra em um novo capítulo\n• Equilibrado: Verifica no máximo a cada 5 minutos (recomendado)\n• Econômico: Verifica no máximo a cada 15 minutos\n• Esparso: Verifica no máximo a cada 30 minutos\n• Desativado: Sem solicitações em segundo plano\n\nNota: Se um capítulo for pulado devido a limites de frequência, o X-Ray o incluirá automaticamente na próxima busca em segundo plano."
+msgstr "A atualização automática busca novos dados dos capítulos conforme a frequência e as configurações de spoilers selecionadas.\n\nAs atualizações pendentes são salvas por livro e retomadas quando ele é reaberto com acesso à internet. Atualizações grandes são divididas em lotes menores, com o intervalo selecionado entre solicitações. Desativar a atualização automática pausa as tarefas na fila.\n\nSolicitações frequentes podem consumir a bateria e atingir os limites do provedor de IA."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

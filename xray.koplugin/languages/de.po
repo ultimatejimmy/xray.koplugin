@@ -89,9 +89,9 @@ msgstr "Deaktiviert"
 msgid "auto_update_economical"
 msgstr "Sparsam: prüft max. alle 15 Min."
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "Auto-Update prüft im Hintergrund auf neue Kapiteldaten, während Sie lesen.\n\nLIMITS & PERFORMANCE\nHäufige Hintergrundanfragen können den AKKU belasten und API-LIMITS erreichen (besonders bei Pro-Modellen).\n\nMODI\n• Ultra: Prüft alle N Seiten, die Sie konfigurieren (mitten im Kapitel)\n• Aggressiv: Prüft bei jedem neuen Kapitel\n• Ausgewogen: Prüft höchstens alle 5 Minuten (empfohlen)\n• Sparsam: Prüft höchstens alle 15 Minuten\n• Selten: Prüft höchstens alle 30 Minuten\n• Deaktiviert: Keine Hintergrundanfragen\n\nHinweis: Wenn ein Kapitel aufgrund von Limits übersprungen wird, wird X-Ray es automatisch beim nächsten Hintergrundabruf einbeziehen."
+msgstr "Automatische Updates suchen entsprechend der gewählten Häufigkeit und Spoiler-Einstellungen nach neuen Kapiteldaten.\n\nNicht abgeschlossene Updates werden pro Buch gespeichert und fortgesetzt, wenn das Buch mit Internetzugang erneut geöffnet wird. Große Updates werden in kleinere Pakete aufgeteilt, mit der gewählten Wartezeit zwischen Anfragen. Das Deaktivieren automatischer Updates pausiert ausstehende Aufgaben.\n\nHäufige Anfragen können den Akku belasten und die Anfragelimits des KI-Anbieters erreichen."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

@@ -4,3 +4,8 @@ scratch/
 .wrangler/
 *.log
 *.log.old
+
+# Local macOS development environment and generated test data.
+.dev/
+.DS_Store
+__pycache__/

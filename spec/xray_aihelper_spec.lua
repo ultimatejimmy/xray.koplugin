@@ -268,7 +268,7 @@ describe("AIHelper", function()
 
                 local data, err_code, err_msg = AIHelper:checkAsyncResult(tmp)
                 assert.is_false(data)
-                assert.are.equal("error_api", err_code)
+                assert.are.equal("error_config", err_code)
                 assert.are.equal("HTTP 400: custom1 is not a valid model ID", err_msg)
             end)
 

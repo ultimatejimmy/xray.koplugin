@@ -365,3 +365,47 @@ describe("xray_chapteranalyzer", function()
         end)
     end)
 end)
+
+describe("background sampling boundaries", function()
+    local analyzer = require("xray_chapteranalyzer"):new()
+
+    it("visits every chapter when more than 200 entries share one page", function()
+        local toc = {}
+        for i = 1, 450 do toc[i] = { title = "Chapter " .. i, page = 1 } end
+        local ui = { document = { getToc = function() return toc end } }
+        local cursor, seen = { page = 0 }, {}
+        for _ = 1, 3 do
+            local batch = analyzer:getBackgroundBatch(ui, cursor, 1)
+            for i = batch.first_chapter, batch.last_chapter do
+                assert.is_nil(seen[i]); seen[i] = true
+            end
+            cursor = batch.next_cursor
+        end
+        assert.are.equal(450, #seen)
+        assert.are.equal(1, cursor.page)
+        assert.is_nil(analyzer:getBackgroundBatch(ui, cursor, 1))
+    end)
+
+    it("samples only the selected chapter slice without reading future pages", function()
+        local toc, ranges = {}, {}
+        for i = 1, 220 do toc[i] = { title = "Chapter " .. i, page = i } end
+        local ui = { document = {
+            getToc = function() return toc end,
+            getPageText = function(_, p) ranges[#ranges + 1] = p; return string.rep("é漢字 ", 100) end,
+        } }
+        local batch = analyzer:getBackgroundBatch(ui, { page = 100 }, 220)
+        local text, titles = analyzer:getDetailedChapterSamples(ui, 200, 150000, false, 101, {}, 160, batch)
+        assert.is_string(text)
+        assert.are.equal("Chapter 101", titles[1])
+        assert.are.equal("Chapter 160", titles[#titles])
+        for _, page in ipairs(ranges) do assert.is_true(page >= 101 and page <= 160) end
+    end)
+
+    it("never splits a UTF-8 code point when trimming main context", function()
+        local ui = { document = { getPageText = function() return string.rep("é漢字", 20) end } }
+        local text = analyzer:getTextForAnalysis(ui, 11, nil, 1, 1)
+        local chars = require("util").splitToChars(text)
+        assert.are.equal(text, table.concat(chars))
+        assert.is_true(#text <= 11)
+    end)
+end)

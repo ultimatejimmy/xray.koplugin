@@ -22,18 +22,10 @@ function CacheManager:new(o)
 end
 
 function CacheManager:cancelAsyncSaves()
-    if self._active_saves then
-        for _, entry in ipairs(self._active_saves) do
-            entry.cancelled = true
-            if entry.file then
-                pcall(function() entry.file:close() end)
-                entry.file = nil
-            end
-        end
-        self._active_saves = {}
-    end
+    local pending = {}
+    for _, job in ipairs(self._active_saves or {}) do pending[#pending + 1] = job end
+    for _, job in ipairs(pending) do job.cancel() end
 end
-
 
 -- Get cache file path for a book
 function CacheManager:getCachePath(book_path)
@@ -76,279 +68,107 @@ function CacheManager:ensureDirectory(path)
     return true
 end
 
--- Save book data to cache.
--- Writes the serialized data directly to the file handle token-by-token so
--- that no large string ever exists in RAM. Peak memory is just the recursion
--- stack plus the OS file buffer, not the full serialized text.
-function CacheManager:saveCache(book_path, data)
-    if not book_path or not data then
-        logger.warn("CacheManager: Cannot save cache - invalid parameters")
-        return false
-    end
-    
-    local cache_file = self:getCachePath(book_path)
-    if not cache_file then
-        logger.warn("CacheManager: Cannot determine cache path")
-        return false
-    end
-    
-    -- Ensure directory exists
-    if not self:ensureDirectory(cache_file) then
-        logger.warn("CacheManager: Cannot create cache directory")
-        return false
-    end
-    
-    -- Add timestamp
-    data.cached_at = os.time()
-    data.cache_version = "6.0"
-    
-    local success, err = pcall(function()
-        local f, open_err = io.open(cache_file, "w")
-        
-        if not f then
-            logger.warn("CacheManager: Cannot open file for writing:", cache_file)
-            logger.warn("CacheManager: Error:", open_err or "unknown")
-            return false
-        end
-        
-        f:write("-- X-Ray Cache v6.0\n")
-        f:write("-- Generated: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-        f:write("return ")
-        
-        local ok2, write_err = pcall(function()
-            self:serializeToFile(f, data, "")
-        end)
-        
-        f:write("\n")
-        f:close()
-        
-        if not ok2 then
-            logger.warn("CacheManager: Serialization error:", write_err or "unknown")
-            AIHelper:log("CacheManager: Serialization error: " .. tostring(write_err or "unknown"))
-            return false
-        end
-        
-        logger.info("CacheManager: Saved cache to:", cache_file)
-        AIHelper:log("CacheManager: Saved cache to: " .. tostring(cache_file))
-        return true
-    end)
-    
-    if not success then
-        logger.warn("CacheManager: Failed to save cache:", err or "unknown error")
-        AIHelper:log("CacheManager: Failed to save cache: " .. tostring(err or "unknown error"))
-        return false
-    end
-    
-    return success
-end
+-- One writer per destination, including callers using different manager instances.
+local writers = {}
+local save_sequence = 0
+local utils = require(plugin_path .. "xray_utils")
 
--- Save book data to cache asynchronously using a cooperative coroutine-based recursive serializer.
--- Writing is executed in the background by yielding to KOReader's UIManager loop every 15 entries,
--- ensuring that all database tables (characters, terms, locations, etc.) are saved incrementally
--- without blocking the UI thread.
-function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
-    if not book_path or not data then
-        logger.warn("CacheManager: Cannot save cache async - invalid parameters")
+function CacheManager:_queueSave(book_path, data, on_done_cb)
+    local path = book_path and self:getCachePath(book_path)
+    if not path or not data or not self:ensureDirectory(path) then
         if on_done_cb then on_done_cb(false) end
-        return false
+        return nil
     end
-
-    local cache_file = self:getCachePath(book_path)
-    if not cache_file then
-        logger.warn("CacheManager: Cannot determine cache path for async save")
-        if on_done_cb then on_done_cb(false) end
-        return false
-    end
-
-    if not self:ensureDirectory(cache_file) then
-        logger.warn("CacheManager: Cannot create cache directory for async save")
-        if on_done_cb then on_done_cb(false) end
-        return false
-    end
-
-    data.cached_at = os.time()
-    data.cache_version = "6.0"
-
-    -- ── UIManager cooperative coroutine path (primary) ──────────────────────
+    local snapshot = utils:copyTable(data)
+    snapshot.cached_at = os.time()
+    snapshot.cache_version = "6.0"
+    save_sequence = save_sequence + 1
+    local job = { path = path, temp = path .. ".tmp-" .. tostring(save_sequence) }
+    local queue = writers[path] or {}
+    writers[path] = queue
+    queue[#queue + 1] = job
+    self._active_saves = self._active_saves or {}
+    self._active_saves[#self._active_saves + 1] = job
     local ok_ui, UIManager = pcall(require, "ui/uimanager")
-    if ok_ui and UIManager then
-        local f, open_err = io.open(cache_file, "w")
-        if not f then
-            logger.warn("CacheManager: Cannot open cache file for async write:", open_err or "unknown")
-            if on_done_cb then on_done_cb(false) end
-            return false
-        end
 
-        f:write("-- X-Ray Cache v6.0\n")
-        f:write("-- Generated: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-        f:write("return ")
-
-        self._active_saves = self._active_saves or {}
-        local save_entry = { cancelled = false, file = f, path = cache_file }
-        table.insert(self._active_saves, save_entry)
-
-        local function cleanupSave()
-            if self._active_saves then
-                for idx, entry in ipairs(self._active_saves) do
-                    if entry == save_entry then
-                        table.remove(self._active_saves, idx)
-                        break
-                    end
-                end
-            end
-        end
-
-        local write_count = 0
-        local serializeCo
-        serializeCo = function(obj, indent, seen)
-            seen = seen or {}
-            local t = type(obj)
-
-            if t == "table" then
-                if seen[obj] then
-                    f:write("{--[[circular reference]]}")
-                    return
-                end
-                seen[obj] = true
-
-                f:write("{\n")
-                local child_indent = indent .. "  "
-                for k, v in pairs(obj) do
-                    if type(v) ~= "function" and type(v) ~= "userdata" and type(v) ~= "thread" then
-                        f:write(child_indent)
-                        if type(k) == "number" then
-                            f:write("[" .. k .. "] = ")
-                        elseif type(k) == "string" and k:match("^[%a_][%w_]*$") then
-                            f:write(k .. " = ")
-                        else
-                            f:write("[" .. string.format("%q", tostring(k)) .. "] = ")
-                        end
-                        serializeCo(v, child_indent, seen)
-                        f:write(",\n")
-
-                        -- Yield control back to UIManager loop periodically
-                        write_count = write_count + 1
-                        if write_count >= 100 then
-                            write_count = 0
-                            coroutine.yield()
-                        end
-                    end
-                end
-                f:write(indent .. "}")
-            elseif t == "string" then
-                f:write(string.format("%q", obj))
-            elseif t == "number" or t == "boolean" then
-                f:write(tostring(obj))
-            else
-                f:write("nil")
-            end
-        end
-
-        local co = coroutine.create(function()
-            serializeCo(data, "")
-            f:write("\n")
-        end)
-
-        local function resumeCoroutine()
-            if save_entry.cancelled then
-                pcall(function() f:close() end)
-                cleanupSave()
-                if on_done_cb then on_done_cb(false) end
-                return
-            end
-
-            local ok, err = coroutine.resume(co)
-            if not ok then
-                logger.warn("CacheManager: Error during async serialization:", err or "unknown")
-                pcall(function() f:close() end)
-                cleanupSave()
-                if on_done_cb then on_done_cb(false) end
-                return
-            end
-
-            if coroutine.status(co) == "dead" then
-                pcall(function() f:close() end)
-                cleanupSave()
-                logger.info("CacheManager: Saved cache asynchronously (cooperative) to:", cache_file)
-                AIHelper:log("CacheManager: Saved cache asynchronously (cooperative) to: " .. tostring(cache_file))
-                if on_done_cb then on_done_cb(true) end
-            else
-                if not save_entry.cancelled then
-                    UIManager:scheduleIn(0.05, resumeCoroutine)
-                else
-                    pcall(function() f:close() end)
-                    cleanupSave()
-                    if on_done_cb then on_done_cb(false) end
-                end
-            end
-        end
-
-        UIManager:scheduleIn(0.05, resumeCoroutine)
-        logger.info("CacheManager: Started cooperative async save to:", cache_file)
-        return true
-    end
-
-    -- ── Fork-based fallback (rarely reached in practice) ─────────────────────
-    local ok_ffi, ffiutil = pcall(require, "ffi/util")
-    if not ok_ffi then
-        ok_ffi, ffiutil = pcall(require, "ffiutil")
-    end
-
-    local function child_logic(pid, write_fd)
-        local header = "-- X-Ray Cache v6.0\n-- Generated: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\nreturn "
-        local serialized_str = header .. self:serialize(data, "") .. "\n"
-        pcall(function()
-            local f = io.open(cache_file, "w")
-            if f then
-                f:write(serialized_str)
-                f:close()
-            end
-        end)
-        if write_fd and write_fd > 0 then
-            pcall(function()
-                local ffi = require("ffi")
-                ffi.cdef[[ int close(int fd); ]]
-                ffi.C.close(write_fd)
-            end)
-        end
-        local ffi_ok, ffi = pcall(require, "ffi")
-        if ffi_ok then
-            pcall(function()
-                ffi.cdef[[ void _exit(int status); ]]
-                ffi.C._exit(0)
-            end)
-        end
-        local posix_ok, posix = pcall(require, "posix.unistd")
-        if posix_ok and posix and posix._exit then
-            posix._exit(0)
+    local function schedule()
+        if ok_ui and UIManager.scheduleIn then
+            UIManager:scheduleIn(0.05, job.step)
         else
-            os.exit(0)
+            while not job.done do job.step() end
         end
     end
-
-    if ok_ffi and ffiutil and ffiutil.runInSubProcess then
-        local pid, read_fd = ffiutil.runInSubProcess(child_logic, true)
-        if pid and pid > 0 then
-            if read_fd and read_fd > 0 then
-                pcall(function()
-                    local ffi = require("ffi")
-                    ffi.cdef[[ int close(int fd); ]]
-                    ffi.C.close(read_fd)
-                end)
-            end
-            logger.info("CacheManager: Saved cache asynchronously (fork PID " .. tostring(pid) .. ") to:", cache_file)
-            if on_done_cb then on_done_cb(true) end
-            return true
+    local function finish(success)
+        if job.done then return end
+        job.done, job.success = true, success
+        if job.file then pcall(function() job.file:close() end); job.file = nil end
+        os.remove(job.temp)
+        for i, entry in ipairs(self._active_saves) do
+            if entry == job then table.remove(self._active_saves, i); break end
+        end
+        for i, entry in ipairs(queue) do
+            if entry == job then table.remove(queue, i); break end
+        end
+        if #queue == 0 then writers[path] = nil end
+        if on_done_cb then
+            local ok, err = pcall(on_done_cb, success)
+            if not ok then logger.warn("CacheManager: Save callback failed:", tostring(err)) end
+        end
+        if queue[1] then queue[1].schedule() end
+    end
+    job.cancel = function() finish(false) end
+    job.schedule = schedule
+    job.step = function()
+        if job.done or queue[1] ~= job then return end
+        if not job.co then
+            job.co = coroutine.create(function()
+                job.file = assert(io.open(job.temp, "w"))
+                local writes = 0
+                local sink = { write = function(_, ...)
+                    assert(job.file:write(...))
+                    writes = writes + 1
+                    if writes % 100 == 0 then coroutine.yield() end
+                end }
+                sink:write("-- X-Ray Cache v6.0\nreturn ")
+                self:serializeToFile(sink, snapshot, "")
+                sink:write("\n")
+                assert(job.file:flush())
+                assert(job.file:close())
+                job.file = nil
+                assert(os.rename(job.temp, path))
+            end)
+        end
+        local ok, err = coroutine.resume(job.co)
+        if not ok then
+            logger.warn("CacheManager: Atomic cache save failed:", tostring(err))
+            finish(false)
+        elseif coroutine.status(job.co) == "dead" then
+            finish(true)
+        else
+            schedule()
         end
     end
-
-    -- ── Final fallback: synchronous ───────────────────────────────────────────
-    logger.info("CacheManager: Async save unavailable, using synchronous save")
-    local success = self:saveCache(book_path, data)
-    if on_done_cb then on_done_cb(success) end
-    return success
+    return job
 end
 
+-- Synchronous saves drain older snapshots first, so they cannot overwrite this one later.
+function CacheManager:saveCache(book_path, data)
+    local job = self:_queueSave(book_path, data)
+    if not job then return false end
+    while not job.done do
+        local queue = writers[job.path]
+        if queue and queue[1] then queue[1].step() end
+    end
+    return job.success
+end
+
+-- The return value reports acceptance; the callback reports the completed atomic rename.
+function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
+    local job = self:_queueSave(book_path, data, on_done_cb)
+    if not job then return false end
+    if writers[job.path] and writers[job.path][1] == job then job.schedule() end
+    return true, job.cancel
+end
 
 -- Load book data from cache
 function CacheManager:loadCache(book_path)

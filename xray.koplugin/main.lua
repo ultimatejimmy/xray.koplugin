@@ -48,6 +48,7 @@ safeRequireMixin("xray_ui")
 safeRequireMixin("xray_fetch")
 safeRequireMixin("xray_mentions")
 safeRequireMixin("xray_unitscanner")
+safeRequireMixin("xray_backgroundfetch")
 
 
 function XRayPlugin:init()
@@ -133,7 +134,7 @@ function XRayPlugin:init()
     self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
-    self:clearPendingBackgroundFetch()
+    self:cancelBackgroundSchedule()
     self.auto_fetch_enabled = not (self.ai_helper.settings and
         self.ai_helper.settings.auto_fetch_on_chapter == false)
 
@@ -252,6 +253,7 @@ function XRayPlugin:destroy()
     elseif self.ai_helper then
         self.ai_helper:cancelAsyncChild()
     end
+    self:persistBackgroundQueue(true)
     self.destroyed = true
     
     if self.active_mention_scan and self.active_mention_scan.cancel_handle then
@@ -270,7 +272,7 @@ function XRayPlugin:destroy()
 
     self.bg_fetch_active = false
     self.bg_fetch_pending = false
-    self:clearPendingBackgroundFetch()
+    self:cancelBackgroundSchedule()
     self._unit_scan_in_progress = false
 
     self:closeAllMenus()
@@ -313,11 +315,13 @@ function XRayPlugin:onExit()
 end
 
 function XRayPlugin:onSuspend()
+    self:cancelBackgroundSchedule()
     if self.cancelActiveAIRequest then
         self:cancelActiveAIRequest("Fetch cancelled because the device suspended")
     elseif self.ai_helper then
         self.ai_helper:cancelAsyncChild()
     end
+    self:persistBackgroundQueue(true)
 end
 
 -- Builds the X-Ray button spec for the dict popup.
@@ -409,8 +413,9 @@ function XRayPlugin:onReaderReady()
     self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
-    self:clearPendingBackgroundFetch()
+    self:cancelBackgroundSchedule()
 
+    self:restoreBackgroundQueue()
     local settings = self.ai_helper and self.ai_helper.settings or {}
 
     -- Initial unit scanner run
@@ -491,78 +496,14 @@ end
 
 
 function XRayPlugin:onNetworkConnected()
+    local document = self.ui and self.ui.document
+    if not document then return end
     self:log("XRayPlugin: onNetworkConnected fired. Scheduling series context check in 2 seconds.")
     UIManager:scheduleIn(2, function()
-        if self.destroyed or not self.ui or not self.ui.document then return end
+        if self.destroyed or not self.ui or self.ui.document ~= document then return end
         self:checkSeriesContext()
     end)
-    self:scheduleBackgroundCatchUp(2)
-end
-
-function XRayPlugin:clearPendingBackgroundFetch()
-    self.pending_background_fetch = false
-    if self._background_catch_up_callback then
-        UIManager:unschedule(self._background_catch_up_callback)
-        self._background_catch_up_callback = nil
-    end
-end
-
-function XRayPlugin:scheduleBackgroundCatchUp(delay)
-    if not self.pending_background_fetch or self._background_catch_up_callback then return end
-    if self.destroyed or not self.ui or not self.ui.document then return end
-    local document = self.ui.document
-    local callback
-    callback = function()
-        if self._background_catch_up_callback ~= callback then return end
-        self._background_catch_up_callback = nil
-        if self.destroyed or not self.ui or self.ui.document ~= document then return end
-        if not self.pending_background_fetch then return end
-        if not self.auto_fetch_enabled then
-            self:clearPendingBackgroundFetch()
-            return
-        end
-
-        local current_page = self.ui:getCurrentPage()
-        local last_fetch_page = self.book_data and self.book_data.last_fetch_page
-        if last_fetch_page and current_page <= last_fetch_page then
-            self:clearPendingBackgroundFetch()
-            return
-        end
-        if not self.ai_helper or not self.ai_helper:hasApiKey() then return end
-
-        -- Keep the deferred update, but do not poll while offline.
-        local NetworkMgr = require("ui/network/manager")
-        if not NetworkMgr:isConnected() or not NetworkMgr:isOnline() then return end
-        if self.bg_fetch_pending or self.bg_fetch_active or self._unit_scan_in_progress
-                or self._active_ai_cancel or self.ai_helper._async_child_pid then
-            self:scheduleBackgroundCatchUp(5)
-            return
-        end
-
-        local cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
-        local remaining = (self.last_bg_fetch_time or 0) + cooldown - os.time()
-        if self.last_bg_fetch_time and remaining > 0 then
-            self:scheduleBackgroundCatchUp(remaining)
-            return
-        end
-
-        local chapter_title = nil
-        local max_p = -1
-        for _, entry in ipairs(self:_getFlatToc() or {}) do
-            local p = tonumber(entry.page)
-            if p and p <= current_page and p >= max_p then
-                max_p = p
-                chapter_title = entry.title
-            end
-        end
-        chapter_title = chapter_title or ("Page " .. tostring(current_page))
-        self:triggerBackgroundMergeFetch(chapter_title)
-        if not self.pending_background_fetch then
-            self.last_bg_fetch_page = current_page
-        end
-    end
-    self._background_catch_up_callback = callback
-    UIManager:scheduleIn(delay, callback)
+    self:wakeBackgroundQueue()
 end
 
 function XRayPlugin:onPageUpdate(pageno)
@@ -586,87 +527,28 @@ function XRayPlugin:onPageUpdate(pageno)
         end
     end
     if not self.auto_fetch_enabled then
-        self:clearPendingBackgroundFetch()
+        self:cancelBackgroundSchedule()
         return
     end
     
     if not self.ui or not self.ui.document then return end
+    if self.background_fetch_queue then self:scheduleBackgroundCatchUp(2) end
 
-    -- 1. Ultra mode: bypass chapter-boundary and is_populated guards; fire on page interval alone
+    -- Ultra mode uses page intervals; the queue owns debounce and request state.
     local page_interval = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_page_interval
     if page_interval and page_interval > 0 then
         local last = self.last_bg_fetch_page
         if not last then
             self.last_bg_fetch_page = pageno
-            self:log("XRayPlugin: Ultra mode initialized last_bg_fetch_page to " .. tostring(pageno))
-            -- If cache is completely empty, trigger initial silent fetch immediately
             if not self.timeline or #self.timeline == 0 then
-                self:log("XRayPlugin: Cache is empty. Triggering immediate initial fetch in Ultra mode.")
-                local chapter_title = nil
-                local toc = self:_getFlatToc()
-                if toc and #toc > 0 then
-                    local max_p = -1
-                    for _, entry in ipairs(toc) do
-                        if entry.page then
-                            local p = tonumber(entry.page)
-                            if p and p <= pageno and p >= max_p then
-                                max_p = p
-                                chapter_title = entry.title
-                            end
-                        end
-                    end
-                end
-                chapter_title = chapter_title or ("Page " .. tostring(pageno))
-
-                if not (self.bg_fetch_pending or self.bg_fetch_active) then
-                    self.bg_fetch_pending = true
-                    UIManager:scheduleIn(2, function()
-                        if self.destroyed or not self.ui or not self.ui.document then return end
-                        self.bg_fetch_pending = false
-                        self:triggerBackgroundMergeFetch(chapter_title)
-                    end)
-                end
+                self:queueBackgroundFetch()
+                self:scheduleBackgroundCatchUp(2)
             end
-            return
+        elseif math.abs(pageno - last) >= page_interval then
+            self.last_bg_fetch_page = pageno
+            self:queueBackgroundFetch()
+            self:scheduleBackgroundCatchUp(2)
         end
-
-        -- Use absolute difference to handle backward navigation, page jumps, etc.
-        local diff = math.abs(pageno - last)
-        if diff < page_interval then
-            return
-        end
-        self:log("XRayPlugin: Ultra mode page interval crossed. Page: " .. tostring(pageno) .. ", Last: " .. tostring(last) .. ", Diff: " .. tostring(diff) .. ", Interval: " .. tostring(page_interval))
-        self.last_bg_fetch_page = pageno
-
-        -- Debounce: ignore if a fetch is already scheduled or active
-        if self.bg_fetch_pending or self.bg_fetch_active then 
-            self:log("XRayPlugin: Fetch already pending or active. Debouncing Ultra mode trigger.")
-            return 
-        end
-        self.bg_fetch_pending = true
-
-        -- Resolve current chapter title from TOC if available
-        local chapter_title = nil
-        local toc = self:_getFlatToc()
-        if toc and #toc > 0 then
-            local max_p = -1
-            for _, entry in ipairs(toc) do
-                if entry.page then
-                    local p = tonumber(entry.page)
-                    if p and p <= pageno and p >= max_p then
-                        max_p = p
-                        chapter_title = entry.title
-                    end
-                end
-            end
-        end
-        chapter_title = chapter_title or ("Page " .. tostring(pageno))
-
-        UIManager:scheduleIn(2, function()
-            if self.destroyed or not self.ui or not self.ui.document then return end
-            self.bg_fetch_pending = false
-            self:triggerBackgroundMergeFetch(chapter_title)
-        end)
         return
     end
 
@@ -744,93 +626,10 @@ function XRayPlugin:onPageUpdate(pageno)
     -- Same chapter as before (no change)?
     if unique_id == self.last_auto_chapter then return end
     self.last_auto_chapter = unique_id
-
-    -- Debounce: ignore if a fetch is already scheduled
-    if self.bg_fetch_pending or self.bg_fetch_active then 
-        return 
-    end
-    self.bg_fetch_pending = true
-
-    -- Wait 2s for the reader to settle on the new chapter before fetching
-    UIManager:scheduleIn(2, function()
-        if self.destroyed or not self.ui or not self.ui.document then return end
-        self.bg_fetch_pending = false
-        self:triggerBackgroundMergeFetch(chapter_title)
-    end)
-end
-
-function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
-    if self.destroyed or not self.ui or not self.ui.document then return end
-    if not self.auto_fetch_enabled then
-        self:clearPendingBackgroundFetch()
-        return
-    end
-    if self._unit_scan_in_progress then
-        if self.bg_fetch_pending then return end
-        self:log("XRayPlugin: Deferring background AI fetch because unit scan is in progress")
-        self.bg_fetch_pending = true
-        UIManager:scheduleIn(5, function()
-            if self.destroyed or not self.ui or not self.ui.document then return end
-            self.bg_fetch_pending = false
-            self:triggerBackgroundMergeFetch(chapter_title)
-        end)
-        return
-    end
-    if self.bg_fetch_active then return end
-    if not self.ui.document.file then return end
+    self:queueBackgroundFetch()
+    self:scheduleBackgroundCatchUp(2)
 
 
-    -- SILENT NETWORK CHECK: use isOnline() instead of runWhenOnline to avoid "white box" connecting dialogs
-    local NetworkMgr = require("ui/network/manager")
-    if NetworkMgr:isConnected() and NetworkMgr:isOnline() then
-        -- Safety Check: Ensure API keys are configured before background activity
-        if not self.ai_helper:hasApiKey() then
-            return
-        end
-
-        -- Foreground requests own the single async child slot and its global
-        -- cancel handler. Do not consume the background cooldown or disturb
-        -- that ownership while one is active.
-        if self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid) then
-            self:log("XRayPlugin: Skipping background fetch because another AI request is active")
-            return
-        end
-
-        -- Cooldown check to prevent API spamming
-        local cooldown = self.ai_helper.settings and self.ai_helper.settings.auto_fetch_cooldown or 300
-        local now = os.time()
-        if self.last_bg_fetch_time and (now - self.last_bg_fetch_time) < cooldown then
-            return
-        end
-        local current_page = self.ui:getCurrentPage()
-        local total_pages = self.ui.document:getPageCount()
-        if not total_pages or total_pages == 0 then return end
-        local reading_percent = math.floor((current_page / total_pages) * 100)
-        
-        local spoiler_setting = self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        if spoiler_setting == "full_book" then
-            reading_percent = 100
-        end
-        
-        local last_fetch_page = self.book_data and self.book_data.last_fetch_page
-        
-        local is_update = true
-        if not self.timeline or #self.timeline == 0 then
-            is_update = false
-            self:log("XRayPlugin: Cache is empty. Switching to normal fetch instead of merge.")
-        else
-            self:log("XRayPlugin: Auto-merge fetch for chapter: " .. tostring(chapter_title))
-        end
-        
-        self.fetch_attempts = self.fetch_attempts or {}
-        self.fetch_attempts[chapter_title] = (self.fetch_attempts[chapter_title] or 0) + 1
-        self.last_bg_fetch_time = now
-        self:clearPendingBackgroundFetch()
-        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true) -- is_silent=true
-    else
-        -- Remember one deferred update, regardless of how many intervals are missed.
-        self.pending_background_fetch = true
-    end
 end
 
 function XRayPlugin:onDispatcherRegisterActions()

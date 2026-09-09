@@ -89,9 +89,9 @@ msgstr "Désactivé"
 msgid "auto_update_economical"
 msgstr "Économique : vérifie max toutes les 15 min"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "La mise à jour automatique vérifie les nouvelles données de chapitre en arrière-plan pendant que vous lisez.\n\nLIMITES ET PERFORMANCE\nLes requêtes fréquentes en arrière-plan peuvent vider la BATTERIE et atteindre les LIMITES DE TAUX du fournisseur IA.\n\nMODES\n• Ultra : Vérifie toutes les N pages configurées (au milieu du chapitre)\n• Agressif : Vérifie chaque fois que vous entrez dans un nouveau chapitre\n• Équilibré : Vérifie au plus toutes les 5 minutes (recommandé)\n• Économique : Vérifie au plus toutes les 15 minutes\n• Clairsemé : Vérifie au plus toutes les 30 minutes\n• Désactivé : Pas de requêtes en arrière-plan\n\nNote : Si un chapitre est sauté en raison des limites de fréquence, X-Ray l'inclura automatiquement dans la prochaine récupération en arrière-plan."
+msgstr "La mise à jour automatique recherche de nouvelles données de chapitres selon la fréquence et les réglages anti-spoilers choisis.\n\nLes mises à jour inachevées sont enregistrées pour chaque livre et reprennent à sa réouverture avec un accès à Internet. Les mises à jour volumineuses sont divisées en petits lots, avec le délai choisi entre les requêtes. Désactiver la mise à jour automatique suspend les tâches en attente.\n\nDes requêtes fréquentes peuvent épuiser la batterie et atteindre les limites du fournisseur IA."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

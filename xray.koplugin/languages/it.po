@@ -89,9 +89,9 @@ msgstr "Disabilitato"
 msgid "auto_update_economical"
 msgstr "Economico: controlla al massimo ogni 15 minuti"
 
-# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+# en-hash: 1389cf8822b066771ca36a16ed5b20a5
 msgid "auto_update_freq_about"
-msgstr "L'aggiornamento automatico controlla la presenza di nuovi dati di capitolo in background mentre leggi.\n\nLIMITI E PRESTAZIONI\nRichieste frequenti in background possono consumare la DURATA DELLA BATTERIA e potrebbero raggiungere i LIMITI DI VELOCITÀ DEL FORNITORE AI (soprattutto sui modelli Pro).\n\nMODALITÀ\n• Ultra: controlla ogni N pagine configurate (a metà capitolo)\n• Aggressivo: controlla ogni volta che entri in un nuovo capitolo\n• Bilanciato: controlla al massimo ogni 5 minuti (consigliato)\n• Economico: controlli al massimo ogni 15 minuti\n• Raro: controlli al massimo ogni 30 minuti\n• Disabilitato: nessuna richiesta in background\n\nNota: se un capitolo viene saltato a causa di limiti di frequenza, X-Ray lo includerà automaticamente nel successivo recupero in background."
+msgstr "Gli aggiornamenti automatici cercano nuovi dati dei capitoli in base alla frequenza e alle impostazioni sugli spoiler selezionate.\n\nGli aggiornamenti incompleti vengono salvati per ogni libro e riprendono quando lo riapri con accesso a internet. Gli aggiornamenti grandi vengono suddivisi in lotti più piccoli, con la pausa selezionata tra le richieste. Disattivare gli aggiornamenti automatici sospende il lavoro in coda.\n\nRichieste frequenti possono consumare la batteria e raggiungere i limiti del fornitore IA."
 
 # en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
 msgid "auto_update_freq_label"

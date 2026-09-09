@@ -456,7 +456,7 @@ function ChapterAnalyzer:getTextFromPageRange(ui, start_page, end_page, max_len)
             
             -- Trim to max_len (take from the beginning since we want this specific range)
             if #text > max_len then
-                text = text:sub(1, max_len)
+                text = utf8_sub(text, 1, max_len)
             end
             return text
         end)
@@ -625,7 +625,7 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
             
             -- Trim to the last max_len characters
             if #full_text > max_len then
-                return full_text:sub(-max_len)
+                return utf8_sub(full_text, -max_len)
             else
                 return full_text
             end
@@ -682,7 +682,7 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
     
     -- Limit text length (from the end)
     if #book_text > max_len then
-        book_text = book_text:sub(-max_len)
+        book_text = utf8_sub(book_text, -max_len)
     end
     
     if progress_callback then progress_callback(1.0) end
@@ -711,8 +711,39 @@ function ChapterAnalyzer:getAnnotationsForAnalysis(ui)
     return #annotations_text > 0 and annotations_text or nil
 end
 
+-- Select the next bounded sampling window. Chapter continuation handles even
+-- TOCs with more than 200 entries on the same page without skipping entries.
+function ChapterAnalyzer:getBackgroundBatch(ui, cursor, target_page, window_pages, chapter_limit)
+    local start_page = math.max(1, (cursor.page or 0) + 1)
+    if start_page > target_page then return nil end
+    local end_page = math.min(target_page, start_page + (window_pages or 60) - 1)
+    local toc = flattenTOC(ui.document:getToc() or {})
+    local indices = {}
+    for i, chapter in ipairs(toc) do
+        local page = tonumber(chapter.page)
+        local next_page = math.huge
+        for j = i + 1, #toc do
+            local p = tonumber(toc[j].page)
+            if p and page and p > page then next_page = p; break end
+        end
+        if page and page <= end_page and next_page > start_page
+                and i >= (cursor.chapter_index or 1) then
+            indices[#indices + 1] = i
+        end
+    end
+    local limit = chapter_limit or 200
+    local more = indices[limit + 1]
+    return {
+        start_page = start_page, end_page = end_page,
+        first_chapter = cursor.chapter_index or 1,
+        last_chapter = more and indices[limit] or #toc,
+        next_cursor = more and { page = cursor.page or 0, chapter_index = more }
+            or { page = end_page },
+    }
+end
+
 -- Get detailed samples (Start/Mid/End) from each chapter
-function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit, is_full_book, start_page, known_chapters, resolved_current_page)
+function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit, is_full_book, start_page, known_chapters, resolved_current_page, batch)
     if not ui or not ui.document then return nil, nil end
     
     local raw_toc
@@ -722,7 +753,7 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
         end
     end)
     local toc = flattenTOC(raw_toc)
-    if not toc or #toc == 0 then 
+    if (not toc or #toc == 0) and not batch then
         logger.info("ChapterAnalyzer: No TOC found for detailed sampling")
         return nil, nil 
     end
@@ -785,8 +816,16 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
                 if isNonNarrative(chapter.title) then
                     AIHelper:log("ChapterAnalyzer: Skipping non-narrative chapter: " .. (chapter.title or tostring(i)))
                 else
-                    local skip = false
-                    if start_page and not is_full_book then
+                    local skip = batch and (i < batch.first_chapter or i > batch.last_chapter) or false
+                    if batch then
+                        local next_page = math.huge
+                        for j = i + 1, #toc do
+                            local p = tonumber(toc[j].page)
+                            if p and ch_page and p > ch_page then next_page = p; break end
+                        end
+                        skip = skip or (ch_page and next_page <= batch.start_page) or false
+                    end
+                    if not batch and start_page and not is_full_book then
                         -- Scan forward for the next TOC entry with a valid page number
                         local next_chapter_page = math.huge
                         for j = i + 1, #toc do
@@ -872,7 +911,15 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
 
             local success, chapter_text = pcall(function()
                 if not ui or not ui.document then return "" end
-                if is_current_chapter then
+                if batch then
+                    local start = math.max(batch.start_page, tonumber(chapter.page) or batch.start_page)
+                    local last = batch.end_page
+                    for j = chapter.toc_index + 1, #toc do
+                        local p = tonumber(toc[j].page)
+                        if p and p > start then last = math.min(last, p - 1); break end
+                    end
+                    return self:getTextFromPageRange(ui, start, self:getEndPageForCurrentPage(ui, last), total_limit)
+                elseif is_current_chapter then
                     local end_page = self:getEndPageForCurrentPage(ui, current_page)
                     return self:getTextFromPageRange(ui, chapter.page, end_page, total_limit)
                 elseif ui.document.getTextFromXPointer and chapter.xpointer then
@@ -895,7 +942,7 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
                 ))
             end
         end
-    else
+    elseif not batch then
         -- NO TOC FALLBACK: Even sampling across the book
         local max_range = 0
         pcall(function()

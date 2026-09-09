@@ -250,6 +250,73 @@ function AIHelper:makeRequest(url, headers, request_body, timeout, maxtime)
     end
 end
 
+-- Book excerpts have their own ceiling; the complete request also has to fit
+-- both configured models. Byte counts are conservative estimates, not tokens.
+function AIHelper:getRequestBudget(request, book_text)
+    local payload = json.decode(request.body) or {}
+    local limits = self.settings.model_context_limits or {}
+    local defaults = { gemini = 1048576, claude = 200000 }
+    local context_limit = tonumber(limits[request.model]) or defaults[request.provider] or 128000
+    local output = payload.max_completion_tokens or payload.max_tokens
+        or (payload.generationConfig and payload.generationConfig.maxOutputTokens) or 16384
+    return {
+        book_text = book_text, book_limit = 800000,
+        input_limit = math.max(0, context_limit - output - 2048),
+    }
+end
+
+function AIHelper:checkRequestBudget(request, count_tokens)
+    local budget = request.token_budget
+    if not budget then return true end
+    local input_tokens, book_tokens = #request.body, #budget.book_text
+    local counted_input, counted_book
+    if count_tokens then
+        counted_input = count_tokens(request, false)
+        counted_book = count_tokens(request, true)
+    end
+    if type(counted_input) == "number" then input_tokens = counted_input end
+    if type(counted_book) == "number" then book_tokens = counted_book end
+    self:log(string.format("AIHelper: Request budget (%s input, %s excerpts): %d / %d; book %d / %d",
+        counted_input and "counted" or "estimated bytes", counted_book and "counted" or "estimated bytes",
+        input_tokens, budget.input_limit, book_tokens, budget.book_limit))
+    return input_tokens <= budget.input_limit and book_tokens <= budget.book_limit
+end
+
+-- Called only inside the request child, never on KOReader's UI thread.
+function AIHelper:countRequestTokens(request, book_only, send)
+    local payload = json.decode(request.body) or {}
+    local url, body
+    if request.provider == "gemini" then
+        url = request.url:gsub(":generateContent.*$", ":countTokens")
+        body = book_only and { contents = {{ parts = {{ text = request.token_budget.book_text }} }} }
+            or { generateContentRequest = {
+                model = "models/" .. request.model, contents = payload.contents,
+                systemInstruction = payload.systemInstruction,
+            } }
+    elseif request.provider == "claude" then
+        url = request.url:gsub("/messages$", "/messages/count_tokens")
+        body = { model = payload.model,
+            messages = book_only and {{ role = "user", content = request.token_budget.book_text }} or payload.messages,
+            system = not book_only and payload.system or nil,
+        }
+    else
+        return nil
+    end
+    local ok, response = pcall(send, url, request.headers, json.encode(body))
+    if not ok or type(response) ~= "table" then return nil end
+    return tonumber(response.totalTokens or response.input_tokens)
+end
+
+function AIHelper:classifyRequestError(code, message)
+    local text = (message or ""):lower()
+    if code == 413 or text:find("context_length") or text:find("context window")
+            or text:find("too many tokens") or text:find("token count") or text:find("prompt is too long")
+            or text:find("maximum context") then return "error_context" end
+    if code == 401 or code == 403 then return "error_auth" end
+    if code == 400 or code == 404 then return "error_config" end
+    return "error_api"
+end
+
 -- Build all possible HTTP request parameters (primary and fallback) for a comprehensive fetch.
 -- Returns: { {url, headers, body, provider, model}, ... } or nil, error_code, error_msg
 function AIHelper:buildComprehensiveRequest(title, author, context, prompt_override)
@@ -469,6 +536,12 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
     end
     
     if #requests > 0 then
+        if context and context.background_batch then
+            local book_text = (context.book_text or "") .. (context.chapter_samples or "")
+            for _, request in ipairs(requests) do
+                request.token_budget = self:getRequestBudget(request, book_text)
+            end
+        end
         return requests
     end
     return nil, "error_api", "No API key configured"
@@ -697,6 +770,26 @@ function AIHelper:makeRequestAsync(request_params, result_file)
             local requests = request_params
             if request_params.url then requests = { request_params } end -- Handle single request fallback
 
+            local function sendCount(url, headers, body)
+                local parts = {}
+                local _, code = http_req.request({ url = url, method = "POST", headers = headers,
+                    source = ltn12_req.source.string(body), sink = socketutil_req.table_sink(parts) })
+                if tonumber(code) == 200 then return json.decode(table.concat(parts)) end
+            end
+            for _, request in ipairs(requests) do
+                local fits = self:checkRequestBudget(request, function(req, book_only)
+                    return self:countRequestTokens(req, book_only, sendCount)
+                end)
+                if not fits then
+                    local f = assert(io.open(result_file, "w"))
+                    f:write("413\n" .. tostring(request.provider) .. "\n"
+                        .. json.encode({ error = { message = "Request exceeds context window or book token budget" } }))
+                    f:close()
+                    socketutil_req:reset_timeout()
+                    return
+                end
+            end
+
             local success_found = false
             for i, req in ipairs(requests) do
                 self:log(string.format("AIHelper Child: Sending request %d/%d to %s (%s)", i, #requests, req.provider, req.model or "default"))
@@ -725,6 +818,15 @@ function AIHelper:makeRequestAsync(request_params, result_file)
                     else
                         break
                     end
+                end
+
+                if req.token_budget and code_num and code_num ~= 200
+                        and self:classifyRequestError(code_num, response_text) == "error_context" then
+                    local f = assert(io.open(result_file, "w"))
+                    f:write("413\n" .. tostring(req.provider) .. "\n" .. response_text)
+                    f:close()
+                    socketutil_req:reset_timeout()
+                    return
                 end
 
                 -- Mirror the content-length completeness check from makeRequest (lines 167-170)
@@ -1071,7 +1173,7 @@ function AIHelper:checkAsyncResult(result_file, expected_pid)
                 error_detail = error_detail .. ": " .. tostring(err_data.error.message)
             end
         end
-        return false, "error_api", error_detail
+        return false, self:classifyRequestError(code_num, error_detail), error_detail
     end
 
     -- Parse the response based on provider
@@ -1736,6 +1838,12 @@ function AIHelper:saveSettings(new_settings, keys_to_delete)
         f:write(json.encode(self.settings))
         f:close()
     end
+    local ok_ui, UIManager = pcall(require, "ui/uimanager")
+    local ok_event, Event = pcall(require, "ui/event")
+    if ok_ui and ok_event and UIManager.broadcastEvent then
+        UIManager:broadcastEvent(Event:new("XRaySettingsChanged"))
+    end
+
 end
 
 function AIHelper:loadLanguage()
