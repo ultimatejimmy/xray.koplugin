@@ -383,6 +383,23 @@ function M:assignTimelinePages(timeline, raw_toc, allow_findtext)
     end
 end
 
+function M:filterOrphanTimelineEvents(timeline, raw_toc)
+    if not timeline or #timeline == 0 then return timeline end
+    if not raw_toc or #raw_toc == 0 then return timeline end
+
+    local filtered = {}
+    for _, ev in ipairs(timeline) do
+        if ev.source == "series_prior" or (ev.page and tonumber(ev.page)) then
+            table.insert(filtered, ev)
+        else
+            if self.log then
+                self:log("XRayPlugin: Filtering orphan/hallucinated timeline event: " .. tostring(ev.chapter))
+            end
+        end
+    end
+    return filtered
+end
+
 function M:sortTimelineByTOC(timeline)
     if not timeline or #timeline == 0 then return end
     

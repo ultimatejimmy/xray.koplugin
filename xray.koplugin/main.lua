@@ -133,6 +133,8 @@ function XRayPlugin:init()
     self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
+    self.pending_background_fetch = false
+    self._background_catch_up_callback = nil
     self.auto_fetch_enabled = not (self.ai_helper.settings and
         self.ai_helper.settings.auto_fetch_on_chapter == false)
 
@@ -269,6 +271,7 @@ function XRayPlugin:destroy()
 
     self.bg_fetch_active = false
     self.bg_fetch_pending = false
+    self:clearPendingBackgroundFetch()
     self._unit_scan_in_progress = false
 
     self:closeAllMenus()
@@ -407,6 +410,7 @@ function XRayPlugin:onReaderReady()
     self.last_bg_fetch_page = nil
     self.chapters_fetched = {}
     self.bg_fetch_pending = false
+    self:clearPendingBackgroundFetch()
 
     local settings = self.ai_helper and self.ai_helper.settings or {}
 
@@ -484,15 +488,224 @@ function XRayPlugin:onReaderReady()
             order_module.insertSorted("tools", "xray", 1)
         end
     end)
+
+    if self.auto_fetch_enabled and settings.spoiler_setting == "full_book" then
+        UIManager:scheduleIn(5, function()
+            if self.destroyed or not self.ui or not self.ui.document then return end
+            if self:isCatchUpNeeded() and not self.bg_fetch_active and not self.bg_fetch_pending then
+                self.pending_background_fetch = true
+                self:scheduleBackgroundCatchUp(3)
+            end
+        end)
+    end
 end
 
 
+function XRayPlugin:clearPendingBackgroundFetch()
+    self.pending_background_fetch = false
+    if self._background_catch_up_callback then
+        UIManager:unschedule(self._background_catch_up_callback)
+        self._background_catch_up_callback = nil
+    end
+end
+
+function XRayPlugin:getCatchUpTargetLimit()
+    if not self.ui or not self.ui.document then return 0, false end
+    local current_page = self.ui:getCurrentPage() or 1
+    local total_pages = self.ui.document:getPageCount() or current_page
+    if total_pages == 0 then total_pages = current_page end
+
+    local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+    if spoiler_setting == "full_book" then
+        return total_pages, true
+    else
+        return current_page, false
+    end
+end
+
+function XRayPlugin:isCatchUpNeeded()
+    if not self.auto_fetch_enabled then return false end
+    if not self.ai_helper or not self.ai_helper:hasApiKey() then return false end
+    local target_limit = self:getCatchUpTargetLimit()
+    if target_limit <= 0 then return false end
+
+    local last_fetch_page = self.book_data and self.book_data.last_fetch_page or 0
+    return last_fetch_page < target_limit
+end
+
+function XRayPlugin:getNextCatchUpBatch(start_page, target_page)
+    local toc = self:_getFlatToc() or {}
+    local candidate_chapters = {}
+    for i, entry in ipairs(toc) do
+        local p = tonumber(entry.page)
+        if p and p > start_page and p <= target_page then
+            if not self:isNonNarrativeChapter(entry.title) then
+                table.insert(candidate_chapters, { title = entry.title, page = p, index = i })
+            end
+        end
+    end
+
+    local BATCH_CHAPTER_LIMIT = 4
+    if #candidate_chapters == 0 then
+        -- No TOC entries between start_page and target_page (e.g. flat text or within single chapter)
+        local diff = target_page - start_page
+        if diff <= 50 then
+            return target_page, ("Page " .. tostring(target_page)), true
+        else
+            local batch_end = math.min(target_page, start_page + 50)
+            return batch_end, ("Page " .. tostring(batch_end)), false
+        end
+    elseif #candidate_chapters <= BATCH_CHAPTER_LIMIT then
+        local last_ch = candidate_chapters[#candidate_chapters]
+        return target_page, (last_ch.title or ("Page " .. tostring(target_page))), true
+    else
+        local batch_ch = candidate_chapters[BATCH_CHAPTER_LIMIT]
+        local batch_end = batch_ch.page
+        for idx = BATCH_CHAPTER_LIMIT + 1, #candidate_chapters do
+            local next_p = candidate_chapters[idx].page
+            if next_p > batch_ch.page then
+                batch_end = next_p - 1
+                break
+            end
+        end
+        batch_end = math.min(target_page, batch_end)
+        if batch_end <= start_page then
+            batch_end = math.min(target_page, start_page + 1)
+        end
+        return batch_end, (batch_ch.title or ("Page " .. tostring(batch_end))), false
+    end
+end
+
+local CATCHUP_COOLDOWN = 15 -- Inter-batch cooldown in seconds to avoid tight loops / API rate limits
+XRayPlugin.CATCHUP_COOLDOWN = CATCHUP_COOLDOWN
+
+function XRayPlugin:scheduleBackgroundCatchUp(delay)
+    if not self.pending_background_fetch then return end
+    if not self.auto_fetch_enabled then
+        self:clearPendingBackgroundFetch()
+        return
+    end
+    if self.destroyed or not self.ui or not self.ui.document then return end
+    local document = self.ui.document
+
+    if self._background_catch_up_callback then return end
+
+    local callback
+    callback = function()
+        if self._background_catch_up_callback ~= callback then return end
+        self._background_catch_up_callback = nil
+        if self.destroyed or not self.ui or self.ui.document ~= document then return end
+        if not self.pending_background_fetch then return end
+        if not self.auto_fetch_enabled then
+            self:clearPendingBackgroundFetch()
+            return
+        end
+
+        local target_limit, is_full_book = self:getCatchUpTargetLimit()
+        local last_fetch_page = self.book_data and self.book_data.last_fetch_page
+        if last_fetch_page and last_fetch_page >= target_limit then
+            self:clearPendingBackgroundFetch()
+            return
+        end
+        if not self.ai_helper or not self.ai_helper:hasApiKey() then return end
+
+        -- SILENT NETWORK CHECK: strictly passive check, NEVER show white-box popups or dialogs
+        local NetworkMgr = require("ui/network/manager")
+        if not NetworkMgr:isConnected() or not NetworkMgr:isOnline() then
+            -- Still offline: keep pending_background_fetch = true, do NOT poll
+            return
+        end
+
+        -- Busy check: defer if another AI request or unit scan is running
+        if self.bg_fetch_pending or self.bg_fetch_active or self._unit_scan_in_progress
+                or self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid) then
+            self:scheduleBackgroundCatchUp(10)
+            return
+        end
+
+        -- Cooldown check between catch-up batches (15s)
+        local catchup_cd = self.CATCHUP_COOLDOWN or CATCHUP_COOLDOWN
+        local now = os.time()
+        local remaining = (self.last_bg_fetch_time or 0) + catchup_cd - now
+        if self.last_bg_fetch_time and remaining > 0 then
+            self:scheduleBackgroundCatchUp(remaining)
+            return
+        end
+
+        local total_pages = self.ui.document:getPageCount() or target_limit
+        if total_pages == 0 then total_pages = target_limit end
+        local start_page = last_fetch_page or 0
+        local batch_end_page, chapter_title, is_final = self:getNextCatchUpBatch(start_page, target_limit)
+        local target_page = batch_end_page or target_limit
+
+        local reading_percent = math.floor((target_page / total_pages) * 100)
+        local spoiler_setting = self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
+        if spoiler_setting == "full_book" and is_final then
+            reading_percent = 100
+        end
+
+        local is_update = true
+        if not self.timeline or #self.timeline == 0 then
+            is_update = false
+        end
+
+        self.fetch_attempts = self.fetch_attempts or {}
+        local attempt_key = chapter_title or tostring(target_page)
+        self.fetch_attempts[attempt_key] = (self.fetch_attempts[attempt_key] or 0) + 1
+        self.last_bg_fetch_time = now
+        self.last_bg_fetch_page = target_page
+
+        self:log("XRayPlugin: Catch-up batch started for target page: " .. tostring(target_page) .. " (chapter: " .. tostring(chapter_title) .. ", final=" .. tostring(is_final) .. ")")
+
+        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, function(success)
+            if self.destroyed or not self.ui or self.ui.document ~= document then return end
+            if success then
+                self.last_bg_fetch_time = os.time()
+                local curr_limit = self:getCatchUpTargetLimit()
+                local lfp = self.book_data and self.book_data.last_fetch_page or target_page
+                if lfp < curr_limit then
+                    self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
+                    self.pending_background_fetch = true
+                    self:scheduleBackgroundCatchUp(catchup_cd)
+                else
+                    self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
+                    self:clearPendingBackgroundFetch()
+                end
+            else
+                -- If failed, wait for next network event or reschedule if still online
+                local net = require("ui/network/manager")
+                if net:isConnected() and net:isOnline() then
+                    self:scheduleBackgroundCatchUp(catchup_cd)
+                end
+            end
+        end)
+    end
+    self._background_catch_up_callback = callback
+    UIManager:scheduleIn(delay or 3, callback)
+end
+
 function XRayPlugin:onNetworkConnected()
+    local document = self.ui and self.ui.document
+    if not document then return end
     self:log("XRayPlugin: onNetworkConnected fired. Scheduling series context check in 2 seconds.")
     UIManager:scheduleIn(2, function()
-        if self.destroyed or not self.ui or not self.ui.document then return end
+        if self.destroyed or not self.ui or self.ui.document ~= document then return end
         self:checkSeriesContext()
     end)
+
+    local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting
+    if self.pending_background_fetch or (spoiler_setting == "full_book" and self:isCatchUpNeeded()) then
+        self.pending_background_fetch = true
+        self:scheduleBackgroundCatchUp(3)
+    end
+end
+
+function XRayPlugin:onResume()
+    local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting
+    if self.pending_background_fetch or (spoiler_setting == "full_book" and self:isCatchUpNeeded()) then
+        self.pending_background_fetch = true
+        self:scheduleBackgroundCatchUp(3)
+    end
 end
 
 function XRayPlugin:onPageUpdate(pageno)
@@ -515,7 +728,10 @@ function XRayPlugin:onPageUpdate(pageno)
             self:closeAllMenus()
         end
     end
-    if not self.auto_fetch_enabled then return end
+    if not self.auto_fetch_enabled then
+        self:clearPendingBackgroundFetch()
+        return
+    end
     
     if not self.ui or not self.ui.document then return end
 
@@ -652,6 +868,13 @@ function XRayPlugin:onPageUpdate(pageno)
             self:log("XRayPlugin: Chapter already populated in data: " .. tostring(chapter_title) .. " (page " .. tostring(chapter_page) .. ")")
         end
         self.chapters_fetched[unique_id] = true
+        local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting
+        if spoiler_setting == "full_book" and self:isCatchUpNeeded() then
+            if not self.pending_background_fetch and not self.bg_fetch_active and not self.bg_fetch_pending then
+                self.pending_background_fetch = true
+                self:scheduleBackgroundCatchUp(5)
+            end
+        end
         return
     end
 
@@ -724,31 +947,57 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
         end
         self.last_bg_fetch_time = now
 
-        local current_page = self.ui:getCurrentPage()
-        local total_pages = self.ui.document:getPageCount()
-        if not total_pages or total_pages == 0 then return end
-        local reading_percent = math.floor((current_page / total_pages) * 100)
-        
+        local document = self.ui.document
+        local target_limit, is_full_book = self:getCatchUpTargetLimit()
+        if target_limit <= 0 then return end
+        local total_pages = self.ui.document:getPageCount() or target_limit
+        if total_pages == 0 then total_pages = target_limit end
+
+        local last_fetch_page = self.book_data and self.book_data.last_fetch_page
+        local start_page = last_fetch_page or 0
+        local batch_end_page, batch_chapter_title, is_final = self:getNextCatchUpBatch(start_page, target_limit)
+        local target_page = batch_end_page or target_limit
+
+        local reading_percent = math.floor((target_page / total_pages) * 100)
         local spoiler_setting = self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        if spoiler_setting == "full_book" then
+        if spoiler_setting == "full_book" and is_final then
             reading_percent = 100
         end
-        
-        local last_fetch_page = self.book_data and self.book_data.last_fetch_page
-        
+
         local is_update = true
         if not self.timeline or #self.timeline == 0 then
             is_update = false
             self:log("XRayPlugin: Cache is empty. Switching to normal fetch instead of merge.")
         else
-            self:log("XRayPlugin: Auto-merge fetch for chapter: " .. tostring(chapter_title))
+            self:log("XRayPlugin: Auto-merge fetch for target page: " .. tostring(target_page) .. " (chapter: " .. tostring(batch_chapter_title or chapter_title) .. ", final=" .. tostring(is_final) .. ")")
         end
-        
+
         self.fetch_attempts = self.fetch_attempts or {}
-        self.fetch_attempts[chapter_title] = (self.fetch_attempts[chapter_title] or 0) + 1
-        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true) -- is_silent=true
+        local attempt_key = batch_chapter_title or chapter_title or tostring(target_page)
+        self.fetch_attempts[attempt_key] = (self.fetch_attempts[attempt_key] or 0) + 1
+        self:clearPendingBackgroundFetch()
+
+        local on_complete_cb = function(success, err_code, err_msg)
+            if self.destroyed or not self.ui or self.ui.document ~= document then return end
+            if success then
+                self.last_bg_fetch_time = os.time()
+                local curr_limit = self:getCatchUpTargetLimit()
+                local lfp = self.book_data and self.book_data.last_fetch_page or target_page
+                if lfp < curr_limit then
+                    self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
+                    self.pending_background_fetch = true
+                    self:scheduleBackgroundCatchUp(self.CATCHUP_COOLDOWN or CATCHUP_COOLDOWN)
+                else
+                    self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
+                    self:clearPendingBackgroundFetch()
+                end
+            end
+        end
+
+        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, on_complete_cb) -- is_silent=true
     else
         -- Silently skip if offline
+        self.pending_background_fetch = true
     end
 end
 
@@ -985,6 +1234,9 @@ function XRayPlugin:autoLoadCache()
                 local utils = require(plugin_path .. "xray_utils")
                 local toc = utils:flattenTOC(self.ui.document:getToc())
                 self:assignTimelinePages(self.timeline, toc, false)
+                if self.filterOrphanTimelineEvents then
+                    self.timeline = self:filterOrphanTimelineEvents(self.timeline, toc)
+                end
                 self:sortTimelineByTOC(self.timeline)
 
                 -- Stage 3: Only deduplicate — do NOT re-extract document text here.
