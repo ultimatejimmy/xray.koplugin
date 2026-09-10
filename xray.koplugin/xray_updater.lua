@@ -43,13 +43,27 @@ local function _apiUrl(use_beta)
     )
 end
 
+-- Fallback strings for keys that might not yet exist in non-English .po files
+local FALLBACKS = {
+    updater_btn_view_notes = "View full release notes",
+    updater_btn_back = "Back",
+    updater_release_notes_title = "X-Ray %s Release Notes",
+}
+
 -- Helper to safely call localizer
 local function t(key, ...)
     if M.loc and M.loc.t then
-        return M.loc:t(key, ...)
+        local val = M.loc:t(key, ...)
+        if val and val ~= "" and val ~= key then
+            return val
+        end
     end
-    -- Fallback if loc is missing
-    return key
+    local str = FALLBACKS[key] or key
+    if select("#", ...) > 0 then
+        local ok, formatted = pcall(string.format, str, ...)
+        if ok then return formatted end
+    end
+    return str
 end
 
 local function _cacheFile(use_beta)
@@ -252,6 +266,27 @@ end
 -- JSON parsing
 -- ---------------------------------------------------------------------------
 
+local function _cleanReleaseNotes(raw_notes)
+    if not raw_notes or raw_notes == "" then return nil end
+    local notes = raw_notes
+    -- Convert markdown links [text](url) -> text
+    notes = notes:gsub("%[([^%]]+)%]%([^%)]+%)", "%1")
+    -- Strip markdown headers, bold/italic, code blocks
+    notes = notes:gsub("#+%s*", "")
+    notes = notes:gsub("%*%*(.-)%*%*", "%1")
+    notes = notes:gsub("%*(.-)%*", "%1")
+    notes = notes:gsub("`(.-)`", "%1")
+    notes = notes:gsub("\r\n", "\n"):gsub("\r", "\n")
+    -- Collapse 3+ consecutive newlines into 2
+    notes = notes:gsub("\n%s*\n%s*\n+", "\n\n")
+    notes = notes:match("^%s*(.-)%s*$")
+    if not notes or notes == "" then return nil end
+    if #notes > 4000 then
+        notes = notes:sub(1, 3997) .. "..."
+    end
+    return notes
+end
+
 local function _parseRelease(body, use_beta)
     local ok_j, json = pcall(require, "json")
 
@@ -269,11 +304,12 @@ local function _parseRelease(body, use_beta)
         local notes = body:match('"body"%s*:%s*"(.-)"[,}]')
         if notes then
             notes = notes:gsub("\\n", "\n"):gsub("\\r", ""):gsub('\\"', '"'):gsub("\\\\", "\\")
+            notes = _cleanReleaseNotes(notes)
         end
         return {
             version      = tag:match("v?(.*)"),
             download_url = download_url,
-            notes        = (notes and notes ~= "") and notes or nil,
+            notes        = notes,
         }
     end
 
@@ -310,20 +346,12 @@ local function _parseRelease(body, use_beta)
         end
     end
 
-    local notes = release_data.body
-    if notes and notes ~= "" then
-        notes = notes:gsub("#+%s*", "")
-        notes = notes:gsub("%*%*(.-)%*%*", "%1")
-        notes = notes:gsub("`(.-)`", "%1")
-        notes = notes:gsub("\r\n", "\n"):gsub("\r", "\n")
-        if #notes > 600 then notes = notes:sub(1, 597) .. "..." end
-        notes = notes:match("^%s*(.-)%s*$")
-    end
+    local notes = _cleanReleaseNotes(release_data.body)
 
     return {
         version      = tag:match("v?(.*)"),
         download_url = download_url,
-        notes        = (notes and notes ~= "") and notes or nil,
+        notes        = notes,
         html_url     = release_data.html_url,
     }
 end
@@ -516,6 +544,115 @@ end
 -- Version Check
 -- ---------------------------------------------------------------------------
 
+local function _formatInlineNotes(notes, screen_h)
+    if not notes or notes == "" then
+        return nil, false
+    end
+
+    -- Strip leading redundant "What's New" headers
+    local cleaned = notes:gsub("^[Ww]hat'?s%s+[Nn]ew[:%s]*\n*", "")
+    cleaned = cleaned:match("^%s*(.-)%s*$") or cleaned
+    if cleaned == "" then
+        return nil, false
+    end
+
+    local max_lines
+    local max_chars
+    if screen_h < 700 then
+        -- Small screen or landscape orientation (e.g. 600px height)
+        max_lines = 3
+        max_chars = 140
+    elseif screen_h < 900 then
+        -- Standard screen (e.g. 800px height portrait or 758px landscape)
+        max_lines = 5
+        max_chars = 220
+    else
+        -- Large screen (e.g. 1072+ px height)
+        max_lines = 7
+        max_chars = 320
+    end
+
+    local raw_lines = {}
+    for line in (cleaned .. "\n"):gmatch("([^\n]*)\n") do
+        if #raw_lines > 0 or line:match("%S") then
+            table.insert(raw_lines, line)
+        end
+    end
+    while #raw_lines > 0 and raw_lines[#raw_lines]:match("^%s*$") do
+        table.remove(raw_lines)
+    end
+
+    local result_lines = {}
+    local total_chars = 0
+    local is_truncated = false
+
+    for _, line in ipairs(raw_lines) do
+        if #result_lines >= max_lines then
+            is_truncated = true
+            break
+        end
+        if total_chars + #line > max_chars then
+            if #result_lines == 0 then
+                local sub = line:sub(1, max_chars)
+                local last_space = sub:match("^.*()%s")
+                if last_space and last_space > 20 then
+                    sub = sub:sub(1, last_space - 1)
+                end
+                table.insert(result_lines, sub .. "...")
+            end
+            is_truncated = true
+            break
+        end
+        table.insert(result_lines, line)
+        total_chars = total_chars + #line + 1
+    end
+
+    if #raw_lines > #result_lines then
+        is_truncated = true
+    end
+
+    local preview = table.concat(result_lines, "\n"):match("^%s*(.-)%s*$")
+    if is_truncated and preview then
+        if not preview:match("%.%.%.$") then
+            preview = preview .. "\n..."
+        end
+    end
+
+    return preview, is_truncated
+end
+
+local function _showFullNotesViewer(title_str, full_notes, download_url, latest_version, parent_dialog)
+    local TextViewer = require("ui/widget/textviewer")
+    local viewer
+    local viewer_buttons = {{
+        {
+            text = t("updater_btn_back"),
+            callback = function()
+                UIManager:close(viewer)
+            end,
+        },
+    }}
+    if download_url then
+        table.insert(viewer_buttons[1], {
+            text = t("updater_btn_download"),
+            is_enter_default = true,
+            callback = function()
+                UIManager:close(viewer)
+                if parent_dialog then
+                    UIManager:close(parent_dialog)
+                end
+                _applyUpdate(download_url, latest_version)
+            end,
+        })
+    end
+    viewer = TextViewer:new{
+        title = title_str,
+        text = full_notes,
+        buttons_table = viewer_buttons,
+    }
+    UIManager:show(viewer)
+end
+
 local function _showUpdateDialog(release, current)
     local latest       = release.version
     local download_url = release.download_url
@@ -529,64 +666,111 @@ local function _showUpdateDialog(release, current)
 
     logger.info("xray updater: new version available:", latest)
 
+    local ok_dev, Device = pcall(require, "device")
+    local Screen = ok_dev and Device and Device.screen
+    local screen_h = (Screen and Screen.getHeight and Screen:getHeight()) or 800
+
     local header = t("updater_available_header", latest, current)
     local footer = t("updater_download_prompt")
-    local notes_block = notes
-        and ("\n\n" .. t("updater_whats_new") .. "\n" .. notes)
+
+    local inline_notes, has_more_notes = _formatInlineNotes(notes, screen_h)
+    local notes_block = inline_notes
+        and ("\n\n" .. t("updater_whats_new") .. "\n" .. inline_notes)
         or  ""
+
+    local notes_viewer_title = t("updater_release_notes_title", latest)
 
     local ButtonDialog = require("ui/widget/buttondialog")
     if not download_url then
         local no_asset_dlg
-        no_asset_dlg = ButtonDialog:new{
+        local no_asset_buttons = {}
+        if has_more_notes and notes then
+            table.insert(no_asset_buttons, {
+                {
+                    text = t("updater_btn_view_notes"),
+                    callback = function()
+                        _showFullNotesViewer(notes_viewer_title, notes, nil, latest, no_asset_dlg)
+                    end,
+                },
+            })
+        end
+        table.insert(no_asset_buttons, {
+            {
+                text = t("updater_btn_cancel"),
+                callback = function()
+                    UIManager:close(no_asset_dlg)
+                end,
+            },
+            {
+                text = t("updater_btn_open_browser"),
+                is_enter_default = true,
+                callback = function()
+                    UIManager:close(no_asset_dlg)
+                    if ok_dev and Device and Device.canOpenLink and Device:canOpenLink() then
+                        Device:openLink(release.html_url or string.format(
+                            "https://github.com/%s/%s/releases/latest",
+                            GITHUB_OWNER, GITHUB_REPO
+                        ))
+                    end
+                end,
+            },
+        })
+
+        local dlg_props = {
             title = header .. notes_block .. "\n\n" .. t("updater_no_asset"),
-            buttons = {{
-                {
-                    text = t("updater_btn_cancel"),
-                    callback = function()
-                        UIManager:close(no_asset_dlg)
-                    end,
-                },
-                {
-                    text = t("updater_btn_open_browser"),
-                    is_enter_default = true,
-                    callback = function()
-                        UIManager:close(no_asset_dlg)
-                        local Device = require("device")
-                        if Device:canOpenLink() then
-                            Device:openLink(string.format(
-                                "https://github.com/%s/%s/releases/latest",
-                                GITHUB_OWNER, GITHUB_REPO
-                            ))
-                        end
-                    end,
-                },
-            }},
+            buttons = no_asset_buttons,
         }
+        if screen_h < 700 then
+            local ok_f, Font = pcall(require, "ui/font")
+            if ok_f and Font then
+                dlg_props.info_face = Font:getFace("x_smallinfofont")
+            end
+        end
+        no_asset_dlg = ButtonDialog:new(dlg_props)
         UIManager:show(no_asset_dlg)
         return
     end
 
     local update_dlg
-    update_dlg = ButtonDialog:new{
+    local update_buttons = {}
+    if has_more_notes and notes then
+        table.insert(update_buttons, {
+            {
+                text = t("updater_btn_view_notes"),
+                callback = function()
+                    _showFullNotesViewer(notes_viewer_title, notes, download_url, latest, update_dlg)
+                end,
+            },
+        })
+    end
+    table.insert(update_buttons, {
+        {
+            text = t("updater_btn_cancel"),
+            callback = function()
+                UIManager:close(update_dlg)
+            end,
+        },
+        {
+            text = t("updater_btn_download"),
+            is_enter_default = true,
+            callback = function()
+                UIManager:close(update_dlg)
+                _applyUpdate(download_url, latest)
+            end,
+        },
+    })
+
+    local dlg_props = {
         title = header .. notes_block .. footer,
-        buttons = {{
-            {
-                text = t("updater_btn_cancel"),
-                callback = function()
-                    UIManager:close(update_dlg)
-                end,
-            },
-            {
-                text = t("updater_btn_download"),
-                is_enter_default = true,
-                callback = function()
-                    UIManager:close(update_dlg)
-                    _applyUpdate(download_url, latest)
-                end,
-            },
-        }},
+        buttons = update_buttons,
     }
+    if screen_h < 700 then
+        local ok_f, Font = pcall(require, "ui/font")
+        if ok_f and Font then
+            dlg_props.info_face = Font:getFace("x_smallinfofont")
+        end
+    end
+    update_dlg = ButtonDialog:new(dlg_props)
     UIManager:show(update_dlg)
 end
 
@@ -666,5 +850,9 @@ function M.checkSilentForUpdates(loc, use_beta)
         end
     end
 end
+
+M._cleanReleaseNotes = _cleanReleaseNotes
+M._formatInlineNotes = _formatInlineNotes
+M._showUpdateDialog = _showUpdateDialog
 
 return M
