@@ -1151,6 +1151,9 @@ msgstr "Wavy"
 msgid "updater_available_header"
 msgstr "X-Ray %s is available!\nYou have %s."
 
+msgid "updater_btn_back"
+msgstr "Back"
+
 msgid "updater_btn_cancel"
 msgstr "Cancel"
 
@@ -1165,6 +1168,9 @@ msgstr "Open in browser"
 
 msgid "updater_btn_restart"
 msgstr "Restart"
+
+msgid "updater_btn_view_notes"
+msgstr "View full release notes"
 
 msgid "updater_cancelled_check"
 msgstr "Update check cancelled."
@@ -1198,6 +1204,9 @@ msgstr "Error checking for updates: %s"
 
 msgid "updater_no_asset"
 msgstr "No automatic update file was found.\n\nOpen the releases page on GitHub?"
+
+msgid "updater_release_notes_title"
+msgstr "X-Ray %s Release Notes"
 
 msgid "updater_success_restart"
 msgstr "X-Ray %s successfully installed.\n\nRestart KOReader to apply the update?"

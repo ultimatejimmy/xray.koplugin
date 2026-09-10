@@ -1533,6 +1533,10 @@ msgstr "Ondulata"
 msgid "updater_available_header"
 msgstr "La radiografia %s è disponibile!\nHai %s."
 
+# en-hash: 0557fa923dcee4d0f86b1409f5c2167f
+msgid "updater_btn_back"
+msgstr "Indietro"
+
 # en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "updater_btn_cancel"
 msgstr "Annulla"
@@ -1552,6 +1556,10 @@ msgstr "Apri nel browser"
 # en-hash: 51cfbcff36da74a9fc47f3a5140f99f2
 msgid "updater_btn_restart"
 msgstr "Riavvia"
+
+# en-hash: f90c6e6f2d986a10f351292ffa2968ab
+msgid "updater_btn_view_notes"
+msgstr "Visualizza note di rilascio complete"
 
 # en-hash: 092dc0fe2a1709895d0ffb03306ab644
 msgid "updater_cancelled_check"
@@ -1596,6 +1604,10 @@ msgstr "Errore durante il controllo degli aggiornamenti: %s"
 # en-hash: 4764ffed7fe43c5174fe97c69cb933ee
 msgid "updater_no_asset"
 msgstr "Non è stato trovato alcun file di aggiornamento automatico.\n\nApri la pagina delle versioni su GitHub?"
+
+# en-hash: 83cae54ea5a5d1ac7469aef85cccbd23
+msgid "updater_release_notes_title"
+msgstr "Note di rilascio di X-Ray %s"
 
 # en-hash: fa243c194c72bb2d6c10dfad7c375cf3
 msgid "updater_success_restart"

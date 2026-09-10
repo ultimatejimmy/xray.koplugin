@@ -1533,6 +1533,10 @@ msgstr "Ondulado"
 msgid "updater_available_header"
 msgstr "X-Ray %s está disponível!\nSua versão é %s."
 
+# en-hash: 0557fa923dcee4d0f86b1409f5c2167f
+msgid "updater_btn_back"
+msgstr "Voltar"
+
 # en-hash: ea4788705e6873b424c65e91c2846b19
 msgid "updater_btn_cancel"
 msgstr "Cancelar"
@@ -1552,6 +1556,10 @@ msgstr "Abrir no navegador"
 # en-hash: 51cfbcff36da74a9fc47f3a5140f99f2
 msgid "updater_btn_restart"
 msgstr "Reiniciar"
+
+# en-hash: f90c6e6f2d986a10f351292ffa2968ab
+msgid "updater_btn_view_notes"
+msgstr "Ver notas da versão completas"
 
 # en-hash: 092dc0fe2a1709895d0ffb03306ab644
 msgid "updater_cancelled_check"
@@ -1596,6 +1604,10 @@ msgstr "Erro ao verificar atualizações: %s"
 # en-hash: 4764ffed7fe43c5174fe97c69cb933ee
 msgid "updater_no_asset"
 msgstr "Nenhum arquivo de atualização automática encontrado.\n\nAbrir a página de lançamentos no GitHub?"
+
+# en-hash: 83cae54ea5a5d1ac7469aef85cccbd23
+msgid "updater_release_notes_title"
+msgstr "Notas da versão do X-Ray %s"
 
 # en-hash: fa243c194c72bb2d6c10dfad7c375cf3
 msgid "updater_success_restart"
