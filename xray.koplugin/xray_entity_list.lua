@@ -1082,7 +1082,26 @@ function EntityListOverlay:onItemSelect(item)
     elseif self.mode == "timeline" then
         p:showTimelineEventDetails(item, { source = "menu" })
     elseif self.mode == "mentions" then
-        local return_pg = p.return_page_origin or (p.getCurrentPage and p:getCurrentPage()) or (p._getCurrentPage and p._getCurrentPage(p))
+        local return_pg = p.return_page_origin
+        if not return_pg and p then
+            if p.getCurrentPage then
+                local ok, val = pcall(function() return p:getCurrentPage() end)
+                if ok and val then return_pg = val end
+            end
+            if not return_pg and p.ui then
+                if p.ui.getCurrentPage then
+                    local ok, val = pcall(function() return p.ui:getCurrentPage() end)
+                    if ok and val then return_pg = val end
+                elseif p.ui.paging and p.ui.paging.getCurrentPage then
+                    local ok, val = pcall(function() return p.ui.paging:getCurrentPage() end)
+                    if ok and val then return_pg = val end
+                elseif p.ui.document and p.ui.document.getCurrentPage then
+                    local ok, val = pcall(function() return p.ui.document:getCurrentPage() end)
+                    if ok and val then return_pg = val end
+                end
+            end
+            return_pg = return_pg or p.last_pageno or 1
+        end
         p.return_page_origin = return_pg
         p.pending_return_banner = {
             return_page = return_pg,
@@ -1093,7 +1112,11 @@ function EntityListOverlay:onItemSelect(item)
         p:closeAllMenus()
         local Event = require("ui/event")
         UIManager:nextTick(function()
-            p.ui:handleEvent(Event:new("GotoPage", item.page))
+            if p.ui and p.ui.handleEvent then
+                p.ui:handleEvent(Event:new("GotoPage", item.page))
+            elseif p.ui and p.ui.document and p.ui.document.gotoPage then
+                p.ui.document:gotoPage(item.page)
+            end
         end)
     end
 end

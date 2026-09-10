@@ -509,6 +509,24 @@ function XRayPlugin:clearPendingBackgroundFetch()
     end
 end
 
+function XRayPlugin:getCurrentPage()
+    if self.ui then
+        if self.ui.getCurrentPage then
+            local ok, p = pcall(function() return self.ui:getCurrentPage() end)
+            if ok and p then return p end
+        end
+        if self.ui.paging and self.ui.paging.getCurrentPage then
+            local ok, p = pcall(function() return self.ui.paging:getCurrentPage() end)
+            if ok and p then return p end
+        end
+        if self.ui.document and self.ui.document.getCurrentPage then
+            local ok, p = pcall(function() return self.ui.document:getCurrentPage() end)
+            if ok and p then return p end
+        end
+    end
+    return self.last_pageno or 1
+end
+
 function XRayPlugin:getCatchUpTargetLimit()
     if not self.ui or not self.ui.document then return 0, false end
     local current_page = self.ui:getCurrentPage() or 1

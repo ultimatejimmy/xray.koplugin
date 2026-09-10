@@ -180,6 +180,9 @@ end
 function M:showMentionsForEntity(entity)
     if self.destroyed or not self.ui or not self.ui.document then return end
     if not entity then return end
+    if not self.return_page_origin then
+        self.return_page_origin = (self.getCurrentPage and self:getCurrentPage()) or _getCurrentPage(self)
+    end
     local name = entity.name or "???"
     if (self.active_mention_scan and self.active_mention_scan.entity_name == name) then
         self:showMentionsMenu(entity); return
@@ -493,6 +496,9 @@ function M:showReturnBanner(return_page, entity, mentions, current_page)
     if self.return_banner then UIManager:close(self.return_banner); self.return_banner = nil end
 
     local plugin = self
+    local ret_pg = return_page or plugin.return_page_origin or (plugin.getCurrentPage and plugin:getCurrentPage()) or _getCurrentPage(plugin)
+    plugin.return_page_origin = ret_pg
+
     local entity_name = type(entity) == "table" and entity.name or tostring(entity)
     local title = (self.loc:t("mentions_at_location") or "Mention: %s"):format(entity_name)
     
@@ -517,13 +523,13 @@ function M:showReturnBanner(return_page, entity, mentions, current_page)
             callback = function()
                 if not prev_enabled then return end
                 local prev_pg = unique_pages[current_pg_idx - 1]
-                plugin.pending_return_banner = { return_page = return_page, entity = entity, mentions = mentions }
+                plugin.pending_return_banner = { return_page = ret_pg, entity = entity, mentions = mentions }
                 plugin:_doReturnJump(prev_pg)
             end,
         },
         {
             text = (self.loc:t("back_to_reading") or "Back"),
-            callback = function() plugin:_doReturnJump(return_page) end,
+            callback = function() plugin:_doReturnJump(ret_pg) end,
         },
         {
             text = "\xE2\x9C\x95", -- Close icon
@@ -538,7 +544,7 @@ function M:showReturnBanner(return_page, entity, mentions, current_page)
             callback = function()
                 if not next_enabled then return end
                 local next_pg = unique_pages[current_pg_idx + 1]
-                plugin.pending_return_banner = { return_page = return_page, entity = entity, mentions = mentions }
+                plugin.pending_return_banner = { return_page = ret_pg, entity = entity, mentions = mentions }
                 plugin:_doReturnJump(next_pg)
             end,
         },
@@ -619,6 +625,9 @@ function M:showImageReturnBanner(return_page, image_entry, current_page)
     if self.return_banner then UIManager:close(self.return_banner); self.return_banner = nil end
 
     local plugin = self
+    local ret_pg = return_page or plugin.return_page_origin or (plugin.getCurrentPage and plugin:getCurrentPage()) or _getCurrentPage(plugin)
+    plugin.return_page_origin = ret_pg
+
     local image_title = (image_entry and image_entry.title) or (self.loc and self.loc:t("illustration") or "Illustration")
     local title = image_title
     if current_page and tonumber(current_page) then
@@ -628,7 +637,7 @@ function M:showImageReturnBanner(return_page, image_entry, current_page)
     local buttons = {{
         {
             text = (self.loc and self.loc:t("back_to_reading") or "Back to Reading"),
-            callback = function() plugin:_doReturnJump(return_page) end,
+            callback = function() plugin:_doReturnJump(ret_pg) end,
         },
         {
             text = (self.loc and self.loc:t("menu_images") or "Images & Maps"),
@@ -702,16 +711,35 @@ function M:showImageReturnBanner(return_page, image_entry, current_page)
 end
 
 function M:_doReturnJump(return_page)
-    if not return_page then return end
+    local target_page = return_page or self.return_page_origin or (self.getCurrentPage and self:getCurrentPage()) or (self.last_pageno or 1)
+    if not target_page then return end
     self.is_programmatic_navigation = true
-    if self.return_banner then UIManager:close(self.return_banner); self.return_banner = nil; self.return_page_origin = nil end
+    if self.return_banner then
+        local banner = self.return_banner
+        self.return_banner = nil
+        self.return_page_origin = nil
+        pcall(function() UIManager:close(banner) end)
+    else
+        self.return_page_origin = nil
+    end
     self:clearHighlightOverlay()
     
     -- Sync repaint to clear screen boxes before transitioning page
     if UIManager and type(UIManager.forceRePaint) == "function" then
         UIManager:forceRePaint()
     end
-    self.ui:handleEvent(Event:new("GotoPage", return_page))
+    if self.ui and self.ui.handleEvent then
+        self.ui:handleEvent(Event:new("GotoPage", target_page))
+    elseif self.ui and self.ui.document and self.ui.document.gotoPage then
+        self.ui.document:gotoPage(target_page)
+    end
+    if UIManager and type(UIManager.scheduleIn) == "function" then
+        UIManager:scheduleIn(0.5, function()
+            self.is_programmatic_navigation = nil
+        end)
+    else
+        self.is_programmatic_navigation = nil
+    end
 end
 
 return M

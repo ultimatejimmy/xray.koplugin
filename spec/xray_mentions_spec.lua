@@ -169,4 +169,61 @@ describe("xray_mentions", function()
             assert.is_nil(plugin.mentions_menu)
         end)
     end)
+
+    describe("Back to reading button and _doReturnJump", function()
+        it("should navigate back to return_page when Back button is tapped in showReturnBanner", function()
+            local handled_events = {}
+            plugin.ui.handleEvent = function(self_arg, event)
+                table.insert(handled_events, event)
+            end
+            local test_mentions = { {page = 10}, {page = 20} }
+            plugin:showReturnBanner(42, "Frodo", test_mentions, 10)
+
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            local back_btn = last.buttons[1][2]
+            assert.is_not_nil(back_btn)
+            assert.is_not_nil(back_btn.callback)
+
+            back_btn.callback()
+            assert.are.equal(1, #handled_events)
+            assert.are.equal("GotoPage", handled_events[1].name)
+            assert.are.equal(42, handled_events[1].args)
+            assert.is_nil(plugin.return_banner)
+        end)
+
+        it("should fall back to return_page_origin if return_page argument is nil", function()
+            local handled_events = {}
+            plugin.ui.handleEvent = function(self_arg, event)
+                table.insert(handled_events, event)
+            end
+            plugin.return_page_origin = 77
+            plugin:_doReturnJump(nil)
+
+            assert.are.equal(1, #handled_events)
+            assert.are.equal("GotoPage", handled_events[1].name)
+            assert.are.equal(77, handled_events[1].args)
+        end)
+
+        it("should correctly resolve return_pg in EntityListOverlay mentions tap", function()
+            local EntityListOverlay = require("xray_entity_list")
+            plugin.ui.getCurrentPage = function() return 65 end
+            plugin.last_pageno = 65
+            local handled_events = {}
+            plugin.ui.handleEvent = function(self_arg, event)
+                table.insert(handled_events, event)
+            end
+
+            local overlay = EntityListOverlay:new{
+                mode = "mentions",
+                entity = { name = "Frodo" },
+                raw_items = { { page = 12 } },
+                plugin = plugin,
+            }
+            overlay:onItemSelect({ page = 12 })
+
+            assert.is_not_nil(plugin.pending_return_banner)
+            assert.are.equal(65, plugin.pending_return_banner.return_page)
+        end)
+    end)
 end)
