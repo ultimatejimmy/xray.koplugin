@@ -1952,6 +1952,148 @@ describe("xray_ui", function()
             assert.is_true(log_messages[1]:find("retrying with cfont fallback") ~= nil)
         end)
     end)
+
+    describe("Linked entries modernization & z-order dialog management", function()
+        it("should close active_details_dialog when showRelatedEntities is called", function()
+            local mock_dlg = { type = "ButtonDialog" }
+            plugin.active_details_dialog = mock_dlg
+            local related = {
+                { item = { name = "Shallan", description = "Lightweaver" }, type = "character" }
+            }
+            plugin:showRelatedEntities(related)
+
+            assert.is_nil(plugin.active_details_dialog)
+            assert.is_not_nil(plugin.active_related_menu)
+            assert.are.equal("InputContainer", plugin.active_related_menu.type)
+            assert.are.equal("linked_entries", plugin.active_related_menu.mode)
+            assert.truthy(plugin.active_related_menu.title:find("linked_entries"))
+        end)
+
+        it("should close previous active_related_menu when showRelatedEntities is called again", function()
+            local related1 = {
+                { item = { name = "Shallan", description = "Lightweaver" }, type = "character" }
+            }
+            plugin:showRelatedEntities(related1)
+            local first_menu = plugin.active_related_menu
+            assert.is_not_nil(first_menu)
+
+            local related2 = {
+                { item = { name = "Jasnah", description = "Scholar" }, type = "character" }
+            }
+            plugin:showRelatedEntities(related2)
+            assert.are_not.equal(first_menu, plugin.active_related_menu)
+            assert.are.equal("linked_entries", plugin.active_related_menu.mode)
+        end)
+
+        it("should close active_related_menu when closeAllMenus is called", function()
+            local related = {
+                { item = { name = "Dalinar", description = "Bondsmith" }, type = "character" }
+            }
+            plugin:showRelatedEntities(related)
+            assert.is_not_nil(plugin.active_related_menu)
+
+            plugin:closeAllMenus()
+            assert.is_nil(plugin.active_related_menu)
+        end)
+
+        it("should dismiss active_details_dialog when tapping Linked Entries button in character details", function()
+            plugin.ai_helper.settings.ui_popup_intext = false
+            plugin.ai_helper.settings.ui_popup_menu = false
+            plugin.findRelatedEntities = function()
+                return { { item = { name = "Adolin", description = "Duelist" }, type = "character" } }
+            end
+            local char = { name = "Kaladin", description = "Windrunner" }
+            plugin:showCharacterDetails(char, { source = "menu" })
+
+            local dlg = plugin.active_details_dialog
+            assert.is_not_nil(dlg)
+
+            -- Find the Linked Entries button in dlg.buttons
+            local linked_btn = nil
+            for _, row in ipairs(dlg.buttons or {}) do
+                for _, btn in ipairs(row) do
+                    if (btn.text and (btn.text:find("linked_entries") or btn.text == "Linked Entries")) then
+                        linked_btn = btn
+                        break
+                    end
+                end
+            end
+            assert.is_not_nil(linked_btn)
+            linked_btn.callback()
+
+            assert.is_nil(plugin.active_details_dialog)
+            assert.is_not_nil(plugin.active_related_menu)
+            assert.are.equal("linked_entries", plugin.active_related_menu.mode)
+            assert.are.equal("Kaladin", plugin.active_related_menu.entity.name)
+            assert.truthy(plugin.active_related_menu.title:find("Kaladin"))
+        end)
+
+        it("should render EntityListOverlay in linked_entries mode with Storefront card styling and type badges", function()
+            local EntityListOverlay = require("xray_entity_list")
+            local raw = {
+                { item = { name = "Urithiru", description = "Ancient tower city", source = "series_prior" }, type = "location" },
+                { item = { name = "Spren", definition = "Spirits of Roshar" }, type = "term" },
+                { item = { name = "Gavilar", biography = "Late king" }, type = "historical" },
+            }
+            local overlay = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "linked_entries",
+                raw_items = raw,
+            }
+            assert.are.equal(3, #overlay.items)
+            assert.are.equal(1, overlay.total_pages)
+
+            -- Check search filtering
+            overlay.search_query = "tower"
+            overlay:prepareItems()
+            assert.are.equal(1, #overlay.items)
+            assert.are.equal("Urithiru", overlay.items[1].item.name)
+
+            -- Check search clear
+            overlay.search_query = nil
+            overlay:prepareItems()
+            assert.are.equal(3, #overlay.items)
+
+            -- Check alphabetical sorting
+            overlay.sort_mode = "alphabetical"
+            overlay:prepareItems()
+            assert.are.equal("Gavilar", overlay.items[1].item.name)
+            assert.are.equal("Spren", overlay.items[2].item.name)
+            assert.are.equal("Urithiru", overlay.items[3].item.name)
+        end)
+
+        it("should dispatch onItemSelect to appropriate detail method", function()
+            local EntityListOverlay = require("xray_entity_list")
+            local shown_type = nil
+            local shown_item = nil
+            plugin.showCharacterDetails = function(self, it, opts) shown_type = "character"; shown_item = it end
+            plugin.showLocationDetails = function(self, it, opts) shown_type = "location"; shown_item = it end
+            plugin.showHistoricalFigureDetails = function(self, it, opts) shown_type = "historical"; shown_item = it end
+            plugin.showTermDetails = function(self, it, opts) shown_type = "term"; shown_item = it end
+
+            local overlay = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "linked_entries",
+                raw_items = {},
+            }
+
+            overlay:onItemSelect({ item = { name = "Sadeas" }, type = "character" })
+            assert.are.equal("character", shown_type)
+            assert.are.equal("Sadeas", shown_item.name)
+
+            overlay:onItemSelect({ item = { name = "Kholinar" }, type = "location" })
+            assert.are.equal("location", shown_type)
+            assert.are.equal("Kholinar", shown_item.name)
+
+            overlay:onItemSelect({ item = { name = "Sunmaker" }, type = "historical" })
+            assert.are.equal("historical", shown_type)
+            assert.are.equal("Sunmaker", shown_item.name)
+
+            overlay:onItemSelect({ item = { name = "Highstorm" }, type = "term" })
+            assert.are.equal("term", shown_type)
+            assert.are.equal("Highstorm", shown_item.name)
+        end)
+    end)
 end)
 
 

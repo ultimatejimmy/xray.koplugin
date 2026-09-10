@@ -248,6 +248,18 @@ msgstr "locations"
 msgid "entity_not_found"
 msgstr "'%s' was not found as a character or location."
 
+msgid "entity_type_character"
+msgstr "Character"
+
+msgid "entity_type_historical"
+msgstr "Historical Figure"
+
+msgid "entity_type_location"
+msgstr "Location"
+
+msgid "entity_type_term"
+msgstr "Term"
+
 msgid "entity_ui_style_both"
 msgstr "Modern Popup (Both)"
 
@@ -499,6 +511,12 @@ msgstr "Enabled"
 
 msgid "linked_entries_setting_desc"
 msgstr "Linked Entries automatically connects characters, locations, and historical figures when they are mentioned in each other's descriptions.\n\nDisabling this will hide the [B]Linked Entries[/B] button from detail dialogs."
+
+msgid "linked_none"
+msgstr "No linked entries found for '%s'."
+
+msgid "linked_with_title"
+msgstr "Linked with: %s"
 
 msgid "local_setup_title"
 msgstr "Connect via Local Wi-Fi"
@@ -811,6 +829,9 @@ msgstr "No historical figure data yet.\n\nPlease use 'Fetch X-Ray Data' first.\n
 
 msgid "no_items"
 msgstr "no_items"
+
+msgid "no_linked_entries"
+msgstr "No linked entries found"
 
 msgid "no_location_data"
 msgstr "No location data yet. Please use 'Fetch X-Ray Data' first."

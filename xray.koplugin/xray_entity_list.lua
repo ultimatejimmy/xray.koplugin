@@ -138,7 +138,7 @@ local EntityListOverlay = InputContainer:extend{
     sh = nil,
     plugin = nil,
     entity = nil,
-    mode = "characters", -- "characters", "terms", "locations", "historical_figures", "timeline", "mentions"
+    mode = "characters", -- "characters", "terms", "locations", "historical_figures", "timeline", "mentions", "linked_entries"
     raw_items = nil,
     items = nil,
     current_page = 1,
@@ -207,8 +207,9 @@ function EntityListOverlay:prepareItems()
     if self.search_query and self.search_query ~= "" then
         local q = self.search_query:lower()
         for _, it in ipairs(raw) do
-            local name = (it.name or it.chapter or ""):lower()
-            local desc = (it.description or it.definition or it.biography or it.event or it.snippet or ""):lower()
+            local entity = (self.mode == "linked_entries" and it.item) or it
+            local name = (entity.name or entity.chapter or ""):lower()
+            local desc = (entity.description or entity.definition or entity.biography or entity.event or entity.snippet or ""):lower()
             if name:find(q, 1, true) or desc:find(q, 1, true) then
                 table.insert(filtered, it)
             end
@@ -227,29 +228,35 @@ function EntityListOverlay:prepareItems()
     elseif self.mode ~= "timeline" then
         if self.sort_mode == "alphabetical" then
             table.sort(filtered, function(a, b)
-                local na = (a.name or ""):lower()
-                local nb = (b.name or ""):lower()
+                local ea = (self.mode == "linked_entries" and a.item) or a
+                local eb = (self.mode == "linked_entries" and b.item) or b
+                local na = (ea.name or ""):lower()
+                local nb = (eb.name or ""):lower()
                 return na < nb
             end)
         elseif self.sort_mode == "appearance" then
             table.sort(filtered, function(a, b)
-                local pa = tonumber(a.first_page or a.page) or 999999
-                local pb = tonumber(b.first_page or b.page) or 999999
+                local ea = (self.mode == "linked_entries" and a.item) or a
+                local eb = (self.mode == "linked_entries" and b.item) or b
+                local pa = tonumber(ea.first_page or ea.page) or 999999
+                local pb = tonumber(eb.first_page or eb.page) or 999999
                 if pa == pb then
-                    return (a.sort_order or 99999) < (b.sort_order or 99999)
+                    return (ea.sort_order or 99999) < (eb.sort_order or 99999)
                 end
                 return pa < pb
             end)
         else
             -- Default: Frequency of mentions
             table.sort(filtered, function(a, b)
-                local sa = tonumber(a._sort_score) or (a.sort_order and (10000 - a.sort_order)) or 0
-                local sb = tonumber(b._sort_score) or (b.sort_order and (10000 - b.sort_order)) or 0
+                local ea = (self.mode == "linked_entries" and a.item) or a
+                local eb = (self.mode == "linked_entries" and b.item) or b
+                local sa = tonumber(ea._sort_score) or (ea.sort_order and (10000 - ea.sort_order)) or 0
+                local sb = tonumber(eb._sort_score) or (eb.sort_order and (10000 - eb.sort_order)) or 0
                 if sa == sb then
-                    local ma = (a.mentions and #a.mentions) or 0
-                    local mb = (b.mentions and #b.mentions) or 0
+                    local ma = (ea.mentions and #ea.mentions) or 0
+                    local mb = (eb.mentions and #eb.mentions) or 0
                     if ma == mb then
-                        return (a.name or ""):lower() < (b.name or ""):lower()
+                        return (ea.name or ""):lower() < (eb.name or ""):lower()
                     end
                     return ma > mb
                 end
@@ -580,6 +587,7 @@ function EntityListOverlay:close()
         elseif self.mode == "historical_figures" then self.plugin.hf_menu = nil
         elseif self.mode == "timeline" then self.plugin.timeline_menu = nil
         elseif self.mode == "mentions" then self.plugin.mentions_menu = nil
+        elseif self.mode == "linked_entries" then self.plugin.active_related_menu = nil
         end
     end
     UIManager:close(self, "ui")
@@ -903,9 +911,15 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
     local pad_h = sc(16)
     local inner_w = content_w - (pad_h * 2)
 
+    local is_linked = (self.mode == "linked_entries")
+    local actual_item = (is_linked and item.item) or item
+    local item_type = (is_linked and item.type) or nil
+    local is_prior_item = (actual_item and actual_item.source == "series_prior")
+
     -- 1. Primary line (Bold Name/Title, mimicking the Dialog title)
     local title_str = ""
     local prior_pill = nil
+    local type_pill = nil
     if is_timeline then
         title_str = item.chapter or "Event"
         if item.page and tonumber(item.page) then
@@ -916,9 +930,65 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
         if item.chapter and item.chapter ~= "" then
             title_str = title_str .. " — " .. item.chapter
         end
+    elseif is_linked then
+        title_str = actual_item.name or "???"
+
+        local type_lbl = "Entity"
+        if item_type == "character" then
+            type_lbl = (loc and loc:t("entity_type_character")) or "Character"
+        elseif item_type == "location" then
+            type_lbl = (loc and loc:t("entity_type_location")) or "Location"
+        elseif item_type == "historical" or item_type == "historical_figures" then
+            type_lbl = (loc and loc:t("entity_type_historical")) or "Historical Figure"
+        elseif item_type == "term" or item_type == "terms" then
+            type_lbl = (loc and loc:t("entity_type_term")) or "Term"
+        elseif type(item_type) == "string" and #item_type > 0 then
+            type_lbl = item_type:sub(1,1):upper() .. item_type:sub(2)
+        end
+
+        type_pill = FrameContainer:new{
+            background = Blitbuffer.Color8(235),
+            bordersize = sc(1),
+            color = Blitbuffer.Color8(180),
+            radius = sc(3),
+            padding_top = sc(1),
+            padding_bottom = sc(1),
+            padding_left = sc(6),
+            padding_right = sc(6),
+            TextWidget:new{
+                text = type_lbl,
+                face = Font:getFace("cfont", 11),
+                bold = true,
+                fgcolor = Blitbuffer.Color8(60),
+            },
+        }
+
+        if is_prior_item then
+            local prior_lbl = (loc and loc:t("series_prior_label")) or "Series"
+            prior_lbl = prior_lbl:gsub("^%[", ""):gsub("%]$", "")
+            if prior_lbl == "" or prior_lbl:lower() == "prior" then
+                prior_lbl = "Series"
+            end
+            prior_pill = FrameContainer:new{
+                background = Blitbuffer.Color8(230),
+                bordersize = sc(1),
+                color = Blitbuffer.Color8(180),
+                radius = sc(3),
+                padding_top = sc(1),
+                padding_bottom = sc(1),
+                padding_left = sc(6),
+                padding_right = sc(6),
+                TextWidget:new{
+                    text = prior_lbl,
+                    face = Font:getFace("cfont", 11),
+                    bold = true,
+                    fgcolor = Blitbuffer.Color8(60),
+                },
+            }
+        end
     else
-        title_str = item.name or "???"
-        if is_prior then
+        title_str = actual_item.name or "???"
+        if is_prior_item then
             local prior_lbl = (loc and loc:t("series_prior_label")) or "Series"
             prior_lbl = prior_lbl:gsub("^%[", ""):gsub("%]$", "")
             if prior_lbl == "" or prior_lbl:lower() == "prior" then
@@ -943,22 +1013,33 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
         end
     end
 
+    local pills = {}
+    if type_pill then table.insert(pills, type_pill) end
+    if prior_pill then table.insert(pills, prior_pill) end
+
+    local pills_w = 0
+    for _, pill in ipairs(pills) do
+        local ps = (pill.getSize and pill:getSize().w) or sc(60)
+        pills_w = pills_w + ps + sc(6)
+    end
+
     local title_widget = TextWidget:new{
         text = title_str,
         face = Font:getFace("cfont", 22),
         bold = true,
         fgcolor = Blitbuffer.COLOR_BLACK,
-        max_width = prior_pill and (inner_w - (prior_pill.getSize and prior_pill:getSize().w or sc(50)) - sc(10)) or inner_w,
+        max_width = (#pills > 0) and (inner_w - pills_w) or inner_w,
     }
 
     local title_row_widget
-    if prior_pill then
-        title_row_widget = HorizontalGroup:new{
-            align = "center",
-            title_widget,
-            HorizontalSpan:new{ width = sc(6) },
-            prior_pill,
-        }
+    if #pills > 0 then
+        local row_elements = { title_widget }
+        for _, pill in ipairs(pills) do
+            table.insert(row_elements, HorizontalSpan:new{ width = sc(6) })
+            table.insert(row_elements, pill)
+        end
+        title_row_widget = HorizontalGroup:new(row_elements)
+        title_row_widget.align = "center"
     else
         title_row_widget = title_widget
     end
@@ -969,6 +1050,18 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
         desc_str = item.event or ""
     elseif is_mentions then
         desc_str = item.snippet or ""
+    elseif is_linked then
+        if item_type == "term" then
+            desc_str = actual_item.definition or actual_item.description or ""
+        elseif item_type == "historical" then
+            desc_str = actual_item.biography or actual_item.description or ""
+        else
+            if p and p.resolveDescriptionForPage then
+                desc_str = p:resolveDescriptionForPage(actual_item) or ""
+            else
+                desc_str = actual_item.description or actual_item.biography or ""
+            end
+        end
     elseif self.mode == "terms" then
         desc_str = item.definition or item.description or ""
     else
@@ -1081,6 +1174,19 @@ function EntityListOverlay:onItemSelect(item)
         p:showHistoricalFigureDetails(item, { source = "menu" })
     elseif self.mode == "timeline" then
         p:showTimelineEventDetails(item, { source = "menu" })
+    elseif self.mode == "linked_entries" then
+        local actual_item = item.item or item
+        local item_type = item.type
+        local opts = self.opts or { source = "menu" }
+        if item_type == "character" then
+            p:showCharacterDetails(actual_item, opts)
+        elseif item_type == "location" then
+            p:showLocationDetails(actual_item, opts)
+        elseif item_type == "historical" then
+            p:showHistoricalFigureDetails(actual_item, opts)
+        elseif item_type == "term" then
+            p:showTermDetails(actual_item, opts)
+        end
     elseif self.mode == "mentions" then
         local return_pg = p.return_page_origin
         if not return_pg and p then
@@ -1147,6 +1253,15 @@ function EntityListOverlay:buildUI()
         local title_tmpl = (loc and loc:t("mentions_title")) or "Mentions: %s"
         if title_tmpl == "mentions_title" then title_tmpl = "Mentions: %s" end
         title_text_str = title_tmpl:format(ent_name)
+    elseif self.mode == "linked_entries" then
+        local ent_name = (self.entity and (self.entity.name or self.entity.chapter)) or nil
+        if ent_name and ent_name ~= "" then
+            local title_tmpl = (loc and loc:t("linked_with_title")) or "Linked with: %s"
+            if title_tmpl == "linked_with_title" then title_tmpl = "Linked with: %s" end
+            title_text_str = title_tmpl:format(ent_name)
+        else
+            title_text_str = (loc and loc:t("linked_entries")) or "Linked Entries"
+        end
     else
         title_text_str = (loc and loc:t("menu_characters")) or "Characters"
     end
@@ -1394,6 +1509,15 @@ function EntityListOverlay:buildUI()
                 local none_tmpl = (loc and loc:t("mentions_none")) or "No mentions found for '%s' yet."
                 if none_tmpl == "mentions_none" then none_tmpl = "No mentions found for '%s' yet." end
                 empty_str = none_tmpl:format((self.entity and self.entity.name) or "this entity")
+            end
+        elseif self.mode == "linked_entries" then
+            local ent_name = (self.entity and (self.entity.name or self.entity.chapter)) or nil
+            if ent_name and ent_name ~= "" then
+                local none_tmpl = (loc and loc:t("linked_none")) or "No linked entries found for '%s'."
+                if none_tmpl == "linked_none" then none_tmpl = "No linked entries found for '%s'." end
+                empty_str = none_tmpl:format(ent_name)
+            else
+                empty_str = (loc and loc:t("no_linked_entries")) or "No linked entries found"
             end
         elseif self.search_query and self.search_query ~= "" then
             empty_str = "No items matching \"" .. self.search_query .. "\""

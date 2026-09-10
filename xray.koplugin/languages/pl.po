@@ -329,6 +329,22 @@ msgstr "lokalizacje"
 msgid "entity_not_found"
 msgstr "'%s' nie został znaleziony jako postać ani miejsce."
 
+# en-hash: 76a40e4f974fd895a0a2598c1cee28b4
+msgid "entity_type_character"
+msgstr "Postać"
+
+# en-hash: adb9c82a7733b6bc485275e01bba6eac
+msgid "entity_type_historical"
+msgstr "Postać historyczna"
+
+# en-hash: ce5bf551379459c1c61d2a204061c455
+msgid "entity_type_location"
+msgstr "Miejsce"
+
+# en-hash: cf5f3091e30dee6597885d8c0e0c357f
+msgid "entity_type_term"
+msgstr "Termin"
+
 # en-hash: 76e73569f84e76aa9de514fea51ef9f3
 msgid "entity_ui_style_both"
 msgstr "Nowoczesne okienko (oba)"
@@ -664,6 +680,14 @@ msgstr "Włączone"
 # en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
 msgstr "Powiązane wpisy automatycznie łączą postacie, miejsca i postacie historyczne, gdy są one wspomniane w swoich opisach.\n\nWyłączenie tej opcji ukryje przycisk 'Powiązane wpisy' w oknach szczegółów."
+
+# en-hash: 75c2e35dd42abd75cdb8a9d4b0da8c20
+msgid "linked_none"
+msgstr "Nie znaleziono powiązanych wpisów dla '%s'."
+
+# en-hash: 87388d7588da3ecf170e33b01d82dc2f
+msgid "linked_with_title"
+msgstr "Powiązane z: %s"
 
 # en-hash: 08ea860427184895725e398c5ef821b1
 msgid "local_setup_title"
@@ -1080,6 +1104,10 @@ msgstr "Brak danych o postaciach historycznych.\n\nNajpierw użyj 'Pobierz dane 
 # en-hash: 4c58fb13d107106e3765e3f635e64517
 msgid "no_items"
 msgstr "Brak elementów"
+
+# en-hash: 0f1e243d0830d654feef580caac9fd88
+msgid "no_linked_entries"
+msgstr "Nie znaleziono powiązanych wpisów"
 
 # en-hash: 4d0e58f2c49ca238a05d2a92486d3d70
 msgid "no_location_data"

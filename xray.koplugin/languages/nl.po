@@ -329,6 +329,22 @@ msgstr "locaties"
 msgid "entity_not_found"
 msgstr "'%s' is niet gevonden als personage of locatie."
 
+# en-hash: 76a40e4f974fd895a0a2598c1cee28b4
+msgid "entity_type_character"
+msgstr "Personage"
+
+# en-hash: adb9c82a7733b6bc485275e01bba6eac
+msgid "entity_type_historical"
+msgstr "Historisch figuur"
+
+# en-hash: ce5bf551379459c1c61d2a204061c455
+msgid "entity_type_location"
+msgstr "Locatie"
+
+# en-hash: cf5f3091e30dee6597885d8c0e0c357f
+msgid "entity_type_term"
+msgstr "Term"
+
 # en-hash: 76e73569f84e76aa9de514fea51ef9f3
 msgid "entity_ui_style_both"
 msgstr "Modern popup (beide)"
@@ -664,6 +680,14 @@ msgstr "Ingeschakeld"
 # en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
 msgstr "Gekoppelde vermeldingen verbindt automatisch personages, locaties en historische figuren wanneer ze in elkaars beschrijvingen worden genoemd.\n\nAls u dit uitschakelt, wordt de knop 'Gekoppelde vermeldingen' verborgen in de detailvensters."
+
+# en-hash: 75c2e35dd42abd75cdb8a9d4b0da8c20
+msgid "linked_none"
+msgstr "Geen gekoppelde vermeldingen gevonden voor '%s'."
+
+# en-hash: 87388d7588da3ecf170e33b01d82dc2f
+msgid "linked_with_title"
+msgstr "Gekoppeld aan: %s"
 
 # en-hash: 08ea860427184895725e398c5ef821b1
 msgid "local_setup_title"
@@ -1080,6 +1104,10 @@ msgstr "Nog geen gegevens over historische figuren.\n\nGebruik eerst 'X-Ray-gege
 # en-hash: 4c58fb13d107106e3765e3f635e64517
 msgid "no_items"
 msgstr "Geen items"
+
+# en-hash: 0f1e243d0830d654feef580caac9fd88
+msgid "no_linked_entries"
+msgstr "Geen gekoppelde vermeldingen gevonden"
 
 # en-hash: 4d0e58f2c49ca238a05d2a92486d3d70
 msgid "no_location_data"

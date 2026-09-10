@@ -382,7 +382,7 @@ function XRayBottomPopup:_buildContent()
             cb = function()
                 UIManager:close(self)
                 if plugin and plugin.showRelatedEntities then
-                    plugin:showRelatedEntities(related)
+                    plugin:showRelatedEntities(related, nil, e)
                 end
             end,
         })
@@ -1226,17 +1226,24 @@ function M:closeAllMenus()
     end
 
     -- 1. Close all custom plugin modals instantly
-    local menus = {
-        self.mentions_menu, self.char_menu, self.loc_menu,
-        self.timeline_menu, self.hf_menu, self.xray_menu,
-        self.terms_menu, self.active_details_dialog, self.return_banner
-    }
-    for i = 1, 9 do
-        if menus[i] then pcall(function() UIManager:close(menus[i]) end) end
+    local function closeWidget(w)
+        if w then pcall(function() UIManager:close(w) end) end
     end
+    closeWidget(self.mentions_menu)
+    closeWidget(self.char_menu)
+    closeWidget(self.loc_menu)
+    closeWidget(self.timeline_menu)
+    closeWidget(self.hf_menu)
+    closeWidget(self.xray_menu)
+    closeWidget(self.terms_menu)
+    closeWidget(self.active_details_dialog)
+    closeWidget(self.return_banner)
+    closeWidget(self.active_related_menu)
+
     self.mentions_menu = nil; self.char_menu = nil; self.loc_menu = nil
     self.timeline_menu = nil; self.hf_menu = nil; self.xray_menu = nil
     self.terms_menu = nil; self.active_details_dialog = nil; self.return_banner = nil
+    self.active_related_menu = nil
     
     local function executeClear()
         -- 2. Dismiss native KOReader top menu stack
@@ -1428,51 +1435,33 @@ function M:findRelatedEntities(text, exclude_name)
     return related
 end
 
-function M:showRelatedEntities(related, opts)
-    local items = {}
-    if self.active_related_menu then
-        UIManager:close(self.active_related_menu)
-        self.active_related_menu = nil
+function M:showRelatedEntities(related, opts, source_entity)
+    if self.active_details_dialog then
+        local d = self.active_details_dialog
+        self.active_details_dialog = nil
+        pcall(function() UIManager:close(d) end)
     end
 
-    for _, entry in ipairs(related) do
-        local item = entry.item
-        local item_type = entry.type
-        local display_type = item_type:sub(1,1):upper() .. item_type:sub(2)
-        table.insert(items, {
-            text = (item.name or "???") .. " (" .. display_type .. ")",
-            callback = function()
-                -- Close both the linked entries menu and any open detail dialog
-                -- before opening the new entity's detail.
-                if self.active_related_menu then
-                    UIManager:close(self.active_related_menu)
-                    self.active_related_menu = nil
-                end
-                if self.active_details_dialog then
-                    UIManager:close(self.active_details_dialog)
-                    self.active_details_dialog = nil
-                end
-                if item_type == "character" then
-                    self:showCharacterDetails(item, opts)
-                elseif item_type == "location" then
-                    self:showLocationDetails(item, opts)
-                elseif item_type == "historical" then
-                    self:showHistoricalFigureDetails(item, opts)
-                elseif item_type == "term" then
-                    self:showTermDetails(item, opts)
-                end
-            end
-        })
+    if self.active_related_menu then
+        local m = self.active_related_menu
+        self.active_related_menu = nil
+        pcall(function() UIManager:close(m) end)
     end
-    
-    self.active_related_menu = self:newMenu("active_related_menu", {
-        title = self.loc:t("linked_entries") or "Linked Entries",
-        item_table = items,
+
+    local entity = source_entity or (opts and (opts.entity or opts.item))
+
+    local EntityListOverlay = require(plugin_path .. "xray_entity_list")
+    self.active_related_menu = EntityListOverlay:new{
+        plugin = self,
+        mode = "linked_entries",
+        entity = entity,
+        raw_items = related or {},
+        opts = opts,
         on_close_callback = function()
             self.active_related_menu = nil
-        end
-    })
-    UIManager:show(self.active_related_menu)
+        end,
+    }
+    UIManager:show(self.active_related_menu, "ui")
 end
 
 function M:showCharacterDetails(character, opts)
@@ -1625,7 +1614,8 @@ function M:showCharacterDetails(character, opts)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related, opts)
+                        if self.active_details_dialog then UIManager:close(self.active_details_dialog); self.active_details_dialog = nil end
+                        self:showRelatedEntities(related, opts, character)
                     end,
                 }
             },
@@ -1814,7 +1804,8 @@ function M:showLocationDetails(loc_item, opts)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related, opts)
+                        if self.active_details_dialog then UIManager:close(self.active_details_dialog); self.active_details_dialog = nil end
+                        self:showRelatedEntities(related, opts, loc_item)
                     end,
                 }
             },
@@ -2058,7 +2049,8 @@ function M:showTermDetails(term, opts)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related, opts)
+                        if self.active_details_dialog then UIManager:close(self.active_details_dialog); self.active_details_dialog = nil end
+                        self:showRelatedEntities(related, opts, term)
                     end,
                 }
             },
@@ -3844,7 +3836,8 @@ function M:showTimelineEventDetails(ev, opts)
                 {
                     text     = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related, opts)
+                        if self.active_details_dialog then UIManager:close(self.active_details_dialog); self.active_details_dialog = nil end
+                        self:showRelatedEntities(related, opts, ev)
                     end,
                 },
                 {
@@ -3991,7 +3984,8 @@ function M:showHistoricalFigureDetails(fig, opts)
                 {
                     text = self.loc:t("linked_entries") or "Linked Entries",
                     callback = function()
-                        self:showRelatedEntities(related, opts)
+                        if self.active_details_dialog then UIManager:close(self.active_details_dialog); self.active_details_dialog = nil end
+                        self:showRelatedEntities(related, opts, fig)
                     end,
                 }
             },
