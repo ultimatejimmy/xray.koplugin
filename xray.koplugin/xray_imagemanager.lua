@@ -473,7 +473,7 @@ end
 -- Dynamically resolve accurate page for an image.
 -- Reads TOC mapping from NCX/Nav to pair the image's containing spine XHTML file
 -- directly to KOReader's rendered page for that section.
-function ImageManager:resolveImagePage(ui, image_entry)
+function ImageManager:resolveImagePage(ui, image_entry, force)
     if not image_entry then return 1 end
 
     local href = image_entry.href or ""
@@ -484,12 +484,13 @@ function ImageManager:resolveImagePage(ui, image_entry)
     -- 1. Cover images are always Page 1
     if lower_href:find("cover") or title:find("cover") or (image_entry.id and tostring(image_entry.id):find("cover")) then
         image_entry.page = 1
+        image_entry.page_resolved = true
         return 1
     end
 
-    -- 2. Fast path: If the image already has a valid positive page, return it immediately without disk/process overhead
+    -- 2. Fast path: If the image page was already accurately resolved, return it immediately without disk/process overhead
     local existing = tonumber(image_entry.page)
-    if existing and existing > 0 then
+    if not force and image_entry.page_resolved and existing and existing > 0 then
         return existing
     end
 
@@ -653,6 +654,7 @@ function ImageManager:resolveImagePage(ui, image_entry)
             end
             resolved = math.max(1, math.min(total_pages, resolved))
             image_entry.page = resolved
+            image_entry.page_resolved = true
             return resolved
         end
     end
@@ -665,9 +667,11 @@ function ImageManager:resolveImagePage(ui, image_entry)
         local resolved = base_pg + math.floor((best.rel_pos or 0) * span)
         resolved = math.max(1, math.min(total_pages, resolved))
         image_entry.page = resolved
+        image_entry.page_resolved = true
         return resolved
     end
 
+    local existing = tonumber(image_entry.page)
     return (existing and existing > 1) and existing or (existing or 1)
 end
 
@@ -843,9 +847,11 @@ function ImageManager:scanEpubImages(book_path, total_pages, ui)
 
         local s_idx = image_to_spine_idx[fname]
         local page_num = nil
+        local is_resolved = false
 
         if fname == cover_img_href or base_fname:find("cover") or (s_idx and s_idx == 1) then
             page_num = 1
+            is_resolved = true
             if not title:lower():find("cover") then title = "Cover" end
         elseif s_idx and spine_items[s_idx] then
             local s_href = spine_items[s_idx]
@@ -858,6 +864,7 @@ function ImageManager:scanEpubImages(book_path, total_pages, ui)
                 local ratio = image_to_pos_ratio[fname] or 0
                 page_num = start_pg + math.floor(ratio * math.max(0, end_pg - start_pg))
                 page_num = math.max(1, math.min(total_pages, page_num))
+                is_resolved = true
             end
         end
 
@@ -867,12 +874,14 @@ function ImageManager:scanEpubImages(book_path, total_pages, ui)
             local span = math.max(0, next_pg - base_pg)
             page_num = base_pg + math.floor((image_to_pos_ratio[fname] or 0) * span)
             page_num = math.max(1, math.min(total_pages, page_num))
+            is_resolved = true
         elseif not page_num and (cat == "map" or title:lower():find("map")) then
             -- Direct TOC match fallback for Map
             for _, te in ipairs(toc_entries) do
                 local te_lower = te.title:lower()
                 if (te_lower:find("map") or te_lower:find("karte") or te_lower:find("plano")) and te.page and te.page > 1 then
                     page_num = te.page
+                    is_resolved = true
                     break
                 end
             end
@@ -880,6 +889,7 @@ function ImageManager:scanEpubImages(book_path, total_pages, ui)
 
         if not page_num or page_num < 1 then
             page_num = math.max(1, math.min(total_pages, math.floor(((i - 1) / math.max(1, #image_files)) * total_pages) + 1))
+            is_resolved = false
         end
 
         table.insert(images, {
@@ -889,6 +899,7 @@ function ImageManager:scanEpubImages(book_path, total_pages, ui)
             title = title,
             category = cat,
             page = page_num,
+            page_resolved = is_resolved,
         })
     end
 

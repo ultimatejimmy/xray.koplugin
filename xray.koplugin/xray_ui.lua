@@ -6986,9 +6986,12 @@ function M:showImageActions(image_entry)
         end
     end
 
-    -- Initial build: only resolve page if missing or non-positive
-    if (not image_entry.page or tonumber(image_entry.page) <= 0) and self.image_manager and self.image_manager.resolveImagePage then
-        self.image_manager:resolveImagePage(self.ui, image_entry)
+    -- Initial build: resolve page if missing, non-positive, or if spine cache is already warm
+    if self.image_manager and self.image_manager.resolveImagePage then
+        local is_warm = self.image_manager._epub_spine_cache and self.ui and self.ui.document and self.ui.document.file and self.image_manager._epub_spine_cache[self.ui.document.file] ~= nil
+        if not image_entry.page or tonumber(image_entry.page) <= 0 or (is_warm and not image_entry.page_resolved) then
+            self.image_manager:resolveImagePage(self.ui, image_entry)
+        end
     end
     buildActionItemsList()
     local card = buildDialogWidget()
@@ -7198,8 +7201,8 @@ end
 
 function M:jumpToImagePage(page, image_entry)
     local pg = tonumber(page)
-    if (not pg or pg <= 0) and image_entry and self.image_manager and self.image_manager.resolveImagePage then
-        local resolved = self.image_manager:resolveImagePage(self.ui, image_entry)
+    if image_entry and self.image_manager and self.image_manager.resolveImagePage and (not image_entry.page_resolved or not pg or pg <= 0) then
+        local resolved = self.image_manager:resolveImagePage(self.ui, image_entry, true)
         if resolved and resolved > 0 then pg = resolved end
         if self.cache_manager and self.ui and self.ui.document and self.ui.document.file and self.book_data then
             self.cache_manager:asyncSaveCache(self.ui.document.file, self.book_data)

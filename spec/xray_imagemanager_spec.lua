@@ -226,23 +226,48 @@ describe("xray_imagemanager", function()
     end)
 
     describe("resolveImagePage", function()
-        it("always resolves cover images to page 1", function()
+        it("always resolves cover images to page 1 and marks page_resolved", function()
             local cover_entry = { id = "img_cover", title = "Cover", href = "cover.jpeg", page = 45 }
             local res = img_mgr:resolveImagePage(nil, cover_entry)
             assert.are.equal(1, res)
             assert.are.equal(1, cover_entry.page)
+            assert.is_true(cover_entry.page_resolved)
         end)
 
-        it("returns immediately without disk lookup if entry already has valid page", function()
+        it("returns immediately without disk lookup if entry already has valid page and is page_resolved", function()
             local mock_ui = {
                 document = {
                     file = "/path/to/book.epub",
                     getPageCount = function() return 500 end,
                 }
             }
-            local entry = { id = "img1", title = "Map of Roshar", href = "images/map.jpg", page = 42 }
+            local entry = { id = "img1", title = "Map of Roshar", href = "images/map.jpg", page = 42, page_resolved = true }
             local res = img_mgr:resolveImagePage(mock_ui, entry)
             assert.are.equal(42, res)
+        end)
+
+        it("resolves and marks page_resolved when spine data is available", function()
+            local mock_ui = {
+                document = {
+                    file = "/path/to/book.epub",
+                    getPageCount = function() return 500 end,
+                }
+            }
+            img_mgr._epub_spine_cache = {
+                ["/path/to/book.epub"] = {
+                    spine_items = { "text/map.xhtml" },
+                    file_to_toc_idx = { ["map.xhtml"] = 1 },
+                    flat_toc = { { title = "Map", page = 88 } },
+                    spine_page_map = { [1] = 88 },
+                    spine_contents = { ["text/map.xhtml"] = '<img src="map.jpg"/>' },
+                    image_to_spine = {},
+                }
+            }
+            local entry = { id = "img1", title = "Map", href = "map.jpg", page = 15, page_resolved = false }
+            local res = img_mgr:resolveImagePage(mock_ui, entry)
+            assert.are.equal(88, res)
+            assert.are.equal(88, entry.page)
+            assert.is_true(entry.page_resolved)
         end)
 
         it("falls back to entry page when no document is open", function()
