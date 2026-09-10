@@ -2885,6 +2885,12 @@ function M:showSpoilerSettings()
         end,
         save_func = function(val)
             self.ai_helper:saveSettings({ spoiler_setting = val })
+            if val == "full_book" and self.auto_fetch_enabled then
+                if self.isCatchUpNeeded and self:isCatchUpNeeded() then
+                    self.pending_background_fetch = true
+                    self:scheduleBackgroundCatchUp(2)
+                end
+            end
             UIManager:setDirty(nil, "ui")
         end,
         about_text = self.loc:t("spoiler_free_about") or "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\n[B]Full Book Mode:[/B] Analyzes the entire book, which [B]may contain spoilers[/B].",
@@ -3722,6 +3728,9 @@ function M:showTimeline()
     local utils = require(plugin_path .. "xray_utils")
     local toc = utils:flattenTOC(self.ui.document:getToc())
     self:assignTimelinePages(self.timeline, toc, true)
+    if self.filterOrphanTimelineEvents then
+        self.timeline = self:filterOrphanTimelineEvents(self.timeline, toc)
+    end
     self:sortTimelineByTOC(self.timeline)
 
     if self.timeline_menu then

@@ -463,16 +463,32 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
     end
 end
 
-function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_silent)
-    if self.destroyed or not self.ui or not self.ui.document then return end
+function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_silent, batch_end_page, on_complete_cb)
+    local completed = false
+    local function notifyComplete(success, err_code, err_msg)
+        if completed then return end
+        completed = true
+        if on_complete_cb then
+            pcall(on_complete_cb, success, err_code, err_msg)
+        end
+    end
+
+    if self.destroyed or not self.ui or not self.ui.document then
+        notifyComplete(false, "cancelled")
+        return
+    end
     local doc_file = self.ui.document.file
-    if not doc_file then return end
+    if not doc_file then
+        notifyComplete(false, "cancelled")
+        return
+    end
 
     local has_active_request = self._active_ai_cancel
         or (self.ai_helper and self.ai_helper._async_child_pid)
     if is_silent and has_active_request then
         self.bg_fetch_pending = false
         self:log("XRayPlugin: Skipping background fetch because another AI request is active")
+        notifyComplete(false, "busy")
         return
     elseif not is_silent and has_active_request then
         self:cancelActiveAIRequest("Previous AI request replaced by manual fetch")
@@ -547,6 +563,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         end
         finishActiveRequest()
         self:log("XRayPlugin: " .. reason)
+        notifyComplete(false, "cancelled", reason)
     end
 
     self._active_ai_cancel = cancelActiveRequest
@@ -585,7 +602,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         end
         if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
 
-        local current_page = self.ui:getCurrentPage()
+        local current_page = batch_end_page or self.ui:getCurrentPage()
         local first_missing_page = last_fetch_page
         if is_update then
             local toc = utils:flattenTOC(self.ui.document:getToc())
@@ -618,7 +635,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
 
         local end_page_analysis = current_page
         local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        if spoiler_setting ~= "full_book" then
+        if spoiler_setting ~= "full_book" or batch_end_page then
             end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page)
         end
 
@@ -650,8 +667,9 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 return
             end
 
+            local is_full_book = (reading_percent == 100 and not batch_end_page)
             local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(
-                self.ui, 200, 150000, reading_percent == 100, first_missing_page, known_chapters, current_page)
+                self.ui, 200, 150000, is_full_book, first_missing_page, known_chapters, current_page)
             local annots = self.chapter_analyzer:getAnnotationsForAnalysis(self.ui)
 
             if (not book_text or #book_text < 10) and not samples then
@@ -665,6 +683,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 if not is_silent then UIManager:show(InfoMessage:new{ text = message, timeout = 5 }) end
                 self:log("XRayPlugin: Text extraction failed" .. (is_silent and " (silent)" or ""))
                 finishActiveRequest()
+                notifyComplete(false, "error_extract")
                 return
             end
 
@@ -688,6 +707,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 if wait_msg then UIManager:close(wait_msg) end
                 self:log("XRayPlugin: Failed to build request: " .. tostring(err_msg))
                 finishActiveRequest()
+                notifyComplete(false, err_code, err_msg)
                 if not is_silent then
                     if not self.ai_helper:hasApiKey() and self.showWelcomeCard then
                         self:showWelcomeCard()
@@ -732,6 +752,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 pcall(function() os.remove(result_file) end)
                 result_file = nil
                 finishActiveRequest()
+                notifyComplete(false, "error_start")
                 return
             end
             request_pid = started
@@ -771,6 +792,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     if wait_msg then UIManager:close(wait_msg) end
                     finishActiveRequest()
                     self:log("XRayPlugin: Fetch failed: " .. tostring(p_err_msg))
+                    notifyComplete(false, p_err_code, p_err_msg)
                     if not is_silent then
                         local ButtonDialog = require("ui/widget/buttondialog")
                         local title, text = utils:getFriendlyError(p_err_code, p_err_msg, self.loc)
@@ -787,6 +809,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     if wait_msg then UIManager:close(wait_msg) end
                     finishActiveRequest()
                     self:finalizeXRayData(data, title, author, book_text, is_update, is_silent, current_page)
+                    notifyComplete(true)
                 end
             end
             UIManager:scheduleIn(2, poll)
@@ -1043,6 +1066,9 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         local toc = self.ui and self.ui.document and self.ui.document.getToc and self.ui.document:getToc() or {}
         local incoming_timeline = final_book_data.timeline or {}
         self:assignTimelinePages(incoming_timeline, toc, true)
+        if self.filterOrphanTimelineEvents then
+            incoming_timeline = self:filterOrphanTimelineEvents(incoming_timeline, toc)
+        end
 
         for _, new_event in ipairs(incoming_timeline) do
             local found = false
@@ -1060,6 +1086,10 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                 end
             end
             if not found then table.insert(current_timeline, new_event) end
+        end
+
+        if self.filterOrphanTimelineEvents then
+            current_timeline = self:filterOrphanTimelineEvents(current_timeline, toc)
         end
 
         self.timeline = {}
@@ -1117,6 +1147,9 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         local current_timeline = final_book_data.timeline or {}
         local toc = self.ui and self.ui.document and self.ui.document.getToc and self.ui.document:getToc() or {}
         self:assignTimelinePages(current_timeline, toc, true)
+        if self.filterOrphanTimelineEvents then
+            current_timeline = self:filterOrphanTimelineEvents(current_timeline, toc)
+        end
 
         self.timeline = {}
         for _, ev in ipairs(current_timeline) do table.insert(self.timeline, ev) end
@@ -2098,6 +2131,9 @@ function M:mergeSeriesContext(cache_data, series_info)
 
     local toc = self.ui and self.ui.document and self.ui.document.getToc and utils:flattenTOC(self.ui.document:getToc()) or {}
     self:assignTimelinePages(self.timeline, toc, true)
+    if self.filterOrphanTimelineEvents then
+        self.timeline = self:filterOrphanTimelineEvents(self.timeline, toc)
+    end
     self:sortTimelineByTOC(self.timeline)
 
     self.series_context_loaded = true

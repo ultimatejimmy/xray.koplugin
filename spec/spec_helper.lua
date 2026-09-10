@@ -491,6 +491,7 @@ function _G.createMockPlugin()
         deduplicateByName = function(self, list) return list end,
         sortDataByFrequency = function(self, list) return list end,
         assignTimelinePages = function() end,
+        filterOrphanTimelineEvents = function(self, list) return list end,
         sortTimelineByTOC = function() end,
         getSubMenuItems = function() return {} end,
     }

@@ -100,6 +100,43 @@ describe("xray_data", function()
         end)
     end)
 
+    describe("filterOrphanTimelineEvents", function()
+        it("should drop events without page numbers when TOC exists", function()
+            local timeline = {
+                { chapter = "Chapter 1", page = 10 },
+                { chapter = "CHAPTER EIGHTEND" },
+                { chapter = "Chapter 2", page = 25 },
+            }
+            local toc = { { title = "Chapter 1", page = 10 }, { title = "Chapter 2", page = 25 } }
+            local filtered = xray_data:filterOrphanTimelineEvents(timeline, toc)
+            assert.are.equal(2, #filtered)
+            assert.are.equal("Chapter 1", filtered[1].chapter)
+            assert.are.equal("Chapter 2", filtered[2].chapter)
+        end)
+
+        it("should preserve series_prior events even if page is negative or missing", function()
+            local timeline = {
+                { chapter = "[Book 1]", page = -999, source = "series_prior" },
+                { chapter = "Chapter 1", page = 10 },
+                { chapter = "CHAPTER HALLUCINATED" },
+            }
+            local toc = { { title = "Chapter 1", page = 10 } }
+            local filtered = xray_data:filterOrphanTimelineEvents(timeline, toc)
+            assert.are.equal(2, #filtered)
+            assert.are.equal("[Book 1]", filtered[1].chapter)
+            assert.are.equal("Chapter 1", filtered[2].chapter)
+        end)
+
+        it("should preserve all events if book has no TOC", function()
+            local timeline = {
+                { chapter = "Part 1" },
+                { chapter = "Part 2" },
+            }
+            local filtered = xray_data:filterOrphanTimelineEvents(timeline, {})
+            assert.are.equal(2, #filtered)
+        end)
+    end)
+
     describe("sortDataByFrequency", function()
         it("should rank protagonists higher", function()
             local list = {

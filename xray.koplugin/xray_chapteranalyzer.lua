@@ -889,7 +889,7 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
                 local end_txt = utf8_sub(chapter_text, -sample_len, -1)
                 
                 table.insert(samples, string.format(
-                    "CHAPTER [%s]:\n[START]: %s\n[MID]: %s\n[END]: %s",
+                    "CHAPTER [%s]:\n[EXCERPT_START]: %s\n[EXCERPT_MID]: %s\n[EXCERPT_END]: %s",
                     chapter.title or tostring(i),
                     start_txt, mid_txt, end_txt
                 ))
