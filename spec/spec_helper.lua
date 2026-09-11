@@ -62,16 +62,22 @@ package.loaded["datastorage"] = {
 _G.ui_tracker = {
     shown = {},
     last_shown = nil,
+    last_refreshtype = nil,
     closed = {}
 }
 
 package.loaded["ui/uimanager"] = {
     show = function(self, widget, refreshtype, region, x, y)
         local w = type(self) == "table" and widget or self
+        local rtype = type(self) == "table" and refreshtype or nil
         local posX = type(self) == "table" and x or refreshtype
         local posY = type(self) == "table" and y or region
+        if w and type(w.onShow) == "function" then
+            pcall(function() w:onShow() end)
+        end
         table.insert(_G.ui_tracker.shown, w)
         _G.ui_tracker.last_shown = w
+        _G.ui_tracker.last_refreshtype = rtype
         _G.ui_tracker.last_show_x = posX
         _G.ui_tracker.last_show_y = posY
     end,

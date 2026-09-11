@@ -153,7 +153,7 @@ describe("xray_mentions", function()
     end)
 
     describe("showMentionsMenu", function()
-        it("should show an EntityListOverlay with mode mentions and modal true", function()
+        it("should show an EntityListOverlay with mode mentions, modal true, and 'ui' refreshtype", function()
             local entity = { name = "Eric Wardle", mentions = { { page = 9, chapter = "Prologue", snippet = "Ambulance is two minutes away" } } }
             plugin:showMentionsMenu(entity)
             local last = _G.ui_tracker.last_shown
@@ -162,11 +162,46 @@ describe("xray_mentions", function()
             assert.are.equal("mentions", last.mode)
             assert.are.equal("Eric Wardle", last.entity.name)
             assert.are.equal(1, #last.raw_items)
+            assert.are.equal("ui", _G.ui_tracker.last_refreshtype)
             assert.is_not_nil(plugin.mentions_menu)
 
             -- Close should nil mentions_menu
             last:close()
             assert.is_nil(plugin.mentions_menu)
+        end)
+
+        it("should show mentions over characters menu and dismiss details dialog cleanly", function()
+            for k, v in pairs(xray_ui) do plugin[k] = v end
+            plugin.ui.document.getPageCount = function() return 100 end
+            local ChapterAnalyzer = require("xray_chapteranalyzer")
+            plugin.chapter_analyzer = ChapterAnalyzer:new{ plugin = plugin }
+            plugin.characters = { { name = "Alice", mentions = { { page = 5, chapter = "Ch1" } } } }
+
+            -- 1. Open characters menu
+            plugin:showCharacters()
+            assert.is_not_nil(plugin.char_menu)
+            assert.are.equal("characters", plugin.char_menu.mode)
+
+            -- 2. Open character details
+            plugin.char_menu:onItemSelect(plugin.characters[1])
+            assert.is_not_nil(plugin.active_details_dialog)
+
+            -- 3. Click Find Mentions
+            local find_mentions_btn = plugin.active_details_dialog.buttons[1][1]
+            assert.are.equal("find_mentions", find_mentions_btn.text)
+            find_mentions_btn.callback()
+
+            -- Details dialog closed, mentions menu shown with 'ui' refreshtype
+            assert.is_nil(plugin.active_details_dialog)
+            assert.is_not_nil(plugin.mentions_menu)
+            assert.are.equal("mentions", plugin.mentions_menu.mode)
+            assert.are.equal("ui", _G.ui_tracker.last_refreshtype)
+            assert.is_not_nil(plugin.char_menu) -- Char menu remains underneath
+
+            -- Closing mentions menu keeps char_menu underneath
+            plugin.mentions_menu:close()
+            assert.is_nil(plugin.mentions_menu)
+            assert.is_not_nil(plugin.char_menu)
         end)
     end)
 

@@ -324,8 +324,9 @@ function M:showMentionsMenu(entity)
     
     -- Unconditionally clear any existing menu to prevent stale states
     if self.mentions_menu then
-        pcall(function() UIManager:close(self.mentions_menu) end)
+        local m = self.mentions_menu
         self.mentions_menu = nil
+        pcall(function() UIManager:close(m, "ui") end)
     end
 
     local EntityListOverlay = require(plugin_path .. "xray_entity_list")
@@ -338,7 +339,7 @@ function M:showMentionsMenu(entity)
         covers_fullscreen = true,
         on_close_callback = function() self.mentions_menu = nil end,
     }
-    UIManager:show(self.mentions_menu)
+    UIManager:show(self.mentions_menu, "ui")
 end
 
 function M:highlightMentionsOnPage(page, entity)

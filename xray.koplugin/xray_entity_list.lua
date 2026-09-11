@@ -268,6 +268,11 @@ function EntityListOverlay:prepareItems()
     self.items = filtered
 end
 
+function EntityListOverlay:onShow()
+    UIManager:setDirty(self, "ui")
+    return true
+end
+
 function EntityListOverlay:onTap(arg, ges)
     if self.is_touch_device and self.focus_zone then
         self.focus_zone = nil

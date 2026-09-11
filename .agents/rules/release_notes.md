@@ -19,7 +19,7 @@ trigger: always_on
 ```
 ### Install
 
-If you are on an older version that doesn't have built-in updates or you haven't tried it yet, get it here: https://github.com/ultimatejimmy/koreader-xray-plugin
+If you haven't tried it yet, you can install it directly from [Storefront](https://github.com/ultimatejimmy/storefront.koplugin) or get it here: https://github.com/ultimatejimmy/koreader-xray-plugin
 
 Here's the direct link the releases: https://github.com/ultimatejimmy/koreader-xray-plugin/releases
 
