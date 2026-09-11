@@ -1285,6 +1285,22 @@ msgstr "Chave de API de %s limpa."
 msgid "skip"
 msgstr "Skip"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "Alfabético (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Ordem de aparição"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Ordenar por"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Frequência de menções (padrão)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "O modo sem spoilers limita a extração de IA às páginas que você já leu (até sua página atual), evitando spoilers de capítulos futuros.\n\nO modo de livro completo analisa todo o livro, o que pode conter spoilers."

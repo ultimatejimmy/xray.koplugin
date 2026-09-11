@@ -1285,6 +1285,22 @@ msgstr "%s API-kulcs törölve."
 msgid "skip"
 msgstr "Kihagyás"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "Betűrendben (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Megjelenés sorrendje"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Rendezés"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Említések gyakorisága (alapértelmezett)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "A spoilermentes mód a könyvben már elolvasott oldalakra korlátozza az AI kinyerését (a jelenlegi oldaláig), megakadályozva a jövőbeli fejezetekből származó spoilereket.\n\nA Teljes könyv mód a teljes könyvet elemzi, ami spoilereket tartalmazhat."

@@ -6247,7 +6247,17 @@ function M:resolveDescriptionForPage(entity, current_page)
     end
     
     -- Default current_page fallback
-    current_page = current_page or self.last_pageno or (self.ui and self.ui:getCurrentPage()) or 999999
+    local doc_page = nil
+    if self.ui then
+        if type(self.ui.getCurrentPage) == "function" then
+            local ok, p = pcall(function() return self.ui:getCurrentPage() end)
+            if ok and p then doc_page = p end
+        elseif self.ui.document and type(self.ui.document.getCurrentPage) == "function" then
+            local ok, p = pcall(function() return self.ui.document:getCurrentPage() end)
+            if ok and p then doc_page = p end
+        end
+    end
+    current_page = current_page or self.last_pageno or doc_page or 999999
     
     -- Traverse history and find the latest entry where entry.page <= current_page
     local best_entry = nil

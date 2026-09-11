@@ -545,4 +545,61 @@ describe("xray_seriesmanager", function()
             assert.is_not_nil(prompt:find("TARGET BOOK INDEX: 1"))
         end)
     end)
+
+    describe("Duplicate index pruning and self-import guards", function()
+        it("prunes old index entry when a book is re-indexed to a new position", function()
+            local slug = "test_series"
+            local book_path = "/path/to/book.epub"
+            local bdata1 = { title = "Lethal White", characters = { { name = "Strike" } } }
+            manager:syncBookToSeriesCache(slug, 1, bdata1, book_path)
+
+            local c1 = manager:loadSeriesCache(slug)
+            assert.is_not_nil(c1.books[1])
+            assert.are.equal(book_path, c1.book_paths[1])
+
+            -- Re-index to book 4
+            local bdata4 = { title = "Lethal White", characters = { { name = "Strike" }, { name = "Robin" } } }
+            manager:syncBookToSeriesCache(slug, 4, bdata4, book_path)
+
+            local c4 = manager:loadSeriesCache(slug)
+            assert.is_nil(c4.books[1], "Old index 1 should be pruned")
+            assert.is_nil(c4.book_paths[1], "Old book_paths 1 should be pruned")
+            assert.is_not_nil(c4.books[4], "New index 4 should exist")
+            assert.are.equal(book_path, c4.book_paths[4])
+        end)
+
+        it("avoids self-importing when mergeSeriesContext encounters same book path or title", function()
+            local fake_plugin = {
+                ui = { document = { file = "/books/book4.epub", getProps = function() return { title = "Lethal White" } end } },
+                characters = {},
+                locations = {},
+                terms = {},
+                timeline = {},
+                sortDataByFrequency = function(self, list, text, key) return list end,
+                assignTimelinePages = function() end,
+                sortTimelineByTOC = function() end,
+            }
+            setmetatable(fake_plugin, { __index = xray_fetch })
+
+            local cache_data = {
+                book_paths = {
+                    [1] = "/books/book4.epub", -- same path as current book
+                    [2] = "/books/book2.epub",
+                },
+                books = {
+                    [1] = { title = "Lethal White", characters = { { name = "Duplicate Strike" } } },
+                    [2] = { title = "The Silkworm", characters = { { name = "Silkworm Character" } } },
+                }
+            }
+            local series_info = { index = 4, slug = "cormoran_strike" }
+            fake_plugin:mergeSeriesContext(cache_data, series_info)
+
+            -- Should NOT import from book 1 because it's the current book
+            local imported_names = {}
+            for _, c in ipairs(fake_plugin.characters) do imported_names[c.name] = true end
+            assert.is_nil(imported_names["Duplicate Strike"])
+            assert.is_true(imported_names["Silkworm Character"])
+        end)
+    end)
 end)
+

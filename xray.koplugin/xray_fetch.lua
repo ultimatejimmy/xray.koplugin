@@ -914,6 +914,11 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                             })
                         end
                     end
+                    if existing_char.source == "series_prior" then
+                        existing_char.is_series = true
+                        existing_char.from_series = true
+                        existing_char.source = nil
+                    end
                     found = true
                     break
                 end
@@ -964,6 +969,11 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                         end
                     end
                     existing_fig.role = new_fig.role
+                    if existing_fig.source == "series_prior" then
+                        existing_fig.is_series = true
+                        existing_fig.from_series = true
+                        existing_fig.source = nil
+                    end
                     found = true
                     break
                 end
@@ -1008,6 +1018,11 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                                 description = new_loc.description
                             })
                         end
+                    end
+                    if existing_loc.source == "series_prior" then
+                        existing_loc.is_series = true
+                        existing_loc.from_series = true
+                        existing_loc.source = nil
                     end
                     found = true
                     break
@@ -1998,9 +2013,15 @@ function M:mergeSeriesContext(cache_data, series_info)
     self.terms = filterPrior(self.terms)
     self.timeline = filterPrior(self.timeline)
 
+    local doc_file = self.ui and self.ui.document and self.ui.document.file
+    local props = self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps() or {}
+    local cur_title = props.title or (self.book_data and (self.book_data.book_title or self.book_data.title))
+
     for idx = 1, (series_info.index or 1) - 1 do
+        local book_path_for_idx = cache_data.book_paths and cache_data.book_paths[idx]
+        local is_self = (doc_file and book_path_for_idx and doc_file == book_path_for_idx)
         local book_data = cache_data.books and cache_data.books[idx]
-        if book_data then
+        if book_data and not is_self and (not cur_title or not book_data.title or book_data.title:lower() ~= cur_title:lower()) then
             for _, new_char in ipairs(book_data.characters or {}) do
                 if new_char and new_char.name and new_char.name ~= "" then
                     local found = false
@@ -2021,11 +2042,14 @@ function M:mergeSeriesContext(cache_data, series_info)
                             
                             if matches then
                                 found = true
+                                existing_char.is_series = true
+                                existing_char.from_series = true
                                 local prefix = string.format("[From Book %d] ", idx)
-                                if new_char.description and new_char.description ~= "" then
+                                local clean_desc = (new_char.description or ""):gsub("^%[From Book %d+%]%s*", "")
+                                if clean_desc ~= "" then
                                     local exist_desc = existing_char.description or ""
                                     if not exist_desc:find(prefix, 1, true) then
-                                        existing_char.description = prefix .. new_char.description .. "\n\n" .. exist_desc
+                                        existing_char.description = prefix .. clean_desc .. "\n\n" .. exist_desc
                                     end
                                 end
                                 break
@@ -2037,6 +2061,8 @@ function M:mergeSeriesContext(cache_data, series_info)
                         local char_copy = {}
                         for k, v in pairs(new_char) do char_copy[k] = v end
                         char_copy.source = "series_prior"
+                        char_copy.is_series = true
+                        char_copy.from_series = true
                         char_copy.source_book = idx
                         char_copy.sort_order = 10000 + idx * 1000 + (tonumber(char_copy.sort_order) or #self.characters)
                         table.insert(self.characters, char_copy)
@@ -2052,11 +2078,14 @@ function M:mergeSeriesContext(cache_data, series_info)
                         if existing_loc and existing_loc.name then
                             if existing_loc.name:lower() == lower_name then
                                 found = true
+                                existing_loc.is_series = true
+                                existing_loc.from_series = true
                                 local prefix = string.format("[From Book %d] ", idx)
-                                if new_loc.description and new_loc.description ~= "" then
+                                local clean_desc = (new_loc.description or ""):gsub("^%[From Book %d+%]%s*", "")
+                                if clean_desc ~= "" then
                                     local exist_desc = existing_loc.description or ""
                                     if not exist_desc:find(prefix, 1, true) then
-                                        existing_loc.description = prefix .. new_loc.description .. "\n\n" .. exist_desc
+                                        existing_loc.description = prefix .. clean_desc .. "\n\n" .. exist_desc
                                     end
                                 end
                                 break
@@ -2067,6 +2096,8 @@ function M:mergeSeriesContext(cache_data, series_info)
                         local loc_copy = {}
                         for k, v in pairs(new_loc) do loc_copy[k] = v end
                         loc_copy.source = "series_prior"
+                        loc_copy.is_series = true
+                        loc_copy.from_series = true
                         loc_copy.source_book = idx
                         table.insert(self.locations, loc_copy)
                     end
@@ -2081,11 +2112,14 @@ function M:mergeSeriesContext(cache_data, series_info)
                         if existing_term and existing_term.name then
                             if existing_term.name:lower() == lower_name then
                                 found = true
+                                existing_term.is_series = true
+                                existing_term.from_series = true
                                 local prefix = string.format("[From Book %d] ", idx)
-                                if new_term.definition and new_term.definition ~= "" then
+                                local clean_def = (new_term.definition or ""):gsub("^%[From Book %d+%]%s*", "")
+                                if clean_def ~= "" then
                                     local exist_def = existing_term.definition or ""
                                     if not exist_def:find(prefix, 1, true) then
-                                        existing_term.definition = prefix .. new_term.definition .. "\n\n" .. exist_def
+                                        existing_term.definition = prefix .. clean_def .. "\n\n" .. exist_def
                                     end
                                 end
                                 break
@@ -2096,6 +2130,8 @@ function M:mergeSeriesContext(cache_data, series_info)
                         local term_copy = {}
                         for k, v in pairs(new_term) do term_copy[k] = v end
                         term_copy.source = "series_prior"
+                        term_copy.is_series = true
+                        term_copy.from_series = true
                         term_copy.source_book = idx
                         table.insert(self.terms, term_copy)
                     end
@@ -2135,6 +2171,17 @@ function M:mergeSeriesContext(cache_data, series_info)
         self.timeline = self:filterOrphanTimelineEvents(self.timeline, toc)
     end
     self:sortTimelineByTOC(self.timeline)
+
+    -- Re-sort characters by frequency against current book text if available
+    local book_text = self.book_text
+    if (not book_text or #book_text < 100) and self.chapter_analyzer and self.ui and self.ui.document then
+        pcall(function()
+            book_text = self.chapter_analyzer:getTextForAnalysis(self.ui, 50000, nil, 100, nil)
+        end)
+    end
+    if self.characters and #self.characters > 0 then
+        self:sortDataByFrequency(self.characters, book_text or "", "name")
+    end
 
     self.series_context_loaded = true
     if not self.cache_manager then

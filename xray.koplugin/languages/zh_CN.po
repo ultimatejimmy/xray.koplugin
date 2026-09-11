@@ -1285,6 +1285,22 @@ msgstr "%s API 密钥已清除。"
 msgid "skip"
 msgstr "跳过"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "按字母顺序 (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "按出现顺序"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "排序方式"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "提及频率 (默认)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "无剧透模式将 AI 提取范围限制在您已阅读的页面（截止到当前页），防止剧透后续章节。\n\n整本书模式将分析整本书，可能包含剧透。"

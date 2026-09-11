@@ -2093,6 +2093,190 @@ describe("xray_ui", function()
             assert.are.equal("term", shown_type)
             assert.are.equal("Highstorm", shown_item.name)
         end)
+
+        it("should revert cleanly between frequency, alphabetical, and appearance sorting", function()
+            local EntityListOverlay = require("xray_entity_list")
+            local raw_chars = {
+                { name = "Vin", sort_order = 1, mentions = { { page = 12 }, { page = 25 } } },
+                { name = "Kelsier", sort_order = 2, mentions = { { page = 5 } } },
+                { name = "Elend", sort_order = 3, history = { { page = 80 } } },
+                { name = "Sazed", sort_order = 4, mentions = { { page = 60 } } },
+                { name = "Breeze", sort_order = 5, mentions = { { page = 45 } } },
+            }
+            local overlay = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "characters",
+                raw_items = raw_chars,
+            }
+
+            -- Initial default is frequency: Vin (2 mentions), Kelsier (1), Sazed (1), Breeze (1), Elend (0)
+            assert.are.equal("Vin", overlay.items[1].name)
+            assert.are.equal("Kelsier", overlay.items[2].name)
+            assert.are.equal("Sazed", overlay.items[3].name)
+            assert.are.equal("Breeze", overlay.items[4].name)
+            assert.are.equal("Elend", overlay.items[5].name)
+
+            -- Switch to Alphabetical
+            overlay.sort_mode = "alphabetical"
+            overlay:prepareItems()
+            assert.are.equal("Breeze", overlay.items[1].name)
+            assert.are.equal("Elend", overlay.items[2].name)
+            assert.are.equal("Kelsier", overlay.items[3].name)
+            assert.are.equal("Sazed", overlay.items[4].name)
+            assert.are.equal("Vin", overlay.items[5].name)
+
+            -- Switch back to Frequency: MUST revert cleanly!
+            overlay.sort_mode = "frequency"
+            overlay:prepareItems()
+            assert.are.equal("Vin", overlay.items[1].name)
+            assert.are.equal("Kelsier", overlay.items[2].name)
+            assert.are.equal("Sazed", overlay.items[3].name)
+            assert.are.equal("Breeze", overlay.items[4].name)
+            assert.are.equal("Elend", overlay.items[5].name)
+
+            -- Switch to Appearance: Kelsier (pg 5), Vin (pg 12), Breeze (pg 45), Sazed (pg 60), Elend (pg 80)
+            overlay.sort_mode = "appearance"
+            overlay:prepareItems()
+            assert.are.equal("Kelsier", overlay.items[1].name)
+            assert.are.equal("Vin", overlay.items[2].name)
+            assert.are.equal("Breeze", overlay.items[3].name)
+            assert.are.equal("Sazed", overlay.items[4].name)
+            assert.are.equal("Elend", overlay.items[5].name)
+
+            -- Switch to Alphabetical again
+            overlay.sort_mode = "alphabetical"
+            overlay:prepareItems()
+            assert.are.equal("Breeze", overlay.items[1].name)
+
+            -- Switch back to Appearance: MUST revert cleanly!
+            overlay.sort_mode = "appearance"
+            overlay:prepareItems()
+            assert.are.equal("Kelsier", overlay.items[1].name)
+            assert.are.equal("Vin", overlay.items[2].name)
+            assert.are.equal("Breeze", overlay.items[3].name)
+            assert.are.equal("Sazed", overlay.items[4].name)
+            assert.are.equal("Elend", overlay.items[5].name)
+        end)
+
+        it("should revert cleanly for entities without sort_order or mentions (locations, terms)", function()
+            local EntityListOverlay = require("xray_entity_list")
+            local raw_locs = {
+                { name = "Luthadel" },
+                { name = "Kredik Shaw" },
+                { name = "Urithiru" },
+                { name = "Kharbranth" },
+            }
+            local overlay = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "locations",
+                raw_items = raw_locs,
+            }
+
+            -- Initial default frequency preserves natural list order
+            assert.are.equal("Luthadel", overlay.items[1].name)
+            assert.are.equal("Kredik Shaw", overlay.items[2].name)
+            assert.are.equal("Urithiru", overlay.items[3].name)
+            assert.are.equal("Kharbranth", overlay.items[4].name)
+
+            -- Switch to Alphabetical
+            overlay.sort_mode = "alphabetical"
+            overlay:prepareItems()
+            assert.are.equal("Kharbranth", overlay.items[1].name)
+            assert.are.equal("Kredik Shaw", overlay.items[2].name)
+            assert.are.equal("Luthadel", overlay.items[3].name)
+            assert.are.equal("Urithiru", overlay.items[4].name)
+
+            -- Switch back to Frequency: MUST revert to natural list order!
+            overlay.sort_mode = "frequency"
+            overlay:prepareItems()
+            assert.are.equal("Luthadel", overlay.items[1].name)
+            assert.are.equal("Kredik Shaw", overlay.items[2].name)
+            assert.are.equal("Urithiru", overlay.items[3].name)
+            assert.are.equal("Kharbranth", overlay.items[4].name)
+        end)
+
+        it("should respect sort_order when _sort_score is 0 or equal", function()
+            local EntityListOverlay = require("xray_entity_list")
+            local zero_scores = {
+                { name = "Vin", _sort_score = 0, sort_order = 1 },
+                { name = "Kelsier", _sort_score = 0, sort_order = 2 },
+                { name = "Elend", _sort_score = 0, sort_order = 3 },
+                { name = "Sazed", _sort_score = 0, sort_order = 4 },
+                { name = "Breeze", _sort_score = 0, sort_order = 5 },
+            }
+            local overlay = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "characters",
+                raw_items = zero_scores,
+            }
+
+            assert.are.equal("Vin", overlay.items[1].name)
+            assert.are.equal("Kelsier", overlay.items[2].name)
+            assert.are.equal("Elend", overlay.items[3].name)
+            assert.are.equal("Sazed", overlay.items[4].name)
+            assert.are.equal("Breeze", overlay.items[5].name)
+
+            overlay.sort_mode = "alphabetical"
+            overlay:prepareItems()
+            assert.are.equal("Breeze", overlay.items[1].name)
+
+            overlay.sort_mode = "frequency"
+            overlay:prepareItems()
+            assert.are.equal("Vin", overlay.items[1].name)
+            assert.are.equal("Kelsier", overlay.items[2].name)
+            assert.are.equal("Elend", overlay.items[3].name)
+            assert.are.equal("Sazed", overlay.items[4].name)
+            assert.are.equal("Breeze", overlay.items[5].name)
+        end)
+
+        it("should persist sort mode on plugin across new overlay creations", function()
+            local EntityListOverlay = require("xray_entity_list")
+            plugin.entity_sort_mode = {}
+            local overlay1 = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "characters",
+                raw_items = { { name = "B" }, { name = "A" } },
+            }
+            assert.are.equal("frequency", overlay1.sort_mode)
+
+            -- Simulate picking alphabetical in showSortDialog
+            overlay1.sort_mode = "alphabetical"
+            plugin.entity_sort_mode[overlay1.mode] = overlay1.sort_mode
+
+            -- New overlay instance for characters should inherit saved sort_mode
+            local overlay2 = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "characters",
+                raw_items = { { name = "B" }, { name = "A" } },
+            }
+            assert.are.equal("alphabetical", overlay2.sort_mode)
+            assert.are.equal("A", overlay2.items[1].name)
+            assert.are.equal("B", overlay2.items[2].name)
+        end)
+
+        it("should rank active series characters ahead of minor characters and prior-only characters at bottom", function()
+            local EntityListOverlay = require("xray_entity_list")
+            local chars = {
+                { name = "Sam Barclay", role = "Supporting", sort_order = 3 },
+                { name = "Cormoran Strike", role = "Private Investigator", is_series = true, sort_order = 1 },
+                { name = "Robin Ellacott", role = "Investigative Partner", is_series = true, sort_order = 2 },
+                { name = "Billy", role = "Minor", sort_order = 4 },
+                { name = "Owen Quine", role = "Victim", source = "series_prior", source_book = 1, sort_order = 11001 },
+            }
+            local overlay = EntityListOverlay:new{
+                plugin = plugin,
+                mode = "characters",
+                raw_items = chars,
+            }
+            overlay.sort_mode = "frequency"
+            overlay:prepareItems()
+
+            assert.are.equal("Cormoran Strike", overlay.items[1].name)
+            assert.are.equal("Robin Ellacott", overlay.items[2].name)
+            assert.are.equal("Sam Barclay", overlay.items[3].name)
+            assert.are.equal("Billy", overlay.items[4].name)
+            assert.are.equal("Owen Quine", overlay.items[5].name)
+        end)
     end)
 end)
 

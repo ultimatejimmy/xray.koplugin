@@ -39,8 +39,8 @@ function M:sortDataByFrequency(list, text, key)
         if not role then return 0 end
         local r = role:lower()
         if r:find("protagonist") then return 100 end
-        if r:find("main") or r:find("lead") or r:find("hero") or r:find("detective") then return 90 end
-        if r:find("deuteragonist") then return 80 end
+        if r:find("main") or r:find("lead") or r:find("hero") or r:find("detective") or r:find("investigator") then return 90 end
+        if r:find("deuteragonist") or r:find("partner") then return 80 end
         if r:find("major") or r:find("antagonist") or r:find("villain") or r:find("primary") then return 70 end
         if r:find("secondary") or r:find("supporting") then return 30 end
         if r:find("minor") or r:find("background") then return 5 end
@@ -93,10 +93,30 @@ function M:sortDataByFrequency(list, text, key)
                 
                 -- Normalize: divide by name length bucket to reduce short-name bias
                 local name_len_factor = math.max(1, math.floor(#name / 4))
-                freq = math.floor(count / name_len_factor)
+                freq = (count > 0) and math.max(1, math.floor(count / name_len_factor)) or 0
             end
 
-            item._sort_score = role_score * 1000 + freq
+            local mentions_count = (item.mentions and type(item.mentions) == "table" and #item.mentions) or 0
+            if mentions_count > 0 then
+                freq = math.max(freq, mentions_count * 10)
+            end
+
+            -- Prior-only characters check:
+            -- If an item is a prior series character and appears in the current book (freq > 0 or count > 0 or has mentions),
+            -- promote it to an active series character so it ranks with the current cast.
+            if item.source == "series_prior" and (freq > 0 or (count and count > 0) or (item.history and #item.history > 1)) then
+                item.is_series = true
+                item.from_series = true
+                item.source = nil
+            end
+
+            if item.source == "series_prior" then
+                -- Truly prior-only (not mentioned or active in the current book):
+                -- Assign negative score so they sort to the very bottom
+                item._sort_score = -10000 + (item.source_book or 1) * 100 + role_score
+            else
+                item._sort_score = role_score * 1000 + freq
+            end
         else
             item._sort_score = 0
         end
@@ -108,7 +128,11 @@ function M:sortDataByFrequency(list, text, key)
     -- Stamp a persistent sort_order so cache loads can use a cheap numeric sort
     -- instead of rerunning the full regex-based scoring.
     for i, item in ipairs(list) do
-        item.sort_order = i
+        if item.source == "series_prior" and (item._sort_score or 0) < 0 then
+            item.sort_order = 10000 + (item.source_book or 1) * 1000 + i
+        else
+            item.sort_order = i
+        end
     end
     return list
 end

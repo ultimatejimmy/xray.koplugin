@@ -486,7 +486,22 @@ function SeriesManager:syncBookToSeriesCache(slug, index, book_data, book_path)
         source = "local_xray",
     }
     if book_path and book_path ~= "" then
+        for other_idx, other_path in pairs(cache_data.book_paths) do
+            if tonumber(other_idx) ~= index and other_path == book_path then
+                cache_data.book_paths[other_idx] = nil
+                cache_data.books[other_idx] = nil
+            end
+        end
         cache_data.book_paths[index] = book_path
+    end
+
+    if title and title ~= "" then
+        for other_idx, other_book in pairs(cache_data.books) do
+            if tonumber(other_idx) ~= index and other_book and other_book.title and other_book.title:lower() == title:lower() then
+                cache_data.book_paths[other_idx] = nil
+                cache_data.books[other_idx] = nil
+            end
+        end
     end
 
     logger.info("SeriesManager: Synced Book " .. tostring(index) .. " to series cache for slug '" .. tostring(slug) .. "'")

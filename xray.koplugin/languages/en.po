@@ -965,6 +965,18 @@ msgstr "%s API key cleared."
 msgid "skip"
 msgstr "Skip"
 
+msgid "sort_alphabetical"
+msgstr "Alphabetical (A–Z)"
+
+msgid "sort_appearance"
+msgstr "Order of Appearance"
+
+msgid "sort_by"
+msgstr "Sort By"
+
+msgid "sort_frequency"
+msgstr "Frequency of Mentions (Default)"
+
 msgid "spoiler_free_about"
 msgstr "Spoiler-free mode limits AI extraction to the pages you have already read (up to your current page), preventing spoilers from future chapters.\n\n[B]Full Book Mode:[/B] Analyzes the entire book, which [B]may contain spoilers[/B]."
 

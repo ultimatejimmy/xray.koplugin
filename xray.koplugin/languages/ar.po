@@ -1285,6 +1285,22 @@ msgstr "تم مسح مفتاح API الخاص بـ %s."
 msgid "skip"
 msgstr "تخطي"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "أبجدي (أ–ي)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "ترتيب الظهور"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "ترتيب حسب"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "تكرار الذكر (افتراضي)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "يحد وضع Spoiler-free (خالٍ من الحرق) من استخراج الذكاء الاصطناعي إلى الصفحات التي قرأتها بالفعل (حتى صفحتك الحالية)، مما يمنع حرق الأحداث من الفصول المستقبلية.\n\nيقوم وضع الكتاب الكامل بتحليل الكتاب بأكمله، والذي قد يحتوي على حرق للأحداث."

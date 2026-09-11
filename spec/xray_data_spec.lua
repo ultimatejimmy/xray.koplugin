@@ -147,14 +147,43 @@ describe("xray_data", function()
             assert.are.equal("Hero", list[1].name)
         end)
 
-        it("should rank by frequency when roles are same", function()
+        it("should rank investigator and partner roles high", function()
             local list = {
-                { name = "Rare", role = "Minor" },
-                { name = "Frequent", role = "Minor" }
+                { name = "Witness", role = "Minor" },
+                { name = "Cormoran Strike", role = "Private Investigator" },
+                { name = "Robin Ellacott", role = "Investigative Partner" },
             }
-            -- Use high enough counts to overcome normalization
-            xray_data:sortDataByFrequency(list, "Frequent Frequent Frequent Frequent Frequent Frequent Rare", "name")
-            assert.are.equal("Frequent", list[1].name)
+            xray_data:sortDataByFrequency(list, "Strike Strike Robin Ellacott Witness", "name")
+            assert.are.equal("Cormoran Strike", list[1].name)
+            assert.are.equal("Robin Ellacott", list[2].name)
+            assert.are.equal(1, list[1].sort_order)
+            assert.are.equal(2, list[2].sort_order)
+        end)
+
+        it("should rank recurring series characters with occurrences above minor characters and clear source=series_prior", function()
+            local list = {
+                { name = "Minor Character", role = "Supporting", sort_order = 1 },
+                { name = "Cormoran Strike", role = "Private Investigator", source = "series_prior", source_book = 1, sort_order = 11001 },
+                { name = "Old Prior Guy", role = "Victim", source = "series_prior", source_book = 1, sort_order = 11002 },
+            }
+            local text = "Strike was walking down the street. Cormoran Strike talked to the Minor Character."
+            xray_data:sortDataByFrequency(list, text, "name")
+
+            -- Cormoran Strike appears in text, so is promoted to active series character and sorted to top
+            assert.are.equal("Cormoran Strike", list[1].name)
+            assert.are.equal(1, list[1].sort_order)
+            assert.is_nil(list[1].source)
+            assert.is_true(list[1].is_series)
+
+            -- Minor Character is active in current book
+            assert.are.equal("Minor Character", list[2].name)
+            assert.are.equal(2, list[2].sort_order)
+
+            -- Old Prior Guy has 0 mentions in current text, so stays in 10000+ range
+            assert.are.equal("Old Prior Guy", list[3].name)
+            assert.are.equal("series_prior", list[3].source)
+            assert.is_true(list[3].sort_order >= 10000)
         end)
     end)
 end)
+

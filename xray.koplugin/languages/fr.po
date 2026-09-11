@@ -1285,6 +1285,22 @@ msgstr "Clé API %s effacée."
 msgid "skip"
 msgstr "Passer"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "Alphabétique (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Ordre d'apparition"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Trier par"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Fréquence des mentions (par défaut)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "Le mode sans spoiler limite l'extraction de l'IA aux pages que vous avez déjà lues (jusqu'à votre page actuelle), évitant ainsi les spoilers des chapitres futurs.\n\nLe mode Livre Complet analyse l'ensemble du livre, ce qui peut contenir des spoilers."

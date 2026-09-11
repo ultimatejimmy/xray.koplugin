@@ -1285,6 +1285,22 @@ msgstr "%s-API-sleutel gewist."
 msgid "skip"
 msgstr "Overslaan"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "Alfabetisch (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Volgorde van verschijnen"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Sorteren op"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Frequentie van vermeldingen (standaard)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "Spoiler-vrije modus beperkt de AI-extractie tot de pagina's die u al heeft gelezen (tot uw huidige pagina), waardoor spoilers uit toekomstige hoofdstukken worden voorkomen.\n\nVolledig boek modus analyseert het hele boek, wat spoilers kan bevatten."

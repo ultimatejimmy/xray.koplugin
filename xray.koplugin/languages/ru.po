@@ -1285,6 +1285,22 @@ msgstr "Ключ API %s удален."
 msgid "skip"
 msgstr "Skip"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "По алфавиту (А–Я)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Порядок появления"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Сортировка по"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Частота упоминаний (по умолчанию)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "Режим без спойлеров ограничивает анализ ИИ страницами, которые вы уже прочитали (до вашей текущей страницы), предотвращая спойлеры из будущих глав.\n\nРежим всей книги анализирует всю книгу целиком, что может содержать спойлеры."

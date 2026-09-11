@@ -195,76 +195,139 @@ function EntityListOverlay:init()
         self.prior_collapsed = self.plugin.series_prior_timeline_collapsed
     end
 
+    if self.plugin and self.plugin.entity_sort_mode and self.plugin.entity_sort_mode[self.mode] then
+        self.sort_mode = self.plugin.entity_sort_mode[self.mode]
+    end
+
     self:prepareItems()
     self:buildUI()
 end
 
-function EntityListOverlay:prepareItems()
-    local raw = self.raw_items or {}
-    local filtered = {}
-
-    -- Apply search query if present
-    if self.search_query and self.search_query ~= "" then
-        local q = self.search_query:lower()
-        for _, it in ipairs(raw) do
-            local entity = (self.mode == "linked_entries" and it.item) or it
-            local name = (entity.name or entity.chapter or ""):lower()
-            local desc = (entity.description or entity.definition or entity.biography or entity.event or entity.snippet or ""):lower()
-            if name:find(q, 1, true) or desc:find(q, 1, true) then
-                table.insert(filtered, it)
+local function getFirstAppearancePage(entity)
+    if not entity then return 999999 end
+    if tonumber(entity.first_page) and tonumber(entity.first_page) > 0 then
+        return tonumber(entity.first_page)
+    end
+    if tonumber(entity.page) and tonumber(entity.page) > 0 then
+        return tonumber(entity.page)
+    end
+    local min_p = 999999
+    if entity.mentions and type(entity.mentions) == "table" and #entity.mentions > 0 then
+        for _, m in ipairs(entity.mentions) do
+            local p = tonumber(m.page)
+            if p and p > 0 and p < min_p then
+                min_p = p
             end
         end
-    else
-        for _, it in ipairs(raw) do
-            table.insert(filtered, it)
+    end
+    if min_p < 999999 then return min_p end
+    if entity.history and type(entity.history) == "table" and #entity.history > 0 then
+        for _, h in ipairs(entity.history) do
+            local p = tonumber(h.page)
+            if p and p > 0 and p < min_p then
+                min_p = p
+            end
+        end
+    end
+    return min_p
+end
+
+function EntityListOverlay:prepareItems()
+    local raw = self.raw_items or {}
+    local entries = {}
+
+    -- Apply search query if present
+    local q = (self.search_query and self.search_query ~= "") and self.search_query:lower() or nil
+    for idx, it in ipairs(raw) do
+        local entity = (self.mode == "linked_entries" and it.item) or it
+        local name = (entity.name or entity.chapter or ""):lower()
+        local desc = (entity.description or entity.definition or entity.biography or entity.event or entity.snippet or ""):lower()
+        if not q or (name:find(q, 1, true) or desc:find(q, 1, true)) then
+            table.insert(entries, { item = it, _orig_idx = idx })
         end
     end
 
     -- Sorting (timeline and mentions have their own sequence, others use sort modes)
     if self.mode == "mentions" then
-        table.sort(filtered, function(a, b)
-            return (tonumber(a.page) or 0) < (tonumber(b.page) or 0)
+        table.sort(entries, function(a, b)
+            local pa = tonumber(a.item.page) or 0
+            local pb = tonumber(b.item.page) or 0
+            if pa == pb then return a._orig_idx < b._orig_idx end
+            return pa < pb
         end)
     elseif self.mode ~= "timeline" then
         if self.sort_mode == "alphabetical" then
-            table.sort(filtered, function(a, b)
-                local ea = (self.mode == "linked_entries" and a.item) or a
-                local eb = (self.mode == "linked_entries" and b.item) or b
-                local na = (ea.name or ""):lower()
-                local nb = (eb.name or ""):lower()
+            table.sort(entries, function(a, b)
+                local ea = (self.mode == "linked_entries" and a.item.item) or a.item
+                local eb = (self.mode == "linked_entries" and b.item.item) or b.item
+                local na = (ea.name or ea.chapter or ""):lower()
+                local nb = (eb.name or eb.chapter or ""):lower()
+                if na == nb then return a._orig_idx < b._orig_idx end
                 return na < nb
             end)
         elseif self.sort_mode == "appearance" then
-            table.sort(filtered, function(a, b)
-                local ea = (self.mode == "linked_entries" and a.item) or a
-                local eb = (self.mode == "linked_entries" and b.item) or b
-                local pa = tonumber(ea.first_page or ea.page) or 999999
-                local pb = tonumber(eb.first_page or eb.page) or 999999
-                if pa == pb then
-                    return (ea.sort_order or 99999) < (eb.sort_order or 99999)
+            table.sort(entries, function(a, b)
+                local ea = (self.mode == "linked_entries" and a.item.item) or a.item
+                local eb = (self.mode == "linked_entries" and b.item.item) or b.item
+                local pa = getFirstAppearancePage(ea)
+                local pb = getFirstAppearancePage(eb)
+                if pa ~= pb then
+                    return pa < pb
                 end
-                return pa < pb
+                local oa = tonumber(ea.sort_order)
+                local ob = tonumber(eb.sort_order)
+                if oa and ob and oa ~= ob then
+                    return oa < ob
+                elseif oa and not ob then
+                    return true
+                elseif ob and not oa then
+                    return false
+                end
+                return a._orig_idx < b._orig_idx
             end)
         else
             -- Default: Frequency of mentions
-            table.sort(filtered, function(a, b)
-                local ea = (self.mode == "linked_entries" and a.item) or a
-                local eb = (self.mode == "linked_entries" and b.item) or b
-                local sa = tonumber(ea._sort_score) or (ea.sort_order and (10000 - ea.sort_order)) or 0
-                local sb = tonumber(eb._sort_score) or (eb.sort_order and (10000 - eb.sort_order)) or 0
-                if sa == sb then
-                    local ma = (ea.mentions and #ea.mentions) or 0
-                    local mb = (eb.mentions and #eb.mentions) or 0
-                    if ma == mb then
-                        return (ea.name or ""):lower() < (eb.name or ""):lower()
-                    end
+            table.sort(entries, function(a, b)
+                local ea = (self.mode == "linked_entries" and a.item.item) or a.item
+                local eb = (self.mode == "linked_entries" and b.item.item) or b.item
+
+                -- 1. Real mention count if mentions have been scanned
+                local ma = (ea.mentions and #ea.mentions) or 0
+                local mb = (eb.mentions and #eb.mentions) or 0
+                if ma ~= mb then
                     return ma > mb
                 end
-                return sa > sb
+
+                -- 2. sort_order stamped during AI frequency analysis / cache load (1, 2, 3...)
+                local oa = tonumber(ea.sort_order)
+                local ob = tonumber(eb.sort_order)
+                if oa and ob and oa ~= ob then
+                    return oa < ob
+                elseif oa and not ob then
+                    return true
+                elseif ob and not oa then
+                    return false
+                end
+
+                -- 3. _sort_score if calculated and positive
+                local sa = tonumber(ea._sort_score) or 0
+                local sb = tonumber(eb._sort_score) or 0
+                if sa > 0 or sb > 0 then
+                    if sa ~= sb then
+                        return sa > sb
+                    end
+                end
+
+                -- 4. Guaranteed stable fallback to natural list order in raw_items
+                return a._orig_idx < b._orig_idx
             end)
         end
     end
 
+    local filtered = {}
+    for _, entry in ipairs(entries) do
+        table.insert(filtered, entry.item)
+    end
     self.items = filtered
 end
 
@@ -651,7 +714,7 @@ function EntityListOverlay:showSortDialog()
     local function _tr(key, default)
         if not loc or not loc.t then return default end
         local res = loc:t(key)
-        if not res or res == key or res:find("^sort_") then return default end
+        if not res or res == key then return default end
         return res
     end
 
@@ -671,6 +734,10 @@ function EntityListOverlay:showSortDialog()
                     callback = function()
                         UIManager:close(sort_dialog)
                         self.sort_mode = "frequency"
+                        if self.plugin then
+                            self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
+                            self.plugin.entity_sort_mode[self.mode] = self.sort_mode
+                        end
                         self.current_page = 1
                         self:prepareItems()
                         self:buildUI()
@@ -685,6 +752,10 @@ function EntityListOverlay:showSortDialog()
                     callback = function()
                         UIManager:close(sort_dialog)
                         self.sort_mode = "appearance"
+                        if self.plugin then
+                            self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
+                            self.plugin.entity_sort_mode[self.mode] = self.sort_mode
+                        end
                         self.current_page = 1
                         self:prepareItems()
                         self:buildUI()
@@ -699,6 +770,10 @@ function EntityListOverlay:showSortDialog()
                     callback = function()
                         UIManager:close(sort_dialog)
                         self.sort_mode = "alphabetical"
+                        if self.plugin then
+                            self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
+                            self.plugin.entity_sort_mode[self.mode] = self.sort_mode
+                        end
                         self.current_page = 1
                         self:prepareItems()
                         self:buildUI()
@@ -919,7 +994,7 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
     local is_linked = (self.mode == "linked_entries")
     local actual_item = (is_linked and item.item) or item
     local item_type = (is_linked and item.type) or nil
-    local is_prior_item = (actual_item and actual_item.source == "series_prior")
+    local is_prior_item = (actual_item and (actual_item.source == "series_prior" or actual_item.is_series or actual_item.from_series))
 
     -- 1. Primary line (Bold Name/Title, mimicking the Dialog title)
     local title_str = ""

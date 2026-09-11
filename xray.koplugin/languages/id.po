@@ -1285,6 +1285,22 @@ msgstr "Kunci API %s telah dihapus."
 msgid "skip"
 msgstr "Lewati"
 
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "Alfabetis (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Urutan Kemunculan"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Urutkan Berdasarkan"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Frekuensi Sebutan (Default)"
+
 # en-hash: 55da95c9d6ab32f4873d13cdba88943e
 msgid "spoiler_free_about"
 msgstr "Mode bebas spoiler membatasi ekstraksi AI pada halaman yang telah Anda baca (hingga halaman Anda saat ini), mencegah spoiler dari bab-bab mendatang.\n\nMode Buku Penuh menganalisis seluruh buku, yang mungkin berisi spoiler."
