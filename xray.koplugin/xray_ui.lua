@@ -4340,15 +4340,7 @@ function M:showWelcomeCard(force)
                     UIManager:close(overlay, "ui")
                     overlay = nil
                 end
-                if selected_action == "phone_pc" then
-                    self:showWebSetupQrDialog()
-                elseif selected_action == "ereader" then
-                    self:promptApiKeyInput("gemini")
-                elseif selected_action == "file_config" then
-                    self:checkFileKeyImport()
-                elseif selected_action == "skip" then
-                    self:setSetting("welcome_dismissed", true)
-                end
+                self:handleWelcomeAction(selected_action)
             end
         }
         table.insert(content_vg, continue_btn)
@@ -4380,10 +4372,12 @@ function M:showWelcomeCard(force)
             background = is_dont_ask_focused and (xray_theme.color_focus_bg or Blitbuffer.Color8(230)) or nil,
             radius = xray_theme.radius_btn or sc(4),
             callback = function()
-                self:setSetting("welcome_dismissed", true)
                 if overlay then
                     UIManager:close(overlay, "ui")
                     overlay = nil
+                end
+                if self.ai_helper and self.ai_helper.saveSettings then
+                    self.ai_helper:saveSettings({ welcome_wizard_dont_ask = true, welcome_wizard_dismissed = true })
                 end
             end
         }
@@ -4539,6 +4533,11 @@ function M:handleWelcomeAction(action)
 
     elseif action == "file_config" then
         self:showConfigFileGuide()
+
+    elseif action == "skip" then
+        if self.ai_helper and self.ai_helper.saveSettings then
+            self.ai_helper:saveSettings({ welcome_wizard_dismissed = true })
+        end
 
     elseif action == "all_providers" then
         if self.openReaderMenuToPath then

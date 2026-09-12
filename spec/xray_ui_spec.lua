@@ -1205,6 +1205,12 @@ describe("xray_ui", function()
             local input_dlg = _G.ui_tracker.last_shown
             assert.is_not_nil(input_dlg)
             assert.are.equal("InputDialog", input_dlg.type)
+
+            local saved_settings = nil
+            plugin.ai_helper.saveSettings = function(self, s) saved_settings = s end
+            plugin:handleWelcomeAction("skip")
+            assert.is_not_nil(saved_settings)
+            assert.is_true(saved_settings.welcome_wizard_dismissed)
         end)
     end)
 
