@@ -226,4 +226,44 @@ describe("xray_lookupmanager", function()
             assert.is_not_nil(called.term)
         end)
     end)
+
+    describe("Slovak declension fallback", function()
+        local saved_ai
+        before_each(function()
+            saved_ai = plugin.ai_helper
+            plugin.characters = {
+                { name = "Peter Novák", aliases = {"Peter"} },
+                { name = "Janko Hraško" },
+            }
+            plugin.historical_figures = {}
+            plugin.locations = { { name = "Bratislava" } }
+            plugin.terms = {}
+        end)
+        after_each(function()
+            plugin.ai_helper = saved_ai
+        end)
+
+        it("finds declined names and places when the language is Slovak", function()
+            plugin.ai_helper = { current_language = "sk" }
+            local r1 = lm:lookupAll("Petrovi")
+            assert.are.equal(1, #r1)
+            assert.are.equal("Peter Novák", r1[1].item.name)
+            assert.are.equal(35, r1[1].score)
+
+            local r2 = lm:lookupAll("Janka")
+            assert.are.equal(1, #r2)
+            assert.are.equal("Janko Hraško", r2[1].item.name)
+
+            local r3 = lm:lookupAll("Bratislave")
+            assert.are.equal(1, #r3)
+            assert.are.equal("Bratislava", r3[1].item.name)
+            assert.are.equal("location", r3[1].item_type)
+        end)
+
+        it("keeps exact matching for other languages", function()
+            plugin.ai_helper = { current_language = "en" }
+            assert.are.equal(0, #lm:lookupAll("Petrovi"))
+            assert.are.equal(0, #lm:lookupAll("Bratislave"))
+        end)
+    end)
 end)

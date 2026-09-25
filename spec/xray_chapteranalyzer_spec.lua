@@ -424,4 +424,35 @@ describe("xray_chapteranalyzer", function()
             assert.is_false(completed)
         end)
     end)
+
+    describe("findMentionsInChapter Slovak declension", function()
+        local mock_text = "Peter prišiel domov. Petrovi sa nechcelo spať. Videla Petra v Bratislave. Petržalka je ďaleko."
+        local function mockUi(lang)
+            return {
+                document = {
+                    getTextFromXPointers = function() return mock_text end,
+                    getTotalPages = function() return 100 end,
+                    getProps = function() return { language = lang } end,
+                }
+            }
+        end
+        local toc_entry = { title = "Kapitola 1", page = 10, xpointer = "xp_ch1" }
+        local next_entry = { title = "Kapitola 2", page = 20, xpointer = "xp_ch2" }
+
+        it("finds declined forms in Slovak books", function()
+            local entity = { name = "Peter", role = "Hlavná postava" }
+            local mentions = analyzer:findMentionsInChapter(mockUi("sk"), entity, toc_entry, next_entry)
+            assert.are.equal(3, #mentions)
+
+            local places = analyzer:findMentionsInChapter(mockUi("sk"), { name = "Bratislava" }, toc_entry, next_entry)
+            assert.are.equal(1, #places)
+            assert.is_true(places[1].snippet:find("Bratislave") ~= nil)
+        end)
+
+        it("does not change matching for English books", function()
+            local entity = { name = "Peter", role = "Protagonist" }
+            local mentions = analyzer:findMentionsInChapter(mockUi("en"), entity, toc_entry, next_entry)
+            assert.are.equal(1, #mentions)
+        end)
+    end)
 end)

@@ -1241,14 +1241,53 @@ function ChapterAnalyzer:findMentionsInChapter(ui, entity, toc_entry, next_toc_e
         end
     end
 
+    -- 4. Declined forms (Slovak/Czech): also match "Petra"/"Petrovi" for "Peter",
+    -- "Bratislave" for "Bratislava", etc.
+    if xray_utils:usesInflection(self.plugin or { ui = ui, ai_helper = AIHelper }) then
+        local base_count = #terms
+        for i = 1, base_count do
+            local t = terms[i]
+            if not t.s:find("[%s%-]") then
+                for _, stem in ipairs(xray_utils:inflectionStems(t.s)) do
+                    local exists = false
+                    for _, other in ipairs(terms) do
+                        if other.inflect and other.s == stem.s then exists = true; break end
+                    end
+                    if not exists then
+                        table.insert(terms, { s = stem.s, l = #stem.s, inflect = stem })
+                    end
+                end
+            end
+        end
+    end
+
     local pos = 1
+
+    -- Next match of a term at or after `from`; declined forms also need a valid suffix.
+    local function findTerm(t, from)
+        if not t.pattern then return text_lower:find(t.s, from, true) end
+        if not t.inflect then return text_lower:find(t.pattern, from) end
+        while true do
+            local s, e = text_lower:find(t.pattern, from)
+            if not s then return nil end
+            if xray_utils:isInflectionSuffix(t.inflect, text_lower:sub(s + #t.s, e)) then return s end
+            from = s + 1
+        end
+    end
 
     -- Pre-calculate the first match position for each term.
     -- Enforce strict word boundaries for all single-word terms (no spaces or hyphens)
     -- to prevent substring matches (e.g. "flow" matching "airflow" or "flower").
     for _, t in ipairs(terms) do
         local is_single_word = not t.s:find("[%s%-]")
-        if is_single_word then
+        if t.inflect then
+            -- Whole word = stem + a short declension suffix (UTF-8 letters count as word bytes)
+            local safe_s = t.s:gsub("([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
+            t.pattern = "%f[%a\128-\255]" .. safe_s
+                .. string.rep("[%a\128-\255]?", xray_utils.INFLECTION_MAX_SUFFIX)
+                .. "%f[^%a\128-\255]"
+            t.next_p = findTerm(t, pos)
+        elseif is_single_word then
             local safe_s = t.s:gsub("([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
             local starts_w = safe_s:sub(1, 1):match("%w") ~= nil
             local ends_w = safe_s:sub(-1):match("%w") ~= nil
@@ -1305,11 +1344,7 @@ function ChapterAnalyzer:findMentionsInChapter(ui, entity, toc_entry, next_toc_e
         -- Update ONLY the term we just found. Others are still valid if their next_p >= pos.
         for _, t in ipairs(terms) do
             if not t.next_p or t.next_p < pos then
-                if t.pattern then
-                    t.next_p = text_lower:find(t.pattern, pos)
-                else
-                    t.next_p = text_lower:find(t.s, pos, true)
-                end
+                t.next_p = findTerm(t, pos)
             end
         end
 

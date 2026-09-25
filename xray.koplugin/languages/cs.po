@@ -1,0 +1,1914 @@
+msgid ""
+msgstr ""
+"Language-Team: Czech\n"
+"Language: cs\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# en-hash: 1354e62b68c1d35133d396fc419901c2
+msgid "ai_error"
+msgstr "Chyba AI: "
+
+# en-hash: 582a282f6b085c7665c843fb7e06e4e6
+msgid "ai_fetch_complete"
+msgstr "Načteno z %s\n\nKniha: %s\nAutor: %s\n\nPostavy: %d | Místa: %d | Témata: %d | Události: %d | Historie: %d\n\n%s\n\n%s"
+
+# en-hash: 34f82d2e8250bbcf8a0395a1eb4f1833
+msgid "ai_fetch_complete_msg"
+msgstr "Načítání z AI dokončeno!"
+
+# en-hash: b0fc5654248cb92282e5ece124a750bd
+msgid "ai_key_required"
+msgstr "Je vyžadován API klíč pro AI."
+
+# en-hash: ba33be58a8b8f658193f4b86c5e05b71
+msgid "ai_merge_confirm_title"
+msgstr "AI zjistila duplikát"
+
+# en-hash: adb9b4c51ae2df392591ca847017c9f8
+msgid "ai_merged_n"
+msgstr "Úspěšně sloučené páry: %d."
+
+# en-hash: a33bcf890b6eb6b64b4e272f79e05eda
+msgid "ai_scan"
+msgstr "Kontrola AI"
+
+# en-hash: aeb5711552b5cd7ae34cc3c3393052f8
+msgid "ai_scanning_duplicates"
+msgstr "AI hledá duplikáty..."
+
+# en-hash: ad608bec35300c1dbb0180723f2f6b9f
+msgid "ask_later"
+msgstr "Zeptat se později"
+
+# en-hash: bff74eab9088ad053737e6f0d424ea7e
+msgid "author_born"
+msgstr "Narozen: "
+
+# en-hash: 94e26ed13a62af4b3549ff9e583a0691
+msgid "author_died"
+msgstr "Zemřel: "
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "auto_dupe_check_disabled"
+msgstr "Vypnuto"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "auto_dupe_check_enabled"
+msgstr "Zapnuto"
+
+# en-hash: e791101a1a10500d1f0727b4b8e963b5
+msgid "auto_dupe_check_preference_desc"
+msgstr "Zvolte nastavení automatického hledání duplikátů pomocí AI:"
+
+# en-hash: 670e2792d29f2f41e891f40c6c5b03ea
+msgid "auto_dupe_check_setting_desc"
+msgstr "Pokud je zapnuto, X-Ray po každém načtení dat automaticky požádá AI o kontrolu duplicitních postav a míst. Pokud se najdou duplikáty, budete vyzváni k jejich kontrole a sloučení.\n\nVypnutím se zastaví veškeré hledání duplikátů na pozadí. Duplikáty můžete stále sloučit ručně v nabídce Postavy nebo Místa.\n\n[B]Poznámka:[/B] každá kontrola spotřebuje [B]jedno[/B] volání AI API. Uživatelé bezplatných nebo omezených tarifů ji mohou raději vypnout."
+
+# en-hash: 0700ab9afc75d300e49fd3aac9c86ee8
+msgid "auto_dupe_check_setting_title"
+msgstr "Kontrola duplikátů"
+
+# en-hash: b7e84428c69c17c5536c4a912a191e54
+msgid "auto_fetch_page_interval_prompt"
+msgstr "Interval stran"
+
+# en-hash: 14b471ac49a5d3258cc95b0762da9834
+msgid "auto_update_aggressive"
+msgstr "Agresivní: kontrola při každé nové kapitole"
+
+# en-hash: 6349e8d6a59311506a78bb0cd3d5b92d
+msgid "auto_update_balanced"
+msgstr "Vyvážené: kontrola nejvýše každých 5 min"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "auto_update_disabled"
+msgstr "Vypnuto"
+
+# en-hash: 9ffbf6e9ce7efcb2b5d02ca4b8554236
+msgid "auto_update_economical"
+msgstr "Úsporné: kontrola nejvýše každých 15 min"
+
+# en-hash: 9c620fb1d2e2f8bbb20cf5cc70800efc
+msgid "auto_update_freq_about"
+msgstr "Automatická aktualizace během čtení na pozadí kontroluje data nových kapitol.\n\n[B]Omezení a výkon[/B]\nČasté požadavky na pozadí mohou snížit [B]výdrž baterie[/B] a narazit na [B]limity poskytovatele AI[/B].\n\n[B]Poznámka:[/B] přeskočené kapitoly se automaticky zahrnou do příští aktualizace na pozadí."
+
+# en-hash: 3bc754a76ee8a9cef0615339a3d54bc6
+msgid "auto_update_freq_label"
+msgstr "Frekvence načítání na pozadí"
+
+# en-hash: c0b6e5d7b1280ea464d54bf9cbfffd37
+msgid "auto_update_sparse"
+msgstr "Řídké: kontrola nejvýše každých 30 min"
+
+# en-hash: 7f4cc9b44db70ed676e621f17b8228e3
+msgid "auto_update_ultra"
+msgstr "Ultra: kontrola každých %d stran"
+
+# en-hash: a9d418644a14acc5d9622ca060895802
+msgid "back_to_reading"
+msgstr "Zpět ke čtení"
+
+# en-hash: 5fcd6ed2b6f2c21bc5c936cf44c36b37
+msgid "beta_channel_desc"
+msgstr "Beta kanál vám umožňuje dostávat předběžné verze pluginu X-Ray. Tyto verze obsahují nejnovější funkce a opravy chyb, ale mohou být [B]méně stabilní[/B] než běžné vydání."
+
+# en-hash: 9aac8fedb45eb817ee12a885f1dedc8f
+msgid "beta_disabled"
+msgstr "Stabilní kanál (doporučeno)"
+
+# en-hash: f4bdad9b1beff62e922458298afd169e
+msgid "beta_enabled"
+msgstr "Beta kanál zapnut"
+
+# en-hash: ee4ee500762b7cab66634e1a2df9a053
+msgid "beta_preference_desc"
+msgstr "Zvolte kanál aktualizací:"
+
+# en-hash: 06b9281e396db002010bde1de57262eb
+msgid "book_mode_auto"
+msgstr "Automaticky"
+
+# en-hash: c549e231df08c60006ca035f7834366e
+msgid "book_mode_desc"
+msgstr "Zvolte typ této knihy:"
+
+# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
+msgid "book_mode_fiction"
+msgstr "Beletrie"
+
+# en-hash: 314bf1da631aba7851556f01b79c3fef
+msgid "book_mode_nonfiction"
+msgstr "Odborná literatura"
+
+# en-hash: 272668c7f021d1ae07f88c6593527c61
+msgid "book_mode_saved"
+msgstr "Typ knihy uložen!"
+
+# en-hash: 9ea3cd79552afa39d886f96f4b101991
+msgid "book_type_about"
+msgstr "Typ knihy určuje, jakou strategii extrakce AI použije.\n\n[B]• Beletrie:[/B] Zaměřuje se na postavy, časovou osu a pojmy ze světa příběhu (frakce, kouzla, reálie atd.).\n[B]• Odborná literatura:[/B] Zaměřuje se na odborné pojmy, koncepty a historické osobnosti.\n\n[B]Automatické rozpoznání[/B] nechá AI rozhodnout po [B]prvním[/B] načtení.\n\n[B]Poznámka:[/B] Toto nastavení se ukládá [B]pro každou knihu zvlášť[/B]. Vlastní volba má přednost před automatickým rozpoznáním i globálním nastavením."
+
+# en-hash: e67731741de13a0fcd235ea7630e8ebc
+msgid "book_type_auto"
+msgstr "Automatické rozpoznání"
+
+# en-hash: c3f11f427a0600042da7bc1c37c5a3e1
+msgid "book_type_fiction"
+msgstr "Beletrie"
+
+# en-hash: 314bf1da631aba7851556f01b79c3fef
+msgid "book_type_nonfiction"
+msgstr "Odborná literatura"
+
+# en-hash: 7deeb207a3f824e059410b7f6f118e60
+msgid "btn_clear_key"
+msgstr "Smazat klíč"
+
+# en-hash: 9cf1692949f390c46b8cfb9d074674b2
+msgid "btn_clear_keys"
+msgstr "Smazat všechny klíče"
+
+# en-hash: 36bb6559696dc9124986ae120515984f
+msgid "btn_paste"
+msgstr "Vložit"
+
+# en-hash: cd00fdfb57dccc660b305e787262e649
+msgid "cache_cleared"
+msgstr "Mezipaměť vymazána!\n\nNyní můžete načíst nová data:\nNabídka → X-Ray → Načíst data z AI"
+
+# en-hash: 1edc355371d87a94d024eebfed9f8815
+msgid "cache_save_failed"
+msgstr "✗ Uložení do mezipaměti selhalo."
+
+# en-hash: c420984012423b034d0fb4544c93c663
+msgid "cache_save_success"
+msgstr "✓ Mezipaměť aktualizována."
+
+# en-hash: dd3553afd5b0b207445bf116c57a4cac
+msgid "cache_saved"
+msgstr "[Uloženo]"
+
+# en-hash: ea4788705e6873b424c65e91c2846b19
+msgid "cancel"
+msgstr "Zrušit"
+
+# en-hash: 8ca52642289980168e6599c23ed1a785
+msgid "cancel_scan"
+msgstr "Zrušit skenování"
+
+# en-hash: 261d30af0907fa3e87d73d7719d2b4ef
+msgid "character_not_found"
+msgstr "Nebyla nalezena žádná postava odpovídající '%s'"
+
+# en-hash: 01bc6f8efa4202821e95f4fdf6298b30
+msgid "clear"
+msgstr "vymazat"
+
+# en-hash: d3d2e617335f08df83599665eef8a418
+msgid "close"
+msgstr "Zavřít"
+
+# en-hash: 400a15f44cdb7cf1b903d40d661c98c4
+msgid "cloud_setup_title"
+msgstr "Připojit přes telefon/PC"
+
+# en-hash: 3441bb13db3b069cccbba18579ae99f2
+msgid "config_default_gemini"
+msgstr "Výchozí (Gemini)"
+
+# en-hash: 868ea5dc0202b9f02e4cf8e4a460c827
+msgid "config_status_not_set"
+msgstr "NENASTAVENO"
+
+# en-hash: 8c52684db8f49511e9b44471716bf164
+msgid "config_status_set"
+msgstr "NASTAVENO"
+
+# en-hash: 70d9be9b139893aa6c69b5e77e614311
+msgid "confirm"
+msgstr "Potvrdit"
+
+# en-hash: af56aa659f5ec4ce42bb02c3b75dd111
+msgid "confirm_clear_all_keys"
+msgstr "Opravdu chcete smazat všechny nastavené API klíče a vlastní koncové body?\n\nZ tohoto zařízení budou odstraněny všechny uložené klíče."
+
+# en-hash: dd6eee404e54eafd92e56d09cb4848f3
+msgid "confirm_clear_single_key"
+msgstr "Smazat nastavený API klíč pro %s?"
+
+# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
+msgid "current_language"
+msgstr "cs"
+
+# en-hash: 97b9ad7336ac722cf16044cf603bfe10
+msgid "current_mode"
+msgstr "Aktuálně: "
+
+# en-hash: c0d9a229c4cb5183b5dd602a335c357e
+msgid "custom_api_endpoint_hint"
+msgstr "např. https://openrouter.ai/api/v1/chat/completions"
+
+# en-hash: 210751d51c0e8e4527ae65bc6522789e
+msgid "custom_api_endpoint_title"
+msgstr "Vlastní API %d — URL koncového bodu"
+
+# en-hash: aa2776ae61983d0c0c97e5f7bf996ac2
+msgid "custom_api_is_reasoning"
+msgstr "Jde o model s uvažováním (např. DeepSeek-R1)"
+
+# en-hash: 277c6375d0cacdc5445fdeb15f8158c9
+msgid "custom_api_key_title"
+msgstr "Vlastní API %d — API klíč"
+
+# en-hash: df3771ce7d40ea58977a420365a9511c
+msgid "custom_api_model_hint"
+msgstr "např. google/gemini-2.5-flash nebo openai/gpt-4o"
+
+# en-hash: 54ed8dfd9713a5b46416c04ee0dc253c
+msgid "custom_api_model_title"
+msgstr "Vlastní API %d — výchozí model"
+
+# en-hash: 6265afa1ceb063c099c3b2597670f26e
+msgid "custom_api_name"
+msgstr "Vlastní API %d (kompatibilní s OpenAI)"
+
+# en-hash: 936b30f151a3c4b39d60001a9808c93d
+msgid "custom_api_not_configured"
+msgstr "(nenastaveno — klepněte pro nastavení)"
+
+# en-hash: b7e3710795eeb8a7e11d2c69fca00e5c
+msgid "custom_api_saved"
+msgstr "Nastavení vlastního API %d uloženo."
+
+# en-hash: 0bec527ee74be1c3e327221a74853bca
+msgid "desc_len_about_chars"
+msgstr "Určuje, kolik podrobností AI uvede v profilu každé postavy.\n\n[B]Možnosti délky[/B]\n• Krátký (~80 znaků): Jméno, role a krátká poznámka.\n• Výchozí (~200 znaků): Standardní analýza.\n• Podrobný (~350 znaků): Bohatý rozbor postavy s vlastnostmi a motivacemi.\n• Velmi podrobný (~500 znaků): Úplná hloubková analýza.\n\n[B]Kompromis[/B]\nDelší popisy spotřebují více tokenů, takže při prvním načtení se vrátí [B]méně[/B] postav."
+
+# en-hash: d286e548e835ec6e3280b7af6bd717bc
+msgid "desc_len_about_hist"
+msgstr "Určuje, kolik podrobností AI uvede v životopisu každé historické osobnosti.\n\n[B]Možnosti délky[/B]\n• Krátký (~50 znaků): Jméno a hlavní role.\n• Výchozí (~100 znaků): Standardní životopis.\n• Podrobný (~200 znaků): Život, význam a souvislost s knihou.\n• Velmi podrobný (~300 znaků): Komplexní životopis.\n\n[B]Kompromis[/B]\nDelší životopisy spotřebují více tokenů, takže při prvním načtení se vrátí [B]méně[/B] osobností."
+
+# en-hash: d5c5e27087e0c1ce183faf7725ec4851
+msgid "desc_len_about_locs"
+msgstr "Určuje, kolik podrobností AI uvede v popisu každého místa.\n\n[B]Možnosti délky[/B]\n• Krátký (~50 znaků): Název místa a jednořádkový kontext.\n• Výchozí (~100 znaků): Standardní popis.\n• Podrobný (~200 znaků): Atmosféra, význam a události.\n• Velmi podrobný (~300 znaků): Komplexní popis.\n\n[B]Kompromis[/B]\nDelší popisy spotřebují více tokenů, takže při prvním načtení se vrátí [B]méně[/B] míst."
+
+# en-hash: 9095a16f5b98ef0bf91cfa862f94123c
+msgid "desc_len_about_timeline"
+msgstr "Určuje, kolik podrobností AI uvede v každém shrnutí na časové ose knihy.\n\n[B]Možnosti délky[/B]\n• Krátký (~50 znaků): Stručné shrnutí jednou frází.\n• Výchozí (~80 znaků): Standardní shrnutí.\n• Podrobný (~150 znaků): Včetně kontextu a důsledků.\n\n[B]Poznámka:[/B] časová osa má vždy přesně jednu položku na kapitolu, proto zde není žádný kompromis."
+
+# en-hash: 7a1920d61156abc05a60135aefe8bc67
+msgid "desc_len_default"
+msgstr "Výchozí"
+
+# en-hash: 4042fcadbe61a3300451157e2c9fe651
+msgid "desc_len_detailed"
+msgstr "Podrobný"
+
+# en-hash: 30bb747c98bccdd11b3f89e644c4d0ad
+msgid "desc_len_short"
+msgstr "Krátký"
+
+# en-hash: 32e4e2960890d7cbb4890166ac18d7f8
+msgid "desc_len_v_detailed"
+msgstr "Velmi podrobný"
+
+# en-hash: 2896e8f581f9181834e98580adf8cfff
+msgid "document_unavailable"
+msgstr "Dokument není dostupný"
+
+# en-hash: 7be0e84edd4626f6b7d42f1e8174f118
+msgid "dont_ask_again"
+msgstr "Už se neptat"
+
+# en-hash: 2593c7ce3ff937293feb1e61c152e551
+msgid "entity_label_characters"
+msgstr "postavy"
+
+# en-hash: b4c0b6c75f651ee809fd20c087a4a533
+msgid "entity_label_locations"
+msgstr "místa"
+
+# en-hash: b972b14200d0fad941304c0b361a18f0
+msgid "entity_not_found"
+msgstr "'%s' nebylo nalezeno mezi postavami ani místy."
+
+# en-hash: 76a40e4f974fd895a0a2598c1cee28b4
+msgid "entity_type_character"
+msgstr "Postava"
+
+# en-hash: adb9c82a7733b6bc485275e01bba6eac
+msgid "entity_type_historical"
+msgstr "Historická osobnost"
+
+# en-hash: ce5bf551379459c1c61d2a204061c455
+msgid "entity_type_location"
+msgstr "Místo"
+
+# en-hash: cf5f3091e30dee6597885d8c0e0c357f
+msgid "entity_type_term"
+msgstr "Pojem"
+
+# en-hash: 76e73569f84e76aa9de514fea51ef9f3
+msgid "entity_ui_style_both"
+msgstr "Moderní okno (obojí)"
+
+# en-hash: 386963b724dc569ddd1b4a480c24b826
+msgid "entity_ui_style_classic"
+msgstr "Klasický dialog"
+
+# en-hash: ce817225f09cf8f997decfb4619c28ef
+msgid "entity_ui_style_desc"
+msgstr "Zvolte, kdy se má u popisů položek místo klasického dialogu použít nové moderní okno."
+
+# en-hash: bb09780e4ff57e5ab2fa90f2be004cea
+msgid "entity_ui_style_in_text"
+msgstr "Moderní okno (pouze v textu)"
+
+# en-hash: beae8da8a7553c33bf5d6ae7bdf91002
+msgid "entity_ui_style_menu"
+msgstr "Moderní okno (pouze z nabídky)"
+
+# en-hash: 902b0d55fddef6f8d651fe1035b7d4bd
+msgid "error"
+msgstr "Chyba"
+
+# en-hash: 6b844e936008c2aafa83c80176622884
+msgid "error_api"
+msgstr "Služba AI není dostupná"
+
+# en-hash: 68007307953d58fd56bdcd07d62f3e3f
+msgid "error_api_key_desc"
+msgstr "Zadaný API klíč byl odmítnut. Zkontrolujte nastavení a ověřte, že je klíč správný."
+
+# en-hash: 4b6886b5038ca14e978a72f01df1fe6d
+msgid "error_api_key_title"
+msgstr "Neplatný API klíč"
+
+# en-hash: d1345ddd7c09ae874feee020dcdb908f
+msgid "error_busy_author"
+msgstr "Již probíhá jiný požadavek na AI.\n\nZrušit ho a místo toho načíst informace o autorovi?"
+
+# en-hash: 97b2ecd6aa810d21be9204847d173957
+msgid "error_busy_desc"
+msgstr "Na pozadí již probíhá jiný požadavek na AI. Počkejte, až se dokončí, nebo to zkuste za chvíli znovu."
+
+# en-hash: 1838029eb098962dd8f401b27abd347c
+msgid "error_busy_title"
+msgstr "Požadavek probíhá"
+
+# en-hash: 8a92a303055af14321f3cc7f644623fe
+msgid "error_extract_text"
+msgstr "Chyba: Nepodařilo se extrahovat text knihy."
+
+# en-hash: 0f09bc754e4c901533fa9bcdb6e41926
+msgid "error_model_access_desc"
+msgstr "Váš API klíč nemá přístup ke zvolenému modelu. Možná budete muset použít jiný model nebo poskytovatele."
+
+# en-hash: c4a195c14e7e5b76a6c25cf8991042a3
+msgid "error_model_access_title"
+msgstr "Přístup odepřen"
+
+# en-hash: e40ae570525f73b62420a63937e3fdc5
+msgid "error_model_not_found_desc"
+msgstr "Zvolený model AI není dostupný nebo je nesprávná URL koncového bodu."
+
+# en-hash: d7d7061b1875f44ff39007aea89b505b
+msgid "error_model_not_found_title"
+msgstr "Model nebyl nalezen"
+
+# en-hash: 52f3d028dbfc9859df0fd3417eb58d75
+msgid "error_no_api_key"
+msgstr "Je vyžadován API klíč"
+
+# en-hash: 64a497eb7dda1c38fdb732a8ea236bae
+msgid "error_opening_gallery"
+msgstr "Galerii obrázků se nepodařilo otevřít"
+
+# en-hash: e7b0af2be5bf56ed033f222a42ffd884
+msgid "error_parse_desc"
+msgstr "AI vrátila odpověď, kterou nebylo možné zpracovat. Může jít o dočasnou chybu."
+
+# en-hash: d80a250008a1d3ed31be8a53cc7e7d74
+msgid "error_parse_title"
+msgstr "Chyba dat"
+
+# en-hash: 8101890ac4a7cc06535730504b0e4dc6
+msgid "error_quota_desc"
+msgstr "Váš kredit API je vyčerpán nebo jste dosáhli limitu požadavků. Zkontrolujte stav fakturace nebo chvíli počkejte a zkuste to znovu."
+
+# en-hash: d117d5af67a2a1d9dfc041d66d435519
+msgid "error_quota_title"
+msgstr "Překročena kvóta"
+
+# en-hash: 54130f799248d4be121d04020d031e9b
+msgid "error_service_down_desc"
+msgstr "Služba AI je dočasně nedostupná nebo přetížená. Zkuste to znovu za několik minut."
+
+# en-hash: c95aec10ba314ea37a33cea18cf8a412
+msgid "error_service_down_title"
+msgstr "Služba není dostupná"
+
+# en-hash: 2e00df16667de68033b771bf907f0223
+msgid "error_timeout"
+msgstr "Časový limit požadavku vypršel"
+
+# en-hash: 41fd6797646e09ef2fb1024cd8a2b134
+msgid "error_timeout_desc"
+msgstr "Požadavek trval příliš dlouho. Může se to stát u složitých knih nebo pomalého síťového připojení."
+
+# en-hash: 958768702baf0da65e8147415bc59b66
+msgid "error_timeout_title"
+msgstr "Časový limit připojení vypršel"
+
+# en-hash: 502ff43b8c190768d303036433a5fe17
+msgid "error_unknown_desc"
+msgstr "Došlo k neočekávané chybě: %s"
+
+# en-hash: 12fb24de361ff91915001561cfa9fdc8
+msgid "error_unknown_title"
+msgstr "Načtení selhalo"
+
+# en-hash: bd109e1437d54acaada2eb31eebd39d2
+msgid "extracting_more_characters"
+msgstr "Získávám další postavy..."
+
+# en-hash: a4a9bd989f4fbd0841ad6a1e194eecac
+msgid "extracting_more_terms"
+msgstr "Získávám další pojmy..."
+
+# en-hash: 4ea7755f84f02d23876d90be2f9765cf
+msgid "fetch_button"
+msgstr "Načíst"
+
+# en-hash: 05ab2ce95089e50db065a1bd1ed0cd85
+msgid "fetch_single_word_prompt"
+msgstr "Pro '%s' nebyla nalezena žádná data X-Ray. Chcete to vyhledat?"
+
+# en-hash: f003d65d2046d2fa662682cfcc61836e
+msgid "fetch_successful"
+msgstr "Načtení úspěšné"
+
+# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+msgid "fetching_ai"
+msgstr "Načítám X-Ray..."
+
+# en-hash: cfecb2031470d0e28420642fc37ab55f
+msgid "fetching_author"
+msgstr "Načítám autora..."
+
+# en-hash: 403bf4429b560eb3652c17997d655811
+msgid "fetching_series_context"
+msgstr "Načítám kontext série: kniha %d z %d…"
+
+# en-hash: 019511d88cae31edb42daf4d90ca9a36
+msgid "fetching_series_info"
+msgstr "Zjišťuji knihy série…"
+
+# en-hash: 00deb09e5e37bd7e81c99a6bf98d8380
+msgid "fetching_wait"
+msgstr "Může to chvíli trvat.\nKlepněte na Zrušit pro zastavení."
+
+# en-hash: c65aba36ac8b272d7e881146a6d885bc
+msgid "find_mentions"
+msgstr "Najít zmínky"
+
+# en-hash: 68aeeb5f5f2b6deb964d2c1cebfe0e62
+msgid "full_book_option"
+msgstr "Režim celé knihy"
+
+# en-hash: 224900ca5b99a949b6fe8a5c0360f5ff
+msgid "gemini_key_hint"
+msgstr "Zadejte svůj bezplatný klíč Gemini z Google AI Studio (začíná AQ. nebo AIzaSy...):"
+
+# en-hash: 33dca68e340b8d6c21472341130cf45a
+msgid "illustration"
+msgstr "Ilustrace"
+
+# en-hash: fe63191987f62b9e4806e376671ed335
+msgid "img_extract_failed"
+msgstr "Soubor obrázku se nepodařilo extrahovat."
+
+# en-hash: 30936c8b483b8b104a4ad7821ce2262b
+msgid "img_no_favorites"
+msgstr "Zatím žádné oblíbené.\n\nObrázek přidáte k oblíbeným přes nabídku ⋮ u kteréhokoli obrázku."
+
+# en-hash: c3e4c8dd2122260b0c4e14d6509e62ca
+msgid "img_no_hidden"
+msgstr "Žádné skryté obrázky.\n\nPřes nabídku ⋮ u obrázku v galerii můžete skrýt dekorativní ilustrace nebo iniciály."
+
+# en-hash: 95407637295cd7c30378be19be6e36cb
+msgid "img_no_images"
+msgstr "Pro tuto kartu/filtr nebyly nalezeny žádné obrázky.\n\nExtrahuji nebo skenuji obrázky z knihy..."
+
+# en-hash: 74ab2b6d760dc64ea26012a4fca84490
+msgid "img_no_series"
+msgstr "Žádné uložené reference série.\n\nMapu uložíte do referencí série přes nabídku ⋮ u kterékoli mapy."
+
+# en-hash: 8df91db55dbf3ca2b7410a0e9aa875a8
+msgid "img_no_series_detected"
+msgstr "Tato kniha není součástí rozpoznané série.\n\nReference série jsou dostupné pouze pro knihy ze série."
+
+# en-hash: 52366b2ac097fd22d80d475b8b125d8c
+msgid "img_rename_title"
+msgstr "Přejmenovat popisek"
+
+# en-hash: 393c3f5ea8ad35c02691d507bdbb31b0
+msgid "img_reveal"
+msgstr "Odkrýt"
+
+# en-hash: 646ef4f9024779f1a04ee945deffb8d5
+msgid "img_spoiler_confirm"
+msgstr "Tento obrázek se nachází na straně %d (za vaším aktuálním místem čtení). Odkrýt obrázek?"
+
+# en-hash: d0f2e5376298c880665077b565ffd7dd
+msgid "img_spoiler_locked"
+msgstr "Zamčeno"
+
+# en-hash: b1c94ca2fbc3e78fc30069c8d0f01680
+msgid "img_tab_all"
+msgstr "Vše"
+
+# en-hash: d78986947356ddd37b43d57df289dee9
+msgid "img_tab_favorites"
+msgstr "Oblíbené"
+
+# en-hash: 9d948e617b083222afc868add2f50ec2
+msgid "img_tab_series"
+msgstr "Série"
+
+# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+msgid "img_untitled"
+msgstr "Obrázek"
+
+# en-hash: 57519cae872270f11151178ce007fd53
+msgid "import_file_not_found"
+msgstr "V kořenové složce úložiště ani ve složce nastavení nebyl nalezen soubor xray_key.txt."
+
+# en-hash: 7a40718b9edbd414f46df5dd7d9d96b2
+msgid "import_file_success"
+msgstr "Úspěšně importované API klíče: %d ze souboru %s!"
+
+# en-hash: 7fc7ee757e25b4fa21f3c74e888e9103
+msgid "key_saved"
+msgstr "API klíč uložen!"
+
+# en-hash: 46d812c9b950c3de4557b539f7c32634
+msgid "key_status_err"
+msgstr "[ERR] Selhalo: %s"
+
+# en-hash: 0314635e45812438980e1ef245848537
+msgid "key_status_not_set"
+msgstr "[--] Nenastaveno"
+
+# en-hash: 36fb433675bfba1852e2bc20f946afb9
+msgid "key_status_ok"
+msgstr "[OK] Připojeno (%d ms)"
+
+# en-hash: 27828475d7e3158c09df57d723b02ba4
+msgid "keys_cleared"
+msgstr "Všechny API klíče byly smazány."
+
+# en-hash: 9ab81f57823f6aeb02362291f23883e6
+msgid "label_aliases"
+msgstr "Jiná jména"
+
+# en-hash: e38583f3a073fa2a86a841b672aba548
+msgid "label_category"
+msgstr "KATEGORIE"
+
+# en-hash: 52f90e03a4ea208d52475028ad0250ef
+msgid "label_definition"
+msgstr "DEFINICE"
+
+# en-hash: 35ba4a2677442e210c23a00a5601aba3
+msgid "label_description"
+msgstr "POPIS"
+
+# en-hash: 2301836d10bf537bc0a170ebeda4a7ea
+msgid "label_expanded"
+msgstr "ZNAMENÁ"
+
+# en-hash: 62eb33fae593edd0057718fd9eac51fc
+msgid "label_gender"
+msgstr "POHLAVÍ"
+
+# en-hash: ad32e604e17467fc435538334fbddf3e
+msgid "label_name"
+msgstr "JMÉNO"
+
+# en-hash: 1ee35d254c681898cb2c288faeee97c3
+msgid "label_occupation"
+msgstr "POVOLÁNÍ"
+
+# en-hash: b18ca8e369fbeb06248c9947898d7a9d
+msgid "label_reasoning"
+msgstr "Uvažování AI"
+
+# en-hash: 612f9988ac7994ee666d3a59dad71b28
+msgid "label_role"
+msgstr "ROLE"
+
+# en-hash: c7f0cb0f679c956a1a39bb18f0d1ce38
+msgid "lang_follow_book"
+msgstr "Automaticky (podle knihy)"
+
+# en-hash: 0eed7c5cabc42830815d5054c0bac951
+msgid "lang_follow_system"
+msgstr "Automaticky (podle systému)"
+
+# en-hash: 8606ca108b0e55847f288f1c807eafd5
+msgid "lang_mismatch_title"
+msgstr "Neshoda jazyka"
+
+# en-hash: 3d37179cdc5057a3e15be8b161522ff1
+msgid "language_changed_reopen"
+msgstr "Jazyk byl změněn."
+
+# en-hash: 61057a0c84605444201929bdd72014f0
+msgid "later"
+msgstr "Později"
+
+# en-hash: 94f97454f5a2c6bbca33f92d4818fcef
+msgid "linked_entries"
+msgstr "Propojené položky"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "linked_entries_disabled"
+msgstr "Vypnuto"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "linked_entries_enabled"
+msgstr "Zapnuto"
+
+# en-hash: f2cb4c8134446083c3d2859f02c963f6
+msgid "linked_entries_setting_desc"
+msgstr "Propojené položky automaticky spojují postavy, místa a historické osobnosti, když se zmiňují v popisech jedna druhé.\n\nVypnutím se v dialozích s podrobnostmi skryje tlačítko [B]Propojené položky[/B]."
+
+# en-hash: 75c2e35dd42abd75cdb8a9d4b0da8c20
+msgid "linked_none"
+msgstr "Pro '%s' nebyly nalezeny žádné propojené položky."
+
+# en-hash: 87388d7588da3ecf170e33b01d82dc2f
+msgid "linked_with_title"
+msgstr "Propojeno s: %s"
+
+# en-hash: 08ea860427184895725e398c5ef821b1
+msgid "local_setup_title"
+msgstr "Připojit přes místní Wi-Fi"
+
+# en-hash: db644ab64bb392cf0d28dfd9cc2c0372
+msgid "log_empty"
+msgstr "Záznam je prázdný."
+
+# en-hash: 515fba56db1da76925fb6b63f29face7
+msgid "log_loading"
+msgstr "Načítám záznam..."
+
+# en-hash: 3e89a40ac0cf0ae3a671c8ddadabf81a
+msgid "log_tail_notice"
+msgstr "[... vynechané dřívější řádky: %d ...]"
+
+# en-hash: bb3051bbc0e5ad480e29ddcfd8c19c7d
+msgid "logs_cleared"
+msgstr "Záznamy vymazány!"
+
+# en-hash: 36993852e97df8c6de1a644af20b4439
+msgid "looking_up_msg"
+msgstr "Vyhledávám '%s'..."
+
+# en-hash: 1485de0735ca78d3fb650e6418fd9c9c
+msgid "low_conf_match"
+msgstr "Částečná shoda — zobrazuje se '%s' pro váš dotaz. Klepnutím níže načtete přesný pojem."
+
+# en-hash: 8de3f0d375e174f5e13248da04a2e010
+msgid "manage_series_add_book"
+msgstr "Přidat knihu…"
+
+# en-hash: c062ba6f0bf6cfa159d59578ed73c116
+msgid "manage_series_already_added"
+msgstr "Tato kniha už je v seznamu série."
+
+# en-hash: 2d0b508f5a428c8364b2edd4c7ee81ce
+msgid "manage_series_choose_book"
+msgstr "Vyberte knihu k přidání"
+
+# en-hash: ccb28aae73c0fa2f224f85843bc776ab
+msgid "manage_series_current_book"
+msgstr "(Aktuální kniha)"
+
+# en-hash: 452bd296984fe704e30fe4c167a505ee
+msgid "manage_series_custom_index"
+msgstr "Vlastní číslo…"
+
+# en-hash: f850ec88574a6b5332fc1471dce88a39
+msgid "manage_series_edit_entry"
+msgstr "Upravit číslo svazku a název"
+
+# en-hash: d51cac3bcb2c9caf1608d6a8f5fb6cc0
+msgid "manage_series_edit_title"
+msgstr "Upravit název knihy"
+
+# en-hash: 6908c2ddc1c1ee02590ca5ee11878ef2
+msgid "manage_series_enter_index"
+msgstr "Zadejte číslo svazku"
+
+# en-hash: 7cc4900dc501cabf3a477278da440bb4
+msgid "manage_series_name_required"
+msgstr "Před uložením zadejte název série."
+
+# en-hash: 0cd58bbe5e1e8aa133266dc334323ac2
+msgid "manage_series_pick_index"
+msgstr "Vyberte číslo svazku"
+
+# en-hash: 42747cf1899503ce102405167611ad71
+msgid "manage_series_remove_entry"
+msgstr "Odebrat ze série"
+
+# en-hash: feef400b2d3d25987c5bf362608712a8
+msgid "manage_series_saved"
+msgstr "Série uložena."
+
+# en-hash: cb10d930e64c65895417dccf39caa964
+msgid "manage_series_series_name"
+msgstr "Název série"
+
+# en-hash: b78a3223503896721cca1303f776159b
+msgid "manage_series_title_label"
+msgstr "Název"
+
+# en-hash: cfda50147324ea4ffe8d43abcd31dd3d
+msgid "manage_series_unnamed"
+msgstr "(Klepněte pro pojmenování série)"
+
+# en-hash: 156542f5bb1113424fe45e93f664ca32
+msgid "manage_series_volume_label"
+msgstr "Svazek č."
+
+# en-hash: 6ca35323241366b4da17cd03396f1f69
+msgid "manual_pick"
+msgstr "Ruční výběr"
+
+# en-hash: 9899bf3319fb8c6b34520d599f30281e
+msgid "mention_dismiss_btn"
+msgstr "✕"
+
+# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
+msgid "mention_return_btn"
+msgstr "← Zpět"
+
+# en-hash: 1c2fbf8b19aa215337092cba9e51979a
+msgid "mention_return_label"
+msgstr "← Zpět na s. %d"
+
+# en-hash: 4a53c3a6c553dd59d658731018378fce
+msgid "mentions_at_location"
+msgstr "Zmínka: %s"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "mentions_disabled"
+msgstr "Vypnuto"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "mentions_enabled"
+msgstr "Zapnuto"
+
+# en-hash: 6089c3c5bfdda7928b8edaff7fc29d34
+msgid "mentions_none"
+msgstr "Pro '%s' zatím nebyly nalezeny žádné zmínky."
+
+# en-hash: 8c8e4cc582637e842449b7dea503b5b0
+msgid "mentions_preference_desc"
+msgstr "Zvolte nastavení zmínek o postavách a místech:"
+
+# en-hash: c723ad634182d938da720018beb94797
+msgid "mentions_refresh"
+msgstr "Obnovit zmínky"
+
+# en-hash: 3fa85f74d71e5d7d0859e1c9ac30e6cf
+msgid "mentions_scanning"
+msgstr "Skenuji... %1 z %2 kapitol"
+
+# en-hash: b9cb4acd779a0494cd5de4f263626662
+msgid "mentions_setting_desc"
+msgstr "Skenování zmínek vám umožní najít každý výskyt postavy nebo místa v knize. Probíhá [B]automaticky[/B] na pozadí, aby čtečka zůstala plynulá.\n\nVypnutím se zastaví veškeré skenování na pozadí a skryje se tlačítko [B]Najít zmínky[/B]."
+
+# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
+msgid "mentions_setting_title"
+msgstr "Nastavení zmínek"
+
+# en-hash: 795fe7b23df416a5beffd9a50873b771
+msgid "mentions_title"
+msgstr "Zmínky: %s"
+
+# en-hash: 8f7f4c1ce7a4f933663d10543562b096
+msgid "menu_about"
+msgstr "O pluginu"
+
+# en-hash: 92ff32056df3871303587ba7d479c47f
+msgid "menu_ai_settings"
+msgstr "Nastavení AI"
+
+# en-hash: 1d18bcea5f63d1761c231009ed210e11
+msgid "menu_api_keys"
+msgstr "API klíče a poskytovatelé"
+
+# en-hash: 50ef21a8bf0bdcedbbbfd33a536a1357
+msgid "menu_author_info"
+msgstr "O autorovi"
+
+# en-hash: a6c5c63c5c9be868061d03e89d246430
+msgid "menu_auto_update_frequency"
+msgstr "Nastavení automatického X-Ray"
+
+# en-hash: 98c609842fdba0aed4a678b1dd84a604
+msgid "menu_beta_channel"
+msgstr "Nastavení beta kanálu"
+
+# en-hash: a0962fa6cbceddb69f0fa5745c2ca704
+msgid "menu_book_mode"
+msgstr "Typ knihy"
+
+# en-hash: 994d06622c761cbceb384fd10a0b53f3
+msgid "menu_characters"
+msgstr "Postavy"
+
+# en-hash: d842d358ea8d0d431df1113c927b3629
+msgid "menu_clear_all_keys"
+msgstr "Smazat všechny API klíče..."
+
+# en-hash: 06f4f7bd90b1c8a0145d18ee55c265c4
+msgid "menu_clear_cache"
+msgstr "Vymazat mezipaměť"
+
+# en-hash: 67fd6c2ed402914b08701f21af350cc5
+msgid "menu_clear_logs"
+msgstr "Vymazat záznamy"
+
+# en-hash: edcf008bae916e157620688fbff8d980
+msgid "menu_clear_series_cache"
+msgstr "Vymazat mezipaměť série"
+
+# en-hash: ebdd9cc3e307ed530b80afc1b698a302
+msgid "menu_clear_single_key"
+msgstr "Smazat klíč %s..."
+
+# en-hash: 5c4a6c4395765ab86fc49b6c957525d9
+msgid "menu_content_fetch_settings"
+msgstr "Nastavení obsahu a načítání"
+
+# en-hash: ecfaa3fa16216e962dfb2337337df2e4
+msgid "menu_custom_model_title"
+msgstr "Vlastní model %s"
+
+# en-hash: f82e66c60fd95d54434ed37dc81034e2
+msgid "menu_desc_length_settings"
+msgstr "Délka popisů"
+
+# en-hash: d7400967f844d2288239b8d7a10d7839
+msgid "menu_display_ui_settings"
+msgstr "Nastavení zobrazení a rozhraní"
+
+# en-hash: bd44df2bee626fbc7db133d886c1cf63
+msgid "menu_enter_custom_model"
+msgstr "Zadat vlastní model..."
+
+# en-hash: c78507f1735096000bbc8f4b4ddfc289
+msgid "menu_entity_ui_mode"
+msgstr "Styl popisu položek"
+
+# en-hash: c1b19dc83bcbcf0c634af5164ac2f24f
+msgid "menu_fetch_author"
+msgstr "Načíst informace o autorovi"
+
+# en-hash: 1481c3fcb242cec4e66828697e097d65
+msgid "menu_fetch_more_chars"
+msgstr "Načíst další postavy"
+
+# en-hash: e28e1a3102c10986b10c3a58ebc26979
+msgid "menu_fetch_more_terms"
+msgstr "Načíst další pojmy"
+
+# en-hash: f0d29ae92c638538610d26014bda7269
+msgid "menu_fetch_series_context"
+msgstr "Načíst / obnovit kontext série"
+
+# en-hash: b8b0b262311d61e02603a9141ec1d8a2
+msgid "menu_fetch_xray"
+msgstr "Načíst data X-Ray"
+
+# en-hash: 7cf395303ce3665a9834721d4b748e4b
+msgid "menu_frequency"
+msgstr "Frekvence"
+
+# en-hash: 60b01aa51c38e7a952d2760bf1584915
+msgid "menu_historical_figures"
+msgstr "Historické osobnosti"
+
+# en-hash: 073096c9e6fbe0599a7c64e0e7a665cb
+msgid "menu_images"
+msgstr "Obrázky a mapy"
+
+# en-hash: 31a20a82ddb0aada27aab20c1352115f
+msgid "menu_import_file"
+msgstr "Importovat klíče z xray_key.txt"
+
+# en-hash: 4994a8ffeba4ac3140beb89e8d41f174
+msgid "menu_language"
+msgstr "Jazyk"
+
+# en-hash: 1e1459fdaf8dd012ccee18d64ebf8fe7
+msgid "menu_linked_entries_settings"
+msgstr "Nastavení propojených položek"
+
+# en-hash: eebd338ddbd547e41e4a1296de82963a
+msgid "menu_locations"
+msgstr "Místa"
+
+# en-hash: 10d0de28911c5f66463b9c8783f8148a
+msgid "menu_maintenance"
+msgstr "Údržba"
+
+# en-hash: 853bc97f601398edb9bfc5415ad553bd
+msgid "menu_manage_series"
+msgstr "Spravovat sérii"
+
+# en-hash: 2c126ee6ce85ef471a3a0e096c78b724
+msgid "menu_mentions_settings"
+msgstr "Nastavení zmínek"
+
+# en-hash: ed2a15d3eeee0693f0274e6b772fd466
+msgid "menu_paste_clipboard"
+msgstr "Vložit klíč %s ze schránky"
+
+# en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
+msgid "menu_primary_ai_model"
+msgstr "Primární model AI"
+
+# en-hash: 22b189dd0fe1b07c3174e8a676a0fe3c
+msgid "menu_reasoning_effort"
+msgstr "Úroveň uvažování modelu AI"
+
+# en-hash: e6715670e7b8c78618954705045a1599
+msgid "menu_rebuild_xray"
+msgstr "Znovu vytvořit data X-Ray (čisté načtení)"
+
+# en-hash: 3e8a42af68c64edd3ce4f9d3d4da0147
+msgid "menu_secondary_ai_model"
+msgstr "Sekundární model AI"
+
+# en-hash: 18f3f323b19a809e90e381568c5acb51
+msgid "menu_series_context"
+msgstr "Kontext série"
+
+# en-hash: c1cd902a55171a323ff6504b0dfdb405
+msgid "menu_set_keys_device"
+msgstr "Nastavit API klíč z telefonu/PC"
+
+# en-hash: f4f70727dc34561dfde1a3c529b6205c
+msgid "menu_settings"
+msgstr "Nastavení"
+
+# en-hash: 476ca4e2e359e5560dc4ab4ead44725c
+msgid "menu_setup_cloud"
+msgstr "Cloud Relay (doporučeno — funguje všude)"
+
+# en-hash: cce94c5e2e1e515981d108a91b9a2bdc
+msgid "menu_setup_local"
+msgstr "Místní Wi-Fi (offline LAN)"
+
+# en-hash: 31d109d162629f8d0cfc8ce8316c0567
+msgid "menu_terms"
+msgstr "Slovníček pojmů"
+
+# en-hash: 6310faa148f6d077593bdad673760e0d
+msgid "menu_test_key"
+msgstr "Otestovat znovu"
+
+# en-hash: 3d1f92a565d3b1a61880236e33c49bf3
+msgid "menu_timeline"
+msgstr "Časová osa"
+
+# en-hash: 3c1fa918adf3e65fbff595ee1fd50d26
+msgid "menu_ui_popup_intext"
+msgstr "Styl poznámky pod čarou pro vyhledávání v textu"
+
+# en-hash: 575c1c5654ec32201c7eea873a1fe01b
+msgid "menu_ui_popup_menu"
+msgstr "Styl poznámky pod čarou pro vyhledávání z nabídky"
+
+# en-hash: ada4a5a87032c5a246e7f76bb95f587e
+msgid "menu_unit_categories"
+msgstr "Kategorie jednotek"
+
+# en-hash: 01eb258da99de69aab015959dfc528d9
+msgid "menu_unit_converter"
+msgstr "Převod jednotek"
+
+# en-hash: f55a01bb8237586887c0f4f6c7a56131
+msgid "menu_update_xray"
+msgstr "Aktualizovat data X-Ray (sloučit)"
+
+# en-hash: 5f67980bfad5601276847f8b2f74cd19
+msgid "menu_validate_all_keys"
+msgstr "Otestovat a ověřit všechny API klíče"
+
+# en-hash: 02c89382dc0b7f202b7d455bf88ab785
+msgid "menu_view_config"
+msgstr "Zobrazit všechny hodnoty nastavení"
+
+# en-hash: 8f96241822e718c6be629d036f586ca6
+msgid "menu_view_log"
+msgstr "Zobrazit záznam"
+
+# en-hash: 464b65f46044b81b6b95485f1d38ccfa
+msgid "menu_web_setup"
+msgstr "Nastavit API klíč z telefonu/PC (QR kód)"
+
+# en-hash: a7c2b2011b7d2850cb512d993e312e49
+msgid "menu_welcome_quick_setup"
+msgstr "Úvod a rychlé nastavení..."
+
+# en-hash: 0863526e514d88cd2d00b39f8dda0920
+msgid "menu_xray"
+msgstr "X-Ray"
+
+# en-hash: a805cb8f152d740dadbc6d065afb91db
+msgid "menu_xray_mode"
+msgstr "Nastavení režimu X-Ray"
+
+# en-hash: fa9309cd5ba2f89ef8590aa88cbc9579
+msgid "merge_back"
+msgstr "← Zpět"
+
+# en-hash: 68be4837f6c739877233e527a996dd00
+msgid "merge_button"
+msgstr "Sloučit"
+
+# en-hash: 8bb01dda315086774624ba2e7444a265
+msgid "merge_confirm"
+msgstr "Sloučit %s do %s? Druhá položka bude odstraněna a její jiná jména budou převzata."
+
+# en-hash: 288650687add5951b526ac950ce45b03
+msgid "merge_duplicates"
+msgstr "⋈ Sloučit duplikáty..."
+
+# en-hash: 1a0eb2431b20a745a419931f2f637210
+msgid "merge_failed"
+msgstr "Sloučení selhalo."
+
+# en-hash: 975d71893cc2c5cb96e7c1e8dfad785a
+msgid "merge_pick_primary"
+msgstr "Vyberte položku, která ZŮSTANE"
+
+# en-hash: 41d27b298020df5b8ec938b89b487b8d
+msgid "merge_pick_secondary"
+msgstr "Vyberte položku, která bude ODSTRANĚNA"
+
+# en-hash: d0517e8f339cc45490ff9eb6d43fc981
+msgid "merge_success"
+msgstr "Položky byly úspěšně sloučeny."
+
+# en-hash: 1db7d7c3180a75c44c8edeccdfd01536
+msgid "merging_smartly"
+msgstr "Slučuji..."
+
+# en-hash: aa2d6e4f578eb0cfaba23beef76c2194
+msgid "model_free"
+msgstr "zdarma"
+
+# en-hash: 76e084771e78c194efd0e2d5b8920bea
+msgid "model_paid"
+msgstr "placený"
+
+# en-hash: e7fa74181aff985bd6dadb3d57bb7119
+msgid "msg_added_characters"
+msgstr "Přidané nové postavy: %d!"
+
+# en-hash: 3803163145663de684e7c6212832d27c
+msgid "msg_added_terms"
+msgstr "Přidané nové pojmy: %d!"
+
+# en-hash: 3f0246c95a38aaf04b2c550c9e1a287d
+msgid "msg_fetch_failed"
+msgstr "Požadavek na AI selhal. Zkontrolujte připojení nebo nastavení API."
+
+# en-hash: dffb8357db1ec38d1f6dffbcc270400d
+msgid "msg_no_bio"
+msgstr "Životopis není k dispozici."
+
+# en-hash: 1a99b2b1ba9babaa605eb045980477a7
+msgid "msg_suggest_lang"
+msgstr "Tato kniha je v jazyce %s. Přepnout jazyk X-Ray, aby odpovídal?"
+
+# en-hash: 2e7e2d7f8421035f2e307aa4064d20ee
+msgid "multiple_matches"
+msgstr "Více shod pro '%s'. Kterou jste měli na mysli?"
+
+# en-hash: cafa45757baae6a9b3e4daafcc454e43
+msgid "new_feature"
+msgstr "Nová funkce"
+
+# en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
+msgid "next"
+msgstr "Další"
+
+# en-hash: bafd7322c6e97d25b6299b5d6fe8920b
+msgid "no"
+msgstr "Ne"
+
+# en-hash: 9b793d19e6877134f19c37c3ac6247fa
+msgid "no_api_key"
+msgstr "Není nastaven API klíč!"
+
+# en-hash: 23dfd40828eb2cf5e31ad869ef4bda83
+msgid "no_author_data_fetch"
+msgstr "Životopis autora není k dispozici. Načíst nyní?"
+
+# en-hash: 18b36cd276b2c5afa9f9cdf198876b20
+msgid "no_character_data"
+msgstr "Nebyly nalezeny žádné postavy."
+
+# en-hash: 80a4905228688f8ad8ec996803f60ffb
+msgid "no_data_prompt"
+msgstr "Pro tuto knihu nebyla nalezena žádná data X-Ray. Chcete je nyní načíst z AI?"
+
+# en-hash: f66eabdf2cb216138e5c20cd3f9d890d
+msgid "no_duplicates_found"
+msgstr "Nebyly nalezeny žádné duplikáty."
+
+# en-hash: 064105ef9b1bca475059078013cc4a4b
+msgid "no_historical_data"
+msgstr "Zatím žádná data o historických osobnostech.\n\nNejprve použijte 'Načíst data X-Ray'.\n\nAI rozpozná skutečné historické\nosobnosti zmíněné v knize."
+
+# en-hash: 4c58fb13d107106e3765e3f635e64517
+msgid "no_items"
+msgstr "no_items"
+
+# en-hash: 0f1e243d0830d654feef580caac9fd88
+msgid "no_linked_entries"
+msgstr "Nebyly nalezeny žádné propojené položky"
+
+# en-hash: 4d0e58f2c49ca238a05d2a92486d3d70
+msgid "no_location_data"
+msgstr "Zatím žádná data o místech. Nejprve použijte 'Načíst data X-Ray'."
+
+# en-hash: 6c32701ae234f6a1c3a03e18d89bd1e1
+msgid "no_merges_performed"
+msgstr "Nebylo provedeno žádné sloučení."
+
+# en-hash: 6f19d0bda35aaa9b39c3adc080e31220
+msgid "no_new_text"
+msgstr "Na vaší aktuální pozici není k dispozici žádný nový text; X-Ray je zde již aktuální."
+
+# en-hash: 3ae96dc007966de2542db31b76ff72cd
+msgid "no_series_detected"
+msgstr "Pro tuto knihu nebyla rozpoznána žádná série"
+
+# en-hash: f90c5e84342ce9096a0f72b0fe9c5203
+msgid "no_series_to_clear"
+msgstr "Pro tuto knihu nebyla rozpoznána žádná série."
+
+# en-hash: 29503d301d509e5cfea9e97daffa9e79
+msgid "no_terms_data"
+msgstr "Zatím žádné pojmy. Nejprve použijte 'Načíst data X-Ray'."
+
+# en-hash: 0c8a85db22b4a3eadf95fe1a55f00c63
+msgid "no_timeline_data"
+msgstr "Zatím žádná časová osa.\n\nNejprve použijte 'Načíst data X-Ray'.\n\nAI zobrazí klíčové události\nv chronologickém pořadí."
+
+# en-hash: e0aa021e21dddbd6d8cecec71e9cf564
+msgid "ok"
+msgstr "OK"
+
+# en-hash: 386b384e3eec6bf9bf55d32b5018de15
+msgid "pair_rejected"
+msgstr "Pár byl označen jako neduplicitní."
+
+# en-hash: b8d4677ac13de48defd22ae1a3fe2479
+msgid "paste_clipboard_confirm"
+msgstr "Použít API klíč ze schránky pro %s?"
+
+# en-hash: 607481fc96e754b33650eb171aac9447
+msgid "path"
+msgstr "plugins/xray.koplugin"
+
+# en-hash: 046763a0d64321194477604b7751c8e4
+msgid "pending_duplicates_prompt"
+msgstr "AI při posledním načtení našla možná duplicitní místa: %d. Zkontrolovat nyní?"
+
+# en-hash: 3c74d67fe6539aa42a867a2f7bc6dffc
+msgid "picker_cover_view"
+msgstr "Obálky"
+
+# en-hash: 7ee4364fa0e2e61963fcd9007342b20c
+msgid "picker_items_count"
+msgstr "Složky: %d, knihy: %d"
+
+# en-hash: 4ee29ca12c7d126654bd0e5275de6135
+msgid "picker_list_view"
+msgstr "Seznam"
+
+# en-hash: bec831129824662ffbf6183ac501aa11
+msgid "picker_no_books_found"
+msgstr "V této složce nebyly nalezeny žádné e-knihy."
+
+# en-hash: d87f433b237815fa419a2ac953956c54
+msgid "plugin_description"
+msgstr "Proměňte svůj čtenářský zážitek díky analýze knih pomocí AI, přesně jako Amazon Kindle X-Ray!"
+
+# en-hash: 14230d11143a03f4330c6433d5032a9d
+msgid "prev"
+msgstr "Zpět"
+
+# en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
+msgid "quick_menu_title"
+msgstr "Rychlá nabídka X-Ray"
+
+# en-hash: decbe415d8accca7c2c16d48a79ee934
+msgid "read_more"
+msgstr "Číst dál"
+
+# en-hash: fffcb4d1e12c96b2f571f77ad25878b8
+msgid "reason"
+msgstr "Důvod"
+
+# en-hash: 1ec7919a887b228482b4fd9a80fcd324
+msgid "reasoning_about"
+msgstr "Určuje hloubku [B]uvažování[/B] pro modely s uvažováním:\n\n• Nenastaveno: Neposílá se žádný pokyn; model použije své výchozí hodnoty.\n• Nízká: Rychlá a úsporná extrakce pro jednoduché knihy.\n• Střední: Vyvážená hloubka pro většinu příběhů.\n• Vysoká: Podrobná analýza pro složité sítě postav.\n\n[B]Platí pro:[/B] GPT-5.x (o1/o3/gpt-5), Claude (sonnet/opus/haiku) a Gemini 2.5+.\n\n[B]Poznámka:[/B] DeepSeek V4 uvažuje [B]vždy[/B] — toto nastavení na něj nemá vliv."
+
+# en-hash: 655d20c1ca69519ca647684edbb2db35
+msgid "reasoning_high"
+msgstr "Vysoká"
+
+# en-hash: 28d0edd045e05cf5af64e35ae0c4c6ef
+msgid "reasoning_low"
+msgstr "Nízká"
+
+# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
+msgid "reasoning_medium"
+msgstr "Střední"
+
+# en-hash: e22876a23ad77be581ada0285360983a
+msgid "reasoning_unset"
+msgstr "Nenastaveno (výchozí)"
+
+# en-hash: 1c6aac0280240c97962b30423f1f852b
+msgid "rebuild_confirm_btn"
+msgstr "Znovu vytvořit"
+
+# en-hash: 0b9d064b6a4725acbe72220a8b042acc
+msgid "rebuild_confirm_text"
+msgstr "Tímto se zahodí všechna uložená data X-Ray pro tuto knihu a z AI se načtou nová.\n\nPokračovat?"
+
+# en-hash: 28d57012d4eada5bfcadc8447e1550ea
+msgid "rebuild_confirm_title"
+msgstr "Znovu vytvořit data X-Ray"
+
+# en-hash: d98ac12774fca5c3cbaffe276840c55f
+msgid "reject_pair"
+msgstr "Odmítnout"
+
+# en-hash: 88e790884cd8072ac5a804be29a0a287
+msgid "relookup_button"
+msgstr "Znovu vyhledat '%s'"
+
+# en-hash: 457dd55184faedb7885afd4009d70163
+msgid "review"
+msgstr "Zkontrolovat"
+
+# en-hash: c9cc8cce247e49bae79f15173ce97354
+msgid "save"
+msgstr "Uložit"
+
+# en-hash: 06a943c59f33a34bb5924aaf72cd2995
+msgid "search"
+msgstr "hledat"
+
+# en-hash: 13348442cc6a27032d2b4aa28b75a5d3
+msgid "search_button"
+msgstr "Hledat"
+
+# en-hash: 428279a428d9f130d69840b2b73c7514
+msgid "search_character"
+msgstr "Hledat postavy..."
+
+# en-hash: c2380a3df7158668908b94405cbe5902
+msgid "search_character_title"
+msgstr "Hledání postav"
+
+# en-hash: 828800124a2c130cc221b4d028b781a2
+msgid "search_hint"
+msgstr "Zadejte jméno postavy"
+
+# en-hash: da83080ddaefc008f3de01b20a111043
+msgid "search_term"
+msgstr "Hledat pojmy"
+
+# en-hash: 428da3d1fd5aaa456409aa6b30d2c4f2
+msgid "series_ask_later_msg"
+msgstr "Shrnutí série bylo odloženo. Zeptáme se znovu, až tuto knihu otevřete nebo se k ní vrátíte."
+
+# en-hash: ca2f917dc09a99bc7b63ada86cabdfa4
+msgid "series_cache_cleared"
+msgstr "Mezipaměť série '%s' byla vymazána."
+
+# en-hash: c69ce70b393414a1cdee677a96a195e4
+msgid "series_context_enabled_toggle"
+msgstr "Zapnout kontext série"
+
+# en-hash: cfd20c079f624acba218200220eb4a10
+msgid "series_context_loaded"
+msgstr "Kontext série načten (předchozí knihy: %d)."
+
+# en-hash: 167442e30a87a00e4f109ca2361ec53a
+msgid "series_context_prompt_text"
+msgstr "Toto je zřejmě kniha č. %d ze série '%s'. Načíst shrnutí předchozích knih (%d)?\n\n(Vypnout to můžete v Nastavení → Kontext série)"
+
+# en-hash: 577a96abeeaa42e4748d2189f746a05b
+msgid "series_context_prompt_title"
+msgstr "Rozpoznaná série"
+
+# en-hash: ddb44dbe6c8ac2048d293e6102eb4c54
+msgid "series_disabled_msg"
+msgstr "Automatická výzva pro tuto knihu je vypnuta. Shrnutí můžete načíst ručně z nabídky X-Ray."
+
+# en-hash: 3b7f48d3ca71c86651435ebde85b76cf
+msgid "series_link_no_chooser"
+msgstr "Výběr souborů není na tomto zařízení dostupný."
+
+# en-hash: 45038789e6aae12b35398440e65bf810
+msgid "series_no_prior_detected"
+msgstr "Pro tuto sérii nebyly rozpoznány žádné předchozí knihy."
+
+# en-hash: 4492f89a70cb73291167d53d07868ebc
+msgid "series_prior_books_header"
+msgstr "── Předchozí knihy ──"
+
+# en-hash: 38a1412b98e409d6f6a0b2464c62fa08
+msgid "series_prior_label"
+msgstr "[Předch.]"
+
+# en-hash: 4307bc48de0a1f321210a63396bea390
+msgid "single_key_cleared"
+msgstr "API klíč %s byl smazán."
+
+# en-hash: 72ef2b9b6965d078e3c7f95487a82d1c
+msgid "skip"
+msgstr "Přeskočit"
+
+# en-hash: 4b4ec0f3a3872375ea37068549e8584f
+msgid "sort_alphabetical"
+msgstr "Abecedně (A–Z)"
+
+# en-hash: 1a82af45993146d81d8a45f98ad29745
+msgid "sort_appearance"
+msgstr "Podle výskytu"
+
+# en-hash: 059a1aa256b770eca2d69c096f759ad0
+msgid "sort_by"
+msgstr "Seřadit podle"
+
+# en-hash: ff14265adbb6186636bff92477cb34aa
+msgid "sort_frequency"
+msgstr "Podle počtu zmínek (výchozí)"
+
+# en-hash: 55da95c9d6ab32f4873d13cdba88943e
+msgid "spoiler_free_about"
+msgstr "Režim bez spoilerů omezí extrakci AI na strany, které jste již přečetli (po vaši aktuální stranu), a zabrání tak spoilerům z následujících kapitol.\n\n[B]Režim celé knihy:[/B] Analyzuje celou knihu, která [B]může obsahovat spoilery[/B]."
+
+# en-hash: 5445912c4c35d13ae26a53a6d782d149
+msgid "spoiler_free_menu_option"
+msgstr "Bez spoilerů"
+
+# en-hash: f6bcf48f8091f8fe253489d94223ec7c
+msgid "spoiler_free_option"
+msgstr "Režim bez spoilerů (do %d%% knihy)"
+
+# en-hash: 49d594b5e1f6994860fa4c0328c44977
+msgid "spoiler_preference_desc"
+msgstr "Zvolte nastavení spoilerů pro data X-Ray:"
+
+# en-hash: 082822dd3aeeab538d5e399d7883d31a
+msgid "spoiler_preference_title"
+msgstr "Nastavení spoilerů"
+
+# en-hash: 11a755d598c0c417f9a36758c3da7481
+msgid "stop"
+msgstr "Zastavit"
+
+# en-hash: d725036d492c380f06f4eb32f5704bc9
+msgid "term_not_found"
+msgstr "Pojem nebyl nalezen."
+
+# en-hash: 1ecbe04157c9f7433d24d17cf5e70564
+msgid "testing_api_keys"
+msgstr "Testuji připojení API klíčů..."
+
+# en-hash: 5d5b473a14bed6f67fdbe6c745b045a7
+msgid "this_chapter"
+msgstr "Tato kapitola"
+
+# en-hash: d2c24d59e0baff4d0155fbdf62590867
+msgid "this_page"
+msgstr "Sekce"
+
+# en-hash: f61824b403008733ff955da48052ee04
+msgid "unit_action_configure"
+msgstr "Upravit nastavení..."
+
+# en-hash: 6ee50812725a7a053ed2c5742c6ebfef
+msgid "unit_action_disable"
+msgstr "Vypnout funkci"
+
+# en-hash: 074331092c85358cfa576b7c8424a94e
+msgid "unit_action_keep"
+msgstr "Ponechat zapnuté (výchozí)"
+
+# en-hash: fd380cdfeb02e89fd87e81a03440d1a4
+msgid "unit_auto_scan_about"
+msgstr "U velkých knih může skenování trvat 15–20 sekund. Děje se to pouze při prvním otevření knihy a výsledky se uloží pro další použití."
+
+# en-hash: cba623198fb7055516673257f1573ad8
+msgid "unit_auto_scan_desc"
+msgstr "Automaticky skenovat knihy na jednotky:"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "unit_auto_scan_disabled"
+msgstr "Vypnuto"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "unit_auto_scan_enabled"
+msgstr "Zapnuto"
+
+# en-hash: b1c61b015abaa0f358173ae8aaf8d96e
+msgid "unit_auto_scan_settings"
+msgstr "Nastavení automatického skenování"
+
+# en-hash: 6f2986a4e360c7afe3e426f2ff568c8c
+msgid "unit_book_type_auto"
+msgstr "Automaticky rozpoznat"
+
+# en-hash: 241e06b4dad1d08b4172feac53c444c0
+msgid "unit_book_type_children"
+msgstr "Dětské knihy"
+
+# en-hash: 3080a1c276c76ea625e80734602c210a
+msgid "unit_book_type_cookbook"
+msgstr "Kuchařky a recepty"
+
+# en-hash: a5dcaee167e685dd8bcf9bf02339fa08
+msgid "unit_book_type_detected"
+msgstr "Rozpoznaný typ knihy"
+
+# en-hash: b6cf4509f11628ed741ca36a32f81381
+msgid "unit_book_type_filter"
+msgstr "Filtr typu knihy"
+
+# en-hash: c026a5df7244b6080df8cfecb130356b
+msgid "unit_book_type_graphic_novel"
+msgstr "Grafické romány a komiksy"
+
+# en-hash: f6dba9e25fa714cf3cef54d4de318165
+msgid "unit_book_type_manage"
+msgstr "Spravovat povolené typy"
+
+# en-hash: fbc25b8aa6354d0762d7173cd6aad528
+msgid "unit_book_type_manage_about"
+msgstr "Určete, u kterých typů knih se mají skenovat jednotky. Vypnutím typu se globálně zruší zvýrazňování převodu jednotek pro všechny knihy zařazené do tohoto formátu."
+
+# en-hash: 89e232daddb744ef83905c92b9a74900
+msgid "unit_book_type_manga"
+msgstr "Manga"
+
+# en-hash: 88546cdcbcd8400f1ee2846852ae2e1f
+msgid "unit_book_type_override"
+msgstr "Přepsat pro tuto knihu"
+
+# en-hash: ff928a73d5b2ff2a461db998958a1282
+msgid "unit_book_type_poetry"
+msgstr "Poezie a verše"
+
+# en-hash: 4d8ba3523f4ad502d6dddee9f0d10d20
+msgid "unit_book_type_prose_fiction"
+msgstr "Beletrie (romány, povídky)"
+
+# en-hash: 99ded02c970ab5538b35f9aa0cd27079
+msgid "unit_book_type_prose_nonfiction"
+msgstr "Odborná literatura (historie, věda atd.)"
+
+# en-hash: 888a79cbd69091bfa3d5fc5365b73cdb
+msgid "unit_book_type_textbook"
+msgstr "Učebnice a akademické texty"
+
+# en-hash: 90b9a0ebb86893e6d002055d6d8045f9
+msgid "unit_book_type_travel"
+msgstr "Cestovní průvodci"
+
+# en-hash: ccc1d907334fda22583f0023f90d05d5
+msgid "unit_book_type_unknown"
+msgstr "Neznámé/jiné"
+
+# en-hash: 5b2e3a633a4d820d64aa4356495ab188
+msgid "unit_conv_direction"
+msgstr "Směr převodu"
+
+# en-hash: 0352baf577c778cf15e49c40b1126bc3
+msgid "unit_conv_direction_about"
+msgstr "Směr převodu jednotek určuje, jak se převádějí míry v knihách (např. délky, hmotnosti, teploty):\n\n• [B]Automaticky (podle zařízení):[/B] Převádí automaticky podle systémového nastavení 'Jednotky rozměrů' ve vašem zařízení.\n• [B]Na metrické:[/B] Vždy převádí imperiální jednotky (např. míle, Fahrenheit) na metrické ekvivalenty (např. kilometry, Celsius).\n• [B]Na imperiální:[/B] Vždy převádí metrické jednotky na imperiální ekvivalenty."
+
+# en-hash: 78b12f9283363cc04ec6a9f2f8fb18c4
+msgid "unit_conv_direction_auto"
+msgstr "Automaticky (podle zařízení)"
+
+# en-hash: 926a5778ac523de44a7059268db8eb90
+msgid "unit_conv_direction_desc"
+msgstr "Zvolte cílový směr převodu jednotek:"
+
+# en-hash: 16fb229accd0e21e3b01de25113a5092
+msgid "unit_conv_direction_imperial"
+msgstr "Na imperiální"
+
+# en-hash: eb80006cda3aa58a5be2dbc9f535dc06
+msgid "unit_conv_direction_metric"
+msgstr "Na metrické"
+
+# en-hash: 9039461fb813111bf38dc683527be31d
+msgid "unit_conv_enabled"
+msgstr "Zapnout převod jednotek"
+
+# en-hash: 01eb258da99de69aab015959dfc528d9
+msgid "unit_conv_headline"
+msgstr "Převod jednotek"
+
+# en-hash: 63d401a64c232b43a1335ae7e02fb607
+msgid "unit_conv_new_feature_desc"
+msgstr "X-Ray nyní rozpoznává míry (délky, hmotnosti, teplotu) ve vašich knihách a zvýrazňuje je jemným podtržením. Klepnutím na zvýrazněnou jednotku zobrazíte její přepočtenou hodnotu v bublinové nápovědě.\n\nPoznámka: Při prvním otevření knihy je nutné skenování."
+
+# en-hash: 37a611b3aed746b1f20cd611500496f2
+msgid "unit_conv_style_settings"
+msgstr "Nastavení stylu a podtržení"
+
+# en-hash: a18366b217ebf811ad1886e4f4f865b2
+msgid "unit_intensity_dark"
+msgstr "Tmavá"
+
+# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
+msgid "unit_intensity_light"
+msgstr "Světlá"
+
+# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
+msgid "unit_intensity_medium"
+msgstr "Střední"
+
+# en-hash: 2e507ae5d58861d457e684dfe05b9593
+msgid "unit_manual_scan_button"
+msgstr "Skenovat/znovu skenovat"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "unit_scan_written_disabled"
+msgstr "Vypnuto"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "unit_scan_written_enabled"
+msgstr "Zapnuto"
+
+# en-hash: f8115ed7a0bb14ce3154f12ad441b614
+msgid "unit_scan_written_numbers"
+msgstr "Skenovat čísla slovy (např. 'pět mil')"
+
+# en-hash: 984acb9f42ff774b4b3f5e00266cbd73
+msgid "unit_scan_written_numbers_about"
+msgstr "Skenování čísel napsaných slovy (např. 'pět mil') vyžaduje druhý průchod celým textem. Jeho vynechání na slabších zařízeních (Kindle, Kobo, PocketBook) zrychlí skenování 4- až 5násobně a zabrání zamrznutí při spuštění. Na rychlejších platformách jako Android nebo počítače není zpomalení znatelné."
+
+# en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
+msgid "unit_scan_written_numbers_desc"
+msgstr "Skenovat čísla napsaná slovy (např. 'pět mil'):"
+
+# en-hash: 41e615cb7654281a8e431c371a92311e
+msgid "unit_scan_written_numbers_title"
+msgstr "Skenovat čísla slovy"
+
+# en-hash: 59655846df0abfca05d478f9c0a18eb4
+msgid "unit_scanning_book"
+msgstr "Skenuji knihu na jednotky..."
+
+# en-hash: 2c8c1e763a8b739446b8dcd7908f318f
+msgid "unit_scanning_title"
+msgstr "X-Ray: Převod jednotek"
+
+# en-hash: 2f59140753baa1e1e8193111db3ed7e1
+msgid "unit_style_preview_title"
+msgstr "UKÁZKA STYLU"
+
+# en-hash: 6e7b34fa59e1bd229b207892956dc41c
+msgid "unit_timeout_never"
+msgstr "Nikdy"
+
+# en-hash: efb97de9aae997a3dde262761bed835d
+msgid "unit_tooltip_timeout_label"
+msgstr "Doba zobrazení nápovědy"
+
+# en-hash: eb656e41b6da91494775ecf47a51da91
+msgid "unit_underline_dashed"
+msgstr "Čárkované"
+
+# en-hash: 90c09393a4c0970bc9a6703ad527781c
+msgid "unit_underline_dotted"
+msgstr "Tečkované"
+
+# en-hash: d909d38d705ce75386dd86e611a82f5b
+msgid "unit_underline_double"
+msgstr "Dvojité"
+
+# en-hash: 04cc5cd272ac4f83c184b294e7f38b1f
+msgid "unit_underline_intensity_label"
+msgstr "Intenzita podtržení"
+
+# en-hash: 8bcda43732b0928d269955e0f09ff76f
+msgid "unit_underline_invisible"
+msgstr "Neviditelné"
+
+# en-hash: e41480b6bbfbf7407974a88d3d34f4fa
+msgid "unit_underline_solid"
+msgstr "Plné"
+
+# en-hash: 9a66725ea21264441ab1682f4739fbc2
+msgid "unit_underline_style_label"
+msgstr "Styl podtržení"
+
+# en-hash: 5cc1d76d86c562d334e35e4ef262ba5c
+msgid "unit_underline_thickness_label"
+msgstr "Tloušťka podtržení"
+
+# en-hash: 0e9498bd18e441969b23cb70819abc3c
+msgid "unit_underline_wavy"
+msgstr "Vlnité"
+
+# en-hash: 3f50e96b2eef687f766dc7651a55ad0a
+msgid "updater_available_header"
+msgstr "X-Ray %s je k dispozici!\nVy máte %s."
+
+# en-hash: 0557fa923dcee4d0f86b1409f5c2167f
+msgid "updater_btn_back"
+msgstr "Zpět"
+
+# en-hash: ea4788705e6873b424c65e91c2846b19
+msgid "updater_btn_cancel"
+msgstr "Zrušit"
+
+# en-hash: 326737de1766f7c8b80a5acde0f18651
+msgid "updater_btn_download"
+msgstr "Stáhnout a nainstalovat"
+
+# en-hash: 61057a0c84605444201929bdd72014f0
+msgid "updater_btn_later"
+msgstr "Později"
+
+# en-hash: 6175d78ff8e7f8913d4c2fa339199bfc
+msgid "updater_btn_open_browser"
+msgstr "Otevřít v prohlížeči"
+
+# en-hash: 51cfbcff36da74a9fc47f3a5140f99f2
+msgid "updater_btn_restart"
+msgstr "Restartovat"
+
+# en-hash: f90c6e6f2d986a10f351292ffa2968ab
+msgid "updater_btn_view_notes"
+msgstr "Zobrazit všechny poznámky k vydání"
+
+# en-hash: 092dc0fe2a1709895d0ffb03306ab644
+msgid "updater_cancelled_check"
+msgstr "Kontrola aktualizací zrušena."
+
+# en-hash: 1e4112df1113e06c77e13d6614f2cd0a
+msgid "updater_cancelled_update"
+msgstr "Aktualizace zrušena."
+
+# en-hash: f77f38f684c8b974dd4a56bb321cfd5f
+msgid "updater_check"
+msgstr "Zkontrolovat aktualizace"
+
+# en-hash: a07813cc05571f23ce8dd7039583d7da
+msgid "updater_checking"
+msgstr "Kontroluji aktualizace..."
+
+# en-hash: 3e6aed71a195328451956394c1ba0e70
+msgid "updater_download_prompt"
+msgstr "\n\nStáhnout a nainstalovat nyní?"
+
+# en-hash: 4d7dcb1c7639337d915a10ffc18f0c5d
+msgid "updater_downloading"
+msgstr "Stahuji X-Ray %s..."
+
+# en-hash: 3ee3d18e96340272001439279cf33314
+msgid "updater_err_download"
+msgstr "Chyba stahování: %s"
+
+# en-hash: 8080e73222237f54453a9d31947ecb53
+msgid "updater_err_extract"
+msgstr "Chyba rozbalování: %s"
+
+# en-hash: bd2ab435fbc5c07d9803f63cfa2ea188
+msgid "updater_error_checking"
+msgstr "Chyba při kontrole aktualizací."
+
+# en-hash: 1f2460a4555c14c00a245d44c9742751
+msgid "updater_error_checking_detail"
+msgstr "Chyba při kontrole aktualizací: %s"
+
+# en-hash: 4764ffed7fe43c5174fe97c69cb933ee
+msgid "updater_no_asset"
+msgstr "Nebyl nalezen soubor pro automatickou aktualizaci.\n\nOtevřít stránku vydání na GitHubu?"
+
+# en-hash: 83cae54ea5a5d1ac7469aef85cccbd23
+msgid "updater_release_notes_title"
+msgstr "Poznámky k vydání X-Ray %s"
+
+# en-hash: fa243c194c72bb2d6c10dfad7c375cf3
+msgid "updater_success_restart"
+msgstr "X-Ray %s byl úspěšně nainstalován.\n\nRestartovat KOReader a použít aktualizaci?"
+
+# en-hash: 1d506d775154b17218de18195cf130b3
+msgid "updater_up_to_date"
+msgstr "X-Ray je aktuální (%s)."
+
+# en-hash: 67b3aeb4ed5299bb57c1e2de1beb0bf5
+msgid "updater_whats_new"
+msgstr "Co je nového:"
+
+# en-hash: 46667b51ced49ca8828f897cf83e89b8
+msgid "updating_ai"
+msgstr "Aktualizuji X-Ray..."
+
+# en-hash: 0d1b08c34858921bc7c662b228acb7ba
+msgid "val"
+msgstr "???"
+
+# en-hash: 1739e3ae6d734407aef8af879665b8ee
+msgid "validate_keys_title"
+msgstr "Stav a ověření API klíčů"
+
+# en-hash: df59c9aeac50ab85bc1945555592cf8a
+msgid "web_setup_local_unsupported"
+msgstr "Místní Wi-Fi server není na zařízeních Kindle podporován kvůli omezením firewallu systému. Použijte Cloud Relay."
+
+# en-hash: 94eeb39559330226a1d0c942718547ea
+msgid "web_setup_msg"
+msgstr "1. Připojte telefon/PC ke stejné Wi-Fi.\n2. Naskenujte tento QR kód nebo otevřete:\n\n%s\n\n3. Vložte svůj API klíč a klepněte na Uložit."
+
+# en-hash: d845f459e17a314cfc7949ba6a1659cb
+msgid "web_setup_no_wifi"
+msgstr "Wi-Fi je odpojena. Chcete-li použít webové nastavení, připojte se k Wi-Fi."
+
+# en-hash: 81daae83c93d7822f5bfc4779f5a7c2c
+msgid "web_setup_success"
+msgstr "API klíč pro %s byl přijat a uložen!"
+
+# en-hash: 400a15f44cdb7cf1b903d40d661c98c4
+msgid "web_setup_title"
+msgstr "Připojit přes telefon/PC"
+
+# en-hash: 4111bd6fb88b1690bc80082903801ab8
+msgid "welcome_action_ask_later"
+msgstr "Zeptat se později"
+
+# en-hash: a0bfb8e59e6c13fc8d990781f77694fe
+msgid "welcome_action_continue"
+msgstr "Pokračovat"
+
+# en-hash: 10577dd8e9aef1c7097268c665a5f46e
+msgid "welcome_action_dont_ask"
+msgstr "Už se neptat"
+
+# en-hash: b9709e1b50c06ed39df03fa0b90d40ab
+msgid "welcome_btn_import_now"
+msgstr "Importovat nyní"
+
+# en-hash: bcaef36c11aa1e80a9357b990991575e
+msgid "welcome_desc"
+msgstr "Na začátek zvolte, jak chcete připojit svůj API klíč:"
+
+# en-hash: b6b5dc2a0846b328e444266fa87d26ec
+msgid "welcome_file_guide_desc"
+msgstr "Jak nastavit API klíče pomocí textového souboru:\n\n1. Vytvořte soubor s názvem 'xray_key.txt' v zařízení nebo v počítači.\n2. Umístěte ho do složky KOReader (např. koreader/ nebo koreader/settings/).\n3. Vložte do něj klíč na samostatný řádek:\n   • Gemini: gemini = VÁŠ_KLÍČ (nebo jednoduše vložte samotný klíč)\n   • OpenAI: openai = sk-...\n   • DeepSeek / Claude: deepseek = ..., claude = ...\n4. Klepnutím na 'Importovat nyní' níže načtete klíče.\n\nRuční nastavení: Můžete také upravit koreader/plugins/xray.koplugin/xray_config.lua."
+
+# en-hash: 6db5d8a713e37567f7785261dc00ae74
+msgid "welcome_file_guide_scan"
+msgstr "Naskenujte QR kód pro návod k nastavení API klíče (wiki)"
+
+# en-hash: c832496ce43a8a4c1465b7089b7ba5b6
+msgid "welcome_file_guide_title"
+msgstr "Nastavení přes konfiguraci a textový soubor..."
+
+# en-hash: 7e19e3d6ef015d76a93fc39fa78555a2
+msgid "welcome_headline"
+msgstr "Nastavte poskytovatele AI"
+
+# en-hash: f307ec8cddbe39ac8784564076e583ae
+msgid "welcome_no_file_found"
+msgstr "Ve složce KOReader nebyl nalezen soubor xray_key.txt."
+
+# en-hash: 7464eef1919692978bb13f0aab065f20
+msgid "welcome_opt_all_desc"
+msgstr "Nastavte vlastní koncové body, OpenAI, DeepSeek, Claude nebo OpenRouter."
+
+# en-hash: 4c25c9a50a911c95509525f745eb9a6a
+msgid "welcome_opt_all_title"
+msgstr "Otevřít nastavení všech poskytovatelů"
+
+# en-hash: 39f6b18d9eef21577906958535c0e9ed
+msgid "welcome_opt_ereader_desc"
+msgstr "Napište nebo vložte API klíč přímo pomocí klávesnice na obrazovce."
+
+# en-hash: 3fa00ffac23d281a564a8d36a33c5c33
+msgid "welcome_opt_ereader_title"
+msgstr "Zadat klíč ve čtečce"
+
+# en-hash: 12273c89c62d45e28d60480dc913c65a
+msgid "welcome_opt_file_desc"
+msgstr "Umístěte klíč do koreader/settings/xray_key.txt nebo vyberte již nastaveného poskytovatele."
+
+# en-hash: 5e2364ee83d001f6721276c20925e78e
+msgid "welcome_opt_file_title"
+msgstr "Import z textového souboru (xray_key.txt) nebo konfigurace"
+
+# en-hash: 0b8604ae3471a584cb27ba990fb656d9
+msgid "welcome_opt_phone_desc"
+msgstr "Naskenujte QR kód a zadejte klíč online přes Cloud Relay nebo místní Wi-Fi."
+
+# en-hash: f5d12f602967b00beea3f12412fcb3a2
+msgid "welcome_opt_phone_title"
+msgstr "Nastavit z telefonu/PC (doporučeno)"
+
+# en-hash: 97d815bfab1c9a82c9e305a76b4b559f
+msgid "welcome_opt_skip_desc"
+msgstr "Používat místní počty slov, statistiky čtení a uložené informace o sériích bez AI."
+
+# en-hash: 93c52d3e72f67abf20b2ec1c235f5dc5
+msgid "welcome_opt_skip_title"
+msgstr "Zatím přeskočit (pouze offline funkce)"
+
+# en-hash: 741987eccc2e46095fdd70cf9377e31e
+msgid "welcome_select_provider"
+msgstr "Vyberte poskytovatele AI"
+
+# en-hash: b88c7d8b4f064676524e945ceb6fc35c
+msgid "welcome_tag"
+msgstr "VÍTEJTE V X-RAY"
+
+# en-hash: b9f5c797ebbf55adccdd8539a65a0241
+msgid "xray_disabled_label"
+msgstr "Vypnuto"
+
+# en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
+msgid "xray_enabled_label"
+msgstr "Zapnuto"
+
+# en-hash: aa3045baed0aad489f96655b14b671ac
+msgid "xray_mode_desc"
+msgstr "Přidá tlačítko 'X-Ray' do slovníku a nabídek výběru textu pro okamžité vyhledávání."
+
+# en-hash: 93cba07454f06a4a960172bbd6e2a435
+msgid "yes"
+msgstr "Ano"

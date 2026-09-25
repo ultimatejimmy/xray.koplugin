@@ -152,7 +152,7 @@ end
 local COMMA_LOCALES = {
     de = true, fr = true, es = true, ru = true, uk = true,
     hu = true, pl = true, nl = true, pt_br = true, pt = true, sr = true,
-    it = true, tr = true
+    it = true, tr = true, sk = true, cs = true
 }
 
 -- Format number according to locale and smart formatting
