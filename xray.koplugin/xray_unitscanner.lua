@@ -1383,13 +1383,16 @@ function UnitTooltip:init()
     local c = self.conversion
     local text = c.converted
     
-    local fs = _getPopupFontSize(self.plugin)
-    local doc_family
-    if self.plugin and self.plugin.ui and self.plugin.ui.font then
-        doc_family = self.plugin.ui.font.font_face
-    end
-    if not doc_family and G_reader_settings then
-        doc_family = G_reader_settings:readSetting("cre_font_family")
+    local metrics = (self.plugin and self.plugin.calculatePopupFontMetrics and self.plugin:calculatePopupFontMetrics(text))
+    local fs = metrics and metrics.fs or _getPopupFontSize(self.plugin)
+    local doc_family = metrics and metrics.doc_family
+    if not doc_family then
+        if self.plugin and self.plugin.ui and self.plugin.ui.font then
+            doc_family = self.plugin.ui.font.font_face
+        end
+        if not doc_family and G_reader_settings then
+            doc_family = G_reader_settings:readSetting("cre_font_family")
+        end
     end
     local face = getFontSafe(doc_family, fs)
     

@@ -214,5 +214,60 @@ describe("xray_utils", function()
             assert.are.equal("贾宝玉", utils:trimPunctuation("【贾宝玉】"))
         end)
     end)
+
+    describe("Arabic & CJK script detection", function()
+        it("detects Arabic script correctly", function()
+            assert.is_true(utils:textHasArabic("باريستان سلمي"))
+            assert.is_true(utils:textHasArabic("فارس وحارس الملكة"))
+            assert.is_true(utils:textHasArabic("Aliases: باريستان الجسور"))
+            assert.is_false(utils:textHasArabic("Barristan Selmy"))
+            assert.is_false(utils:textHasArabic("Раскольников"))
+            assert.is_false(utils:textHasArabic("红楼梦"))
+            assert.is_false(utils:textHasArabic(""))
+            assert.is_false(utils:textHasArabic(nil))
+        end)
+
+        it("detects Arabic font families correctly", function()
+            assert.is_true(utils:isArabicFontFamily("Amiri"))
+            assert.is_true(utils:isArabicFontFamily("Noto Sans Arabic"))
+            assert.is_true(utils:isArabicFontFamily("Scheherazade New"))
+            assert.is_true(utils:isArabicFontFamily("Naskh Regular"))
+            assert.is_false(utils:isArabicFontFamily("Bookerly"))
+            assert.is_false(utils:isArabicFontFamily("Noto Serif"))
+            assert.is_false(utils:isArabicFontFamily(nil))
+        end)
+
+        it("detects Arabic in entities", function()
+            local ar_entity = {
+                name = "باريستان سلمي",
+                role = "Supporting Protagonist",
+                description = "فارس شجاع ومخلص يخدم كحارس لملكة ميرين",
+            }
+            assert.is_true(utils:entityHasArabic(ar_entity))
+
+            local en_entity = {
+                name = "Barristan Selmy",
+                role = "Supporting Protagonist",
+                description = "A bold knight.",
+            }
+            assert.is_false(utils:entityHasArabic(en_entity))
+        end)
+
+        it("detects CJK in entities", function()
+            local cjk_entity = {
+                name = "贾宝玉",
+                role = "Protagonist",
+                description = "红楼梦主角",
+            }
+            assert.is_true(utils:entityHasCJK(cjk_entity))
+
+            local en_entity = {
+                name = "Barristan Selmy",
+                role = "Supporting Protagonist",
+                description = "A bold knight.",
+            }
+            assert.is_false(utils:entityHasCJK(en_entity))
+        end)
+    end)
 end)
 

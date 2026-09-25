@@ -981,6 +981,10 @@ msgstr "Configurações de menções"
 msgid "menu_paste_clipboard"
 msgstr "Colar chave de %s da área de transferência"
 
+# en-hash: f3ab2ad220b458e8cd144bc464038505
+msgid "menu_popup_font_size"
+msgstr "Tamanho da fonte do pop-up"
+
 # en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "Modelo de IA principal"
@@ -1256,6 +1260,34 @@ msgstr "Nenhum arquivo de ebook encontrado nesta pasta."
 # en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "Transforme sua experiência de leitura com análise de livros por IA, igual ao Amazon Kindle X-Ray!"
+
+# en-hash: 389c89fbd48a05af731ab36f38724350
+msgid "popup_font_size_about"
+msgstr "O tamanho da fonte dos pop-ups é ajustado automaticamente com base na fonte do livro e otimizado para idiomas com escritas complexas, como o árabe. Use esta configuração para ajustar a exibição conforme sua preferência de leitura."
+
+# en-hash: 863ec258c5c61f509ae260a37d2d9107
+msgid "popup_font_size_auto"
+msgstr "Automático (Recomendado)"
+
+# en-hash: dc6490ab9cc5ae91d5179dd59ad3e73a
+msgid "popup_font_size_desc"
+msgstr "Ajuste o tamanho da fonte para pop-ups de notas de rodapé e diálogos:"
+
+# en-hash: 3a69b34ce86dacb205936a8094f6c743
+msgid "popup_font_size_large"
+msgstr "Grande"
+
+# en-hash: 960b44c579bc2f6818d2daaf9e4c16f0
+msgid "popup_font_size_normal"
+msgstr "Normal"
+
+# en-hash: 2660064e68655415da2628c2ae2f7592
+msgid "popup_font_size_small"
+msgstr "Pequeno"
+
+# en-hash: 5d4d8771b47d6c5166952822e552f082
+msgid "popup_font_size_xlarge"
+msgstr "Muito grande"
 
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"

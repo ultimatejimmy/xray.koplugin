@@ -2039,6 +2039,156 @@ describe("xray_ui", function()
         end)
     end)
 
+    describe("Popup font size optimization & complex script scaling", function()
+        it("calculates font metrics with optical scaling for Arabic text", function()
+            local ar_char = {
+                name = "باريستان سلمي",
+                aliases = { "باريستان الجسور" },
+                role = "فارس وحارس الملكة",
+                description = "فارس شجاع ومخلص يخدم كحارس لملكة ميرين دنيرس."
+            }
+            local metrics = plugin:calculatePopupFontMetrics(ar_char)
+            assert.is_true(metrics.is_arabic)
+            assert.is_false(metrics.is_cjk)
+            -- With base 22, Arabic scaled at 1.25x should be 27
+            assert.are.equal(27, metrics.fs)
+            -- Small text (aliases/attributes) should be 23 instead of 16
+            assert.are.equal(23, metrics.fs_small)
+            assert.are.equal(25, metrics.fs_btn)
+        end)
+
+        it("calculates font metrics with downscaling for CJK text", function()
+            local cjk_char = {
+                name = "贾宝玉",
+                description = "红楼梦主角"
+            }
+            local metrics = plugin:calculatePopupFontMetrics(cjk_char)
+            assert.is_true(metrics.is_cjk)
+            assert.is_false(metrics.is_arabic)
+            -- With base 22, CJK scaled at 0.75x should be 16
+            assert.are.equal(16, metrics.fs)
+            assert.are.equal(13, metrics.fs_small)
+            assert.are.equal(15, metrics.fs_btn)
+        end)
+
+        it("calculates default font metrics for Latin text without premature 20pt clamping", function()
+            local en_char = {
+                name = "Barristan Selmy",
+                description = "A bold and loyal knight."
+            }
+            local metrics = plugin:calculatePopupFontMetrics(en_char)
+            assert.is_false(metrics.is_cjk)
+            assert.is_false(metrics.is_arabic)
+            assert.are.equal(22, metrics.fs)
+            assert.are.equal(18, metrics.fs_small)
+            assert.are.equal(20, metrics.fs_btn)
+        end)
+
+        it("applies user preset font offsets (small, large, xlarge)", function()
+            local en_char = { name = "Hero", description = "Test" }
+            
+            plugin.ai_helper.settings.popup_font_size = "small"
+            local m_small = plugin:calculatePopupFontMetrics(en_char)
+            assert.are.equal(20, m_small.fs) -- 22 - 2
+
+            plugin.ai_helper.settings.popup_font_size = "large"
+            local m_large = plugin:calculatePopupFontMetrics(en_char)
+            assert.are.equal(24, m_large.fs) -- 22 + 3, clamped at 24 for Latin
+
+            plugin.ai_helper.settings.popup_font_size = "xlarge"
+            local m_xl = plugin:calculatePopupFontMetrics(en_char)
+            assert.are.equal(24, m_xl.fs) -- 22 + 6, clamped at 24 for Latin
+
+            local ar_char = { name = "باريستان سلمي", description = "فارس" }
+            local m_ar_xl = plugin:calculatePopupFontMetrics(ar_char)
+            assert.are.equal(30, m_ar_xl.fs) -- (22 + 6) * 1.25 = 35 clamped to 30
+
+            plugin.ai_helper.settings.popup_font_size = "auto"
+        end)
+
+        it("renders Arabic character details with properly sized font faces in ButtonDialog", function()
+            plugin.ai_helper.settings.ui_popup_intext = false
+            plugin.ai_helper.settings.ui_popup_menu = false
+            local ar_char = {
+                name = "باريستان سلمي",
+                aliases = { "باريستان الجسور" },
+                role = "فارس وحارس الملكة",
+                description = "فارس شجاع ومخلص يخدم كحارس لملكة ميرين دنيرس."
+            }
+            local Font = require("ui/font")
+            local old_getFace = Font.getFace
+            local captured_faces = {}
+            Font.getFace = function(self, face, size)
+                table.insert(captured_faces, { face = face, size = size })
+                return old_getFace(self, face, size)
+            end
+
+            plugin:showCharacterDetails(ar_char, { source = "menu" })
+            Font.getFace = old_getFace
+
+            local has_27 = false
+            local has_23 = false
+            for _, call in ipairs(captured_faces) do
+                if call.size == 27 then has_27 = true end
+                if call.size == 23 then has_23 = true end
+            end
+            assert.is_true(has_27, "Expected main text font size 27 for Arabic")
+            assert.is_true(has_23, "Expected subtitle/attribute font size 23 for Arabic")
+        end)
+
+        it("renders Arabic character in XRayBottomPopup with properly sized font faces", function()
+            plugin.ai_helper.settings.ui_popup_intext = true
+            local ar_char = {
+                name = "باريستان سلمي",
+                aliases = { "باريستان الجسور" },
+                role = "فارس وحارس الملكة",
+                description = "فارس شجاع ومخلص يخدم كحارس لملكة ميرين دنيرس."
+            }
+            local Font = require("ui/font")
+            local old_getFace = Font.getFace
+            local captured_faces = {}
+            Font.getFace = function(self, face, size)
+                table.insert(captured_faces, { face = face, size = size })
+                return old_getFace(self, face, size)
+            end
+
+            plugin:showCharacterDetails(ar_char, { source = "in_text" })
+            Font.getFace = old_getFace
+
+            local has_27 = false
+            local has_23 = false
+            local has_25 = false
+            for _, call in ipairs(captured_faces) do
+                if call.size == 27 then has_27 = true end
+                if call.size == 23 then has_23 = true end
+                if call.size == 25 then has_25 = true end
+            end
+            assert.is_true(has_27, "Expected main text font size 27 in bottom popup for Arabic")
+            assert.is_true(has_23, "Expected subtitle font size 23 in bottom popup for Arabic")
+            assert.is_true(has_25, "Expected button font size 25 in bottom popup for Arabic")
+        end)
+
+        it("displays and saves settings via showPopupFontSizeCard", function()
+            local shown_card = nil
+            local XRaySettingsCard = require("xray_settings_card")
+            local old_show = XRaySettingsCard.show
+            XRaySettingsCard.show = function(inst, args)
+                shown_card = args
+            end
+
+            plugin:showPopupFontSizeCard()
+            XRaySettingsCard.show = old_show
+
+            assert.is_not_nil(shown_card)
+            assert.are.equal("auto", shown_card.get_current_func())
+            assert.are.equal(5, #shown_card.options)
+
+            shown_card.save_func("large")
+            assert.are.equal("large", plugin.ai_helper.settings.popup_font_size)
+            plugin.ai_helper.settings.popup_font_size = "auto"
+        end)
+    end)
+
     describe("Linked entries modernization & z-order dialog management", function()
         it("should close active_details_dialog when showRelatedEntities is called", function()
             local mock_dlg = { type = "ButtonDialog" }

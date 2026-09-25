@@ -981,6 +981,10 @@ msgstr "提及设置"
 msgid "menu_paste_clipboard"
 msgstr "从剪贴板粘贴 %s 密钥"
 
+# en-hash: f3ab2ad220b458e8cd144bc464038505
+msgid "menu_popup_font_size"
+msgstr "弹出窗口字号"
+
 # en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "主位 AI 模型"
@@ -1256,6 +1260,34 @@ msgstr "该文件夹内未找到电子书。"
 # en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "使用 AI 驱动的书籍分析提升您的阅读体验，就像 Kindle X-Ray 一样！"
+
+# en-hash: 389c89fbd48a05af731ab36f38724350
+msgid "popup_font_size_about"
+msgstr "弹出窗口的字号会根据当前书籍的字号自动调整，并针对阿拉伯语等复杂脚本语言进行优化。使用此设置可按个人阅读喜好调整整体显示效果。"
+
+# en-hash: 863ec258c5c61f509ae260a37d2d9107
+msgid "popup_font_size_auto"
+msgstr "自动（推荐）"
+
+# en-hash: dc6490ab9cc5ae91d5179dd59ad3e73a
+msgid "popup_font_size_desc"
+msgstr "调整脚注弹窗和详细信息对话框的字号："
+
+# en-hash: 3a69b34ce86dacb205936a8094f6c743
+msgid "popup_font_size_large"
+msgstr "大"
+
+# en-hash: 960b44c579bc2f6818d2daaf9e4c16f0
+msgid "popup_font_size_normal"
+msgstr "正常"
+
+# en-hash: 2660064e68655415da2628c2ae2f7592
+msgid "popup_font_size_small"
+msgstr "小"
+
+# en-hash: 5d4d8771b47d6c5166952822e552f082
+msgid "popup_font_size_xlarge"
+msgstr "特大"
 
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"

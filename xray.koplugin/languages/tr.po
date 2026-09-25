@@ -981,6 +981,10 @@ msgstr "Bahsedilenler Ayarları"
 msgid "menu_paste_clipboard"
 msgstr "Panodan %s anahtarını yapıştır"
 
+# en-hash: f3ab2ad220b458e8cd144bc464038505
+msgid "menu_popup_font_size"
+msgstr "Açılır Pencere Yazı Boyutu"
+
 # en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "Birincil YZ Modeli"
@@ -1256,6 +1260,34 @@ msgstr "Bu klasörde e-kitap bulunamadı."
 # en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "Amazon Kindle X-Ray gibi, YZ destekli kitap analizi ile okuma deneyiminizi dönüştürün!"
+
+# en-hash: 389c89fbd48a05af731ab36f38724350
+msgid "popup_font_size_about"
+msgstr "Açılır pencere yazı tipi boyutları, mevcut kitap yazı tipi boyutunuza göre otomatik olarak ayarlanır ve Arapça gibi karmaşık alfabelere sahip diller için optimize edilir. Genel görünümü okuma tercihinize göre ayarlamak için bu ayarı kullanın."
+
+# en-hash: 863ec258c5c61f509ae260a37d2d9107
+msgid "popup_font_size_auto"
+msgstr "Otomatik (Önerilen)"
+
+# en-hash: dc6490ab9cc5ae91d5179dd59ad3e73a
+msgid "popup_font_size_desc"
+msgstr "Dipnotlar ve detay pencereleri için yazı boyutunu ayarlayın:"
+
+# en-hash: 3a69b34ce86dacb205936a8094f6c743
+msgid "popup_font_size_large"
+msgstr "Büyük"
+
+# en-hash: 960b44c579bc2f6818d2daaf9e4c16f0
+msgid "popup_font_size_normal"
+msgstr "Normal"
+
+# en-hash: 2660064e68655415da2628c2ae2f7592
+msgid "popup_font_size_small"
+msgstr "Küçük"
+
+# en-hash: 5d4d8771b47d6c5166952822e552f082
+msgid "popup_font_size_xlarge"
+msgstr "Çok Büyük"
 
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"

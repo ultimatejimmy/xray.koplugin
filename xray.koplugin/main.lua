@@ -1384,6 +1384,11 @@ function XRayPlugin:getSubMenuItems()
                         end,
                     },
                     {
+                        text = self.loc:t("menu_popup_font_size") or "Popup & Footnote Font Size",
+                        keep_menu_open = true,
+                        callback = function() self:showPopupFontSizeCard() end,
+                    },
+                    {
                         text = self.loc:t("menu_linked_entries_settings") or "Linked Entries Settings",
                         keep_menu_open = true,
                         callback = function() self:showLinkedEntriesSettings() end,
@@ -2312,6 +2317,35 @@ function XRayPlugin:showUnitScanWrittenNumbersCard()
             if self.scanBookForUnits then self:scanBookForUnits() end
         end,
         about_text = self.loc:t("unit_scan_written_numbers_about") or "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."
+    })
+end
+
+function XRayPlugin:showPopupFontSizeCard()
+    local XRaySettingsCard = require(plugin_path .. "xray_settings_card")
+    XRaySettingsCard.show(self, {
+        title = self.loc:t("menu_popup_font_size") or "Popup Font Size",
+        description = self.loc:t("popup_font_size_desc") or "Adjust font size for footnote popups and detail dialogs:",
+        options = {
+            { text = self.loc:t("popup_font_size_auto") or "Auto (Recommended)", value = "auto" },
+            { text = self.loc:t("popup_font_size_small") or "Small", value = "small" },
+            { text = self.loc:t("popup_font_size_normal") or "Normal", value = "normal" },
+            { text = self.loc:t("popup_font_size_large") or "Large", value = "large" },
+            { text = self.loc:t("popup_font_size_xlarge") or "Extra Large", value = "xlarge" },
+        },
+        get_current_func = function()
+            local s = self.ai_helper and self.ai_helper.settings
+            return (s and s.popup_font_size) or "auto"
+        end,
+        save_func = function(val)
+            if self.ai_helper then
+                if self.ai_helper.saveSettings then
+                    self.ai_helper:saveSettings({ popup_font_size = val })
+                elseif self.ai_helper.settings then
+                    self.ai_helper.settings.popup_font_size = val
+                end
+            end
+        end,
+        about_text = self.loc:t("popup_font_size_about") or "Popup font sizes automatically adjust based on your current book font size and optimize for languages with complex scripts like Arabic. Use this setting to adjust the overall display to your reading preference."
     })
 end
 

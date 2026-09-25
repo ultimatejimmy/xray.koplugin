@@ -737,6 +737,9 @@ msgstr "Mentions Settings"
 msgid "menu_paste_clipboard"
 msgstr "Paste %s Key from Clipboard"
 
+msgid "menu_popup_font_size"
+msgstr "Popup Font Size"
+
 msgid "menu_primary_ai_model"
 msgstr "Primary AI Model"
 
@@ -943,6 +946,27 @@ msgstr "No ebook files found in this folder."
 
 msgid "plugin_description"
 msgstr "Transform your reading experience with AI-powered book analysis, just like Amazon Kindle X-Ray!"
+
+msgid "popup_font_size_about"
+msgstr "Popup font sizes automatically adjust based on your current book font size and optimize for languages with complex scripts like Arabic. Use this setting to adjust the overall display to your reading preference."
+
+msgid "popup_font_size_auto"
+msgstr "Auto (Recommended)"
+
+msgid "popup_font_size_desc"
+msgstr "Adjust font size for footnote popups and detail dialogs:"
+
+msgid "popup_font_size_large"
+msgstr "Large"
+
+msgid "popup_font_size_normal"
+msgstr "Normal"
+
+msgid "popup_font_size_small"
+msgstr "Small"
+
+msgid "popup_font_size_xlarge"
+msgstr "Extra Large"
 
 msgid "prev"
 msgstr "Prev"

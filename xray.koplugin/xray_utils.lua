@@ -249,6 +249,52 @@ function M:textHasCJK(text)
     return text:find("[\227-\234][\128-\191][\128-\191]") ~= nil
 end
 
+-- Returns true if the text contains Arabic script characters (U+0600–U+06FF, U+0750–U+077F, U+08A0–U+08FF, U+FB50–U+FDFF, U+FE70–U+FEFF)
+function M:textHasArabic(text)
+    if type(text) ~= "string" or text == "" then return false end
+    return text:find("[\216-\219][\128-\191]") ~= nil
+        or text:find("\221[\144-\191]") ~= nil
+        or text:find("\224[\162-\163][\128-\191]") ~= nil
+        or text:find("\239[\173-\187][\128-\191]") ~= nil
+end
+
+-- Returns true if the font family name looks like an Arabic font
+function M:isArabicFontFamily(family)
+    if not family or type(family) ~= "string" then return false end
+    local fl = family:lower()
+    return fl:find("arabic") ~= nil or fl:find("amiri") ~= nil or fl:find("scheherazade") ~= nil
+        or fl:find("naskh") ~= nil or fl:find("kufi") ~= nil or fl:find("ruq") ~= nil
+        or fl:find("lateef") ~= nil or fl:find("harmattan") ~= nil or fl:find("almarai") ~= nil
+        or fl:find("tajawal") ~= nil or fl:find("aref") ~= nil or fl:find("cairo") ~= nil
+        or fl:find("dubai") ~= nil or fl:find("noto.*ar") ~= nil
+end
+
+-- Returns true if an entity contains Arabic text in any of its fields
+function M:entityHasArabic(entity)
+    if not entity or type(entity) ~= "table" then return false end
+    return self:textHasArabic(entity.name)
+        or self:textHasArabic(entity.description)
+        or self:textHasArabic(entity.biography)
+        or self:textHasArabic(entity.definition)
+        or self:textHasArabic(entity.desc)
+        or self:textHasArabic(entity.event)
+        or (type(entity.aliases) == "table" and self:textHasArabic(table.concat(entity.aliases, " ")))
+        or (type(entity.aliases) == "string" and self:textHasArabic(entity.aliases))
+end
+
+-- Returns true if an entity contains CJK text in any of its fields
+function M:entityHasCJK(entity)
+    if not entity or type(entity) ~= "table" then return false end
+    return self:textHasCJK(entity.name)
+        or self:textHasCJK(entity.description)
+        or self:textHasCJK(entity.biography)
+        or self:textHasCJK(entity.definition)
+        or self:textHasCJK(entity.desc)
+        or self:textHasCJK(entity.event)
+        or (type(entity.aliases) == "table" and self:textHasCJK(table.concat(entity.aliases, " ")))
+        or (type(entity.aliases) == "string" and self:textHasCJK(entity.aliases))
+end
+
 -- Truncates a string to limit_en characters (scaled down to limit_en/3 if CJK)
 -- only if the total length exceeds threshold_en (scaled down to threshold_en/3 if CJK).
 -- Returns: truncated_text, is_truncated

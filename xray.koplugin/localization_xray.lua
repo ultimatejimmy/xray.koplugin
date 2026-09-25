@@ -528,6 +528,14 @@ function Localization:t(key, ...)
             confirm_clear_single_key = "Clear the configured API key for %s?",
             btn_clear_key = "Clear Key",
             single_key_cleared = "%s API key cleared.",
+            menu_popup_font_size = "Popup & Footnote Font Size",
+            popup_font_size_desc = "Adjust font size for footnote popups and detail dialogs:",
+            popup_font_size_auto = "Auto (Recommended)",
+            popup_font_size_small = "Small",
+            popup_font_size_normal = "Normal",
+            popup_font_size_large = "Large",
+            popup_font_size_xlarge = "Extra Large",
+            popup_font_size_about = "Popup font sizes automatically adjust based on your current book font size and optimize for languages with complex scripts like Arabic. Use this setting to adjust the overall display to your reading preference.",
         }
         translation = fallbacks[key] or key
     end

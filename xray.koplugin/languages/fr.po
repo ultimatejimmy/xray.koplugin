@@ -981,6 +981,10 @@ msgstr "Paramètres des mentions"
 msgid "menu_paste_clipboard"
 msgstr "Coller la clé %s depuis le presse-papiers"
 
+# en-hash: f3ab2ad220b458e8cd144bc464038505
+msgid "menu_popup_font_size"
+msgstr "Taille de police des popups"
+
 # en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "Modèle IA principal"
@@ -1256,6 +1260,34 @@ msgstr "Aucun fichier de livre trouvé dans ce dossier."
 # en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "Transformez votre expérience de lecture avec l'analyse de livre assistée par l'IA, tout comme Amazon Kindle X-Ray !"
+
+# en-hash: 389c89fbd48a05af731ab36f38724350
+msgid "popup_font_size_about"
+msgstr "La taille de police des popups s'ajuste automatiquement en fonction de la taille de police actuelle de votre livre et est optimisée pour les langues utilisant des scripts complexes comme l'arabe. Utilisez ce paramètre pour adapter l'affichage global à vos préférences de lecture."
+
+# en-hash: 863ec258c5c61f509ae260a37d2d9107
+msgid "popup_font_size_auto"
+msgstr "Auto (Recommandé)"
+
+# en-hash: dc6490ab9cc5ae91d5179dd59ad3e73a
+msgid "popup_font_size_desc"
+msgstr "Ajuster la taille de la police pour les popups de notes de bas de page et les dialogues détaillés :"
+
+# en-hash: 3a69b34ce86dacb205936a8094f6c743
+msgid "popup_font_size_large"
+msgstr "Grand"
+
+# en-hash: 960b44c579bc2f6818d2daaf9e4c16f0
+msgid "popup_font_size_normal"
+msgstr "Normal"
+
+# en-hash: 2660064e68655415da2628c2ae2f7592
+msgid "popup_font_size_small"
+msgstr "Petit"
+
+# en-hash: 5d4d8771b47d6c5166952822e552f082
+msgid "popup_font_size_xlarge"
+msgstr "Très grand"
 
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"

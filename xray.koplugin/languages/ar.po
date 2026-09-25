@@ -981,6 +981,10 @@ msgstr "إعدادات الإشارات"
 msgid "menu_paste_clipboard"
 msgstr "لصق مفتاح %s من الحافظة"
 
+# en-hash: f3ab2ad220b458e8cd144bc464038505
+msgid "menu_popup_font_size"
+msgstr "حجم خط النوافذ المنبثقة والحواشي"
+
 # en-hash: f0e87a49b3cb82e4faabd5fc3729e8e8
 msgid "menu_primary_ai_model"
 msgstr "نموذج الذكاء الاصطناعي الأساسي"
@@ -1256,6 +1260,34 @@ msgstr "لم يتم العثور على ملفات كتب إلكترونية ف�
 # en-hash: d87f433b237815fa419a2ac953956c54
 msgid "plugin_description"
 msgstr "حول تجربة القراءة الخاصة بك من خلال تحليل الكتب بمساعدة الذكاء الاصطناعي، تمامًا مثل ميزة X-Ray في أجهزة Amazon Kindle!"
+
+# en-hash: 389c89fbd48a05af731ab36f38724350
+msgid "popup_font_size_about"
+msgstr "يتم ضبط أحجام خطوط النوافذ المنبثقة تلقائياً بناءً على حجم خط الكتاب مع تحسين القراءة للنصوص العربية والخطوط المركبة. يمكنك اختيار إعداد أكبر أو أصغر لضبط العرض حسب تفضيلك الشخصي."
+
+# en-hash: 863ec258c5c61f509ae260a37d2d9107
+msgid "popup_font_size_auto"
+msgstr "تلقائي (موصى به)"
+
+# en-hash: dc6490ab9cc5ae91d5179dd59ad3e73a
+msgid "popup_font_size_desc"
+msgstr "ضبط حجم الخط للنوافذ المنبثقة والحواشي السفلية:"
+
+# en-hash: 3a69b34ce86dacb205936a8094f6c743
+msgid "popup_font_size_large"
+msgstr "كبير"
+
+# en-hash: 960b44c579bc2f6818d2daaf9e4c16f0
+msgid "popup_font_size_normal"
+msgstr "عادي"
+
+# en-hash: 2660064e68655415da2628c2ae2f7592
+msgid "popup_font_size_small"
+msgstr "صغير"
+
+# en-hash: 5d4d8771b47d6c5166952822e552f082
+msgid "popup_font_size_xlarge"
+msgstr "كبير جداً"
 
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"
