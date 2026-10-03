@@ -1031,6 +1031,74 @@ describe("xray_ui", function()
             assert.are.equal("10 centimetres", plugin.unit_xp_matches[2].original)
             assert.are.equal("3.94 inches", plugin.unit_xp_matches[2].converted)
         end)
+
+        describe("with auto-scan disabled", function()
+            local cache_path
+            local cancelled
+            local scanned
+
+            before_each(function()
+                local xray_unitscanner = require("xray_unitscanner")
+                for k, v in pairs(xray_unitscanner) do
+                    plugin[k] = v
+                end
+
+                cancelled = false
+                scanned = false
+                plugin.ai_helper = {
+                    settings = {
+                        unit_converter_enabled = true,
+                        unit_underline_enabled = true,
+                        unit_auto_scan_enabled = false,
+                        unit_conversion_direction = "to_imperial",
+                    },
+                    _async_child_pid = 4321,
+                    cancelAsyncChild = function() cancelled = true end,
+                }
+                plugin.bg_fetch_active = true
+
+                cache_path = os.tmpname()
+                plugin._getUnitCachePath = function() return cache_path end
+                plugin.ui.document.findAllText = function()
+                    scanned = true
+                    return {}
+                end
+            end)
+
+            after_each(function()
+                os.remove(cache_path)
+            end)
+
+            it("should restore underlines from a valid cache without scanning", function()
+                plugin.unit_xp_matches = {
+                    { start_xp = "xp_five", end_xp = "xp2", original = "five meters", converted = "5.5 yards", category = "length" },
+                }
+                plugin:saveUnitCache()
+                plugin.unit_xp_matches = nil
+
+                plugin:scanBookForUnits()
+
+                assert.are.equal(1, #plugin.unit_xp_matches)
+                assert.are.equal("xp_five", plugin.unit_xp_matches[1].start_xp)
+                assert.are.equal("five meters", plugin.unit_xp_matches[1].original)
+                assert.is_false(scanned)
+                assert.is_false(cancelled)
+                assert.is_true(plugin.bg_fetch_active)
+                assert.is_falsy(plugin._unit_scan_in_progress)
+            end)
+
+            it("should neither scan nor cancel background AI when no cache exists", function()
+                os.remove(cache_path)
+
+                plugin:scanBookForUnits()
+
+                assert.is_nil(plugin.unit_xp_matches)
+                assert.is_false(scanned)
+                assert.is_false(cancelled)
+                assert.is_true(plugin.bg_fetch_active)
+                assert.is_falsy(plugin._unit_scan_in_progress)
+            end)
+        end)
     end)
     describe("cache operations", function()
         local test_cache_file = "spec/tmp_test_cache.cache"

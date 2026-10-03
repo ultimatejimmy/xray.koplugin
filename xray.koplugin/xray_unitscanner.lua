@@ -673,11 +673,6 @@ function M:scanBookForUnits(force)
         return
     end
 
-    if not force and settings.unit_auto_scan_enabled == false then
-        log("scanBookForUnits: skipped scan because unit_auto_scan_enabled is false.")
-        return
-    end
-
     -- Book Type Filtering Gate
     if self.getEffectiveBookType then
         local book_type = self:getEffectiveBookType()
@@ -696,13 +691,6 @@ function M:scanBookForUnits(force)
         end
     end
 
-    -- Proactively cancel any running background AI processes to prioritize the unit scan
-    if self.ai_helper and self.ai_helper.cancelAsyncChild and self.ai_helper._async_child_pid then
-        log("scanBookForUnits: active background AI process detected, cancelling it to reclaim memory")
-        self.ai_helper:cancelAsyncChild()
-        self.bg_fetch_active = false
-    end
-
     log("scanBookForUnits starting. Force=" .. tostring(force))
     local resolved_dir = _getResolvedDirection(self)
     local cache_loaded = self:loadUnitCache(resolved_dir)
@@ -710,6 +698,18 @@ function M:scanBookForUnits(force)
     if not force and cache_loaded then
         log("scanBookForUnits: returning early due to cached hits")
         return
+    end
+
+    if not force and settings.unit_auto_scan_enabled == false then
+        log("scanBookForUnits: skipped scan because unit_auto_scan_enabled is false.")
+        return
+    end
+
+    -- Proactively cancel any running background AI processes to prioritize the unit scan
+    if self.ai_helper and self.ai_helper.cancelAsyncChild and self.ai_helper._async_child_pid then
+        log("scanBookForUnits: active background AI process detected, cancelling it to reclaim memory")
+        self.ai_helper:cancelAsyncChild()
+        self.bg_fetch_active = false
     end
 
     if self._unit_scan_in_progress then return end
