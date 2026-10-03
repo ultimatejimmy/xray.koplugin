@@ -81,6 +81,30 @@ local WRITTEN_NUMBERS = {
     ["девятьсот"] = 900, ["тысяча"] = 1000, ["тысячи"] = 1000, ["тысяч"] = 1000,
     ["миллион"] = 1000000, ["миллиона"] = 1000000, ["миллионов"] = 1000000,
 
+    -- Ukrainian (lowercase UTF-8, apostrophes normalized to ASCII ')
+    ["чверть"] = 0.25, ["пів"] = 0.5, ["півтора"] = 1.5, ["півтори"] = 1.5,
+    ["одне"] = 1, ["дві"] = 2, ["чотири"] = 4, ["п'ять"] = 5,
+    ["шість"] = 6, ["сім"] = 7, ["вісім"] = 8, ["дев'ять"] = 9,
+    ["одинадцять"] = 11, ["дванадцять"] = 12, ["тринадцять"] = 13, ["чотирнадцять"] = 14,
+    ["п'ятнадцять"] = 15, ["шістнадцять"] = 16, ["сімнадцять"] = 17, ["вісімнадцять"] = 18,
+    ["дев'ятнадцять"] = 19, ["двадцять"] = 20, ["тридцять"] = 30,
+    ["п'ятдесят"] = 50, ["шістдесят"] = 60, ["сімдесят"] = 70, ["вісімдесят"] = 80,
+    ["дев'яносто"] = 90, ["двісті"] = 200, ["чотириста"] = 400,
+    ["п'ятсот"] = 500, ["шістсот"] = 600, ["сімсот"] = 700, ["вісімсот"] = 800,
+    ["дев'ятсот"] = 900, ["тисяча"] = 1000, ["тисячі"] = 1000, ["тисяч"] = 1000,
+    ["мільйон"] = 1000000, ["мільйона"] = 1000000, ["мільйони"] = 1000000, ["мільйонів"] = 1000000,
+    -- Ukrainian genitive forms (e.g. "близько п'яти миль")
+    ["одного"] = 1, ["однієї"] = 1, ["одної"] = 1,
+    ["двох"] = 2, ["трьох"] = 3, ["чотирьох"] = 4, ["п'яти"] = 5, ["шести"] = 6,
+    ["семи"] = 7, ["восьми"] = 8, ["дев'яти"] = 9, ["десяти"] = 10,
+    ["одинадцяти"] = 11, ["дванадцяти"] = 12, ["тринадцяти"] = 13, ["чотирнадцяти"] = 14,
+    ["п'ятнадцяти"] = 15, ["шістнадцяти"] = 16, ["сімнадцяти"] = 17, ["вісімнадцяти"] = 18,
+    ["дев'ятнадцяти"] = 19, ["двадцяти"] = 20, ["тридцяти"] = 30, ["сорока"] = 40,
+    ["п'ятдесяти"] = 50, ["шістдесяти"] = 60, ["сімдесяти"] = 70, ["вісімдесяти"] = 80,
+    ["дев'яноста"] = 90, ["ста"] = 100, ["двохсот"] = 200, ["трьохсот"] = 300,
+    ["чотирьохсот"] = 400, ["п'ятисот"] = 500, ["шестисот"] = 600, ["семисот"] = 700,
+    ["восьмисот"] = 800, ["дев'ятисот"] = 900,
+
     -- German
     ["ein"] = 1, ["eine"] = 1, ["eins"] = 1, ["zwei"] = 2, ["drei"] = 3, ["vier"] = 4,
     ["fünf"] = 5, ["fuenf"] = 5, ["sechs"] = 6, ["sieben"] = 7, ["acht"] = 8, ["neun"] = 9,
@@ -196,8 +220,11 @@ local function parseNumberText(str)
     -- Normalize Unicode minus/dashes to standard hyphen
     str = str:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")
     str = str:gsub("^%-%s+", "-")
-    if str == "half" or str == "half a" or str == "half an" or str == "пол" or str == "полтора" or str == "полторы" then
-        if str == "полтора" or str == "полторы" then return 1.5 end
+    -- Normalize Ukrainian apostrophes (’ U+2019, ʼ U+02BC) to ASCII
+    str = str:gsub("\226\128\153", "'"):gsub("\202\188", "'")
+    if str == "half" or str == "half a" or str == "half an" or str == "пол" or str == "полтора" or str == "полторы"
+        or str == "пів" or str == "півтора" or str == "півтори" then
+        if str == "полтора" or str == "полторы" or str == "півтора" or str == "півтори" then return 1.5 end
         return 0.5
     end
     
@@ -217,7 +244,7 @@ local function parseNumberText(str)
     local wvals = {}
     local found = false
     for word in str:gmatch("[%S]+") do
-        local clean_w = utf8Lower(word):gsub("[%-,]$", "")
+        local clean_w = utf8Lower(word):gsub("^['\"]+", ""):gsub("['\"]+$", ""):gsub("[%-,]$", "")
         if clean_w ~= "and" and clean_w ~= "a" and clean_w ~= "an" and clean_w ~= "и" and clean_w ~= "und" and clean_w ~= "et" and clean_w ~= "y" then
             local wval = WRITTEN_NUMBERS[clean_w]
             if not wval then return nil end
@@ -339,7 +366,7 @@ local UNITS = {
         "zoll", "pulgada", "pulgadas", "pulg", "pouce", "pouces", "po", "pollice", "pollici",
         "polegada", "polegadas", "pol", "cal", "cale", "cali", "cala", "calach", "calami", "calom",
         "дюймов", "дюйма", "дюйм", "дюймы", "дюйме", "дюйму", "дюймом", "дюймах", "дюймам", "дюймами",
-        "дюймів", "дюймі",
+        "дюймів", "дюймі", "дюйми",
         "инча", "инчи", "инч", "inča", "inči", "inč",
         "hüvelyk", "coll", "inç", "inci", "بوصة", "بوصات", "بوصتين", "英寸", "吋", "インチ"
     } },
@@ -348,7 +375,7 @@ local UNITS = {
         "füße", "fuesse", "fuß", "fuss", "pie", "pies", "pied", "pieds", "pi", "piede", "piedi",
         "pé", "pés", "voet", "voeten", "stopa", "stopy", "stóp", "stopie", "stopę", "stopą", "stopami", "stopach", "stop",
         "футов", "фута", "фут", "футы", "футе", "футу", "футом", "футах", "футам", "футами",
-        "футів", "футі",
+        "футів", "футі", "фути",
         "стопа", "стопе", "стопи", "стопу", "стопом", "stopa", "stope", "stopi",
         "láb", "ayak", "kaki", "قدم", "أقدام", "اقدام", "قدمين", "英尺", "呎", "フィート", "フート"
     } },
@@ -357,7 +384,7 @@ local UNITS = {
         "yarda", "yardas", "verge", "verges", "iarda", "iarde", "jarda", "jardas",
         "jard", "jardy", "jardów", "jarda", "jardem", "jardzie", "jardach", "jardami",
         "ярдов", "ярда", "ярд", "ярды", "ярде", "ярду", "ярдом", "ярдах", "ярдам", "ярдами",
-        "ярдів", "ярді",
+        "ярдів", "ярді", "ярди",
         "јарда", "јарди", "јард", "jarda", "jardi", "jard",
         "yard", "yarda", "ياردا", "ياردة", "يارده", "ياردات", "ياردتين", "码", "ヤード"
     } },
@@ -374,7 +401,7 @@ local UNITS = {
         "leagues", "league", "leugen", "leuge", "wegstunden", "wegstunde", "leguas", "legua", "lieues", "lieue",
         "leghe", "lega", "léguas", "légua", "ligi", "lig", "liga",
         "лиг", "лиги", "лига", "лиге", "лигу", "лигой", "лигою", "лигам", "лигами", "лигах",
-        "ліг", "ліги", "ліга", "лігу", "лігою", "лігами", "лігах",
+        "ліг", "ліги", "ліга", "лігу", "лігою", "лігами", "лігах", "лізі", "лігам",
         "лиге", "lige", "里格", "リーグ"
     } },
     { category = "length", system = "imperial", name = "fathom", std_target = "m", aliases = {
@@ -382,14 +409,14 @@ local UNITS = {
         "braças", "braça", "sążnie", "sążni", "sążeń",
         "морских саженей", "морской сажени", "морская сажень", "саженей", "сажени", "сажень", "саженям", "саженями", "саженях",
         "фатомов", "фатома", "фатом", "фатомы", "фатому", "фатомом", "фатоме", "фатомах",
-        "сажнів", "сажні", "фатомів",
+        "сажнів", "сажні", "сажня", "сажню", "сажнем", "сажням", "сажнями", "сажнях", "фатомів", "фатоми",
         "öl", "kulaç", "depa", "英寻", "㖊", "ファゾム", "尋"
     } },
     
     { category = "length", system = "metric", name = "mm", std_target = "inch", aliases = {
         "millimeters", "millimeter", "mm", "millimetres", "millimetre",
         "миллиметров", "миллиметра", "миллиметр", "миллиметры", "миллиметрах", "миллиметрам", "миллиметрами", "мм",
-        "міліметрів", "міліметра", "міліметр", "міліметри",
+        "міліметрів", "міліметра", "міліметр", "міліметри", "міліметру", "міліметром", "міліметрі", "міліметрам", "міліметрами", "міліметрах",
         "milímetros", "milímetro", "millimètres", "millimètre", "millimetri", "millimetro",
         "milimetrów", "milimetry", "milimetr", "miliméter", "milimetre", "milimeter",
         "مليمتر", "مليمترات", "مم", "毫米", "ミリメートル"
@@ -397,14 +424,14 @@ local UNITS = {
     { category = "length", system = "metric", name = "cm", std_target = "inch", aliases = {
         "centimeters", "centimeter", "cm", "centimetres", "centimetre",
         "сантиметров", "сантиметра", "сантиметр", "сантиметры", "сантиметрах", "сантиметрам", "сантиметрами", "см",
-        "сантиметрів", "сантиметрі",
+        "сантиметрів", "сантиметрі", "сантиметри", "сантиметру", "сантиметром",
         "centímetros", "centímetro", "centimètres", "centimètre", "centimetri", "centimetro",
         "centymetrów", "centymetry", "centymetr", "centiméter", "santimetre", "sentimeter",
         "سنتيمتر", "سنتيمترات", "سم", "厘米", "公分", "センチメートル", "センチ"
     } },
     { category = "length", system = "metric", name = "dm", std_target = "inch", aliases = {
         "decimeters", "decimeter", "dm", "decimetres", "decimetre",
-        "дециметров", "дециметра", "дециметр", "дециметры", "дм", "дециметрів",
+        "дециметров", "дециметра", "дециметр", "дециметры", "дм", "дециметрів", "дециметри", "дециметру", "дециметром", "дециметрі", "дециметрах", "дециметрам", "дециметрами",
         "decímetros", "decímetro", "décimètres", "décimètre", "decimetri", "decimetro",
         "decymetrów", "decymetry", "decymetr", "deciméter", "desimetre", "desimeter",
         "ديسيمتر", "分米", "デシメートル"
@@ -412,14 +439,14 @@ local UNITS = {
     { category = "length", system = "metric", name = "m", std_target = "foot", aliases = {
         "meters", "meter", "m", "metres", "metre", "metro", "metros", "mètre", "mètres", "metri", "metr", "metry", "metrów",
         "метров", "метра", "метр", "метры", "метре", "метру", "метром", "метрах", "метрам", "метрами", "м",
-        "метрів", "метрі",
+        "метрів", "метрі", "метри",
         "méter", "متر", "أمتار", "امار", "米", "公尺", "メートル"
     } },
     { category = "length", system = "metric", name = "km", std_target = "mile", aliases = {
         "kilometers", "kilometer", "km", "kilometres", "kilometre", "kilómetro", "kilómetros", "kilomètre", "kilomètres",
         "chilometro", "chilometri", "quilômetro", "quilômetros", "kilometry", "kilometrów", "kilometr",
         "километров", "километра", "километр", "километры", "километре", "километру", "километром", "километрах", "километрам", "километрами", "км",
-        "кілометрів", "кілометра", "кілометр", "кілометри", "кілометрі",
+        "кілометрів", "кілометра", "кілометр", "кілометри", "кілометрі", "кілометру", "кілометром", "кілометрам", "кілометрами", "кілометрах",
         "kilométer", "كيلومتر", "كيلومترات", "كم", "公里", "千米", "キロメートル", "キロ"
     } },
 
@@ -429,7 +456,7 @@ local UNITS = {
         "unze", "unzen", "onza", "onzas", "once", "onces", "oncia",
         "uncja", "uncje", "uncji", "uncję", "uncją", "uncjami", "uncjach",
         "унций", "унции", "унция", "унцию", "унцией", "унциею", "унциям", "унциями", "унциях", "унц.",
-        "унцій", "унцією",
+        "унцій", "унцією", "унція", "унції", "унцію", "унціям", "унціями", "унціях",
         "унце", "унци", "унца", "unce", "unci", "unca",
         "uncia", "ons", "أوقية", "أوقيات", "اوقية", "اوقيات", "أونصة", "اونصة", "盎司", "オンス"
     } },
@@ -445,20 +472,20 @@ local UNITS = {
     { category = "weight", system = "imperial", name = "st", std_target = "kg", aliases = {
         "stones", "stone", "st",
         "стоунов", "стоуна", "стоун", "стоуны", "стоуне", "стоуну", "стоуном", "стоунах",
-        "стоунів", "kamienie", "kamieni", "kamień", "英石"
+        "стоунів", "стоуни", "стоуні", "стоунам", "стоунами", "kamienie", "kamieni", "kamień", "英石"
     } },
 
     { category = "weight", system = "metric", name = "g", std_target = "oz", aliases = {
         "grams", "gram", "g", "grammes", "gramme", "gramm", "gramo", "gramos", "grammo", "grammi", "grama", "gramas", "gramy", "gramów",
         "граммов", "грамма", "грамм", "граммы", "граммах", "граммам", "граммами", "г", "гр",
-        "грамів", "грама", "грам",
+        "грамів", "грама", "грам", "грами", "граму", "грамом", "грамі", "грамам", "грамами", "грамах",
         "جرام", "جرامات", "غرام", "غرامات", "غم", "克", "公克", "グラム"
     } },
     { category = "weight", system = "metric", name = "kg", std_target = "lb", aliases = {
         "kilograms", "kilogram", "kg", "kilogrammes", "kilogramme", "kilogramm", "kilogramo", "kilogramos", "kilogrames", "kilo", "kilos",
         "chilogrammo", "chilogrammi", "chilo", "chili", "quilograma", "quilogramas", "quilo", "quilos", "kilogramy", "kilogramów",
         "килограммов", "килограмма", "килограмм", "килограммы", "килограммах", "килограммам", "килограммами", "кило", "кг",
-        "кілограмів", "кілограма", "кілограм", "кілограми",
+        "кілограмів", "кілограма", "кілограм", "кілограми", "кілограму", "кілограмом", "кілограмі", "кілограмам", "кілограмами", "кілограмах",
         "كيلوجرام", "كيلوجرامات", "كيلو", "كغم", "公斤", "千克", "キログラム", "キロ"
     } },
 
@@ -468,7 +495,7 @@ local UNITS = {
         "fahrenheit", "°fahrenheit", "ºfahrenheit", "°f", "ºf", "°F", "°Fahrenheit", "ºF", "ºFahrenheit", "of", "oF", "0f", "0F", "f",
         "градусов по фаренгейту", "градуса по фаренгейту", "градус по фаренгейту", "по фаренгейту",
         "градусов фаренгейта", "градуса фаренгейта", "градус фаренгейта", "град. фаренгейта", "град. по фаренгейту", "°ф", "°f",
-        "градусів за фаренгейтом", "градуси за фаренгейтом", "градус за фаренгейтом", "за фаренгейтом", "градусів фаренгейта", "градус фаренгейта",
+        "градусів за фаренгейтом", "градуси за фаренгейтом", "градуса за фаренгейтом", "градус за фаренгейтом", "за фаренгейтом", "градусів фаренгейта", "градуси фаренгейта", "градуса фаренгейта", "градус фаренгейта",
         "степени фаренхајта", "степен фаренхајта", "stepeni farenhajta", "stepen farenhajta",
         "grad fahrenheit", "degrés fahrenheit", "degré fahrenheit", "grados fahrenheit", "grado fahrenheit",
         "gradi fahrenheit", "grado fahrenheit", "graus fahrenheit", "grau fahrenheit",
@@ -482,7 +509,7 @@ local UNITS = {
         "celsius", "celcius", "°celsius", "°celcius", "ºcelsius", "ºcelcius", "°c", "ºc", "°C", "°Celsius", "°Celcius", "ºC", "ºCelsius", "ºCelcius", "oc", "oC", "0c", "0C", "c",
         "градусов по цельсию", "градуса по цельсию", "градус по цельсию", "по цельсию",
         "градусов цельсия", "градуса цельсия", "градус цельсия", "град. цельсия", "град. по цельсию", "°с",
-        "градусів за цельсієм", "градуси за цельсієм", "градус за цельсієм", "за цельсієм", "градусів цельсія", "градус цельсія",
+        "градусів за цельсієм", "градуси за цельсієм", "градуса за цельсієм", "градус за цельсієм", "за цельсієм", "градусів цельсія", "градуси цельсія", "градуса цельсія", "градус цельсія",
         "степени целзијуса", "степен целзијуса", "stepeni celzijusa", "stepen celzijusa",
         "grad celsius", "degrés celsius", "degré celsius", "grados celsius", "grado celsius",
         "gradi celsius", "grado celsius", "graus celsius", "grau celsius",
@@ -496,7 +523,7 @@ local UNITS = {
     { category = "volume", system = "imperial", name = "fl oz", std_target = "ml", aliases = {
         "fluid ounces", "fluid ounce", "fl oz", "fl. oz.",
         "жидких унций", "жидкой унции", "жидкая унция", "жидкие унции", "жидкую унцию", "жидкими унциями", "жидких унциях", "ж. унц.",
-        "рідких унцій", "рідка унція",
+        "рідких унцій", "рідка унція", "рідкі унції", "рідкої унції", "рідку унцію", "рідкими унціями", "рідких унціях",
         "flüssigunzen", "flüssigunze", "onces liquides", "once liquide", "onzas líquidas", "onza líquida",
         "once fluide", "oncia fluida", "onças fluidas", "onça fluida",
         "uncji płynu", "uncje płynu", "uncja płynu", "液体盎司", "液量盎司"
@@ -504,27 +531,27 @@ local UNITS = {
     { category = "volume", system = "imperial", name = "cup", std_target = "ml", aliases = {
         "cups", "cup",
         "чашек", "чашки", "чашка", "чашку", "чашке", "чашкой", "чашкам", "чашками", "чашках",
-        "чашок", "чашці",
+        "чашок", "чашці", "чашкою",
         "tassen", "tasse", "tasses", "tazas", "taza", "tazze", "tazza", "xícaras", "xícara", "copos", "copo",
         "szklanek", "szklanki", "szklanka", "kubków", "kubki", "kubek", "杯"
     } },
     { category = "volume", system = "imperial", name = "pint", std_target = "ml", aliases = {
         "pints", "pint", "pt",
         "пинт", "пинты", "пинта", "пинту", "пинте", "пинтой", "пинтами", "пинтах",
-        "пінт", "пінти", "пінта", "пінту",
+        "пінт", "пінти", "пінта", "пінту", "пінті", "пінтою", "пінтам", "пінтами", "пінтах",
         "pinten", "pinte", "pintes", "pintas", "pinta", "pinte", "pinta", "pinty", "pint",
         "品脱"
     } },
     { category = "volume", system = "imperial", name = "quart", std_target = "l", aliases = {
         "quarts", "quart", "qt",
         "кварт", "кварты", "кварта", "кварту", "кварте", "квартой", "квартами", "квартах",
-        "кварт", "кварти", "кварта",
+        "кварт", "кварти", "кварта", "кварті", "квартою", "квартам",
         "chopines", "chopine", "cuartos", "cuarto", "quarti", "quarto", "quartos", "quarto", "kwarty", "kwart", "kwarta", "夸脱"
     } },
     { category = "volume", system = "imperial", name = "gallon", std_target = "l", aliases = {
         "gallons", "gallon", "gal",
         "галлонов", "галлона", "галлон", "галлоны", "галлону", "галлоном", "галлоне", "галлонах",
-        "галонів", "галона", "галон", "галони", "галонах",
+        "галонів", "галона", "галон", "галони", "галонах", "галону", "галоном", "галоні", "галонам", "галонами",
         "галона", "галони", "галон", "galona", "galoni", "galon",
         "gallone", "gallonen", "galón", "galones", "galloni", "galão", "galões", "galonów", "galony", "galonlar",
         "جالونات", "جالون", "غالونات", "غالون", "加仑", "ガロン"
@@ -533,7 +560,7 @@ local UNITS = {
     { category = "volume", system = "metric", name = "ml", std_target = "fl oz", aliases = {
         "milliliters", "milliliter", "ml", "mL", "millilitres", "millilitre",
         "миллилитров", "миллилитра", "миллилитр", "миллилитры", "мл",
-        "мілілітрів", "мілілітра", "мілілітр", "мілілітри",
+        "мілілітрів", "мілілітра", "мілілітр", "мілілітри", "мілілітру", "мілілітром", "мілілітрі", "мілілітрам", "мілілітрами", "мілілітрах",
         "mililitros", "mililitro", "millilitres", "millilitre", "millilitri", "millilitro",
         "mililitrów", "mililitry", "mililitr", "mililiter", "mililitre",
         "مليلتر", "مليلترات", "مل", "毫升", "ミリリットル"
@@ -541,7 +568,7 @@ local UNITS = {
     { category = "volume", system = "metric", name = "l", std_target = "gallon", aliases = {
         "liters", "liter", "l", "L", "litres", "litre", "litro", "litros", "litri", "litr", "litry", "litrów",
         "литров", "литра", "литр", "литры", "литрах", "литрам", "литрами", "л",
-        "літрів", "літра", "літр", "літри", "літрах",
+        "літрів", "літра", "літр", "літри", "літрах", "літру", "літром", "літрі", "літрам", "літрами",
         "литара", "литре", "литар", "litara", "litre", "litar",
         "liter", "litre", "لتر", "لترات", "升", "公升", "リットル"
     } },
@@ -549,7 +576,7 @@ local UNITS = {
     { category = "volume", system = "metric", name = "m³", std_target = "ft3", aliases = {
         "cubic meters", "cubic meter", "cubic metres", "cubic metre", "m3", "m³",
         "кубических метров", "кубического метра", "кубический метр", "кубические метры", "куб. м", "куб. метров", "м³", "м3",
-        "кубічних метрів", "кубічного метра", "кубічний метр", "куб. м",
+        "кубічних метрів", "кубічного метра", "кубічний метр", "кубічні метри", "кубічних метрах", "куб. м", "кубометрів", "кубометра", "кубометр", "кубометри",
         "kubikmeter", "mètres cubes", "mètre cube", "metros cúbicos", "metro cúbico", "metri cubi", "metro cubo",
         "metry sześcienne", "metrów sześciennych", "köbméter", "metreküp", "meter kubik",
         "متر مكعب", "أمتار مكعبة", "م³", "م3", "立方米", "立方メートル"
@@ -557,21 +584,21 @@ local UNITS = {
     { category = "volume", system = "imperial", name = "ft3", std_target = "m³", aliases = {
         "cubic feet", "cubic foot", "ft3", "ft³",
         "кубических футов", "кубического фута", "кубический фут", "кубические футы", "куб. фут", "куб. футов", "фут³", "фут3",
-        "кубічних футів", "кубічний фут",
+        "кубічних футів", "кубічний фут", "кубічні фути", "кубічного фута",
         "kubikfuß", "pieds cubes", "pied cube", "pies cúbicos", "pie cúbico", "piedi cubi", "piede cubo",
         "pés cúbicos", "pé cúbico", "stóp sześciennych", "قدم مكعب", "أقدام مكعبة", "立方英尺", "立方呎", "立方フィート"
     } },
     { category = "volume", system = "imperial", name = "in3", std_target = "cm³", aliases = {
         "cubic inches", "cubic inch", "in3", "in³",
         "кубических дюймов", "кубического дюйма", "кубический дюйм", "кубические дюймы", "куб. дюйм", "дюйм³", "дюйм3",
-        "кубічних дюймів", "кубічний дюйм",
+        "кубічних дюймів", "кубічний дюйм", "кубічні дюйми", "кубічного дюйма",
         "kubikzoll", "pouces cubes", "pulgadas cúbicas", "pollici cubi", "polegadas cúbicas", "cali sześciennych",
         "بوصة مكعبة", "立方英寸", "立方吋", "立方インチ"
     } },
     { category = "volume", system = "metric", name = "cm³", std_target = "in3", aliases = {
         "cubic centimeters", "cubic centimeter", "cubic centimetres", "cubic centimetre", "cm3", "cm³", "cc",
         "кубических сантиметров", "кубического сантиметра", "кубический сантиметр", "кубические сантиметры", "куб. см", "см³", "см3",
-        "кубічних сантиметрів", "кубічний сантиметр",
+        "кубічних сантиметрів", "кубічний сантиметр", "кубічні сантиметри", "кубічного сантиметра",
         "kubikzentimeter", "ccm", "centimètres cubes", "centímetro cúbico", "centímetros cúbicos", "centimetri cubi", "centímetro cúbico",
         "centymetrów sześciennych", "köbcentiméter", "santimetreküp", "sentimeter kubik",
         "سنتيمتر مكعب", "سم³", "سم3", "立方厘米", "立方公分", "立方センチメートル"
@@ -593,7 +620,7 @@ local UNITS = {
     { category = "speed", system = "metric", name = "km/h", std_target = "mph", aliases = {
         "kilometers per hour", "kilometres per hour", "km/h", "kmh", "kph",
         "километров в час", "километра в час", "километр в час", "км/ч", "км/час",
-        "кілометрів на годину", "кілометри на годину", "кілометр на годину", "км/год",
+        "кілометрів на годину", "кілометри на годину", "кілометра на годину", "кілометр на годину", "км/год",
         "километара на сат", "километара на час", "км/ч", "км/х", "km/h", "km/č", "kilometara na sat",
         "kilometer pro stunde", "stundenkilometer",
         "kilomètres à l'heure", "kilomètres par heure", "kilómetros por hora",
@@ -608,7 +635,7 @@ local UNITS = {
     { category = "area", system = "imperial", name = "sq ft", std_target = "m²", aliases = {
         "square feet", "square foot", "sq ft", "ft2", "ft²",
         "квадратных футов", "квадратного фута", "квадратный фут", "квадратные футы", "кв. футов", "кв. фута", "кв. фут", "кв. футы", "кв. футах", "фут²", "фут2",
-        "квадратних футів", "квадратного фута", "квадратний фут", "кв. фут", "кв. футів",
+        "квадратних футів", "квадратного фута", "квадратний фут", "квадратні фути", "квадратних футах", "кв. фут", "кв. футів", "кв. фути",
         "квадратних стопа", "квадратне стопе", "kvadratnih stopa", "kvadratne stope",
         "quadratfuß", "pieds carrés", "pied carré", "pies cuadrados", "pie cuadrado", "piedi quadrati", "piede quadrato", "pés quadrados", "pé quadrado",
         "stóp kwadratowych", "stopa kwadratowa", "vierkante voet", "négyzetláb", "fitkare", "kaki persegi",
@@ -617,7 +644,7 @@ local UNITS = {
     { category = "area", system = "imperial", name = "sq mi", std_target = "km²", aliases = {
         "square miles", "square mile", "sq mi", "mi2", "mi²",
         "квадратных миль", "квадратной мили", "квадратная миля", "квадратные мили", "кв. миль", "кв. мили", "кв. миля", "кв. милях", "миля²", "миля2",
-        "квадратних миль", "квадратна миля", "кв. миль",
+        "квадратних миль", "квадратна миля", "квадратні милі", "квадратної милі", "кв. миль", "кв. милі",
         "квадратних миља", "kvadratnih milja",
         "quadratmeilen", "milles carrés", "mille carré", "millas cuadradas", "milla cuadrada", "miglia quadrate", "miglio quadrato", "milhas quadradas", "milha quadrada",
         "mil kwadratowych", "mila kwadratowa", "vierkante mijl", "négyzetmérföld", "milkare", "mil persegi",
@@ -626,7 +653,7 @@ local UNITS = {
     { category = "area", system = "imperial", name = "acre", std_target = "ha", aliases = {
         "acres", "acre",
         "акров", "акра", "акр", "акры", "акру", "акром", "акре", "акрах", "акрам", "акрами",
-        "акрів", "акри",
+        "акрів", "акри", "акрі",
         "акера", "акра", "aker", "akra",
         "acren", "morgen", "acri", "acro", "akrów", "akry", "akr", "bunder", "hold", "akre", "dönüm", "ekar",
         "فدادين", "فدان", "أكر", "اكر", "英亩", "エーカー"
@@ -634,7 +661,7 @@ local UNITS = {
     { category = "area", system = "imperial", name = "sq in", std_target = "cm²", aliases = {
         "square inches", "square inch", "sq in", "in2", "in²",
         "квадратных дюймов", "квадратного дюйма", "квадратный дюйм", "квадратные дюймы", "кв. дюймов", "кв. дюйма", "кв. дюйм", "дюйм²", "дюйм2",
-        "квадратних дюймів", "квадратний дюйм",
+        "квадратних дюймів", "квадратний дюйм", "квадратні дюйми", "кв. дюймів", "кв. дюйми",
         "quadratzoll", "pouces carrés", "pouce carré", "pulgadas cuadradas", "pulgada cuadrada", "pollici quadrati", "pollici quadrato", "polegadas quadradas", "polegada quadrada",
         "cali kwadratowych", "cal kwadratowy", "vierkante duim", "hüvelyk²", "inçkare", "inci persegi",
         "بوصات مربعة", "بوصة مربعة", "平方英寸", "平方吋", "平方インチ"
@@ -643,31 +670,31 @@ local UNITS = {
     { category = "area", system = "metric", name = "m²", std_target = "sq ft", aliases = {
         "square meters", "square metres", "sq m", "m2", "m²", "qm", "quadratmeter", "metros cuadrados", "mètres carrés", "metri quadrati", "médos quadrados", "metry kwadratowe",
         "квадратных метров", "квадратного метра", "квадратный метр", "квадратные метры", "кв. метров", "кв. метра", "кв. метр", "кв. м", "кв. метрах", "м²", "м2",
-        "квадратних метрів", "квадратного метра", "квадратний метр", "кв. м",
+        "квадратних метрів", "квадратного метра", "квадратний метр", "квадратні метри", "квадратних метрах", "кв. метрів", "кв. метри", "кв. м",
         "квадратних метара", "квадратни метар", "kvadratnih metara", "kvadratni metar",
         "négyzetméter", "metrekare", "متر مربع", "أمتار مربعة", "امار مربعة", "м²", "м2", "meter persegi", "平方米", "平方公尺", "平方メートル"
     } },
     { category = "area", system = "metric", name = "km²", std_target = "sq mi", aliases = {
         "square kilometers", "square kilometres", "sq km", "km2", "km²", "qkm", "quadratkilometer", "kilómetros cuadrados", "kilomètres carrés", "chilometri quadrati", "quilômetros quadrados", "kilometry kwadratowe",
         "квадратных километров", "квадратного километра", "квадратный километр", "квадратные километры", "кв. километров", "кв. километра", "кв. километр", "кв. км", "кв. километрах", "км²", "км2",
-        "квадратних кілометрів", "квадратного кілометра", "квадратний кілометр", "кв. км",
+        "квадратних кілометрів", "квадратного кілометра", "квадратний кілометр", "квадратні кілометри", "квадратних кілометрах", "кв. кілометрів", "кв. кілометри", "кв. км",
         "квадратних километара", "kvadratnih kilometara",
         "négyzetkilométer", "kilometrekare", "كيلومتر مربع", "كيلومترات مربعة", "كم²", "كم2", "kilometer persegi", "平方公里", "平方千米", "平方キロメートル"
     } },
     { category = "area", system = "metric", name = "ha", std_target = "acre", aliases = {
         "hectares", "hectare", "ha", "hektar", "hectárea", "hectáreas", "ettaro", "ettari", "hektary", "hektarów",
         "гектаров", "гектара", "гектар", "гектары", "гектарах", "гектарам", "гектарами", "га",
-        "гектарів", "гектарі",
+        "гектарів", "гектарі", "гектари", "гектару", "гектаром",
         "хектара", "хектар", "hektara",
         "hektár", "هكتار", "هكتارات", "公顷", "ヘクタール"
     } },
     { category = "area", system = "metric", name = "sq dm", std_target = "sq ft", aliases = {
         "square decimeters", "square decimeter", "sq dm", "dm2", "dm²", "square decimetres", "square decimetre", "quadratdezimeter", "décimètres carrés", "décimètre carré",
-        "квадратных дециметров", "квадратный дециметр", "кв. дм", "дм²", "дм2", "квадратних дециметрів"
+        "квадратных дециметров", "квадратный дециметр", "кв. дм", "дм²", "дм2", "квадратних дециметрів", "квадратний дециметр", "квадратні дециметри"
     } },
     { category = "area", system = "metric", name = "cm²", std_target = "sq in", aliases = {
         "square centimeters", "square centimeter", "square centimetres", "square centimetre", "sq cm", "cm2", "cm²",
-        "квадратных сантиметров", "квадратного сантиметра", "квадратный сантиметр", "кв. см", "см²", "см2", "квадратних сантиметрів",
+        "квадратных сантиметров", "квадратного сантиметра", "квадратный сантиметр", "кв. см", "см²", "см2", "квадратних сантиметрів", "квадратний сантиметр", "квадратні сантиметри", "квадратного сантиметра",
         "centimètres carrés", "centímetros cuadrados", "centimetri quadrati", "centímetros quadrados", "centymetrów kwadratowych",
         "négyzetcentiméter", "santimetrekare", "سنتيمتر مربع", "سم²", "سم2", "平方厘米", "平方センチメートル"
     } },
@@ -830,12 +857,12 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
         
         local ft_aliases = {
             "feet", "foot", "ft",
-            "футов", "фута", "фут", "футы", "футів", "футі",
+            "футов", "фута", "фут", "футы", "футів", "футі", "фути",
             "füße", "fuß", "pieds", "pied", "pies", "pie", "piedi", "piede", "pés", "pé"
         }
         local in_aliases = {
             "inches", "inch", "in",
-            "дюймов", "дюйма", "дюйм", "дюймы", "дюймів", "дюймі",
+            "дюймов", "дюйма", "дюйм", "дюймы", "дюймів", "дюймі", "дюйми",
             "zoll", "pouces", "pouce", "pulgadas", "pulgada", "pollici", "pollice", "polegadas", "polegada"
         }
         
@@ -855,7 +882,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
         end
         
         if #present_ft > 0 and #present_in > 0 then
-            local length_connectors = { "", "and", "и", "und", "et", "y", "e", "," }
+            local length_connectors = { "", "and", "и", "і", "й", "та", "und", "et", "y", "e", "," }
             for _, ft_a in ipairs(present_ft) do
                 for _, in_a in ipairs(present_in) do
                     for _, conn in ipairs(length_connectors) do
@@ -902,8 +929,8 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
 
     -- Compound weight units (e.g. 10 st 4 lb, 10 стоунов 4 фунта)
     if enabled_categories.weight and (direction == "to_metric" or direction == "auto") then
-        local st_aliases = { "st", "stone", "stones", "стоунов", "стоуна", "стоун", "стоуны", "стоунів" }
-        local lb_aliases = { "lb", "lbs", "pound", "pounds", "фунтов", "фунта", "фунт", "фунты", "фунтів", "фунті", "pfund", "livres", "livre", "libras", "libra", "libbre", "libbra" }
+        local st_aliases = { "st", "stone", "stones", "стоунов", "стоуна", "стоун", "стоуны", "стоунів", "стоуни" }
+        local lb_aliases = { "lb", "lbs", "pound", "pounds", "фунтов", "фунта", "фунт", "фунты", "фунтів", "фунті", "фунти", "pfund", "livres", "livre", "libras", "libra", "libbre", "libbra" }
         
         local present_st = {}
         for _, st_a in ipairs(st_aliases) do
@@ -920,7 +947,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
         end
 
         if #present_st > 0 and #present_lb > 0 then
-            local weight_connectors = { "", "and", "и", "und", "et", "y", "e", "," }
+            local weight_connectors = { "", "and", "и", "і", "й", "та", "und", "et", "y", "e", "," }
             for _, st_a in ipairs(present_st) do
                 for _, lb_a in ipairs(present_lb) do
                     for _, conn in ipairs(weight_connectors) do
@@ -965,7 +992,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
 
     -- Pre-calculate present connectors in text_lower for fast range matching
     local active_connectors = {}
-    local all_connectors = { "to", "or", "and", "-", "–", "—", "до", "или", "и", "або", "bis", "oder", "und", "à", "ou", "et", "a", "o", "y", "e" }
+    local all_connectors = { "to", "or", "and", "-", "–", "—", "до", "или", "и", "або", "чи", "bis", "oder", "und", "à", "ou", "et", "a", "o", "y", "e" }
     for _, conn in ipairs(all_connectors) do
         if text_lower:find(conn, 1, true) then
             table.insert(active_connectors, conn)
@@ -1125,7 +1152,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
 
                             -- B: Written numbers: e.g. "three miles", "шесть футов", "три мили"
                             if not (alias == "in" or alias == "st" or alias == "m" or alias == "l" or alias == "g") then
-                                local written_pattern = "([^%d%.,:;!?'\"()/\r\n\t]+)%s+(" .. escaped_alias .. ")"
+                                local written_pattern = "([^%d%.,:;!?\"()/\r\n\t]+)%s+(" .. escaped_alias .. ")"
                                 init = 1
                                 while true do
                                     local s, e, word_str = text_lower:find(written_pattern, init)
@@ -1141,7 +1168,7 @@ function M.detectMeasurements(text, direction, enabled_categories, current_lang)
                                         local i_w = #phrase_words
                                         while i_w >= 1 do
                                             local w = phrase_words[i_w]
-                                            local clean_w = utf8Lower(w):gsub("[%-,]$", "")
+                                            local clean_w = utf8Lower(w):gsub("^['\"]+", ""):gsub("['\"]+$", ""):gsub("[%-,]$", "")
                                             if clean_w == "and" or clean_w == "a" or clean_w == "an" or clean_w == "и" or clean_w == "und" or clean_w == "et" or clean_w == "y" or parseNumberText(clean_w) then
                                                 table.insert(valid_words, 1, clean_w)
                                                 i_w = i_w - 1

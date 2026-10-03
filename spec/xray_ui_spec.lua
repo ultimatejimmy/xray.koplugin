@@ -1097,7 +1097,7 @@ describe("xray_ui", function()
 
             -- Signature version 31 + settings categories + 2 entries
             assert.are.equal(3, #lines)
-            assert.is_true(lines[1]:find("^v30|") ~= nil)
+            assert.is_true(lines[1]:find("^v31|") ~= nil)
             assert.are.equal("xp_1\txp_2\t10 cm\t3.94 inches\tlength", lines[2])
             assert.are.equal("xp_3\txp_4\t100 kg\t220.46  lb\tweight", lines[3])
 

@@ -237,6 +237,13 @@ describe("xray_units", function()
             assert.are.equal(1, #res6)
             assert.are.equal("one and a quarter miles", res6[1].original)
             assert.are.equal("2.01 km", res6[1].converted)
+
+            -- Test for single-quoted dialogue
+            local res7 = xray_units.detectMeasurements("He said 'three miles' and left.", "to_metric")
+            assert.are.equal(1, #res7)
+            assert.are.equal("three miles", res7[1].original)
+            assert.are.equal("4.83 km", res7[1].converted)
+            assert.are.equal(3, xray_units.parseNumberText("'three'"))
         end)
 
         it("ignores non-measurement uses of unit words", function()
@@ -571,6 +578,85 @@ describe("xray_units", function()
                 assert.are.equal(1, #res2)
                 assert.are.equal("5 акрів", res2[1].original)
                 assert.are.equal("2,02 ha", res2[1].converted)
+            end)
+
+            it("detects nominative plural forms used after 2-4", function()
+                local cases = {
+                    { "2 дюйми", "5,08 cm" }, { "3 фути", "0,91 m" }, { "2 ярди", "1,83 m" },
+                    { "3 унції", "85,05 g" }, { "4 фунти", "1,81 kg" },
+                }
+                for _, c in ipairs(cases) do
+                    local res = xray_units.detectMeasurements(c[1], "to_metric", nil, "uk")
+                    assert.are.equal(1, #res)
+                    assert.are.equal(c[1], res[1].original)
+                    assert.are.equal(c[2], res[1].converted)
+                end
+                local res = xray_units.detectMeasurements("2 метри", "to_imperial", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("2 метри", res[1].original)
+            end)
+
+            it("detects Ukrainian written numbers with any apostrophe", function()
+                for _, t in ipairs({ "п'ять футів", "п’ять футів", "пʼять футів" }) do
+                    local res = xray_units.detectMeasurements(t, "to_metric", nil, "uk")
+                    assert.are.equal(1, #res)
+                    assert.are.equal("1,52 m", res[1].converted)
+                end
+                local res = xray_units.detectMeasurements("Він сказав 'п'ять миль'.", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("п'ять миль", res[1].original)
+                assert.are.equal("8,05 km", res[1].converted)
+                res = xray_units.detectMeasurements("двадцять чотири милі", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("двадцять чотири милі", res[1].original)
+                assert.are.equal("38,62 km", res[1].converted)
+                assert.are.equal(1.5, xray_units.parseNumberText("півтора"))
+                assert.are.equal(0.5, xray_units.parseNumberText("пів"))
+            end)
+
+            it("detects Ukrainian compounds, digit ranges and genitive numbers", function()
+                local res = xray_units.detectMeasurements("6 футів 2 дюйми", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("6 футів 2 дюйми", res[1].original)
+                assert.are.equal("1,88 m", res[1].converted)
+
+                res = xray_units.detectMeasurements("6 футів і 2 дюйми", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("6 футів і 2 дюйми", res[1].original)
+                assert.are.equal("1,88 m", res[1].converted)
+
+                res = xray_units.detectMeasurements("10 стоунів та 4 фунти", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("65,32 kg", res[1].converted)
+
+                res = xray_units.detectMeasurements("10 стоунів 4 фунти", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("65,32 kg", res[1].converted)
+
+                res = xray_units.detectMeasurements("5 чи 6 миль", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("8,05–9,66 km", res[1].converted)
+
+                res = xray_units.detectMeasurements("близько п'яти миль", "to_metric", nil, "uk")
+                assert.are.equal(1, #res)
+                assert.are.equal("п'яти миль", res[1].original)
+                assert.are.equal("8,05 km", res[1].converted)
+
+                local genitives = {
+                    { "близько ста миль", "ста миль", "160,93 km" },
+                    { "близько однієї милі", "однієї милі", "1,61 km" },
+                    { "понад сорока миль", "сорока миль", "64,37 km" },
+                    { "близько п'ятнадцяти футів", "п'ятнадцяти футів", "4,57 m" },
+                    { "до двохсот п'ятдесяти миль", "двохсот п'ятдесяти миль", "402,34 km" },
+                }
+                for _, c in ipairs(genitives) do
+                    res = xray_units.detectMeasurements(c[1], "to_metric", nil, "uk")
+                    assert.are.equal(1, #res)
+                    assert.are.equal(c[2], res[1].original)
+                    assert.are.equal(c[3], res[1].converted)
+                end
+                assert.are.equal(1, xray_units.parseNumberText("одного"))
+                assert.are.equal(30, xray_units.parseNumberText("тридцяти"))
             end)
         end)
 
