@@ -37,8 +37,25 @@ local RANGE_SEPS = {
     "\227\128\156", -- Wave dash U+301C (〜)
 }
 
+-- Word connectors for ranges ("5 to 10", "п'ять чи шість")
+local RANGE_WORD_CONNECTORS = { "to", "or", "до", "або", "чи", "или" }
+-- Letters (including UTF-8 bytes for Cyrillic), digits and apostrophes
+local WORD_CHARS = "[%a\128-\255%d']"
+
+-- Strip edge quotes, dashes and symbols like ° (ASCII quotes, UTF-8 lead bytes C2 and E2)
+local function strip_edge_symbols(w)
+    local prev
+    repeat
+        prev = w
+        w = w:gsub("^['\"]+", ""):gsub("['\"]+$", "")
+        w = w:gsub("^[\194\226][\128-\191]+", ""):gsub("[\194\226][\128-\191]+$", "")
+    until w == prev
+    return w
+end
+
 local function escape_pattern(alias)
-    local esc = alias:gsub("([%-%+%.%?%*%^%$%(%)%[%]%%%\\])", "%%%1")
+    -- Escape for the regex engine, not Lua patterns
+    local esc = alias:gsub("([%.%+%?%*%^%$%(%)%[%]{}|\\])", "\\%1")
     -- Replace spaces with \s+ to match any whitespace
     esc = esc:gsub("%s+", "\\s+")
     return esc
@@ -562,7 +579,7 @@ local function _getSettingsSignature(self, settings)
     local cat_s = settings.unit_cat_speed ~= false
     local cat_a = settings.unit_cat_area ~= false
     return table.concat({
-        "v31",
+        "v32",
         tostring(cat_l), tostring(cat_w), tostring(cat_t),
         tostring(cat_v), tostring(cat_s), tostring(cat_a),
     }, "|")
@@ -881,16 +898,49 @@ function M:scanBookForUnits(force)
             local digit_units = "(" .. table.concat(digit_parts, "|") .. ")"
             local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*" .. digit_units .. ")"
 
-            -- Build pat_word only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
-            local pat_word = nil
+            -- Build word patterns only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
+            local MAX_REGEX_LEN = 4000
+            local word_chunks = {}
+            local split_on_error = false
             local scan_written = settings.unit_scan_written_numbers
             if scan_written == nil then
                 scan_written = not xray_utils.isLowPowerForScan()
             end
+
+            local function build_word_pattern(items)
+                local boundary_both = {}
+                local boundary_none = {}
+                for _, item in ipairs(items) do
+                    table.insert(item.bounded and boundary_both or boundary_none, item.esc)
+                end
+                local word_parts = {}
+                if #boundary_both > 0 then
+                    table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
+                end
+                if #boundary_none > 0 then
+                    table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
+                end
+                return "(" .. table.concat(word_parts, "|") .. ")"
+            end
+
             if scan_written then
+                -- With a Cyrillic UI, look for written numbers before Cyrillic aliases only
+                local base_lang = tostring(lang):lower():match("^%a+") or ""
+                local cyrillic_ui = base_lang == "ru" or base_lang == "uk" or base_lang == "sr" or base_lang == "bg" or base_lang == "be"
+
                 local function is_abbreviation(alias)
                     local clean = alias:gsub("%s+", "")
-                    if clean:match("%d") or clean:find("[°º/%./]") then
+                    if clean:match("%d") or clean:find("[/%.]") then
+                        return true
+                    end
+                    for _, sym in ipairs({ "°", "º", "²", "³" }) do
+                        if clean:find(sym, 1, true) then
+                            return true
+                        end
+                    end
+                    -- The old byte class also drops names with some UTF-8 letters (Cyrillic а, к);
+                    -- other UIs keep it so their patterns stay under the limit
+                    if not cyrillic_ui and clean:find("[°º]") then
                         return true
                     end
                     if #clean < 4 and clean ~= "cup" then
@@ -899,42 +949,42 @@ function M:scanBookForUnits(force)
                     return false
                 end
 
-                local boundary_both = {}
-                local boundary_none = {}
+                local word_items = {}
                 for _, alias in ipairs(sorted_aliases) do
-                    if not is_abbreviation(alias) then
-                        local esc = escape_pattern(alias)
-                        local start_alnum = alias:match("^[%w]")
-                        local end_alnum = alias:match("[%w]$")
-                        if start_alnum and end_alnum then
-                            table.insert(boundary_both, esc)
-                        else
-                            table.insert(boundary_none, esc)
-                        end
+                    if not is_abbreviation(alias) and (not cyrillic_ui or alias:find("[\208\209\210]")) then
+                        table.insert(word_items, {
+                            esc = escape_pattern(alias),
+                            bounded = alias:match("^[%w]") ~= nil and alias:match("[%w]$") ~= nil,
+                        })
                     end
                 end
-                
-                local word_parts = {}
-                if #boundary_both > 0 then
-                    table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
-                end
-                if #boundary_none > 0 then
-                    table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
-                end
-                if #word_parts > 0 then
-                    pat_word = "(" .. table.concat(word_parts, "|") .. ")"
+
+                if cyrillic_ui then
+                    -- Cyrillic aliases don't fit in one pattern, so search them in chunks
+                    split_on_error = true
+                    local cur, len = {}, 0
+                    for _, item in ipairs(word_items) do
+                        if len > 0 and len + #item.esc + 1 > MAX_REGEX_LEN - 100 then
+                            table.insert(word_chunks, cur)
+                            cur, len = {}, 0
+                        end
+                        table.insert(cur, item)
+                        len = len + #item.esc + 1
+                    end
+                    if #cur > 0 then
+                        table.insert(word_chunks, cur)
+                    end
+                elseif #word_items > 0 then
+                    local pat_word = build_word_pattern(word_items)
+                    if #pat_word > MAX_REGEX_LEN then
+                        log("scanBookForUnits: word pattern too large (" .. #pat_word .. " chars), skipping word pass safety check")
+                    else
+                        table.insert(word_chunks, word_items)
+                    end
                 end
             end
-            
+
             log("scanBookForUnits: pat_digit=[" .. tostring(pat_digit) .. "]")
-            if pat_word then
-                log("scanBookForUnits: pat_word=[" .. tostring(pat_word) .. "]")
-                local MAX_REGEX_LEN = 4000
-                if #pat_word > MAX_REGEX_LEN then
-                    log("scanBookForUnits: word pattern too large (" .. #pat_word .. " chars), skipping word pass safety check")
-                    pat_word = nil
-                end
-            end
 
             log("scanBookForUnits: checkpoint A — pre findAllText digit")
             collectgarbage("collect")
@@ -949,18 +999,6 @@ function M:scanBookForUnits(force)
             log(string.format("scanBookForUnits: checkpoint B — post findAllText digit (took %.2fs), %d hits", t1 - t0, ok1 and hits1 and #hits1 or 0))
             progress_msg:reportProgress(55)
 
-            local ok2, hits2
-            local t2 = t1
-            if pat_word then
-                log("scanBookForUnits: checkpoint C — pre findAllText word")
-                ok2, hits2 = pcall(function()
-                    return doc:findAllText(pat_word, true, 5, 5000, true)
-                end)
-                t2 = os.clock()
-                log(string.format("scanBookForUnits: checkpoint D — post findAllText word (took %.2fs), %s hits", t2 - t1, tostring(ok2 and hits2 and #hits2 or 0)))
-            end
-            progress_msg:reportProgress(85)
-
             if not ok1 then
                 log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(hits1))
                 hits1 = {}
@@ -968,14 +1006,53 @@ function M:scanBookForUnits(force)
                 hits1 = {}
             end
 
-            if pat_word and (not ok2 or not hits2) then
-                if not ok2 then
-                    log("scanBookForUnits: word findAllText pcall failed (non-fatal): " .. tostring(hits2))
-                end
-                hits2 = {}
-            elseif not hits2 then
-                hits2 = {}
+            local function regex_error()
+                if not doc.getAndClearRegexSearchError then return 0 end
+                local ok, code = pcall(doc.getAndClearRegexSearchError, doc)
+                return ok and tonumber(code) or 0
             end
+
+            local hits2 = {}
+            -- In chunks, split a chunk in half and search again if the regex engine reports an error
+            local function run_word_chunk(items, depth)
+                local pat_word = build_word_pattern(items)
+                log("scanBookForUnits: pat_word=[" .. pat_word .. "]")
+                regex_error()
+                local tp = os.clock()
+                local ok, res = pcall(function()
+                    return doc:findAllText(pat_word, true, 5, 5000, true)
+                end)
+                local err = regex_error()
+                log(string.format("scanBookForUnits: word chunk (%d aliases, %d chars, depth %d) took %.2fs, %d hits, regex_error=%d",
+                    #items, #pat_word, depth, os.clock() - tp, ok and type(res) == "table" and #res or 0, err))
+                if not ok then
+                    log("scanBookForUnits: word findAllText pcall failed (non-fatal): " .. tostring(res))
+                end
+                if split_on_error and (err ~= 0 or not ok) and #items > 1 then
+                    local mid = math.floor(#items / 2)
+                    local left, right = {}, {}
+                    for i, item in ipairs(items) do
+                        table.insert(i <= mid and left or right, item)
+                    end
+                    run_word_chunk(left, depth + 1)
+                    run_word_chunk(right, depth + 1)
+                    return
+                end
+                if ok and type(res) == "table" then
+                    for _, h in ipairs(res) do
+                        table.insert(hits2, h)
+                    end
+                end
+            end
+
+            log("scanBookForUnits: checkpoint C — pre findAllText word, " .. #word_chunks .. " chunk(s)")
+            for idx, items in ipairs(word_chunks) do
+                run_word_chunk(items, 0)
+                progress_msg:reportProgress(55 + math.floor(30 * idx / #word_chunks))
+            end
+            local t2 = os.clock()
+            log(string.format("scanBookForUnits: checkpoint D — post findAllText word (took %.2fs), %d hits", t2 - t1, #hits2))
+            progress_msg:reportProgress(85)
 
             local hits = {}
             for _, h in ipairs(hits1) do
@@ -998,8 +1075,16 @@ function M:scanBookForUnits(force)
             end
             hits = nil
 
-            local deduped_hits = {}
+            -- Chunks can match the same text with a shorter alias; keep the longest match per start
+            local by_start = {}
             for _, hit in pairs(unique_hits) do
+                if not by_start[hit.start] or #hit.matched_text > #by_start[hit.start].matched_text then
+                    by_start[hit.start] = hit
+                end
+            end
+
+            local deduped_hits = {}
+            for _, hit in pairs(by_start) do
                 table.insert(deduped_hits, hit)
             end
             unique_hits = nil
@@ -1029,6 +1114,25 @@ function M:scanBookForUnits(force)
             end
 
 
+            -- True if a letter follows end_xp in the same text node (next_text starts at the next word)
+            local function continues_word(end_xp)
+                local ok, next_xp = pcall(doc.getNextVisibleChar, doc, end_xp)
+                if not ok or not next_xp or next_xp:gsub("%.%d+$", "") ~= end_xp:gsub("%.%d+$", "") then
+                    return false
+                end
+                local ok_t, text = pcall(doc.getTextFromXPointers, doc, end_xp, next_xp)
+                return ok_t and type(text) == "string" and text:find("^[%a\208-\211]") ~= nil
+            end
+
+            -- True if a letter precedes start_xp in the same text node
+            local function starts_mid_word(start_xp)
+                local n = tonumber(start_xp:match("%.(%d+)$"))
+                if not n or n == 0 then return false end
+                local prev_xp = start_xp:gsub("%.%d+$", "." .. (n - 1))
+                local ok, text = pcall(doc.getTextFromXPointers, doc, prev_xp, start_xp)
+                return ok and type(text) == "string" and (text:find("%a$") or text:find("[\208-\211][\128-\191]$")) ~= nil
+            end
+
             for _, hit in ipairs(hits) do
                 local is_range = false
                 local val, num_str
@@ -1051,8 +1155,14 @@ function M:scanBookForUnits(force)
 
                 -- Extract prefix part
                 local num_part = matched_text:sub(1, #matched_text - #matched_alias)
+
+                -- Cyrillic aliases have no \b, so skip a match inside a longer word ("акробати", "мільярди")
+                local inside_word = (matched_alias:find("[\208-\211][\128-\191]$") and continues_word(hit["end"]))
+                    or (num_part == "" and matched_alias:find("^[\208-\211]") and starts_mid_word(hit.start))
+
                 local p = (hit.prev_text or "") .. num_part
-                p = p:gsub("%s+$", "")
+                -- No-break spaces separate words too
+                p = p:gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+$", "")
                 for _, sep in ipairs(RANGE_SEPS) do
                     p = p:gsub(sep, "-")
                 end
@@ -1068,37 +1178,66 @@ function M:scanBookForUnits(force)
                 else
                     -- 2. Try prefix_word or prev_text tail
                     -- Try digit range
+                    local lower_p = xray_units.utf8Lower(p)
                     local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
+                    if not r1 then
+                        for _, conn in ipairs(RANGE_WORD_CONNECTORS) do
+                            r1, r2 = lower_p:match("([0-9%.%,]+)%s+" .. conn .. "%s+([0-9%.%,]+)$")
+                            if r1 then break end
+                        end
+                    end
                     if r1 and r2 then
                         val1 = xray_units.parseNumberText(r1)
                         val2 = xray_units.parseNumberText(r2)
                         if val1 and val2 then
-
                             is_range = true
-                            num_str = p:match("([0-9%.%,]+%s*[%-–toor]+%s*[0-9%.%,]+)$") or (r1 .. "-" .. r2)
+                            num_str = r1 .. "-" .. r2
                         end
                     else
                         -- Try written word range
-                        local w1, w2 = p:match("([%a%d%-]+)%s*(?:to|or|%-|and)%s*([%a%d%-]+)$")
+                        local w1, w2, conn
+                        for _, c in ipairs(RANGE_WORD_CONNECTORS) do
+                            -- w2 is all words after the last connector ("thirty-five", "three hundred")
+                            local head, tail = lower_p:match("^(.*)%s+" .. c .. "%s+(.-)$")
+                            if tail then
+                                local tail_words = {}
+                                for w in tail:gmatch(WORD_CHARS .. "+") do
+                                    table.insert(tail_words, strip_edge_symbols(w))
+                                end
+                                w2 = table.concat(tail_words, " ")
+                                if not xray_units.parseNumberText(w2) then
+                                    head, w2 = nil, nil
+                                end
+                            end
+                            if head then
+                                -- Take the whole compound before the connector ("twenty-five to thirty")
+                                local head_words = {}
+                                for w in head:gmatch(WORD_CHARS .. "+") do
+                                    table.insert(head_words, strip_edge_symbols(w))
+                                end
+                                for i = #head_words, 1, -1 do
+                                    local phrase = table.concat(head_words, " ", i)
+                                    if not xray_units.parseNumberText(phrase) then break end
+                                    w1 = phrase
+                                end
+                                conn = c
+                                break
+                            end
+                        end
+                        if not conn then
+                            w1, w2 = lower_p:match("(" .. WORD_CHARS .. "+)%s*%-%s*(" .. WORD_CHARS .. "+)$")
+                            if w1 then conn = "-" end
+                        end
                         if w1 and w2 then
-                            local phrase_words = {}
-                            for w in p:gmatch("[%a%d%-%.%,]+") do
-                                table.insert(phrase_words, w)
-                            end
-                            -- A range requires two distinct parsed parts separated by a connector.
-                            -- If the whole thing parses as a single compound (like "twenty three"), it's not a range.
-                            local is_compound = false
-                            local combined_val = xray_units.parseNumberText(w1 .. " " .. w2)
-                            if combined_val and not p:find("%s+to%s") and not p:find("%s+or%s") and not p:find("%s+and%s") then
-                                is_compound = true
-                            end
-                            
+                            w1, w2 = strip_edge_symbols(w1), strip_edge_symbols(w2)
+                            -- A hyphenated compound ("twenty-three") is not a range
+                            local is_compound = conn == "-" and xray_units.parseNumberText(w1 .. " " .. w2) ~= nil
                             if not is_compound then
                                 val1 = xray_units.parseNumberText(w1)
                                 val2 = xray_units.parseNumberText(w2)
                                 if val1 and val2 then
                                     is_range = true
-                                    num_str = p:match("([%a%d%-]+%s*(?:to|or|%-|and)%s*[%a%d%-]+)$") or (w1 .. " to " .. w2)
+                                    num_str = w1 .. " " .. conn .. " " .. w2
                                 end
                             end
                         end
@@ -1116,8 +1255,8 @@ function M:scanBookForUnits(force)
                         if not val then
                             -- Single number or written compound (greedy backward accumulation)
                             local words = {}
-                            for w in p:gmatch("[%a%d%-%.%,]+") do
-                                table.insert(words, w)
+                            for w in p:gmatch("[%a\128-\255%d%-%.%,']+") do
+                                table.insert(words, strip_edge_symbols(w))
                             end
                             
                             local valid_words = {}
@@ -1166,7 +1305,7 @@ function M:scanBookForUnits(force)
                     end
                 end
                 
-                if val or (val1 and val2) then
+                if not inside_word and (val or (val1 and val2)) then
                     local matched_unit = matched_alias
                     local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
                     if not u then

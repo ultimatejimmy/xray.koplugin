@@ -367,7 +367,7 @@ local UNITS = {
         "polegada", "polegadas", "pol", "cal", "cale", "cali", "cala", "calach", "calami", "calom",
         "дюймов", "дюйма", "дюйм", "дюймы", "дюйме", "дюйму", "дюймом", "дюймах", "дюймам", "дюймами",
         "дюймів", "дюймі", "дюйми",
-        "инча", "инчи", "инч", "inča", "inči", "inč",
+        "инча", "инчи", "инч", "инче", "инчу", "инчем", "инчима", "inča", "inči", "inč",
         "hüvelyk", "coll", "inç", "inci", "بوصة", "بوصات", "بوصتين", "英寸", "吋", "インチ"
     } },
     { category = "length", system = "imperial", name = "foot", std_target = "m", aliases = {
@@ -376,7 +376,7 @@ local UNITS = {
         "pé", "pés", "voet", "voeten", "stopa", "stopy", "stóp", "stopie", "stopę", "stopą", "stopami", "stopach", "stop",
         "футов", "фута", "фут", "футы", "футе", "футу", "футом", "футах", "футам", "футами",
         "футів", "футі", "фути",
-        "стопа", "стопе", "стопи", "стопу", "стопом", "stopa", "stope", "stopi",
+        "стопа", "стопе", "стопи", "стопу", "стопом", "стопама", "stopa", "stope", "stopi",
         "láb", "ayak", "kaki", "قدم", "أقدام", "اقدام", "قدمين", "英尺", "呎", "フィート", "フート"
     } },
     { category = "length", system = "imperial", name = "yard", std_target = "m", aliases = {
@@ -385,7 +385,7 @@ local UNITS = {
         "jard", "jardy", "jardów", "jarda", "jardem", "jardzie", "jardach", "jardami",
         "ярдов", "ярда", "ярд", "ярды", "ярде", "ярду", "ярдом", "ярдах", "ярдам", "ярдами",
         "ярдів", "ярді", "ярди",
-        "јарда", "јарди", "јард", "jarda", "jardi", "jard",
+        "јарда", "јарди", "јард", "јарде", "јарду", "јардом", "јардима", "jarda", "jardi", "jard",
         "yard", "yarda", "ياردا", "ياردة", "يارده", "ياردات", "ياردتين", "码", "ヤード"
     } },
     { category = "length", system = "imperial", name = "mile", std_target = "km", aliases = {
@@ -394,7 +394,7 @@ local UNITS = {
         "milha", "milhas", "mijl", "mijlen", "mila", "mile", "mil", "mili", "milę", "milą", "milami", "milach",
         "миль", "мили", "миля", "милю", "миле", "милей", "милею", "милям", "милями", "милях",
         "милі",
-        "миља", "миље", "миљи", "миљом", "миљу", "milja", "milje", "milji",
+        "миља", "миље", "миљи", "миљом", "миљу", "миљама", "milja", "milje", "milji",
         "mérföld", "أميال", "اميال", "ميل", "ميلين", "英里", "哩", "マイル"
     } },
     { category = "length", system = "imperial", name = "league", std_target = "km", aliases = {
@@ -407,7 +407,7 @@ local UNITS = {
     { category = "length", system = "imperial", name = "fathom", std_target = "m", aliases = {
         "fathoms", "fathom", "faden", "klafter", "brazas", "braza", "brasses", "brasse", "braccia", "braccio",
         "braças", "braça", "sążnie", "sążni", "sążeń",
-        "морских саженей", "морской сажени", "морская сажень", "саженей", "сажени", "сажень", "саженям", "саженями", "саженях",
+        "морских саженей", "морской сажени", "морская сажень", "саженей", "сажени", "сажень", "саженям", "саженями", "саженях", "саженью",
         "фатомов", "фатома", "фатом", "фатомы", "фатому", "фатомом", "фатоме", "фатомах",
         "сажнів", "сажні", "сажня", "сажню", "сажнем", "сажням", "сажнями", "сажнях", "фатомів", "фатоми",
         "öl", "kulaç", "depa", "英寻", "㖊", "ファゾム", "尋"
@@ -466,7 +466,7 @@ local UNITS = {
         "funt", "funty", "funtów", "funta", "funtem", "funcie", "funtach", "funtami",
         "фунтов", "фунта", "фунт", "фунты", "фунте", "фунту", "фунтом", "фунтах", "фунтам", "фунтами",
         "фунтів", "фунті",
-        "фунти", "фунте", "фунта", "funti", "funte", "funta",
+        "фунти", "фунте", "фунта", "фунтама", "funti", "funte", "funta",
         "font", "libreler", "libre", "pon", "رطل", "أرطال", "ارطال", "رطلين", "باوندات", "باوند", "磅", "ポンド"
     } },
     { category = "weight", system = "imperial", name = "st", std_target = "kg", aliases = {
@@ -537,7 +537,7 @@ local UNITS = {
     } },
     { category = "volume", system = "imperial", name = "pint", std_target = "ml", aliases = {
         "pints", "pint", "pt",
-        "пинт", "пинты", "пинта", "пинту", "пинте", "пинтой", "пинтами", "пинтах",
+        "пинт", "пинты", "пинта", "пинту", "пинте", "пинтой", "пинтою", "пинтам", "пинтами", "пинтах",
         "пінт", "пінти", "пінта", "пінту", "пінті", "пінтою", "пінтам", "пінтами", "пінтах",
         "pinten", "pinte", "pintes", "pintas", "pinta", "pinte", "pinta", "pinty", "pint",
         "品脱"
@@ -550,9 +550,9 @@ local UNITS = {
     } },
     { category = "volume", system = "imperial", name = "gallon", std_target = "l", aliases = {
         "gallons", "gallon", "gal",
-        "галлонов", "галлона", "галлон", "галлоны", "галлону", "галлоном", "галлоне", "галлонах",
+        "галлонов", "галлона", "галлон", "галлоны", "галлону", "галлоном", "галлоне", "галлонах", "галлонам", "галлонами",
         "галонів", "галона", "галон", "галони", "галонах", "галону", "галоном", "галоні", "галонам", "галонами",
-        "галона", "галони", "галон", "galona", "galoni", "galon",
+        "галона", "галони", "галон", "галоне", "галонима", "galona", "galoni", "galon",
         "gallone", "gallonen", "galón", "galones", "galloni", "galão", "galões", "galonów", "galony", "galonlar",
         "جالونات", "جالون", "غالونات", "غالون", "加仑", "ガロン"
     } },
@@ -584,14 +584,14 @@ local UNITS = {
     { category = "volume", system = "imperial", name = "ft3", std_target = "m³", aliases = {
         "cubic feet", "cubic foot", "ft3", "ft³",
         "кубических футов", "кубического фута", "кубический фут", "кубические футы", "куб. фут", "куб. футов", "фут³", "фут3",
-        "кубічних футів", "кубічний фут", "кубічні фути", "кубічного фута",
+        "кубічних футів", "кубічний фут", "кубічні фути", "кубічного фута", "куб. футів", "куб. фути",
         "kubikfuß", "pieds cubes", "pied cube", "pies cúbicos", "pie cúbico", "piedi cubi", "piede cubo",
         "pés cúbicos", "pé cúbico", "stóp sześciennych", "قدم مكعب", "أقدام مكعبة", "立方英尺", "立方呎", "立方フィート"
     } },
     { category = "volume", system = "imperial", name = "in3", std_target = "cm³", aliases = {
         "cubic inches", "cubic inch", "in3", "in³",
         "кубических дюймов", "кубического дюйма", "кубический дюйм", "кубические дюймы", "куб. дюйм", "дюйм³", "дюйм3",
-        "кубічних дюймів", "кубічний дюйм", "кубічні дюйми", "кубічного дюйма",
+        "кубічних дюймів", "кубічний дюйм", "кубічні дюйми", "кубічного дюйма", "куб. дюймів", "куб. дюйми",
         "kubikzoll", "pouces cubes", "pulgadas cúbicas", "pollici cubi", "polegadas cúbicas", "cali sześciennych",
         "بوصة مكعبة", "立方英寸", "立方吋", "立方インチ"
     } },
@@ -740,10 +740,13 @@ local VAGUE_BANDS = {
     ["пару"] = {2, 2},
     ["пара"] = {2, 2},
     ["пары"] = {2, 2},
+    -- Ukrainian
+    ["декілька"] = {3, 7},
+    ["кілька"] = {3, 7},
 }
 local VAGUE_ORDER = {
     "a couple of", "a couple", "couple of", "several", "a few", "couple", "some", "few",
-    "несколько", "пару", "пара", "пары"
+    "несколько", "пару", "пара", "пары", "декілька", "кілька"
 }
 local VAGUE_MULTIPLIERS = {
     dozen = 12,
@@ -766,12 +769,24 @@ local VAGUE_MULTIPLIERS = {
     ["миллионов"] = 1000000,
     ["миллиона"] = 1000000,
     ["миллион"] = 1000000,
+    -- Ukrainian
+    ["десятків"] = 10,
+    ["дюжини"] = 12,
+    ["сотень"] = 100,
+    ["сотні"] = 100,
+    ["тисяч"] = 1000,
+    ["тисячі"] = 1000,
+    ["тисяча"] = 1000,
+    ["мільйонів"] = 1000000,
+    ["мільйона"] = 1000000,
+    ["мільйон"] = 1000000,
 }
 
 local function detectVagueQuantifier(prev_text)
     if not prev_text then return nil end
     local p = utf8Lower(prev_text):gsub("%s+$", "")
-    local mword = p:match("([%a\194-\244][\128-\191%a%d]*)$")
+    -- Whole last word, including all UTF-8 letters
+    local mword = p:match("([%a\128-\255%d]+)$")
     local mult = mword and VAGUE_MULTIPLIERS[mword]
     if not mult then return nil end
     

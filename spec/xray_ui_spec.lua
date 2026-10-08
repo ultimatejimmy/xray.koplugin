@@ -656,6 +656,645 @@ describe("xray_ui", function()
             assert.are.equal(0, #plugin.unit_xp_matches)
         end)
 
+        it("should parse a Cyrillic written number instead of an earlier digit", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "дюйми",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "4 фути три ",
+                    next_text = "",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("дюйми", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_three" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_three" and unit_end == "xp2" then return "три дюйми" end
+                if cand == "xp_three" then return "три" end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("xp_three", plugin.unit_xp_matches[1].start_xp)
+            assert.are.equal("три дюйми", plugin.unit_xp_matches[1].original)
+            assert.are.equal("7,62 cm", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a written number after a curly quote", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "inches",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "mind,” said Alice: “three ",
+                    next_text = " is such",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("inches", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_three" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp1" and unit_end == "xp2" then return "inches" end
+                if cand == "xp_three" then return "“three " end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("7.62 cm", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a written number after an ASCII quote", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "inches",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "He said 'six ",
+                    next_text = "'",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("inches", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            -- The word starts after the quote
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_six" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_six" and unit_end == "xp2" then return "six inches" end
+                if cand == "xp_six" then return "six " end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("six inches", plugin.unit_xp_matches[1].original)
+            assert.are.equal("15.24 cm", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a Cyrillic written number with an apostrophe after an ASCII quote", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "миль",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "'п'ять ",
+                    next_text = "'",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("миль", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_five" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_five" and unit_end == "xp2" then return "п'ять миль" end
+                if cand == "xp_five" then return "п'ять " end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("п'ять миль", plugin.unit_xp_matches[1].original)
+            assert.are.equal("8,05 km", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a Cyrillic written number after a no-break space", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "миль",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "пройшли на\194\160п'ять ",
+                    next_text = ".",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("миль", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_five" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_five" and unit_end == "xp2" then return "п'ять миль" end
+                if cand == "xp_five" then return "п'ять " end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("п'ять миль", plugin.unit_xp_matches[1].original)
+            assert.are.equal("8,05 km", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should skip a Cyrillic unit inside a longer word", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local texts = {
+                ["/body/p[1]/text()"] = "на поле вийшли три футболісти з м'ячем",
+                ["/body/p[2]/text()"] = "яма завглибшки три фути а потім",
+            }
+            -- next_text starts at the next word, as in crengine
+            local mock_hits = {
+                {
+                    matched_text = "фут",
+                    start = "/body/p[1]/text().19",
+                    ["end"] = "/body/p[1]/text().22",
+                    prev_text = "на поле вийшли три ",
+                    next_text = "з м'ячем",
+                },
+                {
+                    matched_text = "фути",
+                    start = "/body/p[2]/text().19",
+                    ["end"] = "/body/p[2]/text().23",
+                    prev_text = "яма завглибшки три ",
+                    next_text = "а потім",
+                },
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("фут", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            local function parse(xp)
+                local node, offset = xp:match("^(.*)%.(%d+)$")
+                return node, tonumber(offset)
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                return cand
+            end
+            plugin.ui.document.getNextVisibleChar = function(self_doc, xp)
+                local node, offset = parse(xp)
+                return node .. "." .. (offset + 1)
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, from, to)
+                local node, from_offset = parse(from)
+                local _, to_offset = parse(to)
+                local chars = {}
+                for ch in texts[node]:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+                    table.insert(chars, ch)
+                end
+                return table.concat(chars, "", from_offset + 1, to_offset)
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("/body/p[2]/text().19", plugin.unit_xp_matches[1].start_xp)
+            assert.are.equal("0,91 m", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should skip a Cyrillic unit at the end of a longer word", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local texts = {
+                ["/body/p[1]/text()"] = "бюджет п'ять мільярдів гривень",
+                ["/body/p[2]/text()"] = "пройшов п'ять ярдів далі",
+            }
+            -- prev_text ends at the previous word, as in crengine
+            local mock_hits = {
+                {
+                    matched_text = "ярдів",
+                    start = "/body/p[1]/text().17",
+                    ["end"] = "/body/p[1]/text().22",
+                    prev_text = "бюджет п'ять ",
+                    next_text = "гривень",
+                },
+                {
+                    matched_text = "ярдів",
+                    start = "/body/p[2]/text().14",
+                    ["end"] = "/body/p[2]/text().19",
+                    prev_text = "пройшов п'ять ",
+                    next_text = "далі",
+                },
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("ярдів", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            local function parse(xp)
+                local node, offset = xp:match("^(.*)%.(%d+)$")
+                return node, tonumber(offset)
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                return cand
+            end
+            plugin.ui.document.getNextVisibleChar = function(self_doc, xp)
+                local node, offset = parse(xp)
+                return node .. "." .. (offset + 1)
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, from, to)
+                local node, from_offset = parse(from)
+                local _, to_offset = parse(to)
+                local chars = {}
+                for ch in texts[node]:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+                    table.insert(chars, ch)
+                end
+                return table.concat(chars, "", from_offset + 1, to_offset)
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("/body/p[2]/text().14", plugin.unit_xp_matches[1].start_xp)
+        end)
+
+        it("should search all Cyrillic aliases for written numbers in chunks under the length limit", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local word_patterns = {}
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if not pat:find("[0-9]", 1, true) then
+                    table.insert(word_patterns, pat)
+                end
+                return {}
+            end
+
+            plugin:scanBookForUnits()
+            assert.is_true(#word_patterns > 1)
+            local searched = {}
+            for _, pat in ipairs(word_patterns) do
+                assert.is_true(#pat < 4000)
+                for alias in pat:gmatch("[^|()]+") do
+                    searched[alias] = true
+                end
+            end
+            for _, alias in ipairs({ "фут", "фута", "футів", "акри", "галонів", "квадратних\\s+футів", "кубічних\\s+дюймів" }) do
+                assert.is_true(searched[alias], alias)
+            end
+        end)
+
+        it("should split a word chunk in half on a regex error", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+            plugin.loc.getLanguage = function() return "uk" end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local word_calls = 0
+            local regex_err = 0
+            plugin.ui.document.getAndClearRegexSearchError = function()
+                local err = regex_err
+                regex_err = 0
+                return err
+            end
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if not pat:find("[0-9]", 1, true) then
+                    word_calls = word_calls + 1
+                    -- Fail the first word chunk only
+                    if word_calls == 1 then
+                        regex_err = 111
+                    end
+                end
+                return {}
+            end
+
+            plugin:scanBookForUnits()
+            -- The failed chunk is searched again as two halves
+            assert.is_true(word_calls >= 4)
+        end)
+
+        it("should parse a number followed by a degree sign before 'Fahrenheit'", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "Fahrenheit",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "pound of water to 212° ",
+                    next_text = ".",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("fahrenheit", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                if cand == "xp1" then return "xp_212" end
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp_212" and unit_end == "xp2" then return "212° Fahrenheit" end
+                if cand == "xp_212" then return "212° " end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("xp_212", plugin.unit_xp_matches[1].start_xp)
+            assert.are.equal("212° Fahrenheit", plugin.unit_xp_matches[1].original)
+            assert.are.equal("100 °C", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a compound first number in a written range", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "miles",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "walked twenty-five to thirty ",
+                    next_text = ".",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("miles", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp1" and unit_end == "xp2" then return "miles" end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("40.23–48.28 km", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a hyphenated second number in a written range", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "miles",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "walked twenty-five to thirty-five ",
+                    next_text = ".",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("miles", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp1" and unit_end == "xp2" then return "miles" end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("40.23–56.33 km", plugin.unit_xp_matches[1].converted)
+        end)
+
+        it("should parse a multi-word second number in a written range", function()
+            local xray_unitscanner = require("xray_unitscanner")
+            for k, v in pairs(xray_unitscanner) do
+                plugin[k] = v
+            end
+
+            plugin.ai_helper = {
+                settings = {
+                    unit_converter_enabled = true,
+                    unit_underline_enabled = true,
+                    unit_underline_style = "solid",
+                    unit_conversion_direction = "to_metric",
+                    unit_scan_written_numbers = true,
+                }
+            }
+
+            local mock_hits = {
+                {
+                    matched_text = "feet",
+                    start = "xp1",
+                    ["end"] = "xp2",
+                    prev_text = "walked two hundred or three hundred ",
+                    next_text = ".",
+                }
+            }
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                if pat:find("feet", 1, true) and not pat:find("[0-9]", 1, true) then
+                    return mock_hits
+                end
+                return {}
+            end
+            plugin.ui.document.getPrevVisibleWordStart = function(self_doc, cand)
+                return cand
+            end
+            plugin.ui.document.getTextFromXPointers = function(self_doc, cand, unit_end)
+                if cand == "xp1" and unit_end == "xp2" then return "feet" end
+                return ""
+            end
+
+            plugin:scanBookForUnits()
+            assert.are.equal(1, #plugin.unit_xp_matches)
+            assert.are.equal("60.96–91.44 m", plugin.unit_xp_matches[1].converted)
+        end)
+
         it("should successfully scan '80 degrees Celcius' and populate unit_xp_matches", function()
             local xray_unitscanner = require("xray_unitscanner")
             for k, v in pairs(xray_unitscanner) do
@@ -1165,7 +1804,7 @@ describe("xray_ui", function()
 
             -- Signature version 31 + settings categories + 2 entries
             assert.are.equal(3, #lines)
-            assert.is_true(lines[1]:find("^v31|") ~= nil)
+            assert.is_true(lines[1]:find("^v32|") ~= nil)
             assert.are.equal("xp_1\txp_2\t10 cm\t3.94 inches\tlength", lines[2])
             assert.are.equal("xp_3\txp_4\t100 kg\t220.46  lb\tweight", lines[3])
 
