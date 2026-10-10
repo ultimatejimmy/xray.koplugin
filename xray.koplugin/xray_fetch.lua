@@ -2558,6 +2558,10 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
                         timeline = result.timeline or {},
                         source = "llm_summary"
                     }
+                    -- Save after each book so a later failure or cancel doesn't
+                    -- discard the books already fetched; a retry then only
+                    -- fetches the ones still missing.
+                    self.series_manager:saveSeriesCache(slug, cache_data)
 
                     processNextTask(task_idx + 1)
                 end)()

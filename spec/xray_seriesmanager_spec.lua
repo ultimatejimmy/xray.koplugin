@@ -1340,4 +1340,67 @@ return {
             assert.is_true(labels["[Book 1.5: No Killing Goblins]"])
         end)
     end)
+    describe("fetchSeriesContext", function()
+        local original_network
+
+        before_each(function()
+            original_network = package.loaded["ui/network/manager"]
+            package.loaded["ui/network/manager"] = {
+                isOnline = function() return true end,
+                runWhenOnline = function(_, fn) fn() end,
+            }
+        end)
+
+        after_each(function()
+            package.loaded["ui/network/manager"] = original_network
+        end)
+
+        it("keeps books already fetched when a later book fails", function()
+            local plugin = createMockPlugin()
+            for k, v in pairs(xray_fetch) do
+                plugin[k] = v
+            end
+            plugin.series_manager = manager
+            plugin.cache_manager = {
+                saveCache = function() return true end,
+                asyncSaveCache = function() return true end,
+                loadCache = function() return {} end
+            }
+            plugin.ui.document.getProps = function()
+                return { title = "Proven Guilty", authors = "Jim Butcher", series = "The Dresden Files", series_index = 4 }
+            end
+            local merged = false
+            plugin.mergeSeriesContext = function() merged = true end
+            plugin.ai_helper = {
+                settings = { series_context_enabled = true },
+                setTrapWidget = function() end,
+                resetTrapWidget = function() end,
+                createPrompt = function(_, title, _, context, section)
+                    return { section = section, title = title }
+                end,
+                executeUnifiedRequest = function(_, prompt)
+                    if prompt.section == "prior_book_list" then
+                        return { prior_books = {
+                            { index = 1, title = "Storm Front" },
+                            { index = 2, title = "Fool Moon" },
+                            { index = 3, title = "Grave Peril" },
+                        } }
+                    end
+                    if prompt.title == "Grave Peril" then
+                        return nil, "error_api", "Parse failed: Failed to parse JSON"
+                    end
+                    return { characters = { { name = "Harry Dresden" } }, timeline = {} }
+                end
+            }
+
+            plugin:fetchSeriesContext(true)
+
+            local cache = manager:loadSeriesCache("the_dresden_files")
+            assert.is_not_nil(cache)
+            assert.are.equal("Storm Front", cache.books[1].title)
+            assert.are.equal("Fool Moon", cache.books[2].title)
+            assert.is_nil(cache.books[3])
+            assert.is_false(merged)
+        end)
+    end)
 end)
