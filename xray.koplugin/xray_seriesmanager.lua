@@ -56,7 +56,7 @@ function SeriesManager:extractIndexFromTitle(title, series_name)
     -- 1. Try matching series_name followed by index if series_name is known
     if series_name and series_name ~= "" then
         local s_clean = series_name:lower():gsub("[%-%^%$%(%)%%%.%[%]%*%+%?]", "%%%1")
-        local s_idx = lower_title:match(s_clean .. "%s*[,:%-]?%s*#?%s*0*(%d+)")
+        local s_idx = lower_title:match(s_clean .. "%s*[,:%-]?%s*#?%s*0*(%d+%.?%d*)")
         if s_idx and tonumber(s_idx) then
             return tonumber(s_idx)
         end
@@ -64,14 +64,14 @@ function SeriesManager:extractIndexFromTitle(title, series_name)
 
     -- 2. Explicit numeric patterns
     local patterns = {
-        "book%s*0*(%d+)",
-        "volume%s*0*(%d+)",
-        "vol%s*%.?%s*0*(%d+)",
-        "bk%s*%.?%s*0*(%d+)",
-        "part%s*0*(%d+)",
-        "no%s*%.?%s*0*(%d+)",
-        "nr%s*%.?%s*0*(%d+)",
-        "#%s*0*(%d+)",
+        "book%s*0*(%d+%.?%d*)",
+        "volume%s*0*(%d+%.?%d*)",
+        "vol%s*%.?%s*0*(%d+%.?%d*)",
+        "bk%s*%.?%s*0*(%d+%.?%d*)",
+        "part%s*0*(%d+%.?%d*)",
+        "no%s*%.?%s*0*(%d+%.?%d*)",
+        "nr%s*%.?%s*0*(%d+%.?%d*)",
+        "#%s*0*(%d+%.?%d*)",
     }
     for _, pat in ipairs(patterns) do
         local match = lower_title:match(pat)
@@ -187,14 +187,109 @@ function SeriesManager:detectSeries(props, title, author, ai_helper)
     return nil
 end
 
+-- Series indices are not always whole numbers: novellas and split volumes are
+-- commonly numbered 1.5, 2.5, 5.33, etc. Prior books are therefore tracked by
+-- their actual index values instead of by counting 1..index-1.
+
+-- Format an index for display/prompts: 3 -> "3", 2.5 -> "2.5"
+function SeriesManager.formatIndex(index)
+    local n = tonumber(index)
+    if not n then return tostring(index) end
+    if n == math.floor(n) then return string.format("%d", n) end
+    return tostring(n)
+end
+
+-- Whole-numbered books that must precede `index` (4 -> {1,2,3}, 2.5 -> {1,2})
+function SeriesManager.wholeIndicesBefore(index)
+    local list = {}
+    local n = tonumber(index) or 1
+    for i = 1, math.ceil(n) - 1 do
+        table.insert(list, i)
+    end
+    return list
+end
+
+-- Sorted numeric keys of `books` (a SeriesCache books table) that precede `index`
+function SeriesManager.priorIndicesIn(books, index)
+    local list = {}
+    local n = tonumber(index)
+    if not n or type(books) ~= "table" then return list end
+    for k in pairs(books) do
+        local kn = tonumber(k)
+        if kn and kn < n then
+            table.insert(list, kn)
+        end
+    end
+    table.sort(list)
+    return list
+end
+
+-- Books on the device whose metadata places them before the current book in this series
+function SeriesManager:findLocalPriorBooks(series_info, current_book_path)
+    local list = {}
+    if not current_book_path or current_book_path == "" or not series_info or not series_info.slug then
+        return list
+    end
+    local cur_idx = tonumber(series_info.index)
+    if not cur_idx then return list end
+    for _, b in ipairs(self:scanFolderForEpubs(current_book_path)) do
+        local b_idx = tonumber(b.series_index)
+        if b.path ~= current_book_path and b.series and b_idx
+                and makeSlug(b.series) == series_info.slug and b_idx < cur_idx then
+            table.insert(list, { index = b_idx, title = b.title, author = b.author, path = b.path })
+        end
+    end
+    return list
+end
+
+-- Indices to check for prior books: every whole-numbered book before the
+-- current one, plus fractional entries already in the SeriesCache (`books`)
+-- or found on the device.
+function SeriesManager:getExpectedPriorIndices(series_info, books, current_book_path)
+    local seen, list = {}, {}
+    local function add(i)
+        if not seen[i] then
+            seen[i] = true
+            table.insert(list, i)
+        end
+    end
+    for _, i in ipairs(SeriesManager.wholeIndicesBefore(series_info.index)) do add(i) end
+    for _, i in ipairs(SeriesManager.priorIndicesIn(books, series_info.index)) do add(i) end
+    for _, b in ipairs(self:findLocalPriorBooks(series_info, current_book_path)) do add(b.index) end
+    table.sort(list)
+    return list
+end
+
 -- Get list of prior books in the series
-function SeriesManager:getPriorBookList(series_info, author, ai_helper)
+function SeriesManager:getPriorBookList(series_info, author, ai_helper, current_book_path)
     if not series_info or not series_info.name or not series_info.index or series_info.index <= 1 then
         logger.info("XRayPlugin: Series: getPriorBookList: invalid series_info or index <= 1, returning empty list")
         return {}
     end
     
     logger.info("XRayPlugin: Series: getPriorBookList starting for: " .. tostring(series_info.name) .. ", index=" .. tostring(series_info.index))
+
+    -- Collect prior books keyed by index. Books found on the device take
+    -- precedence, since their indices come from the user's own metadata; AI
+    -- results fill in the rest. Entries at or after the current index, and
+    -- titles already listed under another index, are dropped.
+    local by_index, seen_titles = {}, {}
+    local function addBook(book)
+        local idx = book and tonumber(book.index)
+        if not idx or idx >= series_info.index or by_index[idx] then return end
+        local title_slug = book.title and makeSlug(book.title)
+        if title_slug and title_slug ~= "" then
+            if seen_titles[title_slug] then return end
+            seen_titles[title_slug] = true
+        end
+        by_index[idx] = { index = idx, title = book.title, author = book.author or author, path = book.path }
+    end
+
+    local local_books = self:findLocalPriorBooks(series_info, current_book_path)
+    for _, b in ipairs(local_books) do addBook(b) end
+    if #local_books > 0 then
+        logger.info("XRayPlugin: Series: getPriorBookList: Found " .. tostring(#local_books) .. " prior books on device.")
+    end
 
     if ai_helper then
         logger.info("XRayPlugin: Series: getPriorBookList: Sending AI prior book list prompt.")
@@ -206,18 +301,27 @@ function SeriesManager:getPriorBookList(series_info, author, ai_helper)
         local result, err_code, err_msg = ai_helper:executeUnifiedRequest(prompt)
         if result and result.prior_books then
             logger.info("XRayPlugin: Series: getPriorBookList: AI returned " .. tostring(#result.prior_books) .. " prior books.")
-            return result.prior_books
+            for _, b in ipairs(result.prior_books) do addBook(b) end
         else
-            logger.info("XRayPlugin: Series: getPriorBookList: AI call failed or returned no list (err_code=" .. tostring(err_code) .. ", err_msg=" .. tostring(err_msg) .. "). Using local fallback.")
+            logger.info("XRayPlugin: Series: getPriorBookList: AI call failed or returned no list (err_code=" .. tostring(err_code) .. ", err_msg=" .. tostring(err_msg) .. ").")
         end
     else
-        logger.info("XRayPlugin: Series: getPriorBookList: ai_helper is nil, skipping AI prompt and using local fallback.")
+        logger.info("XRayPlugin: Series: getPriorBookList: ai_helper is nil, skipping AI prompt.")
     end
     
-    -- Minimal local fallback if AI fails/is missing: generate placeholders
-    logger.info("XRayPlugin: Series: getPriorBookList: Generating local fallback list of " .. tostring(series_info.index - 1) .. " placeholder books.")
+    local list = {}
+    for _, idx in ipairs(SeriesManager.priorIndicesIn(by_index, series_info.index)) do
+        table.insert(list, by_index[idx])
+    end
+    if #list > 0 then
+        return list
+    end
+
+    -- Minimal local fallback if nothing was found: generate placeholders
+    local whole = SeriesManager.wholeIndicesBefore(series_info.index)
+    logger.info("XRayPlugin: Series: getPriorBookList: Generating local fallback list of " .. tostring(#whole) .. " placeholder books.")
     local fallback_list = {}
-    for i = 1, series_info.index - 1 do
+    for _, i in ipairs(whole) do
         table.insert(fallback_list, {
             index = i,
             title = string.format("%s (Book %d)", series_info.name, i),
@@ -923,6 +1027,21 @@ function SeriesManager:readBookMetadata(book_path)
         series_index = series_index or tonumber(xray_cache.series_index)
     end
 
+    -- Books never opened in KOReader have no sidecar; fall back to the metadata
+    -- CoverBrowser's BookInfoManager has already extracted from the file.
+    if not series_index then
+        local ok_bim, BookInfoManager = pcall(require, "bookinfomanager")
+        if ok_bim and BookInfoManager and BookInfoManager.getBookInfo then
+            local ok_bi, bi = pcall(BookInfoManager.getBookInfo, BookInfoManager, book_path, false)
+            if ok_bi and bi then
+                title = title or bi.title
+                author = author or bi.authors
+                series_name = series_name or bi.series
+                series_index = tonumber(bi.series_index)
+            end
+        end
+    end
+
     if not title then
         local filename = book_path:match("([^/\\]+)$") or book_path
         title = filename:gsub("%.[^%.]+$", "")
@@ -1036,7 +1155,7 @@ function SeriesManager:buildSeriesRoster(book_data, props, current_book_path)
                 local b_path = cache_data.book_paths and cache_data.book_paths[num_idx]
                 local item = {
                     index = num_idx,
-                    title = b.title or string.format("Book %d", num_idx),
+                    title = b.title or string.format("Book %s", SeriesManager.formatIndex(num_idx)),
                     author = b.author,
                     path = b_path,
                     source = "cache"

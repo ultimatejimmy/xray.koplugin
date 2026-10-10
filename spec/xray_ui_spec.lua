@@ -2792,6 +2792,30 @@ describe("xray_ui", function()
             assert.is_true(fetch_called)
         end)
     end)
+    describe("showSeriesContextPrompt", function()
+        local loc_xray = require("localization_xray")
+
+        local function promptTitle(template)
+            plugin.loc = setmetatable({ translations = { series_context_prompt_text = template } }, { __index = loc_xray })
+            plugin.series_manager = {
+                getExpectedPriorIndices = function() return { 1, 1.5, 2 } end,
+            }
+            plugin:showSeriesContextPrompt({ name = "The Wandering Inn", index = 2.5, slug = "the_wandering_inn" })
+            return _G.ui_tracker.last_shown.args.title
+        end
+
+        it("shows a fractional book number with sequential placeholders", function()
+            local title = promptTitle("This appears to be Book %d of '%s'. Load recaps for the previous %d books?")
+            assert.truthy(title:find("Book 2.5 of 'The Wandering Inn'", 1, true))
+            assert.truthy(title:find("previous 3 books", 1, true))
+        end)
+
+        it("shows a fractional book number with positional placeholders", function()
+            local title = promptTitle("'%2$s' %1$d. kötete. Betölti az előző %3$d könyv összefoglalóját?")
+            assert.truthy(title:find("'The Wandering Inn' 2.5. kötete", 1, true))
+            assert.truthy(title:find("előző 3 könyv", 1, true))
+        end)
+    end)
 end)
 
 

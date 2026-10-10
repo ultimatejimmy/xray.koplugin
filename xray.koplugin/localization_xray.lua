@@ -539,8 +539,13 @@ function Localization:t(key, ...)
         }
         translation = fallbacks[key] or key
     end
-    
-    -- Format with arguments
+
+    return self:format(translation, key, ...)
+end
+
+-- Format a translation template with arguments, supporting positional
+-- placeholders like %1$d. `key` is only used for log messages.
+function Localization:format(translation, key, ...)
     local arg_count = select('#', ...)
     if arg_count > 0 then
         -- Convert nil arguments to "???" to avoid string.format errors

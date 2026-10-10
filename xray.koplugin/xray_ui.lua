@@ -27,6 +27,7 @@ local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local xray_units = require(plugin_path .. "xray_units")
 local XRaySettingsCard = require(plugin_path .. "xray_settings_card")
 local utils = require(plugin_path .. "xray_utils")
+local SeriesManager = require(plugin_path .. "xray_seriesmanager")
 
 local M = {}
 
@@ -6067,16 +6068,40 @@ function M:manualFetchSeriesContext()
     end)
 end
 
+-- Indices of prior books to look for (handles fractional indices like 2.5)
+function M:getExpectedPriorIndices(series_info, books, doc_file)
+    if self.series_manager and self.series_manager.getExpectedPriorIndices then
+        return self.series_manager:getExpectedPriorIndices(series_info, books, doc_file)
+    end
+    return SeriesManager.wholeIndicesBefore(series_info.index)
+end
+
 function M:showSeriesContextPrompt(series_info)
     if self.destroyed then return end
     self:log("XRayPlugin: Series: showSeriesContextPrompt: Series detected: " .. series_info.name .. ", index=" .. tostring(series_info.index) .. ". Showing prompt dialog.")
 
-    local body_text = self.loc:t(
-        "series_context_prompt_text",
-        series_info.index,
-        series_info.name,
-        series_info.index - 1
-    )
+    local doc_file = self.ui and self.ui.document and self.ui.document.file
+    local cache_data = series_info.slug and self.series_manager and self.series_manager.loadSeriesCache and self.series_manager:loadSeriesCache(series_info.slug)
+    local prior_count = #self:getExpectedPriorIndices(series_info, cache_data and cache_data.books, doc_file)
+    -- The translations format the book number with %d (or %1$d), which shows
+    -- 2.5 as "2"; swap that placeholder for %s so fractional indices survive.
+    local body_text
+    local tmpl = self.loc.translations and self.loc.translations["series_context_prompt_text"]
+    if tmpl and tmpl ~= "" and self.loc.format then
+        if tmpl:find("%%1%$d") then
+            tmpl = tmpl:gsub("%%1%$d", "%%1$s")
+        else
+            tmpl = tmpl:gsub("%%d", "%%s", 1)
+        end
+        body_text = self.loc:format(tmpl, "series_context_prompt_text", SeriesManager.formatIndex(series_info.index), series_info.name, prior_count)
+    else
+        body_text = self.loc:t(
+            "series_context_prompt_text",
+            series_info.index,
+            series_info.name,
+            prior_count
+        )
+    end
 
     local confirm
     confirm = ButtonDialog:new{
@@ -6227,7 +6252,8 @@ function M:checkSeriesContext()
 
             -- Try to discover any missing prior books on local disk first
             local doc_file = self.ui and self.ui.document and self.ui.document.file
-            for p_idx = 1, series_info.index - 1 do
+            local prior_indices = self:getExpectedPriorIndices(series_info, cache_data.books, doc_file)
+            for _, p_idx in ipairs(prior_indices) do
                 if not cache_data.books[p_idx] or cache_data.books[p_idx].source ~= "local_xray" then
                     local local_book = self.series_manager and self.series_manager.findLocalBookXRay and self.series_manager:findLocalBookXRay(series_info, p_idx, doc_file, nil, self.cache_manager)
                     if local_book then
@@ -6237,7 +6263,7 @@ function M:checkSeriesContext()
             end
 
             local all_priors_cached = true
-            for p_idx = 1, series_info.index - 1 do
+            for _, p_idx in ipairs(prior_indices) do
                 if not cache_data.books[p_idx] then
                     all_priors_cached = false
                     break
@@ -6329,7 +6355,8 @@ function M:checkSeriesContext()
                         cache_data.books = cache_data.books or {}
 
                         local doc_file = self.ui and self.ui.document and self.ui.document.file
-                        for p_idx = 1, index - 1 do
+                        local prior_indices = self:getExpectedPriorIndices(ai_series_info, cache_data.books, doc_file)
+                        for _, p_idx in ipairs(prior_indices) do
                             if not cache_data.books[p_idx] or cache_data.books[p_idx].source ~= "local_xray" then
                                 local local_book = self.series_manager and self.series_manager.findLocalBookXRay and self.series_manager:findLocalBookXRay(ai_series_info, p_idx, doc_file, nil, self.cache_manager)
                                 if local_book then
@@ -6339,7 +6366,7 @@ function M:checkSeriesContext()
                         end
 
                         local all_priors_cached = true
-                        for p_idx = 1, index - 1 do
+                        for _, p_idx in ipairs(prior_indices) do
                             if not cache_data.books[p_idx] then
                                 all_priors_cached = false
                                 break
@@ -6558,7 +6585,7 @@ function M:showManageSeriesDialog()
                                     UIManager:close(num_dialog)
                                     if val and val > 0 then
                                         closePickerMenu()
-                                        callback(math.floor(val))
+                                        callback(val)
                                     end
                                 end,
                             }}}
@@ -6899,7 +6926,7 @@ function M:showManageSeriesDialog()
 
         -- Book roster rows
         for i, b in ipairs(books_roster) do
-            local idx_str = string.format("#%d", b.index or 0)
+            local idx_str = "#" .. SeriesManager.formatIndex(b.index or 0)
             local current_badge = (b.is_current or (doc_file and b.path == doc_file)) and ("  " .. (self.loc:t("manage_series_current_book") or "(Current Book)")) or ""
             local book_label = string.format("%-4s %s%s", idx_str, b.title or "Untitled", current_badge)
 
