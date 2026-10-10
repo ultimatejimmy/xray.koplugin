@@ -336,7 +336,7 @@ function Localization:t(key, ...)
             custom_api_key_title = "Custom API %d — API Key",
             custom_api_model_title = "Custom API %d — Default Model",
             custom_api_endpoint_hint = "e.g., https://openrouter.ai/api/v1/chat/completions",
-            custom_api_model_hint = "e.g., google/gemini-3.7-flash or openai/gpt-5.4-mini",
+            custom_api_model_hint = "e.g., google/gemini-3.8-flash or openai/gpt-5.4-mini",
             custom_api_saved = "Custom API %d configuration saved.",
             custom_api_is_reasoning = "Is Reasoning Model (e.g. DeepSeek-V4-Pro, DeepSeek-R1)",
             menu_web_setup = "Set API Key from Phone/PC (QR Code)",

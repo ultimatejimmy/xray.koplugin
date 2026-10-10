@@ -26,7 +26,7 @@ return {
     -- Custom API slot 1 (e.g., OpenRouter, any OpenAI-compatible endpoint)
     custom1_api_key  = "",   -- Your API key for this endpoint
     custom1_endpoint = "",   -- e.g., "https://openrouter.ai/api/v1/chat/completions"
-    custom1_model    = "",   -- e.g., "google/gemini-3.7-flash"
+    custom1_model    = "",   -- e.g., "google/gemini-3.8-flash"
     custom1_format   = "",   -- optional: "openai" or "anthropic" (default: auto-detected from endpoint)
 
     -- Custom API slot 2 (e.g., a local Ollama server)

@@ -780,10 +780,10 @@ describe("AIHelper", function()
     end)
 
     describe("DEFAULT_AI configuration", function()
-        it("should have gemini-3.7-flash as default primary model", function()
-            local primary = AIHelper.settings.primary_ai or { provider = "gemini", model = "gemini-3.7-flash" }
+        it("should have gemini-3.8-flash as default primary model", function()
+            local primary = AIHelper.settings.primary_ai or { provider = "gemini", model = "gemini-3.8-flash" }
             assert.are.equal("gemini", primary.provider)
-            assert.are.equal("gemini-3.7-flash", primary.model)
+            assert.are.equal("gemini-3.8-flash", primary.model)
         end)
 
         it("should have gemini-3.5-flash-lite as default secondary model", function()
@@ -803,7 +803,7 @@ describe("AIHelper", function()
 
             -- Test with mock settings containing deprecated Gemini models
             local mock_settings = {
-                primary_ai = { provider = "gemini", model = "gemini-2.0-flash" },
+                primary_ai = { provider = "gemini", model = "gemini-3.5-flash" },
                 secondary_ai = { provider = "gemini", model = "gemini-3.1-flash-lite" },
                 gemini_primary_model = "gemini-1.5-flash",
                 gemini_secondary_model = "gemini-2.0-flash-lite",
@@ -825,9 +825,9 @@ describe("AIHelper", function()
             io.open = old_open
 
             assert.is_not_nil(AIHelper.settings)
-            assert.are.equal("gemini-3.7-flash", AIHelper.settings.primary_ai.model)
+            assert.are.equal("gemini-3.8-flash", AIHelper.settings.primary_ai.model)
             assert.are.equal("gemini-3.5-flash-lite", AIHelper.settings.secondary_ai.model)
-            assert.are.equal("gemini-3.7-flash", AIHelper.settings.gemini_primary_model)
+            assert.are.equal("gemini-3.8-flash", AIHelper.settings.gemini_primary_model)
             assert.are.equal("gemini-3.5-flash-lite", AIHelper.settings.gemini_secondary_model)
         end)
 
@@ -853,7 +853,7 @@ describe("AIHelper", function()
             io.open = old_open
 
             assert.are.equal("gemini-2.5-pro", AIHelper.settings.primary_ai.model)
-            assert.are.equal("gemini-3.7-flash", AIHelper.settings.secondary_ai.model)
+            assert.are.equal("gemini-3.8-flash", AIHelper.settings.secondary_ai.model)
         end)
 
         it("should migrate retired Claude models in primary_ai, secondary_ai, and claude_model", function()
@@ -1033,7 +1033,7 @@ custom1_model = google/gemini-2.5-flash
             AIHelper.providers.claude.api_key = "sk-ant-testkey"
             
             -- Case 1: Fallback to claude-haiku-4-5 when no Claude model is configured
-            AIHelper.settings.primary_ai = { provider = "gemini", model = "gemini-3.7-flash" }
+            AIHelper.settings.primary_ai = { provider = "gemini", model = "gemini-3.8-flash" }
             AIHelper.settings.secondary_ai = { provider = "gemini", model = "gemini-3.5-flash-lite" }
             AIHelper.settings.claude_model = nil
             AIHelper.providers.claude.model = nil

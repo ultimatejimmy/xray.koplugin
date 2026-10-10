@@ -1240,8 +1240,11 @@ describe("xray_ui", function()
             assert.is_not_nil(claude_item)
 
             local gemini_menu = gemini_item.sub_item_table_func()
-            assert.is_not_nil(gemini_menu[1].text:find("gemini%-3%.7%-flash"))
-            assert.is_not_nil(gemini_menu[2].text:find("gemini%-3%.6%-flash"))
+            assert.is_not_nil(gemini_menu[1].text:find("gemini%-3%.8%-flash"))
+            assert.is_not_nil(gemini_menu[2].text:find("gemini%-3%.7%-flash"))
+            for _, item in ipairs(gemini_menu) do
+                assert.is_nil(item.text:match("gemini%-3%.5%-flash$"))
+            end
 
             local chatgpt_menu = chatgpt_item.sub_item_table_func()
             assert.is_not_nil(chatgpt_menu[1].text:find("gpt%-6%-luna"))
