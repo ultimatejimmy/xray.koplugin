@@ -2305,7 +2305,8 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
     cache_data.books = cache_data.books or {}
 
     if init_wait_dialog and self.ai_helper then self.ai_helper:setTrapWidget(init_wait_dialog) end
-    local prior_books = self.series_manager:getPriorBookList(series_info, author, self.ai_helper, self.ui.document.file)
+    local doc_file = self.ui and self.ui.document and self.ui.document.file
+    local prior_books = self.series_manager:getPriorBookList(series_info, author, self.ai_helper, doc_file)
     if init_wait_dialog and self.ai_helper then self.ai_helper:resetTrapWidget() end
     if cancel_ref and cancel_ref.cancelled then
         self:log("XRayPlugin: Series: fetchSeriesContext cancelled after getPriorBookList")
@@ -2339,7 +2340,6 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
 
     local missing_books = {}
     local books_needing_timeline_summary = {}
-    local doc_file = self.ui and self.ui.document and self.ui.document.file
 
     for _, book in ipairs(prior_books) do
         local idx = book.index

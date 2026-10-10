@@ -56,7 +56,7 @@ function SeriesManager:extractIndexFromTitle(title, series_name)
     -- 1. Try matching series_name followed by index if series_name is known
     if series_name and series_name ~= "" then
         local s_clean = series_name:lower():gsub("[%-%^%$%(%)%%%.%[%]%*%+%?]", "%%%1")
-        local s_idx = lower_title:match(s_clean .. "%s*[,:%-]?%s*#?%s*0*(%d+)")
+        local s_idx = lower_title:match(s_clean .. "%s*[,:%-]?%s*#?%s*0*(%d+%.?%d*)")
         if s_idx and tonumber(s_idx) then
             return tonumber(s_idx)
         end
@@ -64,14 +64,14 @@ function SeriesManager:extractIndexFromTitle(title, series_name)
 
     -- 2. Explicit numeric patterns
     local patterns = {
-        "book%s*0*(%d+)",
-        "volume%s*0*(%d+)",
-        "vol%s*%.?%s*0*(%d+)",
-        "bk%s*%.?%s*0*(%d+)",
-        "part%s*0*(%d+)",
-        "no%s*%.?%s*0*(%d+)",
-        "nr%s*%.?%s*0*(%d+)",
-        "#%s*0*(%d+)",
+        "book%s*0*(%d+%.?%d*)",
+        "volume%s*0*(%d+%.?%d*)",
+        "vol%s*%.?%s*0*(%d+%.?%d*)",
+        "bk%s*%.?%s*0*(%d+%.?%d*)",
+        "part%s*0*(%d+%.?%d*)",
+        "no%s*%.?%s*0*(%d+%.?%d*)",
+        "nr%s*%.?%s*0*(%d+%.?%d*)",
+        "#%s*0*(%d+%.?%d*)",
     }
     for _, pat in ipairs(patterns) do
         local match = lower_title:match(pat)
@@ -215,8 +215,9 @@ function SeriesManager.priorIndicesIn(books, index)
     local n = tonumber(index)
     if not n or type(books) ~= "table" then return list end
     for k in pairs(books) do
-        if type(k) == "number" and k < n then
-            table.insert(list, k)
+        local kn = tonumber(k)
+        if kn and kn < n then
+            table.insert(list, kn)
         end
     end
     table.sort(list)
@@ -229,10 +230,13 @@ function SeriesManager:findLocalPriorBooks(series_info, current_book_path)
     if not current_book_path or current_book_path == "" or not series_info or not series_info.slug then
         return list
     end
+    local cur_idx = tonumber(series_info.index)
+    if not cur_idx then return list end
     for _, b in ipairs(self:scanFolderForEpubs(current_book_path)) do
-        if b.path ~= current_book_path and b.series and b.series_index
-                and makeSlug(b.series) == series_info.slug and b.series_index < series_info.index then
-            table.insert(list, { index = b.series_index, title = b.title, author = b.author, path = b.path })
+        local b_idx = tonumber(b.series_index)
+        if b.path ~= current_book_path and b.series and b_idx
+                and makeSlug(b.series) == series_info.slug and b_idx < cur_idx then
+            table.insert(list, { index = b_idx, title = b.title, author = b.author, path = b.path })
         end
     end
     return list

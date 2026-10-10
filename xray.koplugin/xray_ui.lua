@@ -6083,12 +6083,25 @@ function M:showSeriesContextPrompt(series_info)
     local doc_file = self.ui and self.ui.document and self.ui.document.file
     local cache_data = series_info.slug and self.series_manager and self.series_manager.loadSeriesCache and self.series_manager:loadSeriesCache(series_info.slug)
     local prior_count = #self:getExpectedPriorIndices(series_info, cache_data and cache_data.books, doc_file)
-    local body_text = self.loc:t(
-        "series_context_prompt_text",
-        series_info.index,
-        series_info.name,
-        prior_count
-    )
+    -- The translations format the book number with %d (or %1$d), which shows
+    -- 2.5 as "2"; swap that placeholder for %s so fractional indices survive.
+    local body_text
+    local tmpl = self.loc.translations and self.loc.translations["series_context_prompt_text"]
+    if tmpl and tmpl ~= "" and self.loc.format then
+        if tmpl:find("%%1%$d") then
+            tmpl = tmpl:gsub("%%1%$d", "%%1$s")
+        else
+            tmpl = tmpl:gsub("%%d", "%%s", 1)
+        end
+        body_text = self.loc:format(tmpl, "series_context_prompt_text", SeriesManager.formatIndex(series_info.index), series_info.name, prior_count)
+    else
+        body_text = self.loc:t(
+            "series_context_prompt_text",
+            series_info.index,
+            series_info.name,
+            prior_count
+        )
+    end
 
     local confirm
     confirm = ButtonDialog:new{
@@ -6572,7 +6585,7 @@ function M:showManageSeriesDialog()
                                     UIManager:close(num_dialog)
                                     if val and val > 0 then
                                         closePickerMenu()
-                                        callback(math.floor(val))
+                                        callback(val)
                                     end
                                 end,
                             }}}
@@ -6913,7 +6926,7 @@ function M:showManageSeriesDialog()
 
         -- Book roster rows
         for i, b in ipairs(books_roster) do
-            local idx_str = string.format("#%d", b.index or 0)
+            local idx_str = "#" .. SeriesManager.formatIndex(b.index or 0)
             local current_badge = (b.is_current or (doc_file and b.path == doc_file)) and ("  " .. (self.loc:t("manage_series_current_book") or "(Current Book)")) or ""
             local book_label = string.format("%-4s %s%s", idx_str, b.title or "Untitled", current_badge)
 

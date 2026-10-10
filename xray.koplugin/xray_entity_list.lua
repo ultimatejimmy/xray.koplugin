@@ -922,12 +922,12 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
 
     if is_timeline and is_prior then
         local raw_ch = item.chapter or ""
-        local num_match, name_match = raw_ch:match("^%[?Book%s+(%d+)%s*:%s*(.-)%]?$")
+        local num_match, name_match = raw_ch:match("^%[?Book%s+(%d+%.?%d*)%s*:%s*(.-)%]?$")
         local title_str = "Prior Book"
         if num_match and name_match and name_match ~= "" then
             title_str = string.format("Book %s: %s", num_match, name_match)
         else
-            local num_only = raw_ch:match("^%[?Book%s+(%d+)%]?$")
+            local num_only = raw_ch:match("^%[?Book%s+(%d+%.?%d*)%]?$")
             if num_only then
                 title_str = "Book " .. num_only
             elseif item.source_book then

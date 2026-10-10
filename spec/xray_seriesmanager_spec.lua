@@ -1287,6 +1287,28 @@ return {
             assert.are.equal(1.5, meta.series_index)
         end)
 
+        it("parses fractional indices from titles", function()
+            assert.are.equal(2.5, manager:extractIndexFromTitle("The Wandering Inn #2.5", "The Wandering Inn"))
+            assert.are.equal(1.5, manager:extractIndexFromTitle("No Killing Goblins (Book 1.5)"))
+            assert.are.equal(12.5, manager:extractIndexFromTitle("Side Jobs: Dresden Files #12.5"))
+            assert.are.equal(3, manager:extractIndexFromTitle("Book 3. The Hero of Ages"))
+            assert.are.equal(4, manager:extractIndexFromTitle("Volume 04"))
+        end)
+
+        it("compares string series indices numerically", function()
+            manager.scanFolderForEpubs = function()
+                return {
+                    { path = "/books/1.5.epub", title = "No Killing Goblins", series = "The Wandering Inn", series_index = "1.5" },
+                    { path = "/books/3.epub", title = "The Wandering Inn 3", series = "The Wandering Inn", series_index = "3" },
+                }
+            end
+            local list = manager:findLocalPriorBooks({ name = "The Wandering Inn", index = "2.5", slug = "the_wandering_inn" }, "/books/2.5.epub")
+            assert.are.equal(1, #list)
+            assert.are.equal(1.5, list[1].index)
+
+            assert.are.same({ 1, 1.5 }, SeriesManager.priorIndicesIn({ ["1"] = {}, ["1.5"] = {}, ["3"] = {} }, 2.5))
+        end)
+
         it("keeps fractional indices in series prompts", function()
             local ai_helper = require("xray_aihelper")
             ai_helper.prompts = require("prompts/en")
