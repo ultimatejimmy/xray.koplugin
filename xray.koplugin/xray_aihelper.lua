@@ -34,6 +34,13 @@ local XRayLogger = require(plugin_path .. "xray_logger")
 local Trapper = require("ui/trapper")
 local utils = require(plugin_path .. "xray_utils")
 
+-- Series index for prompts: 3 -> "3", 2.5 -> "2.5"
+local function formatSeriesIndex(index)
+    local n = tonumber(index) or 1
+    if n == math.floor(n) then return string.format("%d", n) end
+    return tostring(n)
+end
+
 -- Optimization: Use rapidjson if available
 local json_ok, json = pcall(require, "json")
 if not json_ok then
@@ -2029,15 +2036,22 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
     elseif section_name == "series_detect" then
         success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author)
     elseif section_name == "prior_book_list" then
+        -- Series indices may be fractional (e.g. 2.5), which %d would truncate,
+        -- so the index placeholders are filled as strings.
         local idx = context and context.index or 1
-        success, final_prompt = pcall(string.format, template, context.series_name or "Unknown", idx, enhanced_title, enhanced_author, idx - 1)
+        local is_fractional = idx ~= math.floor(idx)
+        local last_whole = math.ceil(idx) - 1
+        success, final_prompt = pcall(string.format, template:gsub("%%d", "%%s"), context.series_name or "Unknown", formatSeriesIndex(idx), enhanced_title, enhanced_author, formatSeriesIndex(last_whole))
+        if is_fractional then
+            extra_context = extra_context .. "\n\nNOTE: This series numbers some entries with decimals (e.g. 1.5 for a novella or split volume). The current book is index " .. formatSeriesIndex(idx) .. ". List EVERY entry whose index is lower than " .. formatSeriesIndex(idx) .. ", including decimal-numbered ones, and give each entry's exact index as the series numbers it."
+        end
     elseif section_name == "series_book_summary" then
         local idx = context and context.index or 1
-        success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, idx, context.series_name or "Unknown", idx)
+        success, final_prompt = pcall(string.format, template:gsub("%%d", "%%s"), enhanced_title, enhanced_author, formatSeriesIndex(idx), context.series_name or "Unknown", formatSeriesIndex(idx))
     elseif section_name == "local_timeline_summary" then
         local idx = context and context.index or 1
         local events_text = context and context.events_text or ""
-        success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, idx, context.series_name or "Unknown", events_text)
+        success, final_prompt = pcall(string.format, template:gsub("%%d", "%%s"), enhanced_title, enhanced_author, formatSeriesIndex(idx), context.series_name or "Unknown", events_text)
     else
         success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p)
     end

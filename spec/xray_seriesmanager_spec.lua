@@ -1178,6 +1178,166 @@ return {
             assert.are.equal("Red Rising (Special Edition)", c.books[1].title)
         end)
     end)
+    describe("fractional series indices", function()
+        -- e.g. The Wandering Inn: 1, 1.5, 2, 2.5, 3, ...
+        local series_info = { name = "The Wandering Inn", index = 2.5, slug = "the_wandering_inn" }
+
+        after_each(function()
+            package.loaded["bookinfomanager"] = nil
+        end)
+
+        it("formats whole and fractional indices", function()
+            assert.are.equal("3", SeriesManager.formatIndex(3))
+            assert.are.equal("2.5", SeriesManager.formatIndex(2.5))
+            assert.are.equal("5.33", SeriesManager.formatIndex(5.33))
+        end)
+
+        it("lists whole-numbered books before an index", function()
+            assert.are.same({ 1, 2, 3 }, SeriesManager.wholeIndicesBefore(4))
+            assert.are.same({ 1, 2 }, SeriesManager.wholeIndicesBefore(2.5))
+            assert.are.same({}, SeriesManager.wholeIndicesBefore(1))
+        end)
+
+        it("lists cached indices before an index in sorted order", function()
+            local books = { [2.5] = {}, [1] = {}, [2] = {}, [1.5] = {}, [3] = {} }
+            assert.are.same({ 1, 1.5, 2 }, SeriesManager.priorIndicesIn(books, 2.5))
+        end)
+
+        it("keeps fractional prior books from the AI and drops the current and later ones", function()
+            local mock_ai = {
+                createPrompt = function() return {} end,
+                executeUnifiedRequest = function()
+                    return {
+                        prior_books = {
+                            { index = 1, title = "The Wandering Inn" },
+                            { index = 1.5, title = "No Killing Goblins" },
+                            { index = "2", title = "Fae and Fare" },
+                            { index = 2.5, title = "Immortal Games" },
+                            { index = 3, title = "Flowers of Esthelm" },
+                        }
+                    }
+                end
+            }
+            local list = manager:getPriorBookList(series_info, "pirateaba", mock_ai)
+            assert.are.equal(3, #list)
+            assert.are.equal(1, list[1].index)
+            assert.are.equal(1.5, list[2].index)
+            assert.are.equal("No Killing Goblins", list[2].title)
+            assert.are.equal(2, list[3].index)
+            assert.are.equal("pirateaba", list[3].author)
+        end)
+
+        it("prefers books found on the device over the AI's numbering", function()
+            manager.scanFolderForEpubs = function()
+                return {
+                    { path = "/books/01.epub", title = "The Wandering Inn", series = "The Wandering Inn", series_index = 1 },
+                    { path = "/books/1.5.epub", title = "No Killing Goblins", series = "The Wandering Inn", series_index = 1.5 },
+                    { path = "/books/2.5.epub", title = "Immortal Games", series = "The Wandering Inn", series_index = 2.5 },
+                    { path = "/books/other.epub", title = "Other", series = "Another Series", series_index = 1 },
+                }
+            end
+            local mock_ai = {
+                createPrompt = function() return {} end,
+                executeUnifiedRequest = function()
+                    return {
+                        prior_books = {
+                            -- AI numbers the novella differently; must not duplicate it
+                            { index = 2, title = "No Killing Goblins" },
+                            { index = 1, title = "Volume 1" },
+                        }
+                    }
+                end
+            }
+            local list = manager:getPriorBookList(series_info, "pirateaba", mock_ai, "/books/2.5.epub")
+            assert.are.equal(2, #list)
+            assert.are.equal("The Wandering Inn", list[1].title)
+            assert.are.equal("/books/01.epub", list[1].path)
+            assert.are.equal(1.5, list[2].index)
+            assert.are.equal("No Killing Goblins", list[2].title)
+        end)
+
+        it("generates whole-numbered placeholders below a fractional index", function()
+            local list = manager:getPriorBookList(series_info, "pirateaba", nil)
+            assert.are.equal(2, #list)
+            assert.are.equal(1, list[1].index)
+            assert.are.equal(2, list[2].index)
+        end)
+
+        it("expects whole-numbered, cached, and on-device prior indices", function()
+            manager.scanFolderForEpubs = function()
+                return {
+                    { path = "/books/1.5.epub", title = "No Killing Goblins", series = "The Wandering Inn", series_index = 1.5 },
+                }
+            end
+            local books = { [1] = {}, [0.5] = {} }
+            assert.are.same({ 0.5, 1, 1.5, 2 }, manager:getExpectedPriorIndices(series_info, books, "/books/2.5.epub"))
+        end)
+
+        it("reads series metadata from BookInfoManager for books without a sidecar", function()
+            package.loaded["bookinfomanager"] = {
+                getBookInfo = function(_, path)
+                    if path == "/books/1.5.epub" then
+                        return { title = "No Killing Goblins", authors = "pirateaba", series = "The Wandering Inn", series_index = 1.5 }
+                    end
+                end
+            }
+            local meta = manager:readBookMetadata("/books/1.5.epub")
+            assert.are.equal("No Killing Goblins", meta.title)
+            assert.are.equal("The Wandering Inn", meta.series)
+            assert.are.equal(1.5, meta.series_index)
+        end)
+
+        it("keeps fractional indices in series prompts", function()
+            local ai_helper = require("xray_aihelper")
+            ai_helper.prompts = require("prompts/en")
+
+            local list_prompt = ai_helper:createPrompt(nil, "pirateaba", { series_name = "The Wandering Inn", index = 2.5 }, "prior_book_list")
+            assert.is_not_nil(list_prompt:find("Current Book Index: 2.5", 1, true))
+            assert.is_not_nil(list_prompt:find("books 1 through 2", 1, true))
+            assert.is_not_nil(list_prompt:find("lower than 2.5", 1, true))
+
+            local summary_prompt = ai_helper:createPrompt("No Killing Goblins", "pirateaba", { series_name = "The Wandering Inn", index = 1.5 }, "series_book_summary")
+            assert.is_not_nil(summary_prompt:find("TARGET BOOK INDEX: 1.5", 1, true))
+            assert.is_not_nil(summary_prompt:find("(Book Index 1.5)", 1, true))
+
+            local whole_prompt = ai_helper:createPrompt(nil, "Brandon Sanderson", { series_name = "Mistborn", index = 3 }, "prior_book_list")
+            assert.is_not_nil(whole_prompt:find("Current Book Index: 3", 1, true))
+            assert.is_not_nil(whole_prompt:find("books 1 through 2", 1, true))
+            assert.is_nil(whole_prompt:find("lower than", 1, true))
+        end)
+
+        it("merges every cached prior book below a fractional index", function()
+            local plugin = createMockPlugin()
+            for k, v in pairs(xray_fetch) do
+                plugin[k] = v
+            end
+            plugin.cache_manager = {
+                saveCache = function() return true end,
+                asyncSaveCache = function() return true end,
+                loadCache = function() return {} end
+            }
+            plugin.characters, plugin.locations, plugin.terms, plugin.timeline = {}, {}, {}, {}
+
+            local cache_data = {
+                books = {
+                    [1] = { title = "The Wandering Inn", characters = { { name = "Erin" } }, timeline = { { event = "Erin arrives" } } },
+                    [1.5] = { title = "No Killing Goblins", characters = { { name = "Rags" } }, timeline = { { event = "Goblins attack" } } },
+                    [2] = { title = "Fae and Fare", characters = { { name = "Ryoka" } } },
+                    [3] = { title = "Flowers of Esthelm", characters = { { name = "Spoiler" } } },
+                }
+            }
+            plugin:mergeSeriesContext(cache_data, series_info)
+
+            local names = {}
+            for _, c in ipairs(plugin.characters) do names[c.name] = c.source_book end
+            assert.are.equal(1, names["Erin"])
+            assert.are.equal(1.5, names["Rags"])
+            assert.are.equal(2, names["Ryoka"])
+            assert.is_nil(names["Spoiler"])
+
+            local labels = {}
+            for _, ev in ipairs(plugin.timeline) do labels[ev.chapter] = true end
+            assert.is_true(labels["[Book 1.5: No Killing Goblins]"])
+        end)
+    end)
 end)
-
-

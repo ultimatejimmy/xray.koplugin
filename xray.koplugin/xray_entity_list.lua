@@ -931,7 +931,7 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
             if num_only then
                 title_str = "Book " .. num_only
             elseif item.source_book then
-                title_str = string.format("Book %d: %s", item.source_book, raw_ch:gsub("^%[", ""):gsub("%]$", ""))
+                title_str = string.format("Book %s: %s", tostring(item.source_book), raw_ch:gsub("^%[", ""):gsub("%]$", ""))
             else
                 title_str = (raw_ch ~= "") and raw_ch:gsub("^%[", ""):gsub("%]$", "") or "Prior Book"
             end

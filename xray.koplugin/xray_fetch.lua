@@ -6,6 +6,7 @@ local ButtonDialog = require("ui/widget/buttondialog")
 local logger = require("logger")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")
+local SeriesManager = require(plugin_path .. "xray_seriesmanager")
 
 local function _truncateSafe(text, limit)
     return (utils:getTruncatedText(text, limit))
@@ -1259,7 +1260,10 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                 local s_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.series_context_enabled
                 if s_setting ~= false and index > 1 and cache_data and cache_data.books then
                     local all_priors_cached = true
-                    for p_idx = 1, index - 1 do
+                    local prior_indices = self.series_manager.getExpectedPriorIndices
+                        and self.series_manager:getExpectedPriorIndices(series_info, cache_data.books, doc_file)
+                        or SeriesManager.wholeIndicesBefore(index)
+                    for _, p_idx in ipairs(prior_indices) do
                         if not cache_data.books[p_idx] then
                             all_priors_cached = false
                             break
@@ -2048,7 +2052,7 @@ function M:mergeSeriesContext(cache_data, series_info)
     local props = self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps() or {}
     local cur_title = props.title or (self.book_data and (self.book_data.book_title or self.book_data.title))
 
-    for idx = 1, (series_info.index or 1) - 1 do
+    for _, idx in ipairs(SeriesManager.priorIndicesIn(cache_data.books, series_info.index or 1)) do
         local book_path_for_idx = cache_data.book_paths and cache_data.book_paths[idx]
         local is_self = (doc_file and book_path_for_idx and doc_file == book_path_for_idx)
         local book_data = cache_data.books and cache_data.books[idx]
@@ -2075,8 +2079,8 @@ function M:mergeSeriesContext(cache_data, series_info)
                                 found = true
                                 existing_char.is_series = true
                                 existing_char.from_series = true
-                                local prefix = string.format("[From Book %d] ", idx)
-                                local clean_desc = (new_char.description or ""):gsub("^%[From Book %d+%]%s*", "")
+                                local prefix = string.format("[From Book %s] ", SeriesManager.formatIndex(idx))
+                                local clean_desc = (new_char.description or ""):gsub("^%[From Book [%d%.]+%]%s*", "")
                                 if clean_desc ~= "" then
                                     local exist_desc = existing_char.description or ""
                                     if not exist_desc:find(prefix, 1, true) then
@@ -2111,8 +2115,8 @@ function M:mergeSeriesContext(cache_data, series_info)
                                 found = true
                                 existing_loc.is_series = true
                                 existing_loc.from_series = true
-                                local prefix = string.format("[From Book %d] ", idx)
-                                local clean_desc = (new_loc.description or ""):gsub("^%[From Book %d+%]%s*", "")
+                                local prefix = string.format("[From Book %s] ", SeriesManager.formatIndex(idx))
+                                local clean_desc = (new_loc.description or ""):gsub("^%[From Book [%d%.]+%]%s*", "")
                                 if clean_desc ~= "" then
                                     local exist_desc = existing_loc.description or ""
                                     if not exist_desc:find(prefix, 1, true) then
@@ -2145,8 +2149,8 @@ function M:mergeSeriesContext(cache_data, series_info)
                                 found = true
                                 existing_term.is_series = true
                                 existing_term.from_series = true
-                                local prefix = string.format("[From Book %d] ", idx)
-                                local clean_def = (new_term.definition or ""):gsub("^%[From Book %d+%]%s*", "")
+                                local prefix = string.format("[From Book %s] ", SeriesManager.formatIndex(idx))
+                                local clean_def = (new_term.definition or ""):gsub("^%[From Book [%d%.]+%]%s*", "")
                                 if clean_def ~= "" then
                                     local exist_def = existing_term.definition or ""
                                     if not exist_def:find(prefix, 1, true) then
@@ -2179,9 +2183,9 @@ function M:mergeSeriesContext(cache_data, series_info)
                 local book_title = book_data.title or (cache_data.books and cache_data.books[idx] and cache_data.books[idx].title) or ""
                 local label
                 if book_title and book_title ~= "" then
-                    label = string.format("[Book %d: %s]", idx, book_title)
+                    label = string.format("[Book %s: %s]", SeriesManager.formatIndex(idx), book_title)
                 else
-                    label = string.format("[Book %d]", idx)
+                    label = string.format("[Book %s]", SeriesManager.formatIndex(idx))
                 end
                 local consolidated_event = table.concat(events, "\n\n")
                 local ev_copy = {
@@ -2301,7 +2305,7 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
     cache_data.books = cache_data.books or {}
 
     if init_wait_dialog and self.ai_helper then self.ai_helper:setTrapWidget(init_wait_dialog) end
-    local prior_books = self.series_manager:getPriorBookList(series_info, author, self.ai_helper)
+    local prior_books = self.series_manager:getPriorBookList(series_info, author, self.ai_helper, self.ui.document.file)
     if init_wait_dialog and self.ai_helper then self.ai_helper:resetTrapWidget() end
     if cancel_ref and cancel_ref.cancelled then
         self:log("XRayPlugin: Series: fetchSeriesContext cancelled after getPriorBookList")
@@ -2311,7 +2315,7 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
 
     if #prior_books == 0 then
         self:log("XRayPlugin: Series: getPriorBookList returned empty list, using generated placeholders")
-        for i = 1, series_info.index - 1 do
+        for _, i in ipairs(SeriesManager.wholeIndicesBefore(series_info.index)) do
             table.insert(prior_books, {
                 index = i,
                 title = string.format("%s (Book %d)", series_info.name, i),
@@ -2367,7 +2371,7 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
         closeInitWait()
         self:mergeSeriesContext(cache_data, series_info)
         if not is_silent then
-            local count = series_info.index - 1
+            local count = #prior_books
             local loaded_msg = self.loc:t("series_context_loaded", count)
             UIManager:show(InfoMessage:new{
                 text = loaded_msg,
@@ -2384,7 +2388,7 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
         closeInitWait()
         self:mergeSeriesContext(cache_data, series_info)
         if not is_silent then
-            local count = series_info.index - 1
+            local count = #prior_books
             local loaded_msg = self.loc:t("series_context_loaded", count)
             UIManager:show(InfoMessage:new{
                 text = loaded_msg,
@@ -2445,7 +2449,7 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
                 self:mergeSeriesContext(cache_data, series_info)
 
                 if not is_silent then
-                    local count = series_info.index - 1
+                    local count = #prior_books
                     local loaded_msg = self.loc:t("series_context_loaded", count)
                     UIManager:show(InfoMessage:new{
                         text = loaded_msg,
