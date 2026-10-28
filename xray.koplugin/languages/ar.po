@@ -21,6 +21,10 @@ msgstr "اكتمل جلب الذكاء الاصطناعي!"
 msgid "ai_key_required"
 msgstr "مطلوب مفتاح API للذكاء الاصطناعي."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "نفس الكيان في قصة أخرى؟"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "تم الكشف عن تكرار بواسطة الذكاء الاصطناعي"
@@ -36,6 +40,18 @@ msgstr "فحص بالذكاء الاصطناعي"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "يقوم الذكاء الاصطناعي بالبحث عن التكرارات..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "نشط حالياً: وضع المختارات (تم اكتشاف %d قصص)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "كيانات أخرى"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "هذه القصة"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "غير خيالي"
 msgid "book_mode_saved"
 msgstr "تم حفظ وضع الكتاب!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "يحدد نوع الكتاب استراتيجية استخراج الذكاء الاصطناعي المستخدمة والميزات المتاحة.\n\n- خيال: يركز على السرد والشخصيات والمخطط الزمني للحبكة.\n- غير خيالي: يركز على المصطلحات والمفاهيم والشخصيات التاريخية.\n\nسيسمح 'الكشف التلقائي' للذكاء الاصطناعي باتخاذ القرار بعد الجلب الأول.\n\n[B]ملاحظة:[/B] يتم حفظ هذا الإعداد [B]لكل كتاب[/B]. ويؤدي الاختيار المخصص إلى إلغاء الكشف التلقائي أو الإعدادات العامة."
+msgstr "يحدد نوع الكتاب استراتيجية استخراج الذكاء الاصطناعي المستخدمة.\n\n[B]• خيالي:[/B] يركز على الشخصيات، والجدول الزمني، ومصطلحات بناء العالم (الفصائل، التعاويذ، التقاليد، إلخ).\n[B]• غير خيالي:[/B] يركز على المصطلحات التقنية والمفاهيم والشخصيات التاريخية.\n[B]• مختارات/قصص قصيرة:[/B] يحدد نطاق استخراج الذكاء الاصطناعي وقوائم الكيانات ودمج التكرارات لكل قصة على حدة بناءً على جدول المحتويات.\n\n[B]كشف تلقائي[/B] سيسمح للذكاء الاصطناعي بالقرار بعد [B]أول[/B] عملية جلب.\n\n[B]ملاحظة:[/B] يتم حفظ هذا الإعداد [B]لكل كتاب[/B]. الخيار المخصص يتجاوز الكشف التلقائي الافتراضي أو الإعدادات العالمية."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "مختارات/قصص قصيرة"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "خيال"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "غير خيالي"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "إعادة اكتشاف هيكلية المختارات"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "معين"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "يبدو أن هذا الكتاب عبارة عن مجموعة روايات (Omnibus). هل تود تفعيل وضع المختارات (فصل الشخصيات والأماكن حسب الرواية)؟"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "تغيرت اللغة. أعد فتح القائمة لرؤية التغ�
 msgid "later"
 msgstr "لاحقًا"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "ربط"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "نفس الشيء كـ"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "هذه القصة"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "الإدخالات المرتبطة"
@@ -1072,6 +1112,10 @@ msgstr "Cloud Relay (Recommended — works anywhere)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Local Wi-Fi (Offline LAN)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "مستوى جدول المحتويات لقصص المختارات"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "إيقاف"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "إيقاف الإنشاء المسبق"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "متكرر"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "المستوى 1 (الإدخالات ذات المستوى الأعلى)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "المستوى 2 (تحت الأجزاء/المجلدات)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "المستوى 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "كشف تلقائي (موصى به)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "اختر مستوى جدول المحتويات الذي يمثل القصص الفردية:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

@@ -205,12 +205,21 @@ function M:fetchSingleWord(text, pos0, pos1)
             end
             if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
             
+            local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+            local current_story = is_anthology and self:getCurrentStory(current_page) or nil
+
             -- 1. Distributed chapter samples (Start/Mid/End of each chapter up to current)
-            local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(self.ui, 100, 60000, limit_percent == 100, nil, nil, current_page)
+            local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(
+                self.ui, 100, 60000, limit_percent == 100, nil, nil, current_page, current_story)
             
             -- 2. Immediate book text (Previous and Current page for maximum context relevance)
             local end_page = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page)
-            local raw_book_text = self.chapter_analyzer:getTextFromPageRange(self.ui, math.max(1, current_page - 1), end_page, 25000) or ""
+            local start_page = math.max(1, current_page - 1)
+            if current_story then
+                start_page = math.max(start_page, current_story.start_page)
+                end_page = math.min(end_page, current_story.end_page)
+            end
+            local raw_book_text = self.chapter_analyzer:getTextFromPageRange(self.ui, start_page, end_page, 25000) or ""
             local book_text = raw_book_text
             -- #150: Clamp single-word lookup text so it doesn't leak remainder of the page beyond the target
             if text and text ~= "" and #raw_book_text > 0 then
@@ -236,7 +245,9 @@ function M:fetchSingleWord(text, pos0, pos1)
             local context = {
                 reading_percent = limit_percent,
                 chapter_samples = samples,
-                book_text = book_text
+                book_text = book_text,
+                story_title = current_story and current_story.story_title or nil,
+                story_id = current_story and current_story.story_id or nil,
             }
 
             local DataStorage = require("datastorage")
@@ -396,6 +407,13 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
         end
 
         if target_list then
+            local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+            local current_story = is_anthology and self:getCurrentStory(current_page) or nil
+            if is_anthology and current_story then
+                item.story_id = item.story_id or current_story.story_id
+                item.story_title = item.story_title or current_story.story_title
+            end
+
             -- Resolve current chapter title for history tracking
             local chapter_title = nil
             if self.ui and self.ui.document and current_page then
@@ -417,7 +435,13 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
             -- Check if already exists (case-insensitive)
             local found = false
             for _, existing in ipairs(target_list) do
-                if (existing.name or ""):lower() == (item.name or ""):lower() then
+                local name_match = (existing.name or ""):lower() == (item.name or ""):lower()
+                local story_match = true
+                if is_anthology and current_story then
+                    local ex_st = existing.story_id or (self.resolveEntityStory and self:resolveEntityStory(existing))
+                    story_match = (ex_st == (item.story_id or current_story.story_id))
+                end
+                if name_match and story_match then
                     -- Update description/role
                     for k, v in pairs(item) do existing[k] = v end
                     
@@ -453,6 +477,17 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
                 table.insert(target_list, item)
             end
             
+            target_list = self:deduplicateByName(target_list, "name")
+            if item_type == "character" then
+                self.characters = target_list
+            elseif item_type == "location" then
+                self.locations = target_list
+            elseif item_type == "historical_figure" then
+                self.historical_figures = target_list
+            elseif item_type == "term" then
+                self.terms = target_list
+            end
+
             -- Sort and save cache
             self:sortDataByFrequency(target_list, book_text, "name")
             if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
@@ -638,16 +673,33 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
 
         local current_page = batch_end_page or self.ui:getCurrentPage()
+        local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+        local current_story = nil
+        if is_anthology then
+            current_story = self:getCurrentStory(current_page)
+        end
+
         local first_missing_page = last_fetch_page
+        if is_anthology and current_story then
+            local story_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[current_story.story_id]
+            if is_update then
+                first_missing_page = story_state and story_state.last_fetch_page and (story_state.last_fetch_page + 1) or current_story.start_page
+            else
+                first_missing_page = current_story.start_page
+            end
+        end
+
         if is_update then
             local toc = utils:flattenTOC(self.ui.document:getToc())
             local candidate_chapters = {}
             for i = #toc, 1, -1 do
                 local entry = toc[i]
                 if entry.page and entry.page <= current_page then
-                    if not self:isNonNarrativeChapter(entry.title) then
-                        table.insert(candidate_chapters, entry)
-                        if #candidate_chapters >= 3 then break end
+                    if not is_anthology or not current_story or (entry.page >= current_story.start_page and entry.page <= (current_story.end_page or current_page)) then
+                        if not self:isNonNarrativeChapter(entry.title) then
+                            table.insert(candidate_chapters, entry)
+                            if #candidate_chapters >= 3 then break end
+                        end
                     end
                 end
             end
@@ -670,7 +722,15 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
 
         local end_page_analysis = current_page
         local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
-        if spoiler_setting ~= "full_book" or batch_end_page then
+        if is_anthology and current_story then
+            if spoiler_setting == "full_book" then
+                end_page_analysis = current_story.end_page
+            elseif batch_end_page then
+                end_page_analysis = math.min(batch_end_page, current_story.end_page)
+            else
+                end_page_analysis = math.min(self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page), current_story.end_page)
+            end
+        elseif spoiler_setting ~= "full_book" or batch_end_page then
             end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page)
         end
 
@@ -700,7 +760,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
             return
         end
 
-        local book_text = self.chapter_analyzer:getTextForAnalysis(self.ui, 20000, nil, end_page_analysis, first_missing_page)
+        local book_text = self.chapter_analyzer:getTextForAnalysis(self.ui, 20000, nil, end_page_analysis, first_missing_page, nil, current_story)
         local known_chapters = {}
         if is_update and self.timeline then
             for _, ev in ipairs(self.timeline) do
@@ -719,7 +779,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
 
             local is_full_book = (reading_percent == 100 and not batch_end_page)
             local samples, chapter_titles = self.chapter_analyzer:getDetailedChapterSamples(
-                self.ui, 200, 150000, is_full_book, first_missing_page, known_chapters, current_page)
+                self.ui, 200, 150000, is_full_book, first_missing_page, known_chapters, current_page, current_story)
             local annots = self.chapter_analyzer:getAnnotationsForAnalysis(self.ui, current_page)
 
             if (not book_text or #book_text < 10) and not samples then
@@ -737,6 +797,33 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 return
             end
 
+            local existing_chars = is_update and self.characters or nil
+            local existing_locs = is_update and self.locations or nil
+            local existing_hist = is_update and self.historical_figures or nil
+            if is_anthology and current_story then
+                if existing_chars then
+                    local f = {}
+                    for _, c in ipairs(existing_chars) do
+                        if self:isEntityInCurrentStory(c, current_story) then table.insert(f, c) end
+                    end
+                    existing_chars = f
+                end
+                if existing_locs then
+                    local f = {}
+                    for _, l in ipairs(existing_locs) do
+                        if self:isEntityInCurrentStory(l, current_story) then table.insert(f, l) end
+                    end
+                    existing_locs = f
+                end
+                if existing_hist then
+                    local f = {}
+                    for _, h in ipairs(existing_hist) do
+                        if self:isEntityInCurrentStory(h, current_story) then table.insert(f, h) end
+                    end
+                    existing_hist = f
+                end
+            end
+
             local context = {
                 reading_percent = reading_percent,
                 spoiler_free = reading_percent < 100,
@@ -746,10 +833,12 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 chapter_titles = chapter_titles,
                 annotations = annots,
                 book_text = book_text,
-                existing_characters = is_update and self.characters or nil,
-                existing_locations = is_update and self.locations or nil,
-                existing_historical_figures = is_update and self.historical_figures or nil,
-                book_type = self.book_type,
+                existing_characters = existing_chars,
+                existing_locations = existing_locs,
+                existing_historical_figures = existing_hist,
+                book_type = is_anthology and "anthology" or self.book_type,
+                story_title = current_story and current_story.story_title or nil,
+                story_id = current_story and current_story.story_id or nil,
             }
 
             local req_params, err_code, err_msg = self.ai_helper:buildComprehensiveRequest(title, author, context)
@@ -867,11 +956,92 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
     end)
 end
 
+function M:updateEntityDescPreservingPrior(existing, new_desc, key)
+    if not existing then return nil end
+    if not new_desc or new_desc == "" then return nil end
+    local field = key or "description"
+    local exist_desc = existing[field] or existing.description or ""
+    if type(exist_desc) == "string" and exist_desc:find("%[From Book [%d%.]+%]") then
+        local prior_parts = {}
+        for sec in (exist_desc .. "\n\n"):gmatch("(.-)\n%s*\n+") do
+            local trimmed = sec:match("^%s*(.-)%s*$")
+            if trimmed and trimmed:find("^%[From Book [%d%.]+%]") then
+                table.insert(prior_parts, trimmed)
+            end
+        end
+        if #prior_parts > 0 then
+            local combined = SeriesManager.reorderSeriesDescription(new_desc .. "\n\n" .. table.concat(prior_parts, "\n\n"))
+            existing[field] = combined
+            if field ~= "description" then existing.description = combined end
+            return new_desc
+        end
+    end
+    existing[field] = new_desc
+    if field ~= "description" then existing.description = new_desc end
+    return new_desc
+end
+
+function M:markSeriesSyncDirty(slug, index, title, author, doc_file, has_explicit_index)
+    if not slug or not index then return end
+    self._pending_series_sync = {
+        slug = slug,
+        index = index,
+        title = title,
+        author = author,
+        doc_file = doc_file,
+        has_explicit_index = has_explicit_index
+    }
+end
+
+function M:flushSeriesSync()
+    local pending = self._pending_series_sync
+    if not pending or not self.series_manager then return end
+    self._pending_series_sync = nil
+
+    local book_data = self.book_data
+    if not book_data and pending.doc_file and self.cache_manager then
+        book_data = self.cache_manager:loadCache(pending.doc_file)
+    end
+    if not book_data then return end
+
+    pcall(function()
+        self.series_manager:syncBookToSeriesCache(
+            pending.slug,
+            pending.index,
+            pending.title,
+            pending.author,
+            book_data,
+            pending.doc_file,
+            pending.has_explicit_index
+        )
+        self:log("XRayPlugin: Flushed deferred series sync for " .. tostring(pending.slug))
+    end)
+end
 
 function M:finalizeXRayData(final_book_data, title, author, book_text, is_update, is_silent, current_page)
     if self.destroyed or not self.ui or not self.ui.document then return end
     final_book_data.book_title = title
     final_book_data.author = author
+
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+    local current_story = nil
+    if is_anthology then
+        current_story = self:getCurrentStory(current_page)
+        if current_story then
+            local function tagList(list)
+                if not list then return end
+                for _, item in ipairs(list) do
+                    if not item.story_id then item.story_id = current_story.story_id end
+                    if not item.story_title then item.story_title = current_story.story_title end
+                end
+            end
+            tagList(final_book_data.characters)
+            tagList(final_book_data.historical_figures)
+            tagList(final_book_data.locations)
+            tagList(final_book_data.terms)
+            tagList(final_book_data.timeline)
+        end
+    end
 
     -- Frequency Sorting
     final_book_data.characters = self:sortDataByFrequency(final_book_data.characters, book_text, "name")
@@ -935,22 +1105,58 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         self.locations = self.locations or {}
         self.timeline = self.timeline or {}
 
+        local match_story = function(existing_item, new_item)
+            if not is_anthology or not current_story then return true end
+            local ex_st = existing_item.story_id or (self.resolveEntityStory and self:resolveEntityStory(existing_item))
+            local new_st = new_item.story_id or current_story.story_id
+            return ex_st == new_st
+        end
+
         -- Merge characters
+        local match_char = function(existing_char, new_char)
+            if not match_story(existing_char, new_char) then return false end
+            local ex_name = existing_char.name and existing_char.name:lower() or ""
+            local new_name = new_char.name and new_char.name:lower() or ""
+            if ex_name ~= "" and ex_name == new_name then return true end
+            if existing_char.aliases and type(existing_char.aliases) == "table" then
+                for _, a in ipairs(existing_char.aliases) do
+                    if type(a) == "string" and a:lower() == new_name then return true end
+                end
+            end
+            if new_char.aliases and type(new_char.aliases) == "table" then
+                for _, a in ipairs(new_char.aliases) do
+                    if type(a) == "string" and a:lower() == ex_name then return true end
+                end
+            end
+            return false
+        end
+
         for _, new_char in ipairs(final_book_data.characters or {}) do
             local found = false
             for _, existing_char in ipairs(self.characters) do
-                if existing_char.name:lower() == new_char.name:lower() then
-                    existing_char.role = new_char.role
-                    -- Replace existing description with the AI's rewritten cohesive summary
+                if match_char(existing_char, new_char) then
+                    existing_char.role = new_char.role or existing_char.role
+                    if new_char.aliases and type(new_char.aliases) == "table" then
+                        existing_char.aliases = existing_char.aliases or {}
+                        local seen_a = {}
+                        for _, a in ipairs(existing_char.aliases) do seen_a[a:lower()] = true end
+                        for _, a in ipairs(new_char.aliases) do
+                            if a and a ~= "" and not seen_a[a:lower()] then
+                                table.insert(existing_char.aliases, a)
+                                seen_a[a:lower()] = true
+                            end
+                        end
+                    end
+                    -- Update existing description while preserving prior series context
                     if new_char.description and new_char.description ~= "" then
-                        existing_char.description = new_char.description
+                        local clean_desc = self:updateEntityDescPreservingPrior(existing_char, new_char.description, "description")
                         
-                        -- Record history
+                        -- Record history with clean current-book description
                         existing_char.history = existing_char.history or {}
                         local dup = false
                         for _, entry in ipairs(existing_char.history) do
                             if entry.page == current_page then
-                                entry.description = new_char.description
+                                entry.description = clean_desc or new_char.description
                                 entry.chapter = chapter_title or entry.chapter
                                 dup = true
                                 break
@@ -960,7 +1166,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                             table.insert(existing_char.history, {
                                 page = current_page,
                                 chapter = chapter_title or "",
-                                description = new_char.description
+                                description = clean_desc or new_char.description
                             })
                         end
                     end
@@ -995,7 +1201,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, new_fig in ipairs(final_book_data.historical_figures or {}) do
             local found = false
             for _, existing_fig in ipairs(self.historical_figures or {}) do
-                if existing_fig.name:lower() == new_fig.name:lower() then
+                if existing_fig.name:lower() == new_fig.name:lower() and match_story(existing_fig, new_fig) then
                     if new_fig.biography and new_fig.biography ~= "" then
                         existing_fig.biography = new_fig.biography
                         
@@ -1046,16 +1252,16 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, new_loc in ipairs(final_book_data.locations or {}) do
             local found = false
             for _, existing_loc in ipairs(self.locations or {}) do
-                if existing_loc.name:lower() == new_loc.name:lower() then
+                if existing_loc.name:lower() == new_loc.name:lower() and match_story(existing_loc, new_loc) then
                     if new_loc.description and new_loc.description ~= "" then
-                        existing_loc.description = new_loc.description
+                        local clean_desc = self:updateEntityDescPreservingPrior(existing_loc, new_loc.description, "description")
                         
                         -- Record history
                         existing_loc.history = existing_loc.history or {}
                         local dup = false
                         for _, entry in ipairs(existing_loc.history) do
                             if entry.page == current_page then
-                                entry.description = new_loc.description
+                                entry.description = clean_desc or new_loc.description
                                 entry.chapter = chapter_title or entry.chapter
                                 dup = true
                                 break
@@ -1065,7 +1271,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                             table.insert(existing_loc.history, {
                                 page = current_page,
                                 chapter = chapter_title or "",
-                                description = new_loc.description
+                                description = clean_desc or new_loc.description
                             })
                         end
                     end
@@ -1097,13 +1303,18 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, new_term in ipairs(final_book_data.terms or {}) do
             local found = false
             for _, existing in ipairs(self.terms) do
-                if existing.name:lower() == new_term.name:lower() then
+                if existing.name:lower() == new_term.name:lower() and match_story(existing, new_term) then
                     if new_term.definition and new_term.definition ~= "" then
-                        existing.definition = new_term.definition
+                        self:updateEntityDescPreservingPrior(existing, new_term.definition, "definition")
                     end
-                    existing.expanded = new_term.expanded
-                    existing.aliases = new_term.aliases
+                    existing.expanded = new_term.expanded or existing.expanded
+                    existing.aliases = new_term.aliases or existing.aliases
                     existing._norm_aliases = nil
+                    if existing.source == "series_prior" then
+                        existing.is_series = true
+                        existing.from_series = true
+                        existing.source = nil
+                    end
                     found = true; break
                 end
             end
@@ -1141,7 +1352,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
             local new_norm = self:normalizeChapterName(new_event.chapter or "")
             for _, existing_event in ipairs(current_timeline) do
                 local exist_norm = self:normalizeChapterName(existing_event.chapter or "")
-                if new_norm == exist_norm then
+                if new_norm == exist_norm and match_story(existing_event, new_event) then
                     if new_event.page and existing_event.page and
                        tonumber(new_event.page) == tonumber(existing_event.page) then
                         existing_event.event = new_event.event or existing_event.event
@@ -1163,64 +1374,117 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, ev in ipairs(prior_timeline) do table.insert(self.timeline, ev) end
         self:sortTimelineByTOC(self.timeline)
     else
-        self.characters = final_book_data.characters
-        for _, char in ipairs(self.characters or {}) do
-            if char.description and char.description ~= "" then
-                char.history = char.history or {
-                    {
-                        page = current_page,
-                        chapter = chapter_title or "",
-                        description = char.description
-                    }
-                }
+        if is_anthology and current_story then
+            local function mergeNonUpdateList(existing_list, new_list, desc_field)
+                local kept = {}
+                for _, item in ipairs(existing_list or {}) do
+                    if not self:isEntityInCurrentStory(item, current_story) then
+                        table.insert(kept, item)
+                    end
+                end
+                for _, item in ipairs(new_list or {}) do
+                    if desc_field and item[desc_field] and item[desc_field] ~= "" then
+                        item.history = item.history or {
+                            {
+                                page = current_page,
+                                chapter = chapter_title or "",
+                                [desc_field] = item[desc_field],
+                            }
+                        }
+                    end
+                    table.insert(kept, item)
+                end
+                return kept
             end
-        end
-        self.historical_figures = final_book_data.historical_figures
-        for _, fig in ipairs(self.historical_figures or {}) do
-            if fig.biography and fig.biography ~= "" then
-                fig.history = fig.history or {
-                    {
-                        page = current_page,
-                        chapter = chapter_title or "",
-                        biography = fig.biography
-                    }
-                }
-            end
-        end
-        self.locations = final_book_data.locations
-        for _, loc in ipairs(self.locations or {}) do
-            if loc.description and loc.description ~= "" then
-                loc.history = loc.history or {
-                    {
-                        page = current_page,
-                        chapter = chapter_title or "",
-                        description = loc.description
-                    }
-                }
-            end
-        end
-        self.terms = final_book_data.terms or {}
-        self.book_type = final_book_data.book_type
 
-        -- Preserve series_prior items when non-merge update/fetch overwrites current timeline
-        local prior_timeline = {}
-        for _, ev in ipairs(self.timeline or {}) do
-            if ev.source == "series_prior" then
-                table.insert(prior_timeline, ev)
+            self.characters = mergeNonUpdateList(self.characters, final_book_data.characters, "description")
+            self.historical_figures = mergeNonUpdateList(self.historical_figures, final_book_data.historical_figures, "biography")
+            self.locations = mergeNonUpdateList(self.locations, final_book_data.locations, "description")
+            self.terms = mergeNonUpdateList(self.terms, final_book_data.terms or {}, nil)
+
+            local prior_timeline = {}
+            local kept_timeline = {}
+            for _, ev in ipairs(self.timeline or {}) do
+                if ev.source == "series_prior" then
+                    table.insert(prior_timeline, ev)
+                elseif not self:isEntityInCurrentStory(ev, current_story) then
+                    table.insert(kept_timeline, ev)
+                end
             end
-        end
 
-        local current_timeline = final_book_data.timeline or {}
-        local toc = self.ui and self.ui.document and self.ui.document.getToc and self.ui.document:getToc() or {}
-        self:assignTimelinePages(current_timeline, toc, true)
-        if self.filterOrphanTimelineEvents then
-            current_timeline = self:filterOrphanTimelineEvents(current_timeline, toc)
-        end
+            local current_timeline = final_book_data.timeline or {}
+            local toc = self.ui and self.ui.document and self.ui.document.getToc and self.ui.document:getToc() or {}
+            self:assignTimelinePages(current_timeline, toc, true)
+            if self.filterOrphanTimelineEvents then
+                current_timeline = self:filterOrphanTimelineEvents(current_timeline, toc)
+            end
 
-        self.timeline = {}
-        for _, ev in ipairs(current_timeline) do table.insert(self.timeline, ev) end
-        for _, ev in ipairs(prior_timeline) do table.insert(self.timeline, ev) end
-        self:sortTimelineByTOC(self.timeline)
+            self.timeline = {}
+            for _, ev in ipairs(kept_timeline) do table.insert(self.timeline, ev) end
+            for _, ev in ipairs(current_timeline) do table.insert(self.timeline, ev) end
+            for _, ev in ipairs(prior_timeline) do table.insert(self.timeline, ev) end
+            self:sortTimelineByTOC(self.timeline)
+            self.book_type = "anthology"
+        else
+            self.characters = final_book_data.characters
+            for _, char in ipairs(self.characters or {}) do
+                if char.description and char.description ~= "" then
+                    char.history = char.history or {
+                        {
+                            page = current_page,
+                            chapter = chapter_title or "",
+                            description = char.description
+                        }
+                    }
+                end
+            end
+            self.historical_figures = final_book_data.historical_figures
+            for _, fig in ipairs(self.historical_figures or {}) do
+                if fig.biography and fig.biography ~= "" then
+                    fig.history = fig.history or {
+                        {
+                            page = current_page,
+                            chapter = chapter_title or "",
+                            biography = fig.biography
+                        }
+                    }
+                end
+            end
+            self.locations = final_book_data.locations
+            for _, loc in ipairs(self.locations or {}) do
+                if loc.description and loc.description ~= "" then
+                    loc.history = loc.history or {
+                        {
+                            page = current_page,
+                            chapter = chapter_title or "",
+                            description = loc.description
+                        }
+                    }
+                end
+            end
+            self.terms = final_book_data.terms or {}
+            self.book_type = final_book_data.book_type
+
+            -- Preserve series_prior items when non-merge update/fetch overwrites current timeline
+            local prior_timeline = {}
+            for _, ev in ipairs(self.timeline or {}) do
+                if ev.source == "series_prior" then
+                    table.insert(prior_timeline, ev)
+                end
+            end
+
+            local current_timeline = final_book_data.timeline or {}
+            local toc = self.ui and self.ui.document and self.ui.document.getToc and self.ui.document:getToc() or {}
+            self:assignTimelinePages(current_timeline, toc, true)
+            if self.filterOrphanTimelineEvents then
+                current_timeline = self:filterOrphanTimelineEvents(current_timeline, toc)
+            end
+
+            self.timeline = {}
+            for _, ev in ipairs(current_timeline) do table.insert(self.timeline, ev) end
+            for _, ev in ipairs(prior_timeline) do table.insert(self.timeline, ev) end
+            self:sortTimelineByTOC(self.timeline)
+        end
     end
 
     -- If we don't have author info in memory, check if the cache already has it
@@ -1246,6 +1510,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     updated_data.terms = self.terms
     updated_data.book_type = self.book_type or updated_data.book_type
     updated_data.timeline = self.timeline
+    updated_data.chapters_fetched = self.chapters_fetched or updated_data.chapters_fetched
     updated_data.author_info = self.author_info or updated_data.author_info
     updated_data.images = (self.images and #self.images > 0 and self.images) or updated_data.images or (self.book_data and self.book_data.images)
     updated_data.last_fetch_page = current_page
@@ -1260,13 +1525,23 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     local s = self.ai_helper and self.ai_helper.settings or {}
     updated_data.timeline_event_len = s.timeline_event_len or 80
 
+    if is_anthology and current_story then
+        updated_data.story_fetch_state = updated_data.story_fetch_state or {}
+        local s_state = updated_data.story_fetch_state[current_story.story_id] or {
+            story_id = current_story.story_id,
+            story_title = current_story.story_title,
+        }
+        s_state.story_id = current_story.story_id
+        s_state.story_title = current_story.story_title
+        s_state.last_fetch_page = current_page
+        s_state.terms_fetched = true
+        updated_data.story_fetch_state[current_story.story_id] = s_state
+    end
+
     self.book_data = updated_data
-
-    if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
     local doc_file = (self.ui and self.ui.document) and self.ui.document.file
-    local cache_saved = doc_file and self.cache_manager:asyncSaveCache(doc_file, updated_data)
 
-    -- If book is part of a series, update this book's entry in SeriesCache
+    -- If book is part of a series, update series metadata and handle initial series context merge if needed
     if self.series_manager and (updated_data.series_slug or (self.ui and self.ui.document)) then
         pcall(function()
             local props = self.ui and self.ui.document and self.ui.document:getProps() or {}
@@ -1284,37 +1559,54 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                     updated_data.series_slug = slug
                 end
 
-                self.series_manager:syncBookToSeriesCache(slug, index, {
-                    title = title,
-                    author = author,
-                    characters = self.characters,
-                    locations = self.locations,
-                    terms = self.terms,
-                    timeline = self.timeline,
-                }, doc_file, series_info.has_explicit_index)
+                -- Defer writing current book into the series file until close/suspend
+                self:markSeriesSyncDirty(slug, index, title, author, doc_file, series_info.has_explicit_index)
 
-                local cache_data = self.series_manager:loadSeriesCache(slug)
+                -- Check if series context needs to be loaded/merged
                 local s_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.series_context_enabled
-                if s_setting ~= false and index > 1 and cache_data and cache_data.books then
-                    local all_priors_cached = true
-                    local prior_indices = self.series_manager.getExpectedPriorIndices
-                        and self.series_manager:getExpectedPriorIndices(series_info, cache_data.books, doc_file)
-                        or SeriesManager.wholeIndicesBefore(index)
-                    for _, p_idx in ipairs(prior_indices) do
-                        local b = cache_data.books[p_idx]
-                        if not bookHasEntities(b, self.series_manager) then
-                            all_priors_cached = false
-                            break
+                local already_loaded = (self.series_context_loaded or updated_data.series_context_loaded)
+                if is_update and already_loaded then
+                    -- Normal background update: series context is already merged into this book's cache.
+                    -- Skip reading the series file, scanning folders, and re-merging.
+                    self.series_context_loaded = true
+                    updated_data.series_context_loaded = true
+                elseif s_setting ~= false and index > 1 then
+                    -- Initial fetch or full non-update overwrite: check if all prior books are cached in SeriesCache
+                    local cache_data = self.series_manager:loadSeriesCache(slug)
+                    if cache_data and cache_data.books then
+                        local all_priors_cached = true
+                        local whole_priors = SeriesManager.wholeIndicesBefore(index)
+                        for _, p_idx in ipairs(whole_priors) do
+                            local b = cache_data.books[p_idx]
+                            if not bookHasEntities(b, self.series_manager) then
+                                all_priors_cached = false
+                                break
+                            end
                         end
-                    end
-                    if all_priors_cached then
-                        self:log("XRayPlugin: Series: Post-fetch auto-restoring cached series context for " .. tostring(slug))
-                        self:mergeSeriesContext(cache_data, series_info)
+                        if all_priors_cached then
+                            local prior_indices = self.series_manager.getExpectedPriorIndices
+                                and self.series_manager:getExpectedPriorIndices(series_info, cache_data.books, doc_file)
+                                or whole_priors
+                            for _, p_idx in ipairs(prior_indices) do
+                                local b = cache_data.books[p_idx]
+                                if not bookHasEntities(b, self.series_manager) then
+                                    all_priors_cached = false
+                                    break
+                                end
+                            end
+                            if all_priors_cached then
+                                self:log("XRayPlugin: Series: Post-fetch auto-restoring cached series context for " .. tostring(slug))
+                                self:mergeSeriesContext(cache_data, series_info, book_text, true)
+                            end
+                        end
                     end
                 end
             end
         end)
     end
+
+    if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
+    local cache_saved = doc_file and self.cache_manager:asyncSaveCache(doc_file, updated_data)
 
     UIManager:scheduleIn(1, function()
         if self.destroyed or not self.ui or not self.ui.document then return end
@@ -1327,7 +1619,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         end
         local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
         if spoiler_setting == "full_book" then reading_percent = 100 end
-        self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
+        self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent, book_text)
     end)
 
     if is_silent then
@@ -1358,7 +1650,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
 
 end
 
-function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
+function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent, book_text)
     if self.destroyed then return end
     if not self.ui or not self.ui.document or not self.ui.getCurrentPage then
         self:log("XRayPlugin: Skipping duplicate check because the reader document is unavailable")
@@ -1368,7 +1660,7 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
         self:log("XRayPlugin: Deferring duplicate check because unit scan is in progress")
         UIManager:scheduleIn(5, function()
             if self.destroyed or not self.ui or not self.ui.document then return end
-            self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
+            self:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent, book_text)
         end)
         return
     end
@@ -1378,13 +1670,47 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
     local DataStorage = require("datastorage")
     local settings_xray_dir = DataStorage:getSettingsDir() .. "/xray"
 
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+    local current_story = nil
+    if is_anthology then
+        current_story = self:getCurrentStory(self.ui:getCurrentPage())
+    end
+
     -- Gather a small book text anchor for the spoiler guard.
     -- This is done once here and shared across both list checks.
-    if not self.chapter_analyzer then
-        self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new()
+    local dup_book_text
+    if book_text and #book_text > 0 then
+        dup_book_text = book_text:sub(-15000)
+    else
+        if not self.chapter_analyzer then
+            self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new()
+        end
+        dup_book_text = self.chapter_analyzer:getTextForAnalysis(
+            self.ui, 15000, nil, self.ui:getCurrentPage(), nil, nil, current_story)
     end
-    local dup_book_text = self.chapter_analyzer:getTextForAnalysis(
-        self.ui, 15000, nil, self.ui:getCurrentPage())
+
+    local target_characters = self.characters or {}
+    local target_locations = self.locations or {}
+    if is_anthology then
+        if self.buildDuplicateCandidates then
+            target_characters = self:buildDuplicateCandidates(target_characters, current_story)
+            target_locations = self:buildDuplicateCandidates(target_locations, current_story)
+        elseif current_story then
+            local c_filt = {}
+            for _, c in ipairs(target_characters) do
+                if self:isEntityInCurrentStory(c, current_story) then table.insert(c_filt, c) end
+            end
+            target_characters = c_filt
+
+            local l_filt = {}
+            for _, l in ipairs(target_locations) do
+                if self:isEntityInCurrentStory(l, current_story) then table.insert(l_filt, l) end
+            end
+            target_locations = l_filt
+        end
+    end
+
+    local scope_story_id = current_story and current_story.story_id or nil
 
     -- Run checks for characters and locations in sequence using async subprocesses
     local function checkListAsync(list, list_name, entity_label, on_done)
@@ -1394,7 +1720,7 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
         local result_file = settings_xray_dir .. "/dupe_res_" .. list_name .. "_" .. unique_id .. ".json"
         
         self:log("XRayPlugin: Starting async duplicate check for " .. list_name)
-        local pid = self.ai_helper:findDuplicatesAsync(title, author, list, entity_label, reading_percent, result_file, dup_book_text)
+        local pid = self.ai_helper:findDuplicatesAsync(title, author, list, entity_label, reading_percent, result_file, dup_book_text, scope_story_id)
         if not pid then
             self:log("XRayPlugin: Failed to start async duplicate check for " .. list_name)
             on_done(nil)
@@ -1430,53 +1756,33 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent)
         UIManager:scheduleIn(2, poll)
     end
 
-    checkListAsync(self.characters, "characters",
+    checkListAsync(target_characters, "characters",
         self.loc:t("entity_label_characters") or "characters",
         function(char_pairs)
-            checkListAsync(self.locations, "locations",
+            checkListAsync(target_locations, "locations",
                 self.loc:t("entity_label_locations") or "locations",
                 function(loc_pairs)
-                    local rejected_pairs = self.book_data and self.book_data.rejected_merge_pairs or {}
-                    
-                    local function filterRejected(pairs)
-                        if not pairs then return nil end
-                        local filtered = {}
-                        for _, pair in ipairs(pairs) do
-                            if pair.primary and pair.secondary then
-                                local p_name = pair.primary:lower()
-                                local s_name = pair.secondary:lower()
-                                local key = p_name < s_name and (p_name .. "|" .. s_name) or (s_name .. "|" .. p_name)
-                                if not rejected_pairs[key] then
-                                    table.insert(filtered, pair)
-                                end
-                            end
-                        end
-                        return filtered
-                    end
-
-                    char_pairs = filterRejected(char_pairs)
-                    loc_pairs = filterRejected(loc_pairs)
-
                     local has_chars = char_pairs and #char_pairs > 0
                     local has_locs  = loc_pairs  and #loc_pairs  > 0
 
                     if not has_chars and not has_locs then return end
 
-                    if is_silent then
-                        self.pending_duplicate_review = {
-                            characters = has_chars and char_pairs or nil,
-                            locations  = has_locs and loc_pairs or nil,
-                        }
-                        self:log("XRayPlugin: Stored " .. tostring(has_chars and #char_pairs or 0) .. " char and " .. tostring(has_locs and #loc_pairs or 0) .. " loc duplicate pairs for later review")
-                    else
+                    self.pending_duplicate_review = {
+                        story_id   = scope_story_id,
+                        characters = has_chars and char_pairs or nil,
+                        locations  = has_locs and loc_pairs or nil,
+                    }
+                    self:log("XRayPlugin: Stored " .. tostring(has_chars and #char_pairs or 0) .. " char and " .. tostring(has_locs and #loc_pairs or 0) .. " loc duplicate pairs for review (scope: " .. tostring(scope_story_id) .. ")")
+
+                    if not is_silent then
                         UIManager:scheduleIn(0.5, function()
                             if self.destroyed or not self.ui or not self.ui.document then return end
                             if has_chars then
-                                self:showAIFindDuplicatesFlow(self.characters, "characters",
-                                    self.loc:t("entity_label_characters") or "characters")
+                                self.pending_duplicate_review.characters = nil
+                                self:walkDuplicatePairs(self.characters, "characters", char_pairs)
                             elseif has_locs then
-                                self:showAIFindDuplicatesFlow(self.locations, "locations",
-                                    self.loc:t("entity_label_locations") or "locations")
+                                self.pending_duplicate_review.locations = nil
+                                self:walkDuplicatePairs(self.locations, "locations", loc_pairs)
                             end
                         end)
                     end
@@ -1585,6 +1891,9 @@ function M:fetchMoreEntities(entity_type)
             
             -- EVEN SAMPLING: Divide the readable range into equal segments
             local current_page = self.ui:getCurrentPage()
+            local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+            local current_story = is_anthology and self:getCurrentStory(current_page) or nil
+
             local pages_per_sample = 20
             local chars_per_sample = 10000
             local num_samples = 6
@@ -1597,25 +1906,31 @@ function M:fetchMoreEntities(entity_type)
             self:log("XRayPlugin: More " .. entity_type .. " call #" .. call_num .. " (offset: " .. offset .. " pages)")
             
             -- Divide readable range into equal segments
-            local readable_pages = math.max(1, current_page)
+            local readable_start = 1
+            local readable_end = math.max(1, current_page)
+            if current_story then
+                readable_start = current_story.start_page or 1
+                readable_end = math.min(current_page, current_story.end_page or current_page)
+            end
+            local readable_pages = math.max(1, readable_end - readable_start + 1)
             local segment_size = math.floor(readable_pages / num_samples)
             if segment_size < pages_per_sample then segment_size = pages_per_sample end
             
             local text_parts = {}
             for i = 0, num_samples - 1 do
-                local segment_start = i * segment_size
-                local sample_start = math.min(segment_start + offset, readable_pages - pages_per_sample)
-                sample_start = math.max(1, sample_start)
+                local segment_start = readable_start + (i * segment_size)
+                local sample_start = math.min(segment_start + offset, readable_end - pages_per_sample)
+                sample_start = math.max(readable_start, sample_start)
                 
                 -- Wrap around within the segment if the offset pushes past the segment boundary
-                local segment_end = (i + 1) * segment_size
+                local segment_end = segment_start + segment_size
                 if sample_start >= segment_end and i < num_samples - 1 then
                     sample_start = segment_start + ((offset) % segment_size)
-                    sample_start = math.max(1, math.min(sample_start, readable_pages - pages_per_sample))
+                    sample_start = math.max(readable_start, math.min(sample_start, readable_end - pages_per_sample))
                 end
                 
-                if sample_start <= current_page then
-                    local end_page = math.min(sample_start + pages_per_sample, current_page)
+                if sample_start <= readable_end then
+                    local end_page = math.min(sample_start + pages_per_sample, readable_end)
                     local sample = self.chapter_analyzer:getTextFromPageRange(self.ui, sample_start, end_page, chars_per_sample)
                     if sample and #sample > 100 then
                         table.insert(text_parts, "[SECTION " .. (i + 1) .. "]\n" .. sample)
@@ -1629,7 +1944,9 @@ function M:fetchMoreEntities(entity_type)
             local source_list = is_terms and (self.terms or {}) or (self.characters or {})
             for _, item in ipairs(source_list) do
                 if item.name then
-                    table.insert(exclude_list, item.name)
+                    if not is_anthology or not current_story or self:isEntityInCurrentStory(item, current_story) then
+                        table.insert(exclude_list, item.name)
+                    end
                 end
             end
             
@@ -1641,6 +1958,8 @@ function M:fetchMoreEntities(entity_type)
                 book_text = book_text,
                 exclude_characters = not is_terms and table.concat(exclude_list, ", ") or nil,
                 exclude_terms = is_terms and table.concat(exclude_list, ", ") or nil,
+                story_title = current_story and current_story.story_title or nil,
+                story_id = current_story and current_story.story_id or nil,
             }
             
             local pid, res_file_or_err, err_msg = self.ai_helper:startAIRequest(title, author, context, section_name)
@@ -1753,9 +2072,19 @@ function M:fetchMoreEntities(entity_type)
                     local target_list = is_terms and (self.terms or {}) or (self.characters or {})
                     for _, new_item in ipairs(items) do
                         if new_item.name then
+                            if is_anthology and current_story then
+                                new_item.story_id = new_item.story_id or current_story.story_id
+                                new_item.story_title = new_item.story_title or current_story.story_title
+                            end
                             local found = false
                             for _, existing_item in ipairs(target_list) do
-                                if (existing_item.name or ""):lower() == (new_item.name or ""):lower() then
+                                local name_match = (existing_item.name or ""):lower() == (new_item.name or ""):lower()
+                                local story_match = true
+                                if is_anthology and current_story then
+                                    local ex_st = existing_item.story_id or (self.resolveEntityStory and self:resolveEntityStory(existing_item))
+                                    story_match = (ex_st == (new_item.story_id or current_story.story_id))
+                                end
+                                if name_match and story_match then
                                     found = true
                                     break
                                 end
@@ -1766,11 +2095,8 @@ function M:fetchMoreEntities(entity_type)
                             end
                         end
                     end
+                    target_list = self:deduplicateByName(target_list, "name")
                     if is_terms then self.terms = target_list else self.characters = target_list end
-
-                    if is_terms then
-                        self.terms = self:deduplicateByName(self.terms, "name")
-                    end
 
                     -- Re-sort by frequency based on the newly extracted samples
                     if book_text and #book_text > 0 then
@@ -2069,7 +2395,7 @@ function M:checkWeeklyUpdate()
     end
 end
 
-function M:mergeSeriesContext(cache_data, series_info)
+function M:mergeSeriesContext(cache_data, series_info, book_text, skip_save)
     if not cache_data or not series_info then return end
 
     self.characters = self.characters or {}
@@ -2266,46 +2592,47 @@ function M:mergeSeriesContext(cache_data, series_info)
     end
     self:sortTimelineByTOC(self.timeline)
 
-    -- Re-sort characters by frequency against current book text if available
-    local book_text = self.book_text
-    if (not book_text or #book_text < 100) and self.chapter_analyzer and self.ui and self.ui.document then
-        pcall(function()
-            book_text = self.chapter_analyzer:getTextForAnalysis(self.ui, 50000, nil, 100, nil)
-        end)
-    end
-    if self.characters and #self.characters > 0 then
-        self:sortDataByFrequency(self.characters, book_text or "", "name")
+    -- Re-sort characters by frequency against current book text if provided
+    local text_for_sort = book_text or self.book_text or ""
+    if self.characters and #self.characters > 0 and text_for_sort ~= "" then
+        self:sortDataByFrequency(self.characters, text_for_sort, "name")
     end
 
     self.series_context_loaded = true
-    if not self.cache_manager then
-        self.cache_manager = require(plugin_path .. "xray_cachemanager"):new()
-    end
-    local book_path = self.ui and self.ui.document and self.ui.document.file
-    if book_path then
-        if not self.book_data then
-            self.book_data = self.cache_manager:loadCache(book_path) or {}
+    if not skip_save then
+        if not self.cache_manager then
+            self.cache_manager = require(plugin_path .. "xray_cachemanager"):new()
         end
-        local cache = self.book_data
-        cache.series_context_loaded = true
-        cache.series_slug = series_info.slug
-        if series_info.index then
-            cache.series_index = series_info.index
+        local book_path = self.ui and self.ui.document and self.ui.document.file
+        if book_path then
+            if not self.book_data then
+                self.book_data = self.cache_manager:loadCache(book_path) or {}
+            end
+            local cache = self.book_data
+            cache.series_context_loaded = true
+            cache.series_slug = series_info.slug
+            if series_info.index then
+                cache.series_index = series_info.index
+            end
+            if series_info.name then
+                cache.series = series_info.name
+            end
+            cache.characters = self.characters
+            cache.locations = self.locations
+            cache.terms = self.terms
+            cache.timeline = self.timeline
+            cache.images = (self.images and #self.images > 0 and self.images) or cache.images or (self.book_data and self.book_data.images)
+            self.cache_manager:asyncSaveCache(book_path, cache)
+            self.book_data = cache
         end
-        if series_info.name then
-            cache.series = series_info.name
-        end
-        cache.characters = self.characters
-        cache.locations = self.locations
-        cache.terms = self.terms
-        cache.timeline = self.timeline
-        cache.images = (self.images and #self.images > 0 and self.images) or cache.images or (self.book_data and self.book_data.images)
-        self.cache_manager:asyncSaveCache(book_path, cache)
-        self.book_data = cache
     end
 end
 
 function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
+    if self.flushSeriesSync then
+        self:flushSeriesSync()
+    end
+
     local function closeInitWait()
         if init_wait_dialog then
             UIManager:close(init_wait_dialog)
@@ -2638,12 +2965,17 @@ function M:checkpointHorizonScan()
     if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
     if not self.book_data then self.book_data = {} end
 
+    if self.sortTimelineByTOC and self.timeline and #self.timeline > 1 then
+        self:sortTimelineByTOC(self.timeline)
+    end
+
     local cache = self.book_data
     cache.characters = self.characters or {}
     cache.locations = self.locations or {}
     cache.terms = self.terms or {}
     cache.historical_figures = self.historical_figures or {}
     cache.timeline = self.timeline or {}
+    cache.chapters_fetched = self.chapters_fetched or {}
     cache.author_info = self.author_info or cache.author_info
     cache.book_title = cache.book_title or (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps().title)
     cache.book_author = cache.book_author or (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps().authors)
@@ -2654,9 +2986,18 @@ function M:checkpointHorizonScan()
         #(self.characters or {}), #(self.locations or {}), #(self.terms or {}), #(self.timeline or {})))
 end
 
-function M:buildCompactEntityManifest()
+function M:buildCompactEntityManifest(story_id)
     local lines = {}
     local chars = self.characters or {}
+    if story_id then
+        local filt = {}
+        for _, c in ipairs(chars) do
+            local is_rec = c.is_recurring or (self.isEntityRecurring and self:isEntityRecurring(c))
+            local st = c.story_id or (self.resolveEntityStory and self:resolveEntityStory(c))
+            if is_rec or st == story_id then table.insert(filt, c) end
+        end
+        chars = filt
+    end
     if #chars > 0 then
         table.insert(lines, "CHARACTERS:")
         for _, c in ipairs(chars) do
@@ -2672,6 +3013,15 @@ function M:buildCompactEntityManifest()
         end
     end
     local locs = self.locations or {}
+    if story_id then
+        local filt = {}
+        for _, l in ipairs(locs) do
+            local is_rec = l.is_recurring or (self.isEntityRecurring and self:isEntityRecurring(l))
+            local st = l.story_id or (self.resolveEntityStory and self:resolveEntityStory(l))
+            if is_rec or st == story_id then table.insert(filt, l) end
+        end
+        locs = filt
+    end
     if #locs > 0 then
         table.insert(lines, "\nLOCATIONS:")
         for _, l in ipairs(locs) do
@@ -2686,6 +3036,15 @@ function M:buildCompactEntityManifest()
         end
     end
     local terms = self.terms or {}
+    if story_id then
+        local filt = {}
+        for _, t in ipairs(terms) do
+            local is_rec = t.is_recurring or (self.isEntityRecurring and self:isEntityRecurring(t))
+            local st = t.story_id or (self.resolveEntityStory and self:resolveEntityStory(t))
+            if is_rec or st == story_id then table.insert(filt, t) end
+        end
+        terms = filt
+    end
     if #terms > 0 then
         table.insert(lines, "\nTERMS:")
         for _, t in ipairs(terms) do
@@ -2705,11 +3064,26 @@ end
 
 function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_checkpoint)
     if not delta_data or type(delta_data) ~= "table" then return end
-    chapter = chapter or {}
+    if type(chapter) == "number" then
+        chapter = { toc_index = chapter, page = chapter_idx }
+    else
+        chapter = chapter or {}
+    end
     chapter_idx = chapter_idx or chapter.toc_index or 1
     local ch_title = chapter.title or ("Chapter " .. tostring(chapter_idx))
     local ch_page = tonumber(chapter.page)
     local ch_xp = chapter.xpointer
+
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+    local ch_story_id = chapter.story_id
+    local ch_story_title = chapter.story_title
+    if is_anthology and not ch_story_id then
+        local st = self:getCurrentStory(ch_page or (chapter_idx and self.chapter_analyzer and self.chapter_analyzer:getStoryForTocIndex(self.ui, chapter_idx)))
+        if st then
+            ch_story_id = st.story_id
+            ch_story_title = st.story_title
+        end
+    end
 
     self.characters = self.characters or {}
     self.locations = self.locations or {}
@@ -2731,22 +3105,76 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
         return prefix .. "_" .. (clean ~= "" and clean or tostring(os.time()))
     end
 
+    local function isSpecificMultiWordName(n)
+        if not n or type(n) ~= "string" then return false end
+        local words = {}
+        for w in n:gmatch("%S+") do table.insert(words, w) end
+        return #words >= 2
+    end
+
     local function findEntity(list, name, aliases)
         local n_target = norm(name)
         if n_target == "" then return nil end
+        -- Pass 1: exact match or canonical match in the same story
         for _, e in ipairs(list) do
-            if norm(e.name) == n_target then return e end
-            if e.aliases then
-                for _, a in ipairs(e.aliases) do
-                    if norm(a) == n_target then return e end
+            local story_match = not is_anthology or not ch_story_id or (e.story_id or (self.resolveEntityStory and self:resolveEntityStory(e))) == ch_story_id
+            if story_match then
+                if norm(e.name) == n_target then return e end
+                if e.aliases then
+                    for _, a in ipairs(e.aliases) do
+                        if norm(a) == n_target then return e end
+                    end
                 end
-            end
-            if aliases then
-                for _, a in ipairs(aliases) do
-                    if norm(e.name) == norm(a) then return e end
+                if aliases then
+                    for _, a in ipairs(aliases) do
+                        if norm(e.name) == norm(a) then return e end
+                    end
+                end
+                if self.namesMatchCanonical and self:namesMatchCanonical(e.name, name) then
+                    return e
                 end
             end
         end
+
+        -- Pass 2: in anthology mode, link across stories for multi-word or recurring entities
+        if is_anthology and ch_story_id then
+            for _, e in ipairs(list) do
+                local eligible = e.is_recurring or (self.isEntityRecurring and self:isEntityRecurring(e)) or isSpecificMultiWordName(e.name)
+                if eligible then
+                    local matched = (norm(e.name) == n_target)
+                    if not matched and e.aliases then
+                        for _, a in ipairs(e.aliases) do
+                            if norm(a) == n_target then matched = true; break end
+                        end
+                    end
+                    if not matched and aliases then
+                        for _, a in ipairs(aliases) do
+                            if norm(e.name) == norm(a) then matched = true; break end
+                        end
+                    end
+                    if not matched and self.namesMatchCanonical and self:namesMatchCanonical(e.name, name) then
+                        matched = true
+                    end
+                    if matched then
+                        e.is_recurring = true
+                        local ex_st = e.story_id or (self.resolveEntityStory and self:resolveEntityStory(e))
+                        if self.markStoryPresence then
+                            if ex_st then self:markStoryPresence(e.name, ex_st) end
+                            self:markStoryPresence(e.name, ch_story_id)
+                        else
+                            if self.book_data then
+                                self.book_data.story_presence = self.book_data.story_presence or {}
+                                self.book_data.story_presence[e.name] = self.book_data.story_presence[e.name] or {}
+                                if ex_st then self.book_data.story_presence[e.name][ex_st] = true end
+                                self.book_data.story_presence[e.name][ch_story_id] = true
+                            end
+                        end
+                        return e
+                    end
+                end
+            end
+        end
+
         return nil
     end
 
@@ -2767,26 +3195,10 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
     end
 
     local function updateEntityDescPreservingPrior(existing, new_desc, key)
-        if not new_desc or new_desc == "" then return end
-        local field = key or "description"
-        local exist_desc = existing[field] or existing.description or ""
-        if type(exist_desc) == "string" and exist_desc:find("%[From Book [%d%.]+%]") then
-            local prior_parts = {}
-            for sec in (exist_desc .. "\n\n"):gmatch("(.-)\n%s*\n+") do
-                local trimmed = sec:match("^%s*(.-)%s*$")
-                if trimmed and trimmed:find("^%[From Book [%d%.]+%]") then
-                    table.insert(prior_parts, trimmed)
-                end
-            end
-            if #prior_parts > 0 then
-                local combined = SeriesManager.reorderSeriesDescription(new_desc .. "\n\n" .. table.concat(prior_parts, "\n\n"))
-                existing[field] = combined
-                if field ~= "description" then existing.description = combined end
-                return
-            end
+        if self.updateEntityDescPreservingPrior then
+            return self:updateEntityDescPreservingPrior(existing, new_desc, key)
         end
-        existing[field] = new_desc
-        if field ~= "description" then existing.description = new_desc end
+        return M.updateEntityDescPreservingPrior(self, existing, new_desc, key)
     end
 
     local function mergeAliases(existing, new_aliases)
@@ -2834,6 +3246,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                         role = c.role or "Character",
                         status = c.status or "alive",
                         description = c.description or "",
+                        story_id = ch_story_id,
+                        story_title = ch_story_title,
                         visible_from = {
                             chapter_index = chapter_idx,
                             chapter_title = ch_title,
@@ -2906,6 +3320,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                         role = u.role or "Character",
                         status = u.status or "alive",
                         description = u.description or "",
+                        story_id = ch_story_id,
+                        story_title = ch_story_title,
                         visible_from = {
                             chapter_index = chapter_idx,
                             chapter_title = ch_title,
@@ -2955,6 +3371,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                         id = l.id or makeId("loc", l.name),
                         name = l.name,
                         description = l.description or "",
+                        story_id = ch_story_id,
+                        story_title = ch_story_title,
                         visible_from = {
                             chapter_index = chapter_idx,
                             chapter_title = ch_title,
@@ -3000,6 +3418,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                         id = u.id or makeId("loc", u.name),
                         name = u.name,
                         description = u.description or "",
+                        story_id = ch_story_id,
+                        story_title = ch_story_title,
                         visible_from = {
                             chapter_index = chapter_idx,
                             chapter_title = ch_title,
@@ -3049,6 +3469,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                         name = t.name,
                         definition = t.description or t.definition or "",
                         description = t.description or t.definition or "",
+                        story_id = ch_story_id,
+                        story_title = ch_story_title,
                         visible_from = {
                             chapter_index = chapter_idx,
                             chapter_title = ch_title,
@@ -3097,6 +3519,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                         name = u.name,
                         definition = desc,
                         description = desc,
+                        story_id = ch_story_id,
+                        story_title = ch_story_title,
                         visible_from = {
                             chapter_index = chapter_idx,
                             chapter_title = ch_title,
@@ -3120,13 +3544,68 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
         end
     end
 
-    -- 5. Timeline Event
-    if delta_data.timeline_event and delta_data.timeline_event.event and delta_data.timeline_event.event ~= "" then
-        local ev_title = delta_data.timeline_event.chapter or ch_title
+    -- 5. Timeline Event (accepts both string from batch scan and table from single chapter)
+    local timeline_ev = delta_data.timeline_event
+    local ev_text = nil
+    local ev_title = ch_title
+
+    if type(timeline_ev) == "string" then
+        ev_text = timeline_ev
+    elseif type(timeline_ev) == "table" then
+        ev_text = timeline_ev.event or timeline_ev.summary or timeline_ev.description or timeline_ev.text
+        if type(timeline_ev.chapter) == "string" and timeline_ev.chapter:match("%S") then
+            ev_title = timeline_ev.chapter
+        end
+    end
+
+    if type(ev_text) == "string" then
+        ev_text = ev_text:gsub("^%s+", ""):gsub("%s+$", "")
+    else
+        ev_text = nil
+    end
+
+    if ev_text and ev_text ~= "" then
+        if is_anthology and self.chapter_analyzer then
+            local st = nil
+            if ch_page then
+                st = self.chapter_analyzer:getStoryForPage(self.ui, ch_page)
+            end
+            if not st and ev_title and self.normalizeChapterName then
+                local n_ev = self:normalizeChapterName(ev_title)
+                local sm = self.chapter_analyzer:getStoryMap(self.ui)
+                if sm and sm.stories then
+                    for _, s in ipairs(sm.stories) do
+                        if self:normalizeChapterName(s.story_title) == n_ev then
+                            st = s
+                            break
+                        end
+                    end
+                end
+            end
+            if not st and chapter_idx then
+                st = self.chapter_analyzer:getStoryForTocIndex(self.ui, chapter_idx)
+            end
+            if st then
+                ch_story_id = st.story_id
+                ch_story_title = st.story_title
+            end
+        end
+
         local already_has_ev = false
+        local norm_ev_title = self.normalizeChapterName and self:normalizeChapterName(ev_title) or ev_title:lower()
         for _, ev in ipairs(self.timeline) do
-            if ev.chapter == ev_title and ((ev.page and ch_page and ev.page == ch_page) or (ev.chapter_index and ev.chapter_index == chapter_idx)) then
+            local story_match = not is_anthology or not ch_story_id or (ev.story_id or (self.resolveEntityStory and self:resolveEntityStory(ev))) == ch_story_id
+            local norm_existing = self.normalizeChapterName and self:normalizeChapterName(ev.chapter or "") or (ev.chapter or ""):lower()
+            local same_chapter = (norm_existing ~= "" and norm_existing == norm_ev_title)
+            local same_index = (ev.chapter_index and chapter_idx and ev.chapter_index == chapter_idx)
+            local same_page = (ev.page and ch_page and tonumber(ev.page) == tonumber(ch_page))
+
+            if story_match and (same_index or (same_chapter and same_page) or (ev.chapter == ev_title and (same_page or same_index))) then
                 already_has_ev = true
+                ev.event = ev_text
+                ev.chapter = ev_title
+                if ch_page and not ev.page then ev.page = ch_page end
+                if chapter_idx and not ev.chapter_index then ev.chapter_index = chapter_idx end
                 break
             end
         end
@@ -3134,9 +3613,11 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
             new_events = new_events + 1
             table.insert(self.timeline, {
                 chapter = ev_title,
-                event = delta_data.timeline_event.event,
+                event = ev_text,
                 chapter_index = chapter_idx,
-                page = ch_page
+                page = ch_page,
+                story_id = ch_story_id,
+                story_title = ch_story_title,
             })
         end
     end
@@ -3149,8 +3630,27 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
     local unique_id = ch_title .. "_" .. tostring(ch_page)
     self.chapters_fetched[unique_id] = true
 
+    if is_anthology and ch_story_id then
+        self.book_data = self.book_data or {}
+        self.book_data.story_fetch_state = self.book_data.story_fetch_state or {}
+        local st_state = self.book_data.story_fetch_state[ch_story_id] or {
+            story_id = ch_story_id,
+            story_title = ch_story_title,
+        }
+        st_state.story_id = ch_story_id
+        st_state.story_title = ch_story_title or st_state.story_title
+        if ch_page and (not st_state.last_fetch_page or ch_page > st_state.last_fetch_page) then
+            st_state.last_fetch_page = ch_page
+        end
+        if chapter_idx and (not st_state.last_fetch_chapter or chapter_idx > st_state.last_fetch_chapter) then
+            st_state.last_fetch_chapter = chapter_idx
+        end
+        st_state.terms_fetched = true
+        self.book_data.story_fetch_state[ch_story_id] = st_state
+    end
+
     -- Checkpoint immediately (unless part of a multi-chapter batch)
-    if not skip_checkpoint then
+    if not skip_checkpoint and self.checkpointHorizonScan then
         self:checkpointHorizonScan()
     end
 end
@@ -3192,6 +3692,13 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         end
         if ch then
             ch.toc_index = idx or ch.toc_index or 1
+            if self.isAnthologyMode and self:isAnthologyMode() and self.chapter_analyzer then
+                local st = self.chapter_analyzer:getStoryForTocIndex(self.ui, ch.toc_index)
+                if st then
+                    ch.story_id = st.story_id
+                    ch.story_title = st.story_title
+                end
+            end
             table.insert(queue, ch)
         end
     end
@@ -3264,6 +3771,8 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
     end
 
     self.is_sequential_scan_active = true
+    local batches_processed = 0
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
 
     local function finishScan(success)
         self.is_sequential_scan_active = false
@@ -3272,6 +3781,9 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         self.active_sequential_on_done = nil
         self.active_sequential_on_progress = nil
         if success then
+            if self.sortTimelineByTOC and self.timeline and #self.timeline > 1 then
+                self:sortTimelineByTOC(self.timeline)
+            end
             self:log(string.format("XRayPlugin: Sequential chapter scan complete! Processed %d of %d chapters (%d segments). Final cache: %d chars, %d locs, %d terms, %d events.",
                 self.active_sequential_completed_chapters or self.active_sequential_completed or 0,
                 self.active_sequential_total_chapters or self.active_sequential_total or 0,
@@ -3282,12 +3794,16 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         end
         if cb then cb(success) end
         if success then
-            pcall(function()
-                local cur_p = self.ui and self.ui.getCurrentPage and self.ui:getCurrentPage() or 1
-                local tot_p = self.ui and self.ui.document and self.ui.document.getPageCount and self.ui.document:getPageCount() or 1
-                local r_pct = tot_p and tot_p > 0 and math.floor((cur_p / tot_p) * 100) or 100
-                self:runPostFetchDuplicateCheck(nil, nil, r_pct, true)
-            end)
+            if batches_processed > 0 then
+                pcall(function()
+                    local cur_p = self.ui and self.ui.getCurrentPage and self.ui:getCurrentPage() or 1
+                    local tot_p = self.ui and self.ui.document and self.ui.document.getPageCount and self.ui.document:getPageCount() or 1
+                    local r_pct = tot_p and tot_p > 0 and math.floor((cur_p / tot_p) * 100) or 100
+                    self:runPostFetchDuplicateCheck(nil, nil, r_pct, true)
+                end)
+            else
+                self:log("XRayPlugin: Sequential scan completed with 0 new batches processed; skipping post-fetch duplicate check.")
+            end
         end
     end
 
@@ -3326,7 +3842,22 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
             local cand_idx = candidate.toc_index or 1
             local cand_id = (candidate.title or ("Chapter " .. tostring(cand_idx))) .. "_" .. tostring(candidate.page)
 
-            if self.chapters_fetched[cand_id] then
+            local cand_already_fetched = self.chapters_fetched and self.chapters_fetched[cand_id]
+            if not cand_already_fetched and self.timeline then
+                for _, ev in ipairs(self.timeline) do
+                    local story_match = not is_anthology or not candidate.story_id or (ev.story_id == candidate.story_id)
+                    if story_match then
+                        if (ev.chapter_index and ev.chapter_index == cand_idx) or
+                           (ev.page and candidate.page and tonumber(ev.page) == tonumber(candidate.page)) then
+                            cand_already_fetched = true
+                            self.chapters_fetched[cand_id] = true
+                            break
+                        end
+                    end
+                end
+            end
+
+            if cand_already_fetched then
                 self:log(string.format("XRayPlugin: Skipping already-fetched chapter '%s' (p. %s).", tostring(candidate.title), tostring(candidate.page)))
                 table.remove(q, 1)
                 self.active_sequential_completed = self.active_sequential_completed + 1
@@ -3352,9 +3883,19 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                     markChapterItemComplete(candidate)
                     notifyProgress()
                 else
-                    if #batch_items > 0 and (total_batch_chars + #ch_text) > MAX_BATCH_CHARS then
-                        -- Reached character budget for this batch, process current batch first
-                        break
+                    if #batch_items > 0 then
+                        if (total_batch_chars + #ch_text) > MAX_BATCH_CHARS then
+                            -- Reached character budget for this batch, process current batch first
+                            break
+                        end
+                        if self.isAnthologyMode and self:isAnthologyMode() then
+                            local b1_st = batch_items[1].story_id
+                            local cand_st = candidate.story_id
+                            if b1_st and cand_st and b1_st ~= cand_st then
+                                -- Story boundary reached, split batch
+                                break
+                            end
+                        end
                     end
                     table.remove(q, 1)
                     local item_entry = {
@@ -3371,6 +3912,8 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                         depth = candidate.depth,
                         unique_id = cand_id,
                         text = ch_text,
+                        story_id = candidate.story_id,
+                        story_title = candidate.story_title,
                     }
                     table.insert(batch_items, item_entry)
                     total_batch_chars = total_batch_chars + #ch_text
@@ -3396,7 +3939,8 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         local props = (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps()) or {}
         local title = props.title or "Book"
         local author = props.authors or props.author or "Author"
-        local manifest = self:buildCompactEntityManifest()
+        local manifest_story_id = (self.isAnthologyMode and self:isAnthologyMode() and batch_items[1]) and batch_items[1].story_id or nil
+        local manifest = self:buildCompactEntityManifest(manifest_story_id)
 
         local prompt, err
         if #batch_items == 1 and not (self.ai_helper.prompts and self.ai_helper.prompts.batch_chapter_delta) then
@@ -3477,6 +4021,7 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                 pcall(function() os.remove(result_file) end)
                 local duration = math.max(0, os.time() - start_t)
                 if type(data) == "table" then
+                    batches_processed = batches_processed + 1
                     self:log(string.format("XRayPlugin: AI response received in %ds. Merging delta data...", duration))
                     self.active_sequential_status = "Merging delta results..."
                     if data.chapters and type(data.chapters) == "table" then

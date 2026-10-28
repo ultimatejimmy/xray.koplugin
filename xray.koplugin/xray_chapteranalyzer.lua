@@ -5,20 +5,27 @@ local AIHelper = require(plugin_path .. "xray_aihelper")
 local xray_utils = require(plugin_path .. "xray_utils")
 
 -- Helper function to flatten KOReader's nested TOC tree
-local function flattenTOC(nodes, flat_list)
+local function flattenTOC(nodes, flat_list, current_depth)
     flat_list = flat_list or {}
+    current_depth = current_depth or 1
     if not nodes then return flat_list end
     
     for _, node in ipairs(nodes) do
-        table.insert(flat_list, node)
         if type(node) == "table" then
-            if #node > 0 then
-                flattenTOC(node, flat_list)
-            elseif node.sub_item_table then
-                flattenTOC(node.sub_item_table, flat_list)
-            elseif node.children then
-                flattenTOC(node.children, flat_list)
+            if node.depth == nil then
+                node.depth = current_depth
             end
+            table.insert(flat_list, node)
+            local next_depth = (node.depth or current_depth) + 1
+            if #node > 0 then
+                flattenTOC(node, flat_list, next_depth)
+            elseif node.sub_item_table then
+                flattenTOC(node.sub_item_table, flat_list, next_depth)
+            elseif node.children then
+                flattenTOC(node.children, flat_list, next_depth)
+            end
+        else
+            table.insert(flat_list, node)
         end
     end
     return flat_list
@@ -503,7 +510,7 @@ function ChapterAnalyzer:getTextFromPageRange(ui, start_page, end_page, max_len)
 end
 
 -- Get text for analysis (up to max_len characters before current position)
-function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, current_page, start_page, target_xp)
+function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, current_page, start_page, target_xp, story_bounds)
     if not ui or not ui.document then
         AIHelper:log("ChapterAnalyzer: getTextForAnalysis - no document")
         return nil
@@ -512,6 +519,15 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
     max_len = max_len or 100000 
     local book_text = ""
     AIHelper:log("ChapterAnalyzer: Extracting text for analysis (max " .. tostring(max_len) .. " chars)")
+
+    if story_bounds then
+        if story_bounds.start_page then
+            start_page = math.max(start_page or story_bounds.start_page, story_bounds.start_page)
+        end
+        if story_bounds.end_page and current_page and current_page > story_bounds.end_page then
+            current_page = story_bounds.end_page
+        end
+    end
     
     -- Check if it's a reflowable document (EPUB, etc.)
     local is_reflowable = ui.rolling ~= nil
@@ -581,6 +597,9 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
                 else
                     local max_lookback = 60
                     local capped_start = math.max(start_page, current_p - max_lookback)
+                    if story_bounds and story_bounds.start_page then
+                        capped_start = math.max(capped_start, story_bounds.start_page)
+                    end
                     if capped_start > start_page then
                         AIHelper:log("ChapterAnalyzer: Capping incremental start_page from " .. tostring(start_page) .. " to " .. tostring(capped_start) .. " (60-page window)")
                         start_page = capped_start
@@ -605,7 +624,8 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
             if not start_page or start_page <= 1 then
                 -- Limit window: at most 60 pages back to avoid blocking extraction
                 local current_p = current_page or (ui.getCurrentPage and ui:getCurrentPage()) or 1
-                local window_start = math.max(1, current_p - 60)
+                local min_bound = (story_bounds and story_bounds.start_page) or 1
+                local window_start = math.max(min_bound, current_p - 60)
                 if ui.document.getPageXPointer then
                     start_xp = ui.document:getPageXPointer(window_start)
                 elseif ui.document.gotoPos then
@@ -645,8 +665,12 @@ function ChapterAnalyzer:getTextForAnalysis(ui, max_len, progress_callback, curr
             return ""
         end
         local current_pos = current_page or (ui.view and ui.view.state and ui.view.state.page) or 1
+        if story_bounds and story_bounds.end_page and current_pos > story_bounds.end_page then
+            current_pos = story_bounds.end_page
+        end
         local max_pages = 100 
-        local calc_start_page = math.max(1, current_pos - max_pages)
+        local min_calc_base = (story_bounds and story_bounds.start_page) or 1
+        local calc_start_page = math.max(min_calc_base, current_pos - max_pages)
         if start_page and start_page > 1 then
             if start_page >= current_pos then
                 AIHelper:log("ChapterAnalyzer: start_page=" .. tostring(start_page)
@@ -745,6 +769,271 @@ function ChapterAnalyzer:getAnnotationsForAnalysis(ui, max_page)
     return #annotations_text > 0 and annotations_text or nil
 end
 
+function ChapterAnalyzer:resolveTocEntryPage(ui, ch)
+    if not ch then return nil end
+    if ch.page and tonumber(ch.page) then
+        return tonumber(ch.page)
+    end
+    if ch.xpointer and ui and ui.document and type(ui.document.getPageFromXPointer) == "function" then
+        local ok, p = pcall(ui.document.getPageFromXPointer, ui.document, ch.xpointer)
+        if ok and p and tonumber(p) then
+            local pg = tonumber(p)
+            ch.page = pg
+            return pg
+        end
+    end
+    return nil
+end
+
+function ChapterAnalyzer:isNonStoryEntry(title, book_title)
+    if not title then return true end
+    local lower = title:lower():gsub("^%s+", ""):gsub("%s+$", "")
+    if lower == "" then return true end
+
+    -- Project Gutenberg / license markers
+    if lower:find("project gutenberg") or lower:find("license") then return true end
+
+    -- Matches the entire book title (NCX entry 1 in many Gutenberg epubs)
+    if book_title then
+        local bt_lower = book_title:lower():gsub("^%s+", ""):gsub("%s+$", "")
+        if lower == bt_lower then return true end
+    end
+
+    -- Front/Back matter markers that shouldn't be counted as a story
+    local non_story_patterns = {
+        "^the full project gutenberg",
+        "^gutenberg",
+        "^introduction",
+        "^preface",
+        "^foreword",
+        "^editor'?s note",
+        "^note on the text",
+        "^publisher'?s note",
+        "^colophon",
+        "^table of contents",
+        "^contents$",
+        "^cover$",
+        "^title page",
+        "^half%-title",
+        "^appendix",
+        "^index$",
+        "^bibliography",
+        "^also by",
+        "^other books",
+        "^about the author",
+        "^about the",
+        "^dedication",
+        "^acknowledgment",
+    }
+    for _, pat in ipairs(non_story_patterns) do
+        if lower:match(pat) then return true end
+    end
+    return false
+end
+
+function ChapterAnalyzer:getStoryMap(ui, custom_depth)
+    if not ui or not ui.document then
+        return { stories = {}, by_id = {}, by_toc_idx = {}, target_depth = 1 }
+    end
+    local doc_file = ui.document.file or "current"
+    self._story_map_cache = self._story_map_cache or {}
+    local cache_key = tostring(doc_file) .. "::" .. tostring(custom_depth or "auto")
+    if self._story_map_cache[cache_key] then
+        return self._story_map_cache[cache_key]
+    end
+
+    local book_title = nil
+    if ui.document.getProps then
+        pcall(function()
+            local props = ui.document:getProps()
+            if props and props.title then book_title = props.title end
+        end)
+    end
+
+    local raw_toc
+    pcall(function()
+        if ui.document.getToc then raw_toc = ui.document:getToc() end
+    end)
+    local toc = flattenTOC(raw_toc)
+    if not toc or #toc == 0 then
+        local empty_map = { stories = {}, by_id = {}, by_toc_idx = {}, target_depth = 1 }
+        self._story_map_cache[cache_key] = empty_map
+        return empty_map
+    end
+
+    local total_pages = 0
+    if ui.document.getPageCount then
+        pcall(function() total_pages = ui.document:getPageCount() or 0 end)
+    elseif ui.document.getNumberOfPages then
+        pcall(function() total_pages = ui.document:getNumberOfPages() or 0 end)
+    end
+
+    local isNonNarrative = function(title)
+        if self:isNonStoryEntry(title, book_title) then return true end
+        if self.plugin and self.plugin.isNonNarrativeChapter then
+            return self.plugin:isNonNarrativeChapter(title)
+        end
+        local ok_data, xray_data = pcall(require, plugin_path .. "xray_data")
+        if ok_data and xray_data and xray_data.isNonNarrativeChapter then
+            return xray_data:isNonNarrativeChapter(title)
+        end
+        return false
+    end
+
+    -- Determine minimum narrative depth
+    local min_depth = nil
+    local narrative_at_depth = {}
+    for i, ch in ipairs(toc) do
+        local d = ch.depth or 1
+        ch.toc_index = i
+        if not isNonNarrative(ch.title) then
+            if not min_depth or d < min_depth then
+                min_depth = d
+            end
+            narrative_at_depth[d] = (narrative_at_depth[d] or 0) + 1
+        end
+    end
+    min_depth = min_depth or 1
+
+    local target_depth = min_depth
+    if custom_depth and tonumber(custom_depth) then
+        target_depth = tonumber(custom_depth)
+    elseif custom_depth == "auto" or not custom_depth then
+        local part_count = 0
+        local total_min_narrative = 0
+        for _, ch in ipairs(toc) do
+            if (ch.depth or 1) == min_depth and not isNonNarrative(ch.title) then
+                total_min_narrative = total_min_narrative + 1
+                local t_low = (ch.title or ""):lower():gsub("^%s+", "")
+                if t_low:match("^part[%s%p%d]") or t_low:match("^volume[%s%p%d]")
+                    or t_low:match("^book[%s%p%d]") or t_low:match("^section[%s%p%d]")
+                    or t_low:match("^[ivxlcdm]+$") then
+                    part_count = part_count + 1
+                end
+            end
+        end
+        if total_min_narrative > 0 and (part_count / total_min_narrative >= 0.5) and (narrative_at_depth[min_depth + 1] or 0) > 0 then
+            target_depth = min_depth + 1
+        end
+    end
+
+    local stories = {}
+    local by_id = {}
+    local by_toc_idx = {}
+    local current_story = nil
+
+    local function closeCurrentStory(next_start_page, next_start_xp, last_toc_idx)
+        if current_story then
+            current_story.end_toc_idx = last_toc_idx or current_story.start_toc_idx
+            if next_start_page and next_start_page > 0 then
+                current_story.end_page = math.max(current_story.start_page or 1, next_start_page - 1)
+            elseif total_pages > 0 then
+                current_story.end_page = total_pages
+            else
+                current_story.end_page = current_story.start_page or 1
+            end
+            current_story.end_xp = next_start_xp
+        end
+    end
+
+    for i, ch in ipairs(toc) do
+        local is_non = isNonNarrative(ch.title)
+        local d = ch.depth or 1
+        local p = self:resolveTocEntryPage(ui, ch)
+
+        local is_container = false
+        if d < target_depth then
+            local nxt = toc[i + 1]
+            if nxt and (nxt.depth or 1) > d then
+                is_container = true
+            end
+        end
+
+        if not is_non and not is_container and d <= target_depth then
+            closeCurrentStory(p, ch.xpointer, i - 1)
+            local story_id = "toc_" .. tostring(i)
+            current_story = {
+                story_id = story_id,
+                story_title = ch.title or ("Story " .. tostring(#stories + 1)),
+                start_toc_idx = i,
+                end_toc_idx = i,
+                start_page = p or (current_story and (current_story.end_page or 0) + 1) or 1,
+                end_page = nil,
+                start_xp = ch.xpointer,
+                end_xp = nil,
+                depth = d,
+            }
+            table.insert(stories, current_story)
+            by_id[story_id] = current_story
+            by_toc_idx[i] = current_story
+        elseif current_story then
+            current_story.end_toc_idx = i
+            by_toc_idx[i] = current_story
+            if not current_story.start_page and p then
+                current_story.start_page = p
+            end
+        end
+    end
+
+    closeCurrentStory(total_pages > 0 and (total_pages + 1) or nil, nil, #toc)
+
+    for idx, s in ipairs(stories) do
+        if not s.start_page then
+            local prev = stories[idx - 1]
+            s.start_page = prev and ((prev.end_page or prev.start_page or 0) + 1) or 1
+        end
+        if not s.end_page or s.end_page < s.start_page then
+            local nxt = stories[idx + 1]
+            if nxt and nxt.start_page and nxt.start_page > s.start_page then
+                s.end_page = nxt.start_page - 1
+            elseif total_pages > 0 then
+                s.end_page = total_pages
+            else
+                s.end_page = s.start_page
+            end
+        end
+    end
+
+    local map = {
+        stories = stories,
+        by_id = by_id,
+        by_toc_idx = by_toc_idx,
+        target_depth = target_depth,
+    }
+    self._story_map_cache[cache_key] = map
+    return map
+end
+
+function ChapterAnalyzer:getStoryForTocIndex(ui, toc_idx, custom_depth)
+    local map = self:getStoryMap(ui, custom_depth)
+    if not map or not map.stories or #map.stories == 0 then return nil end
+    if map.by_toc_idx and map.by_toc_idx[toc_idx] then return map.by_toc_idx[toc_idx] end
+    local best = map.stories[1]
+    for _, s in ipairs(map.stories) do
+        if s.start_toc_idx <= toc_idx then
+            best = s
+        else
+            break
+        end
+    end
+    return best
+end
+
+function ChapterAnalyzer:getStoryForPage(ui, page, custom_depth)
+    local map = self:getStoryMap(ui, custom_depth)
+    if not map or not map.stories or #map.stories == 0 then return nil end
+    page = tonumber(page) or 1
+    local best = map.stories[1]
+    for _, s in ipairs(map.stories) do
+        if s.start_page and s.start_page <= page then
+            best = s
+        elseif s.start_page and s.start_page > page then
+            break
+        end
+    end
+    return best
+end
+
 -- Subdivide oversized TOC entries (e.g. books with only "Parts" like Carrie, or chapters > 60 pages)
 -- into granular virtual segments for sequential Story Arc prefetching.
 function ChapterAnalyzer:expandOversizedTocChapters(toc, total_pages, max_pages_per_segment)
@@ -784,7 +1073,8 @@ function ChapterAnalyzer:expandOversizedTocChapters(toc, total_pages, max_pages_
                     total_parts = num_parts,
                     page = seg_start,
                     end_page = seg_end,
-                    toc_index = global_toc_index,
+                    toc_index = parent_idx,
+                    segment_index = global_toc_index,
                     depth = ch.depth,
                     is_virtual_segment = true,
                     xpointer = (part == 1 and ch.xpointer) or nil,
@@ -801,7 +1091,8 @@ function ChapterAnalyzer:expandOversizedTocChapters(toc, total_pages, max_pages_
                 total_parts = 1,
                 page = ch.page,
                 end_page = next_page and (next_page - 1) or nil,
-                toc_index = global_toc_index,
+                toc_index = parent_idx,
+                segment_index = global_toc_index,
                 depth = ch.depth,
                 xpointer = ch.xpointer,
             }
@@ -867,7 +1158,7 @@ function ChapterAnalyzer:getSingleChapterText(ui, chapter, next_chapter, current
 end
 
 -- Get detailed samples (Start/Mid/End) from each chapter
-function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit, is_full_book, start_page, known_chapters, resolved_current_page)
+function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit, is_full_book, start_page, known_chapters, resolved_current_page, story_bounds)
     if not ui or not ui.document then return nil, nil end
     
     local raw_toc
@@ -933,7 +1224,21 @@ function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit
     if toc and #toc > 0 then
         for i, chapter in ipairs(toc) do
             local ch_page = tonumber(chapter.page)
-            if not is_full_book and current_page and ch_page and ch_page > current_page then
+            local skip_by_story = false
+            if story_bounds then
+                if story_bounds.start_toc_idx and i < story_bounds.start_toc_idx then
+                    skip_by_story = true
+                elseif story_bounds.end_toc_idx and i > story_bounds.end_toc_idx then
+                    skip_by_story = true
+                elseif ch_page and story_bounds.start_page and ch_page < story_bounds.start_page then
+                    skip_by_story = true
+                elseif ch_page and story_bounds.end_page and ch_page > story_bounds.end_page then
+                    skip_by_story = true
+                end
+            end
+            if skip_by_story then
+                -- Skip chapters outside the story bounds
+            elseif not is_full_book and current_page and ch_page and ch_page > current_page then
                 -- Skip chapters past current_page without breaking (since TOC items may not be strictly page-ordered)
             else
                 -- Skip non-narrative chapters
@@ -1634,6 +1939,107 @@ function ChapterAnalyzer:scanMentionsAsync(ui, entity, toc, min_page, max_page, 
     -- Start the scan
     UIManager:scheduleIn(0.2, resumeScan)
     
+    return cancel_handle
+end
+
+function ChapterAnalyzer:scanStoryPresence(ui, story, entities)
+    if not ui or not story or not entities or #entities == 0 then return {} end
+    local start_p = story.start_page or 1
+    local end_p = story.end_page or (start_p + 20)
+    local text = self:getTextFromPageRange(ui, start_p, end_p, 80000)
+    if not text or text == "" then return {} end
+    local text_lower = text:lower()
+
+    local found = {}
+    for _, e in ipairs(entities) do
+        local name = e.name
+        if name and type(name) == "string" then
+            local is_multi = name:find("%s") ~= nil
+            local is_long_single = #name >= 5
+            if is_multi or is_long_single then
+                local pat = name:lower()
+                local matched = false
+                if is_multi then
+                    if text_lower:find(pat, 1, true) then matched = true end
+                else
+                    local escaped = pat:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+                    if text_lower:find("%f[%a]" .. escaped .. "%f[%A]") then matched = true end
+                end
+                if not matched and e.aliases and type(e.aliases) == "table" then
+                    for _, al in ipairs(e.aliases) do
+                        if type(al) == "string" and (#al >= 4) then
+                            local a_multi = al:find("%s") ~= nil
+                            if a_multi and text_lower:find(al:lower(), 1, true) then
+                                matched = true; break
+                            elseif not a_multi and #al >= 5 then
+                                local esc_al = al:lower():gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+                                if text_lower:find("%f[%a]" .. esc_al .. "%f[%A]") then
+                                    matched = true; break
+                                end
+                            end
+                        end
+                    end
+                end
+                if matched then
+                    table.insert(found, name)
+                end
+            end
+        end
+    end
+    return found
+end
+
+function ChapterAnalyzer:scanStoryPresenceAsync(ui, stories, entities, on_progress, on_done)
+    local UIManager = require("ui/uimanager")
+    if not ui or not ui.document or not stories or #stories == 0 or not entities or #entities == 0 then
+        if on_done then UIManager:scheduleIn(0, function() on_done({}) end) end
+        return { cancel = function() end }
+    end
+
+    local cancel_handle = { _cancelled = false }
+    function cancel_handle:cancel()
+        self._cancelled = true
+    end
+
+    local story_presence = {}
+    local total_stories = #stories
+
+    local scan_co = coroutine.create(function()
+        for idx, story in ipairs(stories) do
+            if cancel_handle._cancelled then break end
+            local found_names = self:scanStoryPresence(ui, story, entities)
+            for _, name in ipairs(found_names) do
+                story_presence[name] = story_presence[name] or {}
+                story_presence[name][story.story_id] = true
+            end
+
+            if on_progress then
+                on_progress(idx, total_stories)
+            end
+
+            collectgarbage("step", 50)
+            coroutine.yield()
+        end
+
+        if on_done and not cancel_handle._cancelled then
+            on_done(story_presence)
+        end
+    end)
+
+    local function resumeScan()
+        if cancel_handle._cancelled or not ui or not ui.document then return end
+        local ok, err = coroutine.resume(scan_co)
+        if not ok then
+            logger.error("XRayPlugin: scanStoryPresenceAsync error:", err)
+            if on_done and not cancel_handle._cancelled then on_done(story_presence) end
+            return
+        end
+        if coroutine.status(scan_co) ~= "dead" then
+            UIManager:scheduleIn(0.02, resumeScan)
+        end
+    end
+
+    UIManager:scheduleIn(0.1, resumeScan)
     return cancel_handle
 end
 

@@ -148,10 +148,19 @@ end
 
 -- Safe helper for current page
 local function _getCurrentPage(plugin)
+    if not plugin then return 1 end
     if plugin.last_pageno then return plugin.last_pageno end
+    if plugin.getCurrentDocPage then
+        local ok, pg = pcall(function() return plugin:getCurrentDocPage() end)
+        if ok and pg then return pg end
+    end
+    if plugin.getCurrentPage then
+        local ok, pg = pcall(function() return plugin:getCurrentPage() end)
+        if ok and pg then return pg end
+    end
     if plugin.ui and plugin.ui.paging and plugin.ui.paging.getCurrentPage then
         local ok, pg = pcall(function() return plugin.ui.paging:getCurrentPage() end)
-        if ok then return pg end
+        if ok and pg then return pg end
     end
     if plugin.ui and plugin.ui.pageno then
         return plugin.ui.pageno
@@ -211,20 +220,63 @@ function M:showMentionsForEntity(entity)
         self.active_mention_scan.cancel_handle:cancel()
         self.active_mention_scan = nil
     end
+
+    if not self.chapter_analyzer then
+        local ChapterAnalyzer = require(plugin_path .. "xray_chapteranalyzer")
+        self.chapter_analyzer = ChapterAnalyzer:new{ plugin = self }
+    end
+
     local utils = require(plugin_path .. "xray_utils")
     local toc = utils:flattenTOC(self.ui and self.ui.document and self.ui.document.getToc and self.ui.document:getToc())
     local spoiler_free = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free") == "spoiler_free"
-    local max_page = spoiler_free and _getCurrentPage(self) or nil
     
+    local story = nil
+    if self.isAnthologyMode and self:isAnthologyMode() then
+        local s_id = entity.story_id or (self.resolveEntityStory and select(1, self:resolveEntityStory(entity)))
+        local custom_depth = self.book_data and self.book_data.story_toc_depth
+        local story_map = self.chapter_analyzer:getStoryMap(self.ui, custom_depth)
+        if s_id and story_map then
+            story = (story_map.by_id and story_map.by_id[s_id]) or (story_map.stories and (function()
+                for _, s in ipairs(story_map.stories) do
+                    if s.story_id == s_id then return s end
+                end
+            end)())
+        end
+        if not story and self.getCurrentStory then
+            story = self:getCurrentStory()
+        end
+    end
+
+    if story and story.start_toc_idx and story.end_toc_idx and #toc > 0 then
+        local sliced_toc = {}
+        for i = story.start_toc_idx, story.end_toc_idx do
+            if toc[i] then table.insert(sliced_toc, toc[i]) end
+        end
+        if #sliced_toc > 0 then
+            toc = sliced_toc
+        end
+    end
+
+    local max_page = nil
+    if story and story.end_page then
+        max_page = spoiler_free and math.min(_getCurrentPage(self), story.end_page) or story.end_page
+    else
+        max_page = spoiler_free and _getCurrentPage(self) or nil
+    end
+
     local min_page = entity.last_mention_page
+    if story and story.start_page then
+        min_page = math.max(min_page or story.start_page, story.start_page)
+    end
     
+    local target_end = max_page or (story and story.end_page) or math.huge
     local needs_scan = false
     if max_page == nil then
         if entity.last_mention_page ~= math.huge then
             needs_scan = true
         end
     else
-        if not min_page or min_page < max_page then
+        if not entity.last_mention_page or entity.last_mention_page < max_page then
             needs_scan = true
         end
     end
@@ -232,11 +284,6 @@ function M:showMentionsForEntity(entity)
     if not needs_scan then
         self:showMentionsMenu(entity)
         return
-    end
-
-    if not self.chapter_analyzer then
-        local ChapterAnalyzer = require(plugin_path .. "xray_chapteranalyzer")
-        self.chapter_analyzer = ChapterAnalyzer:new{ plugin = self }
     end
 
     self.active_mention_scan = { entity_name = name, chapter_idx = 0, total_chapters = #toc, cancel_handle = nil }
@@ -256,7 +303,7 @@ function M:showMentionsForEntity(entity)
             for _, m in ipairs(new_mentions) do table.insert(entity.mentions, m) end
             table.sort(entity.mentions, function(a, b) return (a.page or 0) < (b.page or 0) end)
             
-            entity.last_mention_page = max_page or math.huge
+            entity.last_mention_page = target_end
             
             self:saveMentionsToCache()
             if self.mentions_menu then self:updateMentionsMenuInPlace(entity) end
@@ -271,10 +318,35 @@ function M:buildMentionsMenuItems(entity)
     local raw_mentions = entity.mentions or {}
     local is_spoiler_free = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free") == "spoiler_free"
     local cur_page = _getCurrentPage(self)
+
+    local story = nil
+    if self.isAnthologyMode and self:isAnthologyMode() then
+        local s_id = entity.story_id or (self.resolveEntityStory and select(1, self:resolveEntityStory(entity)))
+        local custom_depth = self.book_data and self.book_data.story_toc_depth
+        if not self.chapter_analyzer then
+            local ChapterAnalyzer = require(plugin_path .. "xray_chapteranalyzer")
+            self.chapter_analyzer = ChapterAnalyzer:new{ plugin = self }
+        end
+        local story_map = self.chapter_analyzer:getStoryMap(self.ui, custom_depth)
+        if s_id and story_map then
+            story = (story_map.by_id and story_map.by_id[s_id]) or (story_map.stories and (function()
+                for _, s in ipairs(story_map.stories) do
+                    if s.story_id == s_id then return s end
+                end
+            end)())
+        end
+    end
+
     local mentions = {}
     for _, m in ipairs(raw_mentions) do
         local p = tonumber(m.page)
-        if not is_spoiler_free or not cur_page or not p or p <= cur_page then
+        local page_ok = not is_spoiler_free or not cur_page or not p or p <= cur_page
+        if page_ok and story and story.start_page and story.end_page and p then
+            if p < story.start_page or p > story.end_page then
+                page_ok = false
+            end
+        end
+        if page_ok then
             table.insert(mentions, m)
         end
     end
@@ -395,6 +467,16 @@ end
 
 function M:highlightMentionsOnPage(page, entity)
     if not self.ui or not self.ui.document or not self.ui.view or not entity then return end
+    if self.isAnthologyMode and self:isAnthologyMode() and type(entity) == "table" then
+        local s_id = entity.story_id or (self.resolveEntityStory and select(1, self:resolveEntityStory(entity)))
+        if s_id and self.chapter_analyzer then
+            local custom_depth = self.book_data and self.book_data.story_toc_depth
+            local story = self.chapter_analyzer:getStoryForPage(self.ui, page, custom_depth)
+            if story and story.story_id ~= s_id then
+                return
+            end
+        end
+    end
     
     local ok, err = pcall(function()
         local names_to_search = {}

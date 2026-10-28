@@ -21,6 +21,10 @@ msgstr "¡Obtención de IA completada!"
 msgid "ai_key_required"
 msgstr "Se requiere una clave API de IA."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "¿Misma entidad en otra historia?"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "Duplicado detectado por IA"
@@ -36,6 +40,18 @@ msgstr "AI Scan"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "La IA está buscando duplicados..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "Activo actualmente: Modo Antología (%d historias detectadas)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "Otras entidades"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "Esta historia"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "No ficción"
 msgid "book_mode_saved"
 msgstr "¡Modo de libro guardado!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "El tipo de libro determina qué estrategia de extracción de IA se utiliza y qué funciones están disponibles.\n\n- Ficción: Se centra en la narrativa, personajes y cronología de la trama.\n- No ficción: Se centra en términos, conceptos y personajes históricos.\n\nLa 'Detección automática' dejará que la IA decida después de la primera búsqueda.\n\n[B]Nota:[/B] Esta configuración se guarda [B]por libro[/B]. Una elección personalizada anula la detección automática o la configuración global."
+msgstr "El tipo de libro determina la estrategia de extracción de IA utilizada.\n\n[B]• Ficción:[/B] Se centra en personajes, línea temporal y construcción del mundo (facciones, hechizos, etc.).\n[B]• No ficción:[/B] Se centra en términos técnicos, conceptos y figuras históricas.\n[B]• Antología/Relatos cortos:[/B] Limita la extracción de IA, listas de entidades y fusión de duplicados a cada relato individual basado en el índice.\n\n[B]Detección automática[/B] dejará que la IA decida tras la [B]primera[/B] lectura.\n\n[B]Nota:[/B] Este ajuste se guarda [B]por libro[/B]. Una elección personalizada anula la detección automática o los ajustes globales."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "Antología/Relatos cortos"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "Ficción"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "No ficción"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "Redetectar estructura de antología"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "ESTABLECIDO"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "Este libro parece ser un ómnibus de varias novelas. ¿Deseas activar el Modo Antología (separando personajes y lugares por novela)?"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "Idioma cambiado. Reabra el menú para ver los cambios."
 msgid "later"
 msgstr "Later"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "Enlazar"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "LO MISMO QUE"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "ESTA HISTORIA"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Entradas vinculadas"
@@ -1072,6 +1112,10 @@ msgstr "Retransmisión en la nube (Recomendado — funciona en cualquier lugar)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Wi-Fi local (LAN sin conexión)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "Nivel de índice de antología"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "Stop"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "Detener pregeneración"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "Recurrente"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "Nivel 1 (Entradas de nivel superior)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "Nivel 2 (Bajo partes / volúmenes)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "Nivel 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "Detección automática (recomendado)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "Seleccione qué nivel del índice representa los relatos individuales:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

@@ -21,6 +21,10 @@ msgstr "Obtenção de dados de IA concluída!"
 msgid "ai_key_required"
 msgstr "Uma chave API da IA é necessária."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "Mesma entidade em outra história?"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "Duplicado detectado por IA"
@@ -36,6 +40,18 @@ msgstr "AI Scan"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "IA procurando duplicados..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "Ativo: Modo Antologia (%d histórias detectadas)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "Outras entidades"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "Esta história"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "Não-Ficção"
 msgid "book_mode_saved"
 msgstr "Modo do livro salvo!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "O tipo de livro determina qual estratégia de extração de IA é usada e quais recursos estão disponíveis.\n\n- Ficção: Foca na narrativa, personagens e cronologia da trama.\n- Não-ficção: Foca em termos, conceitos e personagens históricos.\n\n'Detecção automática' deixará a IA decidir após a primeira busca.\n\n[B]Nota:[/B] Esta configuração é salva [B]por livro[/B]. Uma escolha personalizada substitui a detecção automática ou as configurações globais."
+msgstr "O Tipo de Livro determina qual estratégia de extração de IA é usada.\n\n[B]• Ficção:[/B] Foca em personagens, cronologia e termos de construção de mundo (facções, feitiços, folclore, etc.).\n[B]• Não Ficção:[/B] Foca em termos técnicos, conceitos e figuras históricas.\n[B]• Antologia/Contos:[/B] Escopa a extração de IA, listas de entidades e mesclagem de duplicatas para cada história individual com base no Sumário.\n\n[B]Detecção Automática[/B] permitirá que a IA decida após a [B]primeira[/B] busca.\n\n[B]Nota:[/B] Esta configuração é salva [B]por livro[/B]. Uma escolha personalizada substitui a detecção automática padrão ou as configurações globais."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "Antologia/Contos"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "Ficção"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "Não-Ficção"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "Redetectar estrutura da antologia"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "DEFINIDO"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "Este livro parece ser uma coletânea de vários romances. Deseja ativar o Modo Antologia (separando personagens e locais por romance)?"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "Idioma alterado. Reabra o menu para ver as alterações."
 msgid "later"
 msgstr "Later"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "Vincular"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "MESMO QUE"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "ESTA HISTÓRIA"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Entradas vinculadas"
@@ -1072,6 +1112,10 @@ msgstr "Cloud Relay (Recommended — works anywhere)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Local Wi-Fi (Offline LAN)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "Nível do Sumário da Antologia"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "Stop"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "Parar pré-geração"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "Recorrente"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "Nível 1 (Entradas de nível superior)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "Nível 2 (Abaixo de Partes / Volumes)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "Nível 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "Detecção Automática (Recomendado)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "Selecione qual nível do Sumário representa as histórias individuais:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

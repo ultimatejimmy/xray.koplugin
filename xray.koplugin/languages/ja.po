@@ -21,6 +21,10 @@ msgstr "AIデータの取得が完了しました！"
 msgid "ai_key_required"
 msgstr "AI APIキーが必要です。"
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "別のストーリーに同じ実体がありますか？"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "AIによる重複の検出"
@@ -36,6 +40,18 @@ msgstr "AIスキャン"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "AIが重複をスキャンしています..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "有効: アンソロジーモード (%d 個の物語を検出)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "その他のエンティティ"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "この物語"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "ノンフィクション"
 msgid "book_mode_saved"
 msgstr "本の種類を保存しました！"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "「本の種類」により、AIによる抽出戦略が決定されます。\n\n[B]• フィクション:[/B] 登場人物、時系列、世界観の設定（派閥、呪文、伝承など）に焦点を当てます。\n[B]• ノンフィクション:[/B] 専門用語、概念、歴史上の人物に焦点を当てます。\n\n[B]自動検出[/B]に設定すると、[B]初回[/B]のデータ取得後にAIが判断します。\n\n[B]注意:[/B] この設定は[B]本ごと[/B]に保存されます。手動で選択すると、デフォルトの自動検出やグローバル設定よりも優先されます。"
+msgstr "書籍タイプによって、AI抽出戦略が決定されます。\n\n[B]• フィクション:[/B] キャラクター、タイムライン、世界観設定（勢力、魔法、伝承など）に焦点を当てます。\n[B]• ノンフィクション:[/B] 専門用語、概念、歴史上の人物に焦点を当てます。\n[B]• アンソロジー/短編集:[/B] 目次に基づいて、各ストーリーごとにAI抽出、エンティティリスト、重複排除の範囲を限定します。\n\n[B]自動検出[/B]を使用すると、[B]最初[/B]の取得後にAIが判断します。\n\n[B]注:[/B] この設定は[B]書籍ごと[/B]に保存されます。カスタム選択は、デフォルトの自動検出やグローバル設定よりも優先されます。"
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "アンソロジー/短編集"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "フィクション"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "ノンフィクション"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "アンソロジー構造を再検出"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "設定済み"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "確認"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "この本は複数の小説をまとめたオムニバスのようです。アンソロジーモード（小説ごとに登場人物と場所を分離）を有効にしますか？"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "言語設定を変更しました。"
 msgid "later"
 msgstr "後で"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "リンク"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "同一のもの"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "このストーリー"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "関連エントリー"
@@ -1072,6 +1112,10 @@ msgstr "クラウド中継（推奨 — どこでも動作）"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "ローカル Wi-Fi（オフラインLAN）"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "アンソロジー目次レベル"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "停止"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "事前生成を停止"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "再登場"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "レベル 1 (最上位エントリ)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "レベル 2 (部 / 巻の下)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "レベル 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "自動検出 (推奨)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "各ストーリーに対応する目次レベルを選択してください:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

@@ -21,6 +21,10 @@ msgstr "Načítanie z AI dokončené!"
 msgid "ai_key_required"
 msgstr "Je potrebný API kľúč pre AI."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "Rovnaká entita v inom príbehu?"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "AI zistila duplikát"
@@ -36,6 +40,18 @@ msgstr "AI kontrola"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "AI hľadá duplikáty..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "Aktívne: Režim antológie (detekovaných %d príbehov)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "Iné entity"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "Tento príbeh"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "Odborná literatúra"
 msgid "book_mode_saved"
 msgstr "Typ knihy uložený!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "Typ knihy určuje, akú stratégiu extrakcie AI použije.\n\n[B]• Beletria:[/B] Zameriava sa na postavy, časovú os a pojmy zo sveta príbehu (frakcie, kúzla, reálie atď.).\n[B]• Odborná literatúra:[/B] Zameriava sa na odborné pojmy, koncepty a historické osobnosti.\n\n[B]Automatické rozpoznanie[/B] nechá AI rozhodnúť po [B]prvom[/B] načítaní.\n\n[B]Poznámka:[/B] Toto nastavenie sa ukladá [B]pre každú knihu zvlášť[/B]. Vlastná voľba má prednosť pred automatickým rozpoznaním aj globálnymi nastaveniami."
+msgstr "Typ knihy určuje použitú stratégiu AI extrakcie.\n\n[B]• Beletria:[/B] Zameriava sa na postavy, časovú os a pojmy budovania sveta (frakcie, kúzla, lore atď.).\n[B]• Náučná literatúra:[/B] Zameriava sa na technické pojmy, koncepty a historické osobnosti.\n[B]• Antológia/Poviedky:[/B] Obmedzuje AI extrakciu, zoznamy entít a zlučovanie duplikátov na jednotlivé príbehy na základe obsahu.\n\n[B]Auto-detekcia[/B] umožní AI rozhodnúť po [B]prvom[/B] načítaní.\n\n[B]Poznámka:[/B] Toto nastavenie sa ukladá [B]pre každú knihu[/B]. Vlastná voľba prepíše predvolenú auto-detekciu alebo globálne nastavenia."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "Antológia/Poviedky"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "Beletria"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "Odborná literatúra"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "Znovu zistiť štruktúru antológie"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "NASTAVENÉ"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Potvrdiť"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "Táto kniha vyzerá ako omnibus viacerých románov. Chcete povoliť režim antológie (oddeľovanie postáv a miest podľa románu)?"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "Jazyk bol zmenený."
 msgid "later"
 msgstr "Neskôr"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "Prepojiť"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "ROVNAKÉ AKO"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "TENTO PRÍBEH"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Prepojené položky"
@@ -1072,6 +1112,10 @@ msgstr "Cloud Relay (odporúčané — funguje všade)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Lokálna Wi-Fi (offline LAN)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "Úroveň obsahu poviedok"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "Zastaviť"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "Zastaviť predbežnú generáciu"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "Opakujúci sa"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "Úroveň 1 (hlavné položky)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "Úroveň 2 (pod časťami / zväzkami)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "Úroveň 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "Auto-detekcia (odporúčané)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "Vyberte úroveň obsahu, ktorá predstavuje jednotlivé príbehy:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

@@ -21,6 +21,10 @@ msgstr "Recupero AI completato!"
 msgid "ai_key_required"
 msgstr "È necessaria una chiave API AI."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "Stessa entità in un'altra storia?"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "Duplicato rilevato dall'AI"
@@ -36,6 +40,18 @@ msgstr "Scansione AI"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "L'AI sta cercando duplicati..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "Attivo: Modalità Antologia (%d storie rilevate)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "Altre entità"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "Questa storia"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "Saggistica"
 msgid "book_mode_saved"
 msgstr "Modalità libro salvata!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "Il tipo di libro determina quale strategia di estrazione dell'IA viene utilizzata e quali funzionalità sono disponibili.\n\n- Narrativa: si concentra su narrativa, personaggi e sequenza temporale della trama.\n- Saggistica: si concentra su termini, concetti e figure storiche.\n\n\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Rilevamento automatico\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" consentirà all'IA di decidere dopo il primo recupero.\n\n[B]Nota:[/B] Questa impostazione è salvata [B]per libro[/B]. Una scelta personalizzata prevale sul rilevamento automatico o sulle impostazioni globali."
+msgstr "Il Tipo di Libro determina quale strategia di estrazione AI viene utilizzata.\n\n[B]• Narrativa:[/B] Si concentra su personaggi, linea temporale e termini di world-building (fazioni, incantesimi, ambientazione, ecc.).\n[B]• Saggistica:[/B] Si concentra su termini tecnici, concetti e figure storiche.\n[B]• Antologie/Racconti:[/B] Limita l'estrazione AI, gli elenchi di entità e la fusione dei duplicati a ogni singola storia in base all'Indice.\n\n[B]Rilevamento Automatico[/B] lascerà decidere l'AI dopo il [B]primo[/B] recupero.\n\n[B]Nota:[/B] Questa impostazione viene salvata [B]per libro[/B]. Una scelta personalizzata sovrascrive il rilevamento automatico predefinito o le impostazioni globali."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "Antologie/Racconti"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "Narrativa"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "Saggistica"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "Rileva di nuovo la struttura dell'antologia"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -229,6 +253,10 @@ msgstr "IMPOSTATO"
 msgid "confirm"
 msgstr "Conferma"
 
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "Questo libro sembra essere un omnibus di più romanzi. Vuoi attivare la Modalità Antologia (separando personaggi e luoghi per romanzo)?"
+
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
 msgstr "Sei sicuro di voler cancellare tutte le chiavi API configurate e gli endpoint personalizzati?\n\nQuesto rimuoverà tutte le chiavi salvate da questo dispositivo."
@@ -287,7 +315,7 @@ msgstr "Configurazione API personalizzata %d salvata."
 
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
-msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
+msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
 
 # en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
@@ -709,6 +737,18 @@ msgstr "La lingua è cambiata. Riapri il menu per vedere le modifiche."
 msgid "later"
 msgstr "Più tardi"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "Collega"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "IDENTICO A"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "QUESTA STORIA"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Voci collegate"
@@ -723,7 +763,7 @@ msgstr "Abilitato"
 
 # en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
-msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
+msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
 
 # en-hash: 75c2e35dd42abd75cdb8a9d4b0da8c20
 msgid "linked_none"
@@ -871,7 +911,7 @@ msgstr "Scansione in corso... %1 di %2 capitoli"
 
 # en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
-msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
+msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
 
 # en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
@@ -1072,6 +1112,10 @@ msgstr "Relay Cloud (Consigliato — funziona ovunque)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Wi-Fi locale (LAN offline)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "Livello Indice per Antologie"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1399,7 +1443,7 @@ msgstr "Motivo"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
-msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
+msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
 
 # en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
@@ -1572,6 +1616,30 @@ msgstr "Interrompi"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "Interrompi pre-generazione"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "Ricorrente"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "Livello 1 (Voci di primo livello)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "Livello 2 (Sotto Parti / Volumi)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "Livello 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "Rilevamento Automatico (Consigliato)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "Seleziona il livello dell'Indice che rappresenta le singole storie:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

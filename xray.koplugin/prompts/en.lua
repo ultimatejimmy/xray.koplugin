@@ -89,9 +89,9 @@ ALGORITHM FOR LOCATIONS:
 Step 1. Extract {NUM_LOCS} significant locations. NO SPOILERS: Stop exactly at the %d%% mark.
 
 ALGORITHM FOR TERMS:
-Step 0. Declare "book_type" as "fiction" or "non_fiction" at the JSON root.
+Step 0. Declare "book_type" as "fiction", "non_fiction", or "anthology" at the JSON root.
 Step 1. If non_fiction: extract {NUM_TERMS} significant technical terms, acronyms, jargon, or concepts readers would not know without specialized knowledge. Use appropriate categories like Acronym, Technical Term, Concept, or Jargon.
-Step 2. If fiction: extract {NUM_TERMS} significant world-building elements that a new reader would need explained—such as invented factions, organizations, magic systems, technologies, creatures, languages, or in-universe lore.
+Step 2. If fiction or anthology: extract {NUM_TERMS} significant world-building elements that a new reader would need explained—such as invented factions, organizations, magic systems, technologies, creatures, languages, or in-universe lore.
    - Do NOT include character names or location names (those are tracked separately).
    - DO NOT extract real-world common words or concepts.
    - Use appropriate categories: Faction, Magic System, Technology, Creature, Organization, Lore, Language.
@@ -558,6 +558,30 @@ REQUIRED JSON FORMAT:
 
 CHAPTER TEXTS IN THIS BATCH:
 %s]],
+
+    -- Anthology Structure Detection
+    anthology_detect = [[Analyze the following book details and Table of Contents:
+
+Title: %s
+Author: %s
+Subjects: %s
+Description: %s
+
+Table of Contents:
+%s
+
+Determine whether this work is:
+1. "anthology" (a collection of independent short stories, essays, or novellas, each with its own self-contained narrative or cast, e.g. "The Adventures of Sherlock Holmes", "Dubliners", "Exhalation", "Men Without Women").
+2. "novel" (a single unified novel divided into chapters, parts, or acts, e.g. "Pride and Prejudice", "Harry Potter", "Dune", "Carrie").
+3. "novel_omnibus" (a multi-volume collection of full-length novels published together in one volume, e.g. "The Lord of the Rings: All Three Volumes", "The Complete Hitchhiker's Guide to the Galaxy", "Percy Jackson: Books 1-3").
+4. "non_fiction" (a single non-fiction treatise, history, or academic book divided into chapters).
+
+Return ONLY a JSON object with:
+{
+  "type": "anthology" | "novel" | "novel_omnibus" | "non_fiction",
+  "confidence": 0.0 to 1.0,
+  "reasoning": "brief explanation (one sentence)"
+}]],
 
     -- Fallback strings
     fallback = {

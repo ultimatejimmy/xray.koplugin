@@ -1,13 +1,17 @@
 -- xray_fetch_spec.lua
 require("spec.spec_helper")
 local fetch = require("xray_fetch")
+local data = require("xray_data")
 
 describe("xray_fetch", function()
     local plugin
 
     before_each(function()
         plugin = createMockPlugin()
-        -- Mix in fetch methods
+        -- Mix in data and fetch methods
+        for k, v in pairs(data) do
+            plugin[k] = v
+        end
         for k, v in pairs(fetch) do
             plugin[k] = v
         end
@@ -970,6 +974,131 @@ describe("xray_fetch", function()
             assert.are.equal(1, checkpoints)
         end)
 
+        it("handles string timeline_event in mergeSequentialChapterDelta (batch scan format)", function()
+            plugin.timeline = {}
+            local delta_data = {
+                timeline_event = "Alice tumbles down the rabbit hole and discovers a locked door."
+            }
+            local chapter = { title = "Down the Rabbit-Hole", page = 5 }
+            plugin:mergeSequentialChapterDelta(delta_data, chapter, 1, true)
+
+            assert.are.equal(1, #plugin.timeline)
+            local ev = plugin.timeline[1]
+            assert.are.equal("Down the Rabbit-Hole", ev.chapter)
+            assert.are.equal("Alice tumbles down the rabbit hole and discovers a locked door.", ev.event)
+            assert.are.equal(1, ev.chapter_index)
+            assert.are.equal(5, ev.page)
+        end)
+
+        it("handles table timeline_event with event or fallback keys in mergeSequentialChapterDelta", function()
+            plugin.timeline = {}
+            -- Table with explicit chapter and event
+            local delta1 = {
+                timeline_event = {
+                    chapter = "Chapter 2: The Pool of Tears",
+                    event = "Alice cries a pool of giant tears."
+                }
+            }
+            plugin:mergeSequentialChapterDelta(delta1, { title = "Chapter 2", page = 12 }, 2, true)
+
+            -- Table with fallback summary key
+            local delta2 = {
+                timeline_event = {
+                    summary = "Alice runs the Caucus-Race with birds and beasts."
+                }
+            }
+            plugin:mergeSequentialChapterDelta(delta2, { title = "Chapter 3", page = 20 }, 3, true)
+
+            assert.are.equal(2, #plugin.timeline)
+            assert.are.equal("Chapter 2: The Pool of Tears", plugin.timeline[1].chapter)
+            assert.are.equal("Alice cries a pool of giant tears.", plugin.timeline[1].event)
+            assert.are.equal(12, plugin.timeline[1].page)
+
+            assert.are.equal("Chapter 3", plugin.timeline[2].chapter)
+            assert.are.equal("Alice runs the Caucus-Race with birds and beasts.", plugin.timeline[2].event)
+            assert.are.equal(20, plugin.timeline[2].page)
+        end)
+
+        it("updates existing timeline event on re-scan without creating duplicate entries", function()
+            plugin.timeline = {}
+            local delta1 = { timeline_event = "Initial plot event." }
+            plugin:mergeSequentialChapterDelta(delta1, { title = "Chapter 1", page = 1 }, 1, true)
+            assert.are.equal(1, #plugin.timeline)
+
+            local delta2 = { timeline_event = "Updated plot event with more detail." }
+            plugin:mergeSequentialChapterDelta(delta2, { title = "Chapter 1", page = 1 }, 1, true)
+            assert.are.equal(1, #plugin.timeline)
+            assert.are.equal("Updated plot event with more detail.", plugin.timeline[1].event)
+        end)
+
+        it("persists chapters_fetched and sorts timeline in checkpointHorizonScan", function()
+            plugin.book_data = {}
+            plugin.chapters_fetched = { ["Chapter 1_5"] = true }
+            plugin.timeline = {
+                { chapter = "Chapter 2", page = 20, event = "Second" },
+                { chapter = "Chapter 1", page = 5, event = "First" }
+            }
+            plugin:checkpointHorizonScan()
+
+            assert.is_not_nil(plugin.book_data.chapters_fetched)
+            assert.is_true(plugin.book_data.chapters_fetched["Chapter 1_5"])
+            assert.are.equal(5, plugin.timeline[1].page)
+            assert.are.equal(20, plugin.timeline[2].page)
+        end)
+
+        it("skips chapters already present in chapters_fetched or timeline in queueSequentialChapterScan", function()
+            plugin.timeline = {
+                { chapter = "Chapter 1", page = 5, chapter_index = 1, event = "Already done" }
+            }
+            plugin.chapters_fetched = {}
+            local raw_toc = {
+                { title = "Chapter 1", page = 5 },
+                { title = "Chapter 2", page = 15 }
+            }
+            plugin.ui.document.getToc = function() return raw_toc end
+
+            local scanned = false
+            plugin.ai_helper = {
+                hasApiKey = function() return true end,
+                settings = {},
+                buildBatchChapterDeltaPrompt = function()
+                    scanned = true
+                    return "mock_prompt"
+                end,
+                buildComprehensiveRequest = function()
+                    return { url = "mock" }
+                end
+            }
+
+            local done_called = false
+            plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true, nil, function(success)
+                done_called = true
+            end)
+
+            assert.is_true(done_called)
+            assert.is_false(scanned)
+            assert.is_true(plugin.chapters_fetched["Chapter 1_5"])
+        end)
+
+        it("skips post-fetch duplicate check in queueSequentialChapterScan if zero batches were processed", function()
+            plugin.timeline = {
+                { chapter = "Chapter 1", page = 5, chapter_index = 1, event = "Done" }
+            }
+            plugin.chapters_fetched = { ["Chapter 1_5"] = true }
+            local dupe_check_called = false
+            plugin.runPostFetchDuplicateCheck = function()
+                dupe_check_called = true
+            end
+
+            local done_called = false
+            plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true, nil, function(success)
+                done_called = true
+            end)
+
+            assert.is_true(done_called)
+            assert.is_false(dupe_check_called)
+        end)
+
         it("subdivides oversized Part-only TOC chapters into virtual segments", function()
             local ChapterAnalyzer = require("xray_chapteranalyzer")
             local raw_toc = {
@@ -1040,6 +1169,110 @@ describe("xray_fetch", function()
             assert.is_true(expanded[1].is_virtual_segment)
             assert.are.equal(1, expanded[2].parent_toc_index)
             assert.are.equal(2, expanded[2].part_index)
+        end)
+    end)
+
+    describe("issue #156 optimizations", function()
+        it("updateEntityDescPreservingPrior preserves [From Book X] prefixes and returns new description", function()
+            local existing = {
+                name = "Shallan",
+                description = "Shallan is a scholar.\n\n[From Book 1] Apprentice to Jasnah.\n\n[From Book 2] Discovers the Knights Radiant."
+            }
+            local clean = plugin:updateEntityDescPreservingPrior(existing, "Now a full Knight Radiant.", "description")
+            assert.are.equal("Now a full Knight Radiant.", clean)
+            assert.is_not_nil(existing.description:find("Now a full Knight Radiant.", 1, true))
+            assert.is_not_nil(existing.description:find("%[From Book 1%] Apprentice to Jasnah."))
+            assert.is_not_nil(existing.description:find("%[From Book 2%] Discovers the Knights Radiant."))
+        end)
+
+        it("markSeriesSyncDirty and flushSeriesSync defer series writing until flushed", function()
+            local sync_called = false
+            local synced_slug, synced_index
+            plugin.series_manager = {
+                syncBookToSeriesCache = function(_, slug, index, title, author, book_data, doc_file, has_explicit)
+                    sync_called = true
+                    synced_slug = slug
+                    synced_index = index
+                    return true
+                end
+            }
+            plugin.book_data = { title = "Oathbringer", characters = {} }
+
+            plugin:markSeriesSyncDirty("the_stormlight_archive", 3, "Oathbringer", "Brandon Sanderson", "/books/Oathbringer.epub", true)
+            assert.is_false(sync_called)
+            assert.is_not_nil(plugin._pending_series_sync)
+
+            plugin:flushSeriesSync()
+            assert.is_true(sync_called)
+            assert.are.equal("the_stormlight_archive", synced_slug)
+            assert.are.equal(3, synced_index)
+            assert.is_nil(plugin._pending_series_sync)
+        end)
+
+        it("mergeSeriesContext respects skip_save and does not save cache or call getTextForAnalysis", function()
+            local saved_called = false
+            plugin.cache_manager = {
+                asyncSaveCache = function() saved_called = true end,
+                loadCache = function() return {} end
+            }
+            local text_analysis_called = false
+            plugin.chapter_analyzer = {
+                getTextForAnalysis = function() text_analysis_called = true; return "" end
+            }
+            plugin.characters = { { name = "Kaladin" } }
+            local cache_data = {
+                books = {
+                    [1] = { title = "Way of Kings", characters = { { name = "Szeth", description = "Assassin" } } }
+                }
+            }
+            local series_info = { slug = "stormlight", index = 2 }
+
+            plugin:mergeSeriesContext(cache_data, series_info, "Kaladin flew with Syl", true)
+
+            assert.is_false(saved_called)
+            assert.is_false(text_analysis_called)
+            assert.is_true(plugin.series_context_loaded)
+            assert.are.equal(2, #plugin.characters)
+        end)
+
+        it("finalizeXRayData does not reload series cache or merge series context when updating and already loaded", function()
+            local load_series_called = false
+            plugin.series_manager = {
+                getSeriesInfo = function() return { slug = "stormlight", index = 2 } end,
+                loadSeriesCache = function() load_series_called = true; return {} end
+            }
+            local merge_called = false
+            plugin.mergeSeriesContext = function() merge_called = true end
+
+            local save_count = 0
+            plugin.cache_manager = {
+                asyncSaveCache = function() save_count = save_count + 1 end,
+                loadCache = function() return {} end
+            }
+
+            plugin.series_context_loaded = true
+            plugin.characters = {
+                {
+                    name = "Kaladin",
+                    description = "Highprince bodyguard.\n\n[From Book 1] Bridge Four leader."
+                }
+            }
+            local new_data = {
+                characters = {
+                    {
+                        name = "Kaladin",
+                        description = "Knight Radiant Windrunner."
+                    }
+                }
+            }
+
+            plugin:finalizeXRayData(new_data, "Words of Radiance", "Brandon Sanderson", "Kaladin Windrunner", true, true, 50)
+
+            assert.is_false(load_series_called)
+            assert.is_false(merge_called)
+            assert.are.equal(1, save_count)
+            assert.is_not_nil(plugin.characters[1].description:find("Knight Radiant Windrunner."))
+            assert.is_not_nil(plugin.characters[1].description:find("%[From Book 1%] Bridge Four leader."))
         end)
     end)
 end)

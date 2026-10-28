@@ -17,6 +17,9 @@ msgstr "AI Fetch Complete!"
 msgid "ai_key_required"
 msgstr "An AI API key is required."
 
+msgid "ai_link_confirm_title"
+msgstr "Same entity in another story?"
+
 msgid "ai_merge_confirm_title"
 msgstr "AI Duplicate Detected"
 
@@ -28,6 +31,15 @@ msgstr "AI Scan"
 
 msgid "ai_scanning_duplicates"
 msgstr "AI is scanning for duplicates..."
+
+msgid "anthology_detected_status"
+msgstr "Currently active: Anthology Mode (%d stories detected)"
+
+msgid "anthology_other_entities_header"
+msgstr "Other Entities"
+
+msgid "anthology_this_story_header"
+msgstr "This story"
 
 msgid "ask_later"
 msgstr "Ask Later"
@@ -111,7 +123,10 @@ msgid "book_mode_saved"
 msgstr "Book mode saved!"
 
 msgid "book_type_about"
-msgstr "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch.\n\n[B]Note:[/B] This setting is saved [B]per book[/B]. A custom choice overrides default auto-detection or global settings."
+msgstr "The Book Type determines which AI extraction strategy is used.\n\n[B]• Fiction:[/B] Focuses on characters, timeline, and world-building terms (factions, spells, lore, etc.).\n[B]• Non-Fiction:[/B] Focuses on technical terms, concepts, and historical figures.\n[B]• Anthology/Short Stories:[/B] Scopes AI extraction, entity lists, and duplicate merging to each individual story based on the Table of Contents.\n\n[B]Auto-Detect[/B] will let the AI decide after the [B]first[/B] fetch.\n\n[B]Note:[/B] This setting is saved [B]per book[/B]. A custom choice overrides default auto-detection or global settings."
+
+msgid "book_type_anthology"
+msgstr "Anthology/Short Stories"
 
 msgid "book_type_auto"
 msgstr "Auto-Detect"
@@ -121,6 +136,9 @@ msgstr "Fiction"
 
 msgid "book_type_nonfiction"
 msgstr "Non-Fiction"
+
+msgid "book_type_redetect"
+msgstr "Re-detect Anthology Structure"
 
 msgid "btn_clear_key"
 msgstr "Clear Key"
@@ -172,6 +190,9 @@ msgstr "SET"
 
 msgid "confirm"
 msgstr "Confirm"
+
+msgid "confirm_anthology_omnibus"
+msgstr "This book appears to be a multi-novel omnibus. Would you like to enable Anthology Mode (separating characters and locations by novel)?"
 
 msgid "confirm_clear_all_keys"
 msgstr "Are you sure you want to clear all configured API keys and custom endpoints?\n\nThis will remove all saved keys from this device."
@@ -533,6 +554,15 @@ msgstr "Language changed."
 msgid "later"
 msgstr "Later"
 
+msgid "link_button"
+msgstr "Link"
+
+msgid "link_same_as_label"
+msgstr "SAME AS"
+
+msgid "link_this_story_label"
+msgstr "THIS STORY"
+
 msgid "linked_entries"
 msgstr "Linked Entries"
 
@@ -805,6 +835,9 @@ msgstr "Cloud Relay (Recommended — works anywhere)"
 
 msgid "menu_setup_local"
 msgstr "Local Wi-Fi (Offline LAN)"
+
+msgid "menu_story_toc_depth"
+msgstr "Anthology Story ToC Level"
 
 msgid "menu_terms"
 msgstr "Glossary"
@@ -1180,6 +1213,24 @@ msgstr "Stop"
 
 msgid "stop_pregeneration"
 msgstr "Stop Pre-generation"
+
+msgid "story_recurring_pill"
+msgstr "Recurring"
+
+msgid "story_toc_depth_1"
+msgstr "Level 1 (Top-Level Entries)"
+
+msgid "story_toc_depth_2"
+msgstr "Level 2 (Under Parts / Volumes)"
+
+msgid "story_toc_depth_3"
+msgstr "Level 3"
+
+msgid "story_toc_depth_auto"
+msgstr "Auto-Detect (Recommended)"
+
+msgid "story_toc_depth_desc"
+msgstr "Select which Table of Contents level represents individual stories:"
 
 msgid "term_not_found"
 msgstr "Term not found."

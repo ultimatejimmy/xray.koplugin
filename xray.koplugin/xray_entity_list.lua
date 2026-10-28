@@ -198,6 +198,7 @@ function EntityListOverlay:init()
 
     self.focus_zone = nil
     self.focused_index = nil
+    self.story_sections_collapsed = {}
 
     self.key_events = {
         NextPage = {
@@ -249,6 +250,12 @@ function EntityListOverlay:init()
 
     if self.plugin and self.plugin.entity_sort_mode and self.plugin.entity_sort_mode[self.mode] then
         self.sort_mode = self.plugin.entity_sort_mode[self.mode]
+    end
+
+    if self.plugin and self.plugin.isAnthologyMode and self.plugin:isAnthologyMode() then
+        if self.plugin.ensureStoryPresenceScanned then
+            self.plugin:ensureStoryPresenceScanned()
+        end
     end
 
     self:prepareItems()
@@ -437,6 +444,258 @@ local function getAppearanceOrder(entity, plugin)
     return min_chap or 9999, min_page or 999999
 end
 
+function EntityListOverlay:isSectionCollapsed(section_id)
+    if not section_id then return false end
+    if self.search_query and self.search_query ~= "" then
+        return false
+    end
+    self.story_sections_collapsed = self.story_sections_collapsed or {}
+    if self.story_sections_collapsed[section_id] ~= nil then
+        return self.story_sections_collapsed[section_id]
+    end
+    if section_id == "recurring" or section_id == "current" then
+        return false
+    end
+    return true
+end
+
+function EntityListOverlay:toggleSection(section_id)
+    if not section_id then return end
+    self.story_sections_collapsed = self.story_sections_collapsed or {}
+    local cur_state = self:isSectionCollapsed(section_id)
+    self.story_sections_collapsed[section_id] = not cur_state
+    self._anchor_section_id = section_id
+    self:buildUI()
+    self._anchor_section_id = nil
+    UIManager:setDirty(self, "ui")
+end
+
+function EntityListOverlay:togglePriorSection()
+    self.prior_collapsed = not self.prior_collapsed
+    if self.plugin then
+        self.plugin.series_prior_timeline_collapsed = self.prior_collapsed
+    end
+    self._anchor_prior_header = true
+    self:buildUI()
+    self._anchor_prior_header = nil
+    UIManager:setDirty(self, "ui")
+end
+
+function EntityListOverlay:buildStorySections(items)
+    local p = self.plugin
+    if not p or not items or #items == 0 then return items or {} end
+
+    local is_spoiler_free = (p and p.ai_helper and p.ai_helper.settings and p.ai_helper.settings.spoiler_setting or "spoiler_free") == "spoiler_free"
+    local show_all = (self.reveal_future == true) or (not is_spoiler_free) or (p and p.anthology_show_all_stories == true) or (self.search_query and self.search_query ~= "")
+
+    local cur_page = p.getCurrentDocPage and p:getCurrentDocPage()
+    local cur_story = p.getCurrentStory and p:getCurrentStory(cur_page)
+    local cur_story_id = cur_story and cur_story.story_id
+
+    local all_stories = {}
+    if p.ui and p.ui.document then
+        local ok, ChapterAnalyzer = pcall(require, plugin_path .. "xray_chapteranalyzer")
+        if ok and ChapterAnalyzer then
+            p.chapter_analyzer = p.chapter_analyzer or ChapterAnalyzer:new{ plugin = p }
+            local custom_depth = p.book_data and p.book_data.story_toc_depth
+            local sm = p.chapter_analyzer:getStoryMap(p.ui, custom_depth)
+            all_stories = (sm and sm.stories) or {}
+        end
+    end
+
+    local current_items = {}
+    local other_story_items = {}
+    local story_seen = {}
+
+    local current_seen = {}
+    local other_seen = {}
+
+    for _, s in ipairs(all_stories) do
+        other_story_items[s.story_id] = { story = s, items = {} }
+        other_seen[s.story_id] = {}
+        story_seen[s.story_id] = true
+    end
+
+    local unassigned_items = {}
+    local unassigned_seen = {}
+
+    for _, it in ipairs(items) do
+        local entity = (self.mode == "linked_entries" and it.item) or it
+        local name = entity.name or entity.chapter or (entity.item and entity.item.name)
+        local norm_name = name and (p and p.canonicalNameKey and select(1, p:canonicalNameKey(name)) or name:lower()) or tostring(it)
+        local is_rec = p and p.isEntityRecurring and p:isEntityRecurring(entity)
+        local st_id = entity.story_id or (p and p.resolveEntityStory and p:resolveEntityStory(entity))
+        local pres = name and p and (p.getStoryPresence and p:getStoryPresence(name) or (p.book_data and p.book_data.story_presence and p.book_data.story_presence[name]))
+
+        local in_current = false
+        if cur_story_id and (st_id and tostring(st_id) == tostring(cur_story_id) or (pres and (pres[cur_story_id] or pres[tostring(cur_story_id)]))) then
+            in_current = true
+        end
+
+        if in_current then
+            local existing_idx = current_seen[norm_name]
+            if not existing_idx then
+                table.insert(current_items, it)
+                current_seen[norm_name] = #current_items
+            else
+                local stored_it = current_items[existing_idx]
+                local stored_ent = (self.mode == "linked_entries" and stored_it.item) or stored_it
+                local stored_sid = stored_ent.story_id or (p and p.resolveEntityStory and p:resolveEntityStory(stored_ent))
+                if st_id and tostring(st_id) == tostring(cur_story_id) and stored_sid and tostring(stored_sid) ~= tostring(cur_story_id) then
+                    current_items[existing_idx] = it
+                end
+            end
+        end
+
+        -- If recurring, also include in other story groups where presence is recorded
+        if is_rec and pres then
+            for s_id, is_pres in pairs(pres) do
+                if is_pres and (not cur_story_id or tostring(s_id) ~= tostring(cur_story_id)) then
+                    local is_future = not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent({ story_id = s_id }, cur_story)
+                    if not is_future then
+                        other_seen[s_id] = other_seen[s_id] or {}
+                        if not other_seen[s_id][norm_name] then
+                            other_seen[s_id][norm_name] = true
+                            if other_story_items[s_id] then
+                                table.insert(other_story_items[s_id].items, it)
+                            else
+                                other_story_items[s_id] = {
+                                    story = { story_id = s_id, story_title = "Story " .. tostring(s_id) },
+                                    items = { it }
+                                }
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if not in_current and (not is_rec or not pres) then
+            local is_future = not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent({ story_id = st_id }, cur_story)
+            if not is_future then
+                if st_id and other_story_items[st_id] then
+                    other_seen[st_id] = other_seen[st_id] or {}
+                    if not other_seen[st_id][norm_name] then
+                        other_seen[st_id][norm_name] = true
+                        table.insert(other_story_items[st_id].items, it)
+                    end
+                elseif st_id then
+                    other_seen[st_id] = other_seen[st_id] or {}
+                    if not other_seen[st_id][norm_name] then
+                        other_seen[st_id][norm_name] = true
+                        other_story_items[st_id] = {
+                            story = { story_id = st_id, story_title = entity.story_title or ("Story " .. tostring(st_id)) },
+                            items = { it }
+                        }
+                    end
+                else
+                    if not unassigned_seen[norm_name] then
+                        unassigned_seen[norm_name] = true
+                        table.insert(unassigned_items, it)
+                    end
+                end
+            end
+        end
+    end
+
+    local display_items = {}
+    local loc = self.loc or (p and p.loc)
+
+    -- 1. Current story section (expanded by default)
+    local cur_title = cur_story and cur_story.story_title or "Current Story"
+    local prefix = (loc and loc:t("anthology_this_story_header")) or "This story"
+    local cur_header_title = string.format("%s: %s", prefix, cur_title)
+    local show_current_empty = (not self.search_query or self.search_query == "") and (cur_story ~= nil)
+    if #current_items > 0 or show_current_empty then
+        local is_collapsed = self:isSectionCollapsed("current")
+        table.insert(display_items, {
+            is_section_header = true,
+            section_id = "current",
+            title = cur_header_title,
+            count = #current_items,
+            collapsed = is_collapsed,
+            collapsible = true,
+        })
+        if not is_collapsed then
+            for _, it in ipairs(current_items) do
+                table.insert(display_items, it)
+            end
+        end
+    end
+
+    -- 2. Other stories (folded by default)
+    for _, s in ipairs(all_stories) do
+        if not cur_story_id or tostring(s.story_id) ~= tostring(cur_story_id) then
+            local is_future = not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent({ story_id = s.story_id }, cur_story)
+            if not is_future then
+                local grp = other_story_items[s.story_id]
+                if grp and #grp.items > 0 then
+                    local sec_id = "story_" .. s.story_id
+                    local is_collapsed = self:isSectionCollapsed(sec_id)
+                    table.insert(display_items, {
+                        is_section_header = true,
+                        section_id = sec_id,
+                        title = s.story_title or ("Story " .. s.story_id),
+                        count = #grp.items,
+                        collapsed = is_collapsed,
+                        collapsible = true,
+                    })
+                    if not is_collapsed then
+                        for _, it in ipairs(grp.items) do
+                            table.insert(display_items, it)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Any dynamic other_story_items not in all_stories
+    for st_id, grp in pairs(other_story_items) do
+        if not story_seen[st_id] and (not cur_story_id or tostring(st_id) ~= tostring(cur_story_id)) and #grp.items > 0 then
+            local is_future = not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent({ story_id = st_id }, cur_story)
+            if not is_future then
+                local sec_id = "story_" .. st_id
+                local is_collapsed = self:isSectionCollapsed(sec_id)
+                table.insert(display_items, {
+                    is_section_header = true,
+                    section_id = sec_id,
+                    title = grp.story and grp.story.story_title or ("Story " .. st_id),
+                    count = #grp.items,
+                    collapsed = is_collapsed,
+                    collapsible = true,
+                })
+                if not is_collapsed then
+                    for _, it in ipairs(grp.items) do
+                        table.insert(display_items, it)
+                    end
+                end
+            end
+        end
+    end
+
+    -- 3. Unassigned items (fallback)
+    if #unassigned_items > 0 then
+        local sec_id = "story_other"
+        local is_collapsed = self:isSectionCollapsed(sec_id)
+        table.insert(display_items, {
+            is_section_header = true,
+            section_id = sec_id,
+            title = (loc and loc:t("anthology_other_entities_header")) or "Other Entities",
+            count = #unassigned_items,
+            collapsed = is_collapsed,
+            collapsible = true,
+        })
+        if not is_collapsed then
+            for _, it in ipairs(unassigned_items) do
+                table.insert(display_items, it)
+            end
+        end
+    end
+
+    return display_items
+end
+
 function EntityListOverlay:prepareItems()
     local p = self.plugin
     local cur_page = p and p.getCurrentDocPage and p:getCurrentDocPage()
@@ -489,12 +748,16 @@ function EntityListOverlay:prepareItems()
         end
     end
 
-    local raw = self.raw_items or {}
+    local raw = self.raw_items or self.items or {}
+    if not self.raw_items then self.raw_items = raw end
     local entries = {}
 
     -- Apply search query if present
     local q = (self.search_query and self.search_query ~= "") and self.search_query:lower() or nil
     local unfiltered_visible_count = 0
+    local is_anthology = p and p.isAnthologyMode and p:isAnthologyMode()
+    local cur_story = is_anthology and p.getCurrentStory and p:getCurrentStory(cur_page) or nil
+    local show_all = (self.reveal_future == true) or (not is_spoiler_free) or (p and p.anthology_show_all_stories == true) or (self.search_query and self.search_query ~= "")
     for idx, it in ipairs(raw) do
         local entity = (self.mode == "linked_entries" and it.item) or it
         local visible = true
@@ -506,7 +769,22 @@ function EntityListOverlay:prepareItems()
                 end
             end
         elseif self.mode == "timeline" then
-            if is_spoiler_free then
+            if is_anthology then
+                local st_role, in_cur = p.getEntityStoryRole and p:getEntityStoryRole(entity, cur_story and cur_story.story_id)
+                if in_cur or st_role == "current" then
+                    if is_spoiler_free then
+                        if it.chapter_index and cur_chap and it.chapter_index > cur_chap then
+                            visible = false
+                        elseif it.page and cur_page and tonumber(it.page) and tonumber(it.page) > cur_page then
+                            if not (it.chapter_index and cur_chap and it.chapter_index < cur_chap) then
+                                visible = false
+                            end
+                        end
+                    end
+                elseif not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent(entity, cur_story) then
+                    visible = false
+                end
+            elseif is_spoiler_free then
                 if it.chapter_index and cur_chap and it.chapter_index > cur_chap then
                     visible = false
                 elseif it.page and cur_page and tonumber(it.page) and tonumber(it.page) > cur_page then
@@ -516,7 +794,20 @@ function EntityListOverlay:prepareItems()
                 end
             end
         else
-            if is_spoiler_free and p and p.isEntityVisibleAtCurrentPosition then
+            if is_anthology then
+                local st_role, in_cur = p.getEntityStoryRole and p:getEntityStoryRole(entity, cur_story and cur_story.story_id)
+                if in_cur or st_role == "current" then
+                    if is_spoiler_free and p and p.isEntityVisibleAtCurrentPosition then
+                        visible = p:isEntityVisibleAtCurrentPosition(entity, cur_chap, cur_page)
+                    else
+                        visible = true
+                    end
+                elseif not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent(entity, cur_story) then
+                    visible = false
+                else
+                    visible = true
+                end
+            elseif is_spoiler_free and p and p.isEntityVisibleAtCurrentPosition then
                 visible = p:isEntityVisibleAtCurrentPosition(entity, cur_chap, cur_page)
             end
         end
@@ -834,13 +1125,9 @@ function EntityListOverlay:onOpenFocused()
         local item = self.current_page_items and self.current_page_items[self.focused_index or 1]
         if item then
             if item.is_prior_header then
-                self.prior_collapsed = not self.prior_collapsed
-                if self.plugin then
-                    self.plugin.series_prior_timeline_collapsed = self.prior_collapsed
-                end
-                self.current_page = 1
-                self:buildUI()
-                UIManager:setDirty(self, "ui")
+                self:togglePriorSection()
+            elseif item.is_section_header and item.section_id then
+                self:toggleSection(item.section_id)
             elseif item.is_current_header then
                 -- Static section header, no action
             else
@@ -951,7 +1238,7 @@ function EntityListOverlay:handleEvent(ev)
             return self:onFirstPage()
         elseif key == "End" then
             return self:onLastPage()
-        elseif (key == "s" or key == "S") and self.mode ~= "timeline" and self.mode ~= "evolution" and self.mode ~= "evolution_detail" then
+        elseif (key == "s" or key == "S") and (self.mode ~= "timeline" or (self.plugin and self.plugin.isAnthologyMode and self.plugin:isAnthologyMode())) and self.mode ~= "evolution" and self.mode ~= "evolution_detail" then
             return self:showSortDialog()
         elseif (key == "f" or key == "F" or key == "/") and self.mode ~= "evolution" and self.mode ~= "evolution_detail" then
             return self:showSearchDialog()
@@ -970,11 +1257,9 @@ function EntityListOverlay:handleEvent(ev)
                     self.focus_zone = "cards"
                     self.focused_index = num
                     if it.is_prior_header then
-                        self.prior_collapsed = not self.prior_collapsed
-                        if self.plugin then self.plugin.series_prior_timeline_collapsed = self.prior_collapsed end
-                        self.current_page = 1
-                        self:buildUI()
-                        UIManager:setDirty(self, "ui")
+                        self:togglePriorSection()
+                    elseif it.is_section_header and it.section_id then
+                        self:toggleSection(it.section_id)
                     elseif it.is_current_header then
                         -- Static section header, no action
                     else
@@ -1065,76 +1350,122 @@ function EntityListOverlay:showSortDialog()
         return res
     end
 
-    local current_sort = self.sort_mode
-    local check_freq = (current_sort == "frequency") and "● " or "○ "
-    local check_app  = (current_sort == "appearance") and "● " or "○ "
-    local check_az   = (current_sort == "alphabetical") and "● " or "○ "
+    local buttons = {}
+    local is_anthology = p and p.isAnthologyMode and p:isAnthologyMode()
+    local is_timeline = (self.mode == "timeline")
 
+    if not is_timeline then
+        local current_sort = self.sort_mode
+        local check_freq = (current_sort == "frequency") and "● " or "○ "
+        local check_app  = (current_sort == "appearance") and "● " or "○ "
+        local check_az   = (current_sort == "alphabetical") and "● " or "○ "
+
+        table.insert(buttons, {
+            {
+                text = check_freq .. _tr("sort_frequency", "Frequency of Mentions (Default)"),
+                align = "left",
+                callback = function()
+                    UIManager:close(sort_dialog)
+                    self.sort_mode = "frequency"
+                    if self.plugin then
+                        self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
+                        self.plugin.entity_sort_mode[self.mode] = self.sort_mode
+                    end
+                    self.current_page = 1
+                    self:prepareItems()
+                    self:buildUI()
+                    UIManager:setDirty(self, "ui")
+                end,
+            },
+        })
+        table.insert(buttons, {
+            {
+                text = check_app .. _tr("sort_appearance", "Order of Appearance"),
+                align = "left",
+                callback = function()
+                    UIManager:close(sort_dialog)
+                    self.sort_mode = "appearance"
+                    if self.plugin then
+                        self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
+                        self.plugin.entity_sort_mode[self.mode] = self.sort_mode
+                    end
+                    self.current_page = 1
+                    self:prepareItems()
+                    self:buildUI()
+                    UIManager:setDirty(self, "ui")
+                end,
+            },
+        })
+        table.insert(buttons, {
+            {
+                text = check_az .. _tr("sort_alphabetical", "Alphabetical (A–Z)"),
+                align = "left",
+                callback = function()
+                    UIManager:close(sort_dialog)
+                    self.sort_mode = "alphabetical"
+                    if self.plugin then
+                        self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
+                        self.plugin.entity_sort_mode[self.mode] = self.sort_mode
+                    end
+                    self.current_page = 1
+                    self:prepareItems()
+                    self:buildUI()
+                    UIManager:setDirty(self, "ui")
+                end,
+            },
+        })
+    end
+
+    if is_anthology then
+        local cur_story = p.getCurrentStory and p:getCurrentStory()
+        local cur_title = cur_story and cur_story.story_title
+        local cur_label = cur_title and string.format("%s: %s", _tr("story_scope_current", "Current Story"), cur_title) or _tr("story_scope_current", "Current Story")
+        local show_all = p.anthology_show_all_stories == true
+        local check_cur = (not show_all) and "● " or "○ "
+        local check_all = show_all and "● " or "○ "
+
+        table.insert(buttons, {
+            {
+                text = check_cur .. cur_label,
+                align = "left",
+                callback = function()
+                    UIManager:close(sort_dialog)
+                    p.anthology_show_all_stories = false
+                    self.current_page = 1
+                    self:prepareItems()
+                    self:buildUI()
+                    UIManager:setDirty(self, "ui")
+                end,
+            },
+        })
+        table.insert(buttons, {
+            {
+                text = check_all .. _tr("story_scope_all", "All Stories"),
+                align = "left",
+                callback = function()
+                    UIManager:close(sort_dialog)
+                    p.anthology_show_all_stories = true
+                    self.current_page = 1
+                    self:prepareItems()
+                    self:buildUI()
+                    UIManager:setDirty(self, "ui")
+                end,
+            },
+        })
+    end
+
+    table.insert(buttons, {
+        {
+            text = (loc and loc:t("cancel")) or "Cancel",
+            callback = function() UIManager:close(sort_dialog) end,
+        }
+    })
+
+    local dialog_title = is_timeline and _tr("story_scope_label", "Story Scope") or (is_anthology and (_tr("sort_and_scope", "Sort/Story Scope")) or _tr("sort_by", "Sort By"))
     sort_dialog = ButtonDialog:new{
         modal = true,
-        title = _tr("sort_by", "Sort By"),
-        buttons = {
-            {
-                {
-                    text = check_freq .. _tr("sort_frequency", "Frequency of Mentions (Default)"),
-                    align = "left",
-                    callback = function()
-                        UIManager:close(sort_dialog)
-                        self.sort_mode = "frequency"
-                        if self.plugin then
-                            self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
-                            self.plugin.entity_sort_mode[self.mode] = self.sort_mode
-                        end
-                        self.current_page = 1
-                        self:prepareItems()
-                        self:buildUI()
-                        UIManager:setDirty(self, "ui")
-                    end,
-                },
-            },
-            {
-                {
-                    text = check_app .. _tr("sort_appearance", "Order of Appearance"),
-                    align = "left",
-                    callback = function()
-                        UIManager:close(sort_dialog)
-                        self.sort_mode = "appearance"
-                        if self.plugin then
-                            self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
-                            self.plugin.entity_sort_mode[self.mode] = self.sort_mode
-                        end
-                        self.current_page = 1
-                        self:prepareItems()
-                        self:buildUI()
-                        UIManager:setDirty(self, "ui")
-                    end,
-                },
-            },
-            {
-                {
-                    text = check_az .. _tr("sort_alphabetical", "Alphabetical (A–Z)"),
-                    align = "left",
-                    callback = function()
-                        UIManager:close(sort_dialog)
-                        self.sort_mode = "alphabetical"
-                        if self.plugin then
-                            self.plugin.entity_sort_mode = self.plugin.entity_sort_mode or {}
-                            self.plugin.entity_sort_mode[self.mode] = self.sort_mode
-                        end
-                        self.current_page = 1
-                        self:prepareItems()
-                        self:buildUI()
-                        UIManager:setDirty(self, "ui")
-                    end,
-                },
-            },
-            {
-                {
-                    text = (loc and loc:t("cancel")) or "Cancel",
-                    callback = function() UIManager:close(sort_dialog) end,
-                }
-            }
-        }
+        title = dialog_title,
+        buttons = buttons
     }
     UIManager:show(sort_dialog)
 end
@@ -1549,6 +1880,52 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
     local pills = {}
     if type_pill then table.insert(pills, type_pill) end
     if prior_pill then table.insert(pills, prior_pill) end
+
+    if p and p.isAnthologyMode and p:isAnthologyMode() and actual_item and p.isEntityRecurring and p:isEntityRecurring(actual_item) then
+        local rec_pill = FrameContainer:new{
+            background = Blitbuffer.Color8(235),
+            bordersize = sc(1),
+            color = Blitbuffer.Color8(180),
+            radius = sc(3),
+            padding_top = sc(1),
+            padding_bottom = sc(1),
+            padding_left = sc(6),
+            padding_right = sc(6),
+            TextWidget:new{
+                text = (loc and loc:t("story_recurring_pill")) or "Recurring",
+                face = Font:getFace("cfont", 11),
+                bold = true,
+                fgcolor = Blitbuffer.Color8(60),
+            },
+        }
+        table.insert(pills, rec_pill)
+    end
+
+    if p and p.isAnthologyMode and p:isAnthologyMode() and p.anthology_show_all_stories and actual_item then
+        if not actual_item.story_title and p.resolveEntityStory then
+            p:resolveEntityStory(actual_item)
+        end
+        if actual_item.story_title and actual_item.story_title ~= "" then
+            local story_pill = FrameContainer:new{
+                background = Blitbuffer.Color8(235),
+                bordersize = sc(1),
+                color = Blitbuffer.Color8(180),
+                radius = sc(3),
+                padding_top = sc(1),
+                padding_bottom = sc(1),
+                padding_left = sc(6),
+                padding_right = sc(6),
+                TextWidget:new{
+                    text = actual_item.story_title,
+                    face = Font:getFace("cfont", 11),
+                    bold = true,
+                    fgcolor = Blitbuffer.Color8(60),
+                    max_width = sc(140),
+                },
+            }
+            table.insert(pills, story_pill)
+        end
+    end
 
     local pills_w = 0
     for _, pill in ipairs(pills) do
@@ -2577,7 +2954,7 @@ function EntityListOverlay:buildUI()
             end
 
             -- D. Sort button (Sliders icon from Feather Icons)
-            if self.mode ~= "timeline" then
+            if self.mode ~= "timeline" or (p and p.isAnthologyMode and p:isAnthologyMode()) then
                 addHeaderAction("sort", "sliders.svg", function() self:showSortDialog() end)
             end
         end
@@ -2666,9 +3043,12 @@ function EntityListOverlay:buildUI()
     local divider_h = sc(1)
     local items_per_page = math.max(1, math.floor(avail_content_h / (row_h + divider_h)))
 
-    -- Check if we have prior-book events in timeline
+    -- Check if we have anthology sections or prior-book events in timeline
     local display_items = {}
-    if is_timeline then
+    local is_anthology = p and p.isAnthologyMode and p:isAnthologyMode()
+    if is_anthology and not is_mentions and not is_evolution then
+        display_items = self:buildStorySections(self.items or {})
+    elseif is_timeline then
         local has_prior = false
         local prior_count = 0
         for _, it in ipairs(self.items or {}) do
@@ -2723,16 +3103,62 @@ function EntityListOverlay:buildUI()
     local total_display = #display_items
     local pages = {}
     local cur_page_items = {}
+    local cur_page_h = 0
+    local section_header_h = sc(38) + sc(1)
+    local card_h = row_h + divider_h
+
     for idx, it in ipairs(display_items) do
-        table.insert(cur_page_items, it)
-        if #cur_page_items == items_per_page or idx == total_display then
+        local is_sec = it.is_section_header or it.is_prior_header or it.is_current_header
+        local it_h = is_sec and section_header_h or card_h
+
+        -- Prevent orphan headers: if a section header cannot fit with at least 1 card beneath it, move it to next page
+        local is_orphan = is_sec and (#cur_page_items > 0) and (cur_page_h + it_h + card_h > avail_content_h)
+
+        if #cur_page_items > 0 and (is_orphan or (cur_page_h + it_h > avail_content_h)) then
             table.insert(pages, cur_page_items)
             cur_page_items = {}
+            cur_page_h = 0
         end
+
+        table.insert(cur_page_items, it)
+        cur_page_h = cur_page_h + it_h
+    end
+
+    if #cur_page_items > 0 then
+        table.insert(pages, cur_page_items)
     end
     if #pages == 0 then pages = {{}} end
 
     self.total_pages = #pages
+
+    if self._anchor_section_id then
+        for p_idx, p_items in ipairs(pages) do
+            local found = false
+            for item_idx, item in ipairs(p_items) do
+                if item.is_section_header and item.section_id == self._anchor_section_id then
+                    self.current_page = p_idx
+                    self.focused_index = item_idx
+                    found = true
+                    break
+                end
+            end
+            if found then break end
+        end
+    elseif self._anchor_prior_header then
+        for p_idx, p_items in ipairs(pages) do
+            local found = false
+            for item_idx, item in ipairs(p_items) do
+                if item.is_prior_header then
+                    self.current_page = p_idx
+                    self.focused_index = item_idx
+                    found = true
+                    break
+                end
+            end
+            if found then break end
+        end
+    end
+
     if self.current_page > self.total_pages then self.current_page = self.total_pages end
     if self.current_page < 1 then self.current_page = 1 end
 
@@ -2813,8 +3239,8 @@ function EntityListOverlay:buildUI()
         end
     else
         for idx, it in ipairs(page_items) do
-            if it.is_prior_header then
-                -- Collapsible Prior Books section row
+            if it.is_prior_header or it.is_section_header then
+                -- Collapsible section row (Prior Books or Anthology Story Groups)
                 local icon_name = it.collapsed and "chevron-right.svg" or "chevron-down.svg"
                 local chevron_icon = ImageWidget:new{
                     file = getAssetPath(icon_name),
@@ -2824,13 +3250,18 @@ function EntityListOverlay:buildUI()
                     is_icon = true,
                     alpha = true,
                 }
-                local raw_header = (loc and loc:t("series_prior_books_header")) or "Prior Books in Series"
-                local clean_header = raw_header:gsub("^%s*[─%-–—]+%s*", ""):gsub("%s*[─%-–—]+%s*$", "")
-                if clean_header == "" or clean_header:lower() == "prior books" then
-                    clean_header = "Prior Books in Series"
+                local header_title
+                if it.is_prior_header then
+                    local raw_header = (loc and loc:t("series_prior_books_header")) or "Prior Books in Series"
+                    local clean_header = raw_header:gsub("^%s*[─%-–—]+%s*", ""):gsub("%s*[─%-–—]+%s*$", "")
+                    if clean_header == "" or clean_header:lower() == "prior books" then
+                        clean_header = "Prior Books in Series"
+                    end
+                    header_title = string.format("%s (%d)", clean_header, it.count or 0)
+                else
+                    header_title = string.format("%s (%d)", it.title or "Section", it.count or 0)
                 end
-                local header_title = string.format("%s (%d)", clean_header, it.count or 0)
-                local prior_txt = TextWidget:new{
+                local sec_txt = TextWidget:new{
                     text = header_title,
                     face = Font:getFace("cfont", 15),
                     bold = true,
@@ -2840,7 +3271,7 @@ function EntityListOverlay:buildUI()
                     align = "center",
                     chevron_icon,
                     HorizontalSpan:new{ width = sc(8) },
-                    prior_txt,
+                    sec_txt,
                 }
                 local is_sec_focused = (self.focus_zone == "cards" and idx == self.focused_index)
                 local sec_frame = FrameContainer:new{
@@ -2859,13 +3290,11 @@ function EntityListOverlay:buildUI()
                 }
                 local sec_item = makeTapItem(sec_frame, function()
                     if self.is_touch_device then self.focus_zone = nil end
-                    self.prior_collapsed = not self.prior_collapsed
-                    if self.plugin then
-                        self.plugin.series_prior_timeline_collapsed = self.prior_collapsed
+                    if it.is_prior_header then
+                        self:togglePriorSection()
+                    elseif it.is_section_header and it.section_id then
+                        self:toggleSection(it.section_id)
                     end
-                    self.current_page = 1
-                    self:buildUI()
-                    UIManager:setDirty(self, "ui")
                 end)
                 sec_item.onBeforePaint = function()
                     local focused = (self.focus_zone == "cards" and idx == self.focused_index)

@@ -21,6 +21,10 @@ msgstr "AI lekérdezés kész!"
 msgid "ai_key_required"
 msgstr "MI API kulcs szükséges."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "Ugyanaz az entitás egy másik történetben?"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "MI másolat észlelve"
@@ -36,6 +40,18 @@ msgstr "AI vizsgálat"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "A MI másolatokat keres..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "Jelenleg aktív: Antológia mód (%d történet észlelve)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "Egyéb entitások"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "Ez a történet"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "Ismeretterjesztő"
 msgid "book_mode_saved"
 msgstr "Könyvmód mentve!"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "A könyv típusa határozza meg, hogy a MI milyen kinyerési stratégiát használ, és mely funkciók érhetők el.\n\n- Szépirodalom: A történetre, a szereplőkre és a cselekmény idővonalára összpontosít.\n- Ismeretterjesztő: Kifejezésekre, fogalmakra és történelmi személyekre összpontosít.\n\nAz 'Automatikus felismerés' lehetővé teszi, hogy a MI döntsön az első lekérdezés után.\n\n[B]Megjegyzés:[/B] Ezt a beállítást [B]könyvenként[/B] mentjük. A manuális választás felülírja az automatikus felismerést vagy a globális beállításokat."
+msgstr "A könyv típusa meghatározza az alkalmazott MI-kinyerési stratégiát.\n\n[B]• Szépirodalom:[/B] Karakterekre, idővonalra és világépítésre fókuszál.\n[B]• Ismeretterjesztő:[/B] Műszaki kifejezésekre, fogalmakra és történelmi személyekre fókuszál.\n[B]• Antológia/Novellák:[/B] Az MI-kinyerést, entitáslistákat és duplikációkat az egyes történetekre korlátozza a tartalomjegyzék alapján.\n\n[B]Automatikus észlelés:[/B] Az MI dönt az [B]első[/B] lekérdezés után.\n\n[B]Megjegyzés:[/B] Ez a beállítás [B]könyvenként[/B] mentve. Az egyéni választás felülírja az automatikus észlelést vagy a globális beállításokat."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "Antológia/Novellák"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "Szépirodalom"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "Ismeretterjesztő"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "Antológia szerkezet újrafelismerése"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "BEÁLLÍTVA"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "Ez a könyv több regényt tartalmazó gyűjteménynek tűnik. Engedélyezi az Antológia módot (a karakterek és helyszínek regényenkénti szétválasztása)?"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "A nyelv megváltozott. Nyissa meg újra a menüt a változások megtekin
 msgid "later"
 msgstr "Később"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "Linkelés"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "UGYANAZ, MINT"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "EZ A TÖRTÉNET"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Kapcsolódó bejegyzések"
@@ -1072,6 +1112,10 @@ msgstr "Felhő átjátszó (Ajánlott — bárhol működik)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Helyi Wi-Fi (Offline LAN)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "Antológia tartalomjegyzék szintje"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "Leállítás"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "Előkészítés leállítása"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "Visszatérő"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "1. szint (Legfelső szintű bejegyzések)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "2. szint (Részek/kötetek alatt)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "3. szint"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "Automatikus észlelés (ajánlott)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "Válassza ki, melyik tartalomjegyzék-szint jelöli az egyes történeteket:"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"

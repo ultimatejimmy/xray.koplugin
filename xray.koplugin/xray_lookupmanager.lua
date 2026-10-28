@@ -320,10 +320,11 @@ function LookupManager:lookupAll(text)
     end
 
     if #final_results > 0 then
-        table.sort(final_results, function(a, b) return a.score > b.score end)
-
         -- If we have direct match(es) (exact or alias exact), filter out partial/fuzzy matches
-        local best_score = final_results[1].score
+        local best_score = 0
+        for _, candidate in ipairs(final_results) do
+            if candidate.score > best_score then best_score = candidate.score end
+        end
         if best_score >= 95 then
             local filtered = {}
             for _, candidate in ipairs(final_results) do
@@ -333,6 +334,20 @@ function LookupManager:lookupAll(text)
             end
             final_results = filtered
         end
+
+        local is_anthology = self.plugin and self.plugin.isAnthologyMode and self.plugin:isAnthologyMode()
+        local cur_story = is_anthology and self.plugin.getCurrentStory and self.plugin:getCurrentStory() or nil
+
+        table.sort(final_results, function(a, b)
+            if is_anthology and cur_story then
+                local a_cur = self.plugin:isEntityInCurrentStory(a.item, cur_story)
+                local b_cur = self.plugin:isEntityInCurrentStory(b.item, cur_story)
+                if a_cur ~= b_cur then
+                    return a_cur
+                end
+            end
+            return a.score > b.score
+        end)
     end
 
     return final_results
@@ -405,6 +420,15 @@ function LookupManager:handleLookup(text, pos0, pos1)
 
         for _, candidate in ipairs(all) do
             local display_name = candidate.item.name or "???"
+            if self.plugin and self.plugin.isAnthologyMode and self.plugin:isAnthologyMode() then
+                local st_title = candidate.item.story_title
+                if not st_title and self.plugin.resolveEntityStory then
+                    st_title = select(2, self.plugin:resolveEntityStory(candidate.item))
+                end
+                if st_title and st_title ~= "" then
+                    display_name = string.format("%s (%s)", display_name, st_title)
+                end
+            end
             -- Capture loop vars for the closure
             local captured_item = candidate.item
             local captured_type = candidate.item_type

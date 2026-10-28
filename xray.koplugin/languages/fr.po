@@ -21,6 +21,10 @@ msgstr "Récupération IA terminée !"
 msgid "ai_key_required"
 msgstr "Une clé API IA est requise."
 
+# en-hash: a4e9e2c65cde081ec09ea25662b87feb
+msgid "ai_link_confirm_title"
+msgstr "Même entité dans une autre histoire ?"
+
 # en-hash: ba33be58a8b8f658193f4b86c5e05b71
 msgid "ai_merge_confirm_title"
 msgstr "Doublon détecté par l'IA"
@@ -36,6 +40,18 @@ msgstr "AI Scan"
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
 msgstr "L'IA recherche des doublons..."
+
+# en-hash: 92bf6045d6ab18f624a09ab3db94e6e8
+msgid "anthology_detected_status"
+msgstr "Actif actuellement : Mode Anthologie (%d histoires détectées)"
+
+# en-hash: 081e6ad774c306966efd2fc06ef87ca3
+msgid "anthology_other_entities_header"
+msgstr "Autres entités"
+
+# en-hash: eeee17da3225436bc4496e9e65d9ced5
+msgid "anthology_this_story_header"
+msgstr "Cette histoire"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
@@ -145,9 +161,13 @@ msgstr "Non-fiction"
 msgid "book_mode_saved"
 msgstr "Mode de livre enregistré !"
 
-# en-hash: 9ea3cd79552afa39d886f96f4b101991
+# en-hash: ba510a2750d6c96af65ce56392f03d5b
 msgid "book_type_about"
-msgstr "Le type de livre détermine la stratégie d'extraction d'IA utilisée et les fonctionnalités disponibles.\n\n- Fiction : Se concentre sur le récit, les personnages et la chronologie de l'intrigue.\n- Non-fiction : Se concentre sur les termes, les concepts et les personnages historiques.\n\nLa 'Détection automatique' laissera l'IA décider après la première recherche.\n\n[B]Remarque :[/B] Ce paramètre est enregistré [B]par livre[/B]. Un choix personnalisé remplace la détection automatique ou les paramètres globaux."
+msgstr "Le type de livre détermine la stratégie d'extraction IA utilisée.\n\n[B]• Fiction :[/B] Se concentre sur les personnages, la chronologie et le monde (factions, sorts, lore, etc.).\n[B]• Non-fiction :[/B] Se concentre sur les termes techniques, les concepts et les figures historiques.\n[B]• Anthologie/Nouvelles :[/B] Limite l'extraction IA, les listes d'entités et la fusion des doublons à chaque histoire individuelle basée sur la table des matières.\n\n[B]Détection automatique[/B] laisse l'IA décider après la [B]première[/B] analyse.\n\n[B]Note :[/B] Ce réglage est enregistré [B]par livre[/B]. Un choix personnalisé remplace la détection automatique ou les réglages globaux."
+
+# en-hash: 599cc5358bc649fda4a6e722366d9f3a
+msgid "book_type_anthology"
+msgstr "Anthologie/Nouvelles"
 
 # en-hash: e67731741de13a0fcd235ea7630e8ebc
 msgid "book_type_auto"
@@ -160,6 +180,10 @@ msgstr "Fiction"
 # en-hash: 314bf1da631aba7851556f01b79c3fef
 msgid "book_type_nonfiction"
 msgstr "Non-fiction"
+
+# en-hash: c02ca3d96fc7a1ba9384baf7ec55ba54
+msgid "book_type_redetect"
+msgstr "Redétecter la structure de l'anthologie"
 
 # en-hash: 7deeb207a3f824e059410b7f6f118e60
 msgid "btn_clear_key"
@@ -228,6 +252,10 @@ msgstr "CONFIGURÉ"
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
 msgstr "Confirm"
+
+# en-hash: b59432f3e47e0715eaed12d828c25efb
+msgid "confirm_anthology_omnibus"
+msgstr "Ce livre semble être un recueil de plusieurs romans. Souhaitez-vous activer le mode Anthologie (séparer les personnages et lieux par roman) ?"
 
 # en-hash: af56aa659f5ec4ce42bb02c3b75dd111
 msgid "confirm_clear_all_keys"
@@ -709,6 +737,18 @@ msgstr "Langue modifiée. Rouvrez le menu pour voir les changements."
 msgid "later"
 msgstr "Plus tard"
 
+# en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
+msgid "link_button"
+msgstr "Lier"
+
+# en-hash: f3ccbc8f73b43395dfd0b05a4e26ad47
+msgid "link_same_as_label"
+msgstr "IDENTIQUE À"
+
+# en-hash: 61c92819aa4dda5e37773cf8116ee017
+msgid "link_this_story_label"
+msgstr "CETTE HISTOIRE"
+
 # en-hash: 94f97454f5a2c6bbca33f92d4818fcef
 msgid "linked_entries"
 msgstr "Entrées liées"
@@ -1072,6 +1112,10 @@ msgstr "Relais Cloud (Recommandé — fonctionne partout)"
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
 msgstr "Wi-Fi local (LAN hors ligne)"
+
+# en-hash: a79d5f424342db40e3be1b3c3f8a2e73
+msgid "menu_story_toc_depth"
+msgstr "Niveau de la table des matières (anthologie)"
 
 # en-hash: 31d109d162629f8d0cfc8ce8316c0567
 msgid "menu_terms"
@@ -1572,6 +1616,30 @@ msgstr "Arrêter"
 # en-hash: cb70e7496d2ead7064f09a1e145d1822
 msgid "stop_pregeneration"
 msgstr "Arrêter la pré-génération"
+
+# en-hash: 582ff616b727759a2208c65b27b0d309
+msgid "story_recurring_pill"
+msgstr "Récurrent"
+
+# en-hash: 245c5455c755c0a810c1dfbc60da7c46
+msgid "story_toc_depth_1"
+msgstr "Niveau 1 (Entrées de haut niveau)"
+
+# en-hash: 50054c30f83995c52e0fae4b515ea541
+msgid "story_toc_depth_2"
+msgstr "Niveau 2 (Sous parties / volumes)"
+
+# en-hash: 8f60a63315c55e659b1a2dd5064ceae8
+msgid "story_toc_depth_3"
+msgstr "Niveau 3"
+
+# en-hash: fe76430c4349276410380e48e785f48f
+msgid "story_toc_depth_auto"
+msgstr "Détection automatique (recommandé)"
+
+# en-hash: d5ab485b1eaa22b6fb5e355f48859545
+msgid "story_toc_depth_desc"
+msgstr "Sélectionnez le niveau de table des matières représentant les histoires individuelles :"
 
 # en-hash: d725036d492c380f06f4eb32f5704bc9
 msgid "term_not_found"
