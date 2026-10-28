@@ -1471,13 +1471,8 @@ function M:scanBookForUnits(force)
             end
 
             progress_msg:reportProgress(95)
-            log("scanBookForUnits: checkpoint G — scheduling cache write")
-            UIManager:scheduleIn(0.5, function()
-                if not self.destroyed and self.ui and self.ui.document then
-                    log("scanBookForUnits: checkpoint H — writing cache file")
-                    self:saveUnitCache(resolved_dir)
-                end
-            end)
+            log("scanBookForUnits: writing cache file")
+            pcall(function() self:saveUnitCache(resolved_dir) end)
         end)
         
         self._unit_scan_in_progress = false

@@ -259,6 +259,25 @@ describe("X-Ray Book Type Detection and Archive Format Protection", function()
             p:triggerBookTypeDetection()
             assert.are.equal(1, async_detect_called)
         end)
+
+        it("triggers scan only once during initial detection even when AI refinement completes", function()
+            local p = createMockPlugin("/books/novel.epub", { title = "A Mystery" })
+            local poll_cb
+            UIManager.scheduleIn = function(self_ui, delay, fn)
+                poll_cb = fn
+            end
+            p.ai_helper.checkAsyncResult = function()
+                return { book_type_label = "prose_fiction" }
+            end
+
+            p:triggerBookTypeDetection()
+            assert.are.equal(1, scan_triggered)
+
+            -- When AI background refinement finishes, it must NOT trigger a second scan
+            if poll_cb then poll_cb() end
+            assert.are.equal(1, scan_triggered)
+            assert.are.equal(1, underlines_applied)
+        end)
     end)
 
     describe("getBookTypeFilterMenu", function()

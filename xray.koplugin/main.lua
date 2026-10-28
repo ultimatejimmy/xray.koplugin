@@ -453,6 +453,9 @@ function XRayPlugin:onReaderReady()
     self.bg_fetch_pending = false
     self:clearPendingBackgroundFetch()
     self._reader_ready = true
+    self.unit_xp_matches = nil
+    self.unit_conversion_boxes = nil
+    self.last_settings_state = nil
 
     -- Re-evaluate current page now that cache is loaded
     if self.auto_fetch_enabled then
@@ -475,7 +478,7 @@ function XRayPlugin:onReaderReady()
         local has_key = self.ai_helper and type(self.ai_helper.hasApiKey) == "function" and self.ai_helper:hasApiKey()
         if not has_key and settings.welcome_wizard_dont_ask ~= true then
             self:showWelcomeCard()
-        elseif settings.unit_new_feature_prompt_seen ~= true then
+        elseif settings.unit_converter_enabled ~= false and settings.unit_new_feature_prompt_seen ~= true then
             self:showUnitConverterNewFeatureCard()
         else
             if self.scanBookForUnits and settings.unit_converter_enabled ~= false then
@@ -1171,12 +1174,17 @@ function XRayPlugin:retagEntitiesByStory()
                 dirty = true
             end
 
-            -- For timeline events, also sync chapter_index to the story's start_toc_idx if misaligned
+            -- For timeline events, also sync chapter_index to the story's start_toc_idx if outside story bounds
             if item.chapter and sid then
                 local s = story_map.by_id and story_map.by_id[sid]
-                if s and s.start_toc_idx and item.chapter_index ~= s.start_toc_idx then
-                    item.chapter_index = s.start_toc_idx
-                    dirty = true
+                if s and s.start_toc_idx then
+                    local out_of_range = not item.chapter_index
+                        or item.chapter_index < s.start_toc_idx
+                        or (s.end_toc_idx and item.chapter_index > s.end_toc_idx)
+                    if out_of_range then
+                        item.chapter_index = s.start_toc_idx
+                        dirty = true
+                    end
                 end
             end
         end
@@ -1407,6 +1415,15 @@ function XRayPlugin:scheduleBackgroundCatchUp(delay)
 
         local target_limit, is_full_book = self:getCatchUpTargetLimit()
         local last_fetch_page = self.book_data and self.book_data.last_fetch_page
+        if self:isAnthologyMode() then
+            local curr_page = self.ui:getCurrentPage()
+            local curr_story = self:getCurrentStory(curr_page)
+            if curr_story then
+                local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
+                last_fetch_page = st_state and st_state.last_fetch_page or (curr_story.start_page and curr_story.start_page > 1 and (curr_story.start_page - 1) or 0)
+                target_limit = math.min(target_limit, curr_story.end_page or target_limit)
+            end
+        end
         if last_fetch_page and last_fetch_page >= target_limit then
             self:clearPendingBackgroundFetch()
             return
@@ -1462,12 +1479,21 @@ function XRayPlugin:scheduleBackgroundCatchUp(delay)
 
         self:log("XRayPlugin: Catch-up batch started for target page: " .. tostring(target_page) .. " (chapter: " .. tostring(chapter_title) .. ", final=" .. tostring(is_final) .. ")")
 
-        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, function(success)
+        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, function(success, err_code)
             if self.destroyed or not self.ui or self.ui.document ~= document then return end
             if success then
                 self.last_bg_fetch_time = os.time()
                 local curr_limit = self:getCatchUpTargetLimit()
                 local lfp = self.book_data and self.book_data.last_fetch_page or target_page
+                if self:isAnthologyMode() then
+                    local curr_page = self.ui:getCurrentPage()
+                    local curr_story = self:getCurrentStory(curr_page)
+                    if curr_story then
+                        local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
+                        lfp = st_state and st_state.last_fetch_page or lfp
+                        curr_limit = math.min(curr_limit, curr_story.end_page or curr_limit)
+                    end
+                end
                 if lfp < curr_limit then
                     self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
                     self.pending_background_fetch = true
@@ -1476,6 +1502,9 @@ function XRayPlugin:scheduleBackgroundCatchUp(delay)
                     self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
                     self:clearPendingBackgroundFetch()
                 end
+            elseif err_code == "ALREADY_COVERED" then
+                self:log("XRayPlugin: Catch-up batch already covered at page " .. tostring(target_page) .. ". Clearing pending catch-up.")
+                self:clearPendingBackgroundFetch()
             else
                 -- If failed, wait for next network event or reschedule if still online
                 local net = require("ui/network/manager")
@@ -1644,6 +1673,12 @@ function XRayPlugin:onPageUpdate(pageno)
         end
         self:log("XRayPlugin: Ultra mode page interval crossed. Page: " .. tostring(pageno) .. ", Last: " .. tostring(last) .. ", Diff: " .. tostring(diff) .. ", Interval: " .. tostring(page_interval))
         self.last_bg_fetch_page = pageno
+
+        -- Check if catch-up is actually needed before scheduling an Ultra mode fetch
+        if not self:isCatchUpNeeded() then
+            self:log("XRayPlugin: Ultra mode page interval crossed, but catch-up is not needed.")
+            return
+        end
 
         -- Debounce: ignore if a fetch is already scheduled or active
         if self.bg_fetch_pending or self.bg_fetch_active or self.is_sequential_scan_active then 
@@ -1831,6 +1866,15 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
         end
 
         local last_fetch_page = self.book_data and self.book_data.last_fetch_page
+        if self:isAnthologyMode() then
+            local curr_page = self.ui:getCurrentPage()
+            local curr_story = self:getCurrentStory(curr_page)
+            if curr_story then
+                local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
+                last_fetch_page = st_state and st_state.last_fetch_page or (curr_story.start_page and curr_story.start_page > 1 and (curr_story.start_page - 1) or 0)
+                target_limit = math.min(target_limit, curr_story.end_page or target_limit)
+            end
+        end
         if last_fetch_page and last_fetch_page >= target_limit then
             self:clearPendingBackgroundFetch()
             return
@@ -1876,6 +1920,15 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
                 self.last_bg_fetch_time = os.time()
                 local curr_limit = self:getCatchUpTargetLimit()
                 local lfp = self.book_data and self.book_data.last_fetch_page or target_page
+                if self:isAnthologyMode() then
+                    local curr_page = self.ui:getCurrentPage()
+                    local curr_story = self:getCurrentStory(curr_page)
+                    if curr_story then
+                        local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
+                        lfp = st_state and st_state.last_fetch_page or lfp
+                        curr_limit = math.min(curr_limit, curr_story.end_page or curr_limit)
+                    end
+                end
                 if lfp < curr_limit then
                     self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
                     self.pending_background_fetch = true
@@ -1884,6 +1937,9 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
                     self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
                     self:clearPendingBackgroundFetch()
                 end
+            elseif err_code == "ALREADY_COVERED" then
+                self:log("XRayPlugin: Auto-merge batch already covered at page " .. tostring(target_page) .. ". Clearing pending catch-up.")
+                self:clearPendingBackgroundFetch()
             end
         end
 
@@ -2463,7 +2519,10 @@ function XRayPlugin:getSubMenuItems()
                         end,
                         callback = function()
                             local current = self.ai_helper.settings.unit_converter_enabled ~= false
-                            self.ai_helper:saveSettings({ unit_converter_enabled = not current })
+                            self.ai_helper:saveSettings({
+                                unit_converter_enabled = not current,
+                                unit_new_feature_prompt_seen = true,
+                            })
                             if self.scanBookForUnits then self:scanBookForUnits() end
                         end
                     },
@@ -3533,7 +3592,9 @@ function XRayPlugin:showUnitConverterNewFeatureCard()
     local title_font_size = math.max(10, math.min(fs - 5, 15))
 
     local overlay
-    local selected_action = "keep_enabled" -- Default selection
+    local settings = self.ai_helper and self.ai_helper.settings or {}
+    local is_enabled = settings.unit_converter_enabled ~= false
+    local selected_action = is_enabled and "keep_enabled" or "disable"
 
     local function span()
         return VerticalSpan:new{ width = xray_theme.gap }
@@ -3541,10 +3602,6 @@ function XRayPlugin:showUnitConverterNewFeatureCard()
 
     -- 2. Main layout loop
     local function renderCard()
-        if overlay then
-            UIManager:close(overlay, "ui")
-        end
-
         local title_label = TextWidget:new{
             text = (self.loc:t("new_feature") or "New Feature"):upper(),
             face = Font:getFace("infofont", title_font_size),
@@ -3821,15 +3878,16 @@ function XRayPlugin:showUnitConverterNewFeatureCard()
             background = is_confirm_focused and (xray_theme.color_focus_bg or Blitbuffer.Color8(230)) or nil,
             radius = xray_theme.radius_btn,
             callback = function()
-                -- Save prompted state
-                self.ai_helper:saveSettings({ unit_new_feature_prompt_seen = true })
                 if overlay then
                     UIManager:close(overlay, "ui")
                     overlay = nil
                 end
 
                 if selected_action == "configure" then
-                    self.ai_helper:saveSettings({ unit_converter_enabled = true })
+                    self.ai_helper:saveSettings({
+                        unit_new_feature_prompt_seen = true,
+                        unit_converter_enabled = true,
+                    })
                     
                     UIManager:scheduleIn(0.1, function()
                         if self.destroyed or not self.ui or not self.ui.document then return end
@@ -3847,11 +3905,19 @@ function XRayPlugin:showUnitConverterNewFeatureCard()
                         end
                     end)
                 elseif selected_action == "keep_enabled" then
-                    self.ai_helper:saveSettings({ unit_converter_enabled = true })
+                    self.ai_helper:saveSettings({
+                        unit_new_feature_prompt_seen = true,
+                        unit_converter_enabled = true,
+                    })
                     if self.scanBookForUnits then self:scanBookForUnits() end
                 elseif selected_action == "disable" then
-                    self.ai_helper:saveSettings({ unit_converter_enabled = false })
-                    self:clearUnitUnderlines()
+                    self.ai_helper:saveSettings({
+                        unit_new_feature_prompt_seen = true,
+                        unit_converter_enabled = false,
+                    })
+                    if self.clearUnitUnderlines then self:clearUnitUnderlines() end
+                else
+                    self.ai_helper:saveSettings({ unit_new_feature_prompt_seen = true })
                 end
             end
         }
@@ -3869,7 +3935,9 @@ function XRayPlugin:showUnitConverterNewFeatureCard()
                     UIManager:close(overlay, "ui")
                     overlay = nil
                 end
-                if self.scanBookForUnits then self:scanBookForUnits() end
+                if self.scanBookForUnits and (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.unit_converter_enabled ~= false) then
+                    self:scanBookForUnits()
+                end
             end
         }
 
@@ -4159,9 +4227,15 @@ function XRayPlugin:triggerBookTypeDetection()
     end
 
     -- Check if we already have a unit cache first to avoid scans
-    local has_unit_cache = false
-    if self.loadUnitCache then
-        has_unit_cache = self:loadUnitCache()
+    local scan_already_triggered = false
+    local function hasUnitCache()
+        if self.unit_xp_matches ~= nil then
+            return true
+        end
+        if self.loadUnitCache then
+            return self:loadUnitCache()
+        end
+        return false
     end
 
     local function checkAndTriggerScan()
@@ -4178,10 +4252,14 @@ function XRayPlugin:triggerBookTypeDetection()
 
         if is_disabled then
             if self.clearUnitUnderlines then self:clearUnitUnderlines() end
-        elseif not has_unit_cache then
-            if self.scanBookForUnits then self:scanBookForUnits() end
         else
-            if self.applyUnitUnderlines then self:applyUnitUnderlines() end
+            local has_cache = hasUnitCache()
+            if not has_cache and not scan_already_triggered then
+                scan_already_triggered = true
+                if self.scanBookForUnits then self:scanBookForUnits() end
+            else
+                if self.applyUnitUnderlines then self:applyUnitUnderlines() end
+            end
         end
     end
 
@@ -4227,7 +4305,8 @@ function XRayPlugin:triggerBookTypeDetection()
 
         if should_refine then
             -- Avoid forking background AI processes concurrently while unit scanner is running or starting
-            if self._unit_scan_in_progress or not has_unit_cache then
+            local has_cache = hasUnitCache()
+            if self._unit_scan_in_progress or not has_cache then
                 UIManager:scheduleIn(15, function()
                     if not self.destroyed and self.ui and self.ui.document and not self._unit_scan_in_progress then
                         if self.triggerBookTypeDetection then

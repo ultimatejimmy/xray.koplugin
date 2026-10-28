@@ -585,9 +585,10 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
     local cached = self.book_data or self.cache_manager:loadCache(doc_file)
     if cached and cached.timeline and #cached.timeline > 0 then
         local s = self.ai_helper and self.ai_helper.settings or {}
-        local current_len = s.timeline_event_len or 80
-        local cached_len = cached.timeline_event_len or 80
-        if current_len > cached_len then
+        local current_len = s.timeline_event_len or 200
+        local cached_len = cached.timeline_event_len
+        local is_full_replacement = not is_update and not is_silent and not batch_end_page and not is_anthology
+        if is_full_replacement and cached_len and current_len > cached_len then
             self:log("XRayPlugin: timeline_event_len increased from " .. tostring(cached_len) .. " to " .. tostring(current_len) .. ". Regenerating timeline.")
             self.timeline = {}
             cached.timeline = {}
@@ -703,6 +704,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     end
                 end
             end
+            local is_repair_mode = false
             for _, entry in ipairs(candidate_chapters) do
                 local norm = self:normalizeChapterName(entry.title)
                 local found = false
@@ -712,6 +714,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     end
                 end
                 if not found then
+                    is_repair_mode = true
                     if not first_missing_page or entry.page < first_missing_page then
                         first_missing_page = entry.page
                         self:log("XRayPlugin: Repair mode active: recovering missing chapter '" .. tostring(entry.title) .. "' starting at page " .. tostring(entry.page))
@@ -724,21 +727,31 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         local spoiler_setting = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting or "spoiler_free"
         if is_anthology and current_story then
             if spoiler_setting == "full_book" then
-                end_page_analysis = current_story.end_page
+                end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_story.end_page)
             elseif batch_end_page then
-                end_page_analysis = math.min(batch_end_page, current_story.end_page)
+                local raw_target = math.min(batch_end_page, current_story.end_page)
+                end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, raw_target)
             else
-                end_page_analysis = math.min(self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page), current_story.end_page)
+                local raw_target = math.min(current_page, current_story.end_page)
+                end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, raw_target)
             end
         elseif spoiler_setting ~= "full_book" or batch_end_page then
-            end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, current_page)
+            local raw_target = batch_end_page or current_page
+            end_page_analysis = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, raw_target)
+        end
+
+        if is_repair_mode and first_missing_page then
+            local min_needed = self.chapter_analyzer:getEndPageForCurrentPage(self.ui, first_missing_page)
+            if not end_page_analysis or end_page_analysis < min_needed then
+                end_page_analysis = min_needed
+            end
         end
 
         -- A cached page can outlive pagination changes or be ahead of the
         -- reader's current position. In that case an incremental XPointer
         -- range would be empty/reversed; use the current chapter context.
         local stale_cached_position = false
-        if first_missing_page and first_missing_page >= end_page_analysis then
+        if not is_repair_mode and first_missing_page and first_missing_page >= end_page_analysis then
             if is_silent then
                 self:log("XRayPlugin: Silent fetch aborted - current page already covered (last_fetch_page="
                     .. tostring(first_missing_page) .. ", end_page=" .. tostring(end_page_analysis) .. ")")
@@ -1523,7 +1536,7 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
     end
     
     local s = self.ai_helper and self.ai_helper.settings or {}
-    updated_data.timeline_event_len = s.timeline_event_len or 80
+    updated_data.timeline_event_len = s.timeline_event_len or 200
 
     if is_anthology and current_story then
         updated_data.story_fetch_state = updated_data.story_fetch_state or {}
@@ -2366,6 +2379,9 @@ function M:fetchAuthorInfo()
                     self.book_type = author_data.book_type
                 end
                 cache.images = (self.images and #self.images > 0 and self.images) or cache.images or (self.book_data and self.book_data.images)
+                cache.timeline_event_len = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.timeline_event_len) or cache.timeline_event_len or 200
+                cache.last_fetch_page = self.book_data and self.book_data.last_fetch_page
+                cache.story_fetch_state = self.book_data and self.book_data.story_fetch_state
                 
                 self.cache_manager:asyncSaveCache(doc_file, cache)
                 self:showAuthorInfo()
@@ -2622,6 +2638,9 @@ function M:mergeSeriesContext(cache_data, series_info, book_text, skip_save)
             cache.terms = self.terms
             cache.timeline = self.timeline
             cache.images = (self.images and #self.images > 0 and self.images) or cache.images or (self.book_data and self.book_data.images)
+            cache.timeline_event_len = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.timeline_event_len) or cache.timeline_event_len or 200
+            cache.last_fetch_page = self.book_data and self.book_data.last_fetch_page
+            cache.story_fetch_state = self.book_data and self.book_data.story_fetch_state
             self.cache_manager:asyncSaveCache(book_path, cache)
             self.book_data = cache
         end
@@ -2980,6 +2999,9 @@ function M:checkpointHorizonScan()
     cache.book_title = cache.book_title or (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps().title)
     cache.book_author = cache.book_author or (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps().authors)
     cache.images = (self.images and #self.images > 0 and self.images) or cache.images or (self.book_data and self.book_data.images)
+    cache.timeline_event_len = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.timeline_event_len) or cache.timeline_event_len or 200
+    cache.last_fetch_page = self.book_data and self.book_data.last_fetch_page
+    cache.story_fetch_state = self.book_data and self.book_data.story_fetch_state
 
     self.cache_manager:asyncSaveCache(doc_file, cache)
     self:log(string.format("XRayPlugin: Checkpoint saved - Cache totals: %d characters, %d locations, %d terms, %d timeline events.",
@@ -3593,19 +3615,26 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
 
         local already_has_ev = false
         local norm_ev_title = self.normalizeChapterName and self:normalizeChapterName(ev_title) or ev_title:lower()
+        local is_virtual_seg = chapter and (chapter.is_virtual or chapter.is_virtual_segment)
         for _, ev in ipairs(self.timeline) do
             local story_match = not is_anthology or not ch_story_id or (ev.story_id or (self.resolveEntityStory and self:resolveEntityStory(ev))) == ch_story_id
             local norm_existing = self.normalizeChapterName and self:normalizeChapterName(ev.chapter or "") or (ev.chapter or ""):lower()
             local same_chapter = (norm_existing ~= "" and norm_existing == norm_ev_title)
             local same_index = (ev.chapter_index and chapter_idx and ev.chapter_index == chapter_idx)
             local same_page = (ev.page and ch_page and tonumber(ev.page) == tonumber(ch_page))
+            local page_mismatch = (ev.page and ch_page and tonumber(ev.page) ~= tonumber(ch_page))
 
-            if story_match and (same_index or (same_chapter and same_page) or (ev.chapter == ev_title and (same_page or same_index))) then
+            local is_distinct_virtual = is_virtual_seg or (page_mismatch and norm_existing ~= norm_ev_title)
+            if story_match and not is_distinct_virtual and (same_index or (same_chapter and same_page) or (ev.chapter == ev_title and (same_page or same_index))) then
                 already_has_ev = true
                 ev.event = ev_text
                 ev.chapter = ev_title
                 if ch_page and not ev.page then ev.page = ch_page end
                 if chapter_idx and not ev.chapter_index then ev.chapter_index = chapter_idx end
+                break
+            elseif story_match and same_chapter and same_page then
+                already_has_ev = true
+                ev.event = ev_text
                 break
             end
         end
@@ -3630,8 +3659,15 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
     local unique_id = ch_title .. "_" .. tostring(ch_page)
     self.chapters_fetched[unique_id] = true
 
+    local ch_end_page = tonumber(chapter and chapter.end_page) or ch_page
+    local record_page = ch_end_page or ch_page
+
+    self.book_data = self.book_data or {}
+    if record_page and (not self.book_data.last_fetch_page or record_page > self.book_data.last_fetch_page) then
+        self.book_data.last_fetch_page = record_page
+    end
+
     if is_anthology and ch_story_id then
-        self.book_data = self.book_data or {}
         self.book_data.story_fetch_state = self.book_data.story_fetch_state or {}
         local st_state = self.book_data.story_fetch_state[ch_story_id] or {
             story_id = ch_story_id,
@@ -3639,8 +3675,8 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
         }
         st_state.story_id = ch_story_id
         st_state.story_title = ch_story_title or st_state.story_title
-        if ch_page and (not st_state.last_fetch_page or ch_page > st_state.last_fetch_page) then
-            st_state.last_fetch_page = ch_page
+        if record_page and (not st_state.last_fetch_page or record_page > st_state.last_fetch_page) then
+            st_state.last_fetch_page = record_page
         end
         if chapter_idx and (not st_state.last_fetch_chapter or chapter_idx > st_state.last_fetch_chapter) then
             st_state.last_fetch_chapter = chapter_idx
@@ -3874,6 +3910,10 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                     end
                 end
 
+                local doc_pages = (self.ui and self.ui.document and self.ui.document.getPageCount and self.ui.document:getPageCount())
+                local cand_end_page = candidate.end_page or (next_chapter and next_chapter.page and (next_chapter.page - 1)) or doc_pages or candidate.page
+                candidate.end_page = cand_end_page
+
                 local ch_text = ChapterAnalyzer:getSingleChapterText(self.ui, candidate, next_chapter, nil, 50000)
                 if not ch_text or #ch_text < 100 then
                     self:log("XRayPlugin: Chapter text empty or too short (<100 chars), skipping: " .. tostring(candidate.title))
@@ -3906,7 +3946,7 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                         total_parts = candidate.total_parts,
                         is_virtual_segment = candidate.is_virtual_segment,
                         page = candidate.page,
-                        end_page = candidate.end_page,
+                        end_page = cand_end_page,
                         xpointer = candidate.xpointer,
                         toc_index = candidate.toc_index or cand_idx,
                         depth = candidate.depth,

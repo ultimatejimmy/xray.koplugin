@@ -774,4 +774,175 @@ describe("Anthology Story Groups & Recurring Entities", function()
             assert.is_true(found_collapsed_on_page)
         end)
     end)
+
+    describe("Anthology Timeline & Sequential Catch-Up Fixes", function()
+        local fetch_mod = require("xray_fetch")
+
+        it("does not wipe timeline on incremental or anthology fetch when timeline_event_len differs or is nil", function()
+            local p = createMockPlugin(mock_ui, {
+                timeline = {
+                    { chapter = "ARABY", event = "Boy goes to bazaar.", chapter_index = 3, page = 43 },
+                    { chapter = "EVELINE", event = "Girl considers leaving.", chapter_index = 4, page = 55 },
+                },
+                timeline_event_len = nil,
+            })
+            p.timeline = {
+                { chapter = "ARABY", event = "Boy goes to bazaar.", chapter_index = 3, page = 43 },
+                { chapter = "EVELINE", event = "Girl considers leaving.", chapter_index = 4, page = 55 },
+            }
+            p.ai_helper = {
+                settings = { timeline_event_len = 200 }
+            }
+            p.log = function() end
+
+            local cached = p.book_data
+            local s = p.ai_helper and p.ai_helper.settings or {}
+            local current_len = s.timeline_event_len or 200
+            local cached_len = cached.timeline_event_len
+            local is_update = true
+            local is_silent = true
+            local batch_end_page = 154
+            local is_anthology = true
+            local is_full_replacement = not is_update and not is_silent and not batch_end_page and not is_anthology
+
+            if is_full_replacement and cached_len and current_len > cached_len then
+                p.timeline = {}
+            end
+
+            assert.are.equal(2, #p.timeline)
+            assert.are.equal("ARABY", p.timeline[1].chapter)
+        end)
+
+        it("updates last_fetch_page to chapter end_page and preserves virtual segments in mergeSequentialChapterDelta", function()
+            local p = createMockPlugin(mock_ui, {
+                story_fetch_state = {},
+            })
+            for k, v in pairs(fetch_mod) do p[k] = v end
+            p.log = function() end
+            p.checkpointHorizonScan = function() end
+            p.resolveEntityStory = function(self, item) return item.story_id end
+
+            p.timeline = {}
+
+            -- 1. Merge regular chapter with end_page
+            local ch1 = {
+                title = "COUNTERPARTS",
+                page = 154,
+                end_page = 178,
+                toc_index = 9,
+                story_id = "toc_9",
+                story_title = "COUNTERPARTS",
+            }
+            local delta1 = {
+                timeline_event = { chapter = "COUNTERPARTS", event = "Farrington gets reprimanded.", chapter_index = 9, page = 154 }
+            }
+            p:mergeSequentialChapterDelta(delta1, ch1, ch1.toc_index)
+
+            assert.are.equal(178, p.book_data.last_fetch_page)
+            assert.is_not_nil(p.book_data.story_fetch_state["toc_9"])
+            assert.are.equal(178, p.book_data.story_fetch_state["toc_9"].last_fetch_page)
+            assert.are.equal(1, #p.timeline)
+
+            -- 2. Merge virtual segments: THE DEAD (1/2) and THE DEAD (2/2) sharing toc_index 17
+            local ch_v1 = {
+                title = "THE DEAD (1/2)",
+                page = 328,
+                end_page = 376,
+                toc_index = 17,
+                is_virtual = true,
+                story_id = "toc_17",
+                story_title = "THE DEAD",
+            }
+            local delta_v1 = {
+                timeline_event = { chapter = "THE DEAD (1/2)", event = "Gabriel arrives at annual dance.", chapter_index = 17, page = 328 }
+            }
+            p:mergeSequentialChapterDelta(delta_v1, ch_v1, ch_v1.toc_index)
+            assert.are.equal(2, #p.timeline)
+
+            local ch_v2 = {
+                title = "THE DEAD (2/2)",
+                page = 377,
+                end_page = 420,
+                toc_index = 17,
+                is_virtual = true,
+                story_id = "toc_17",
+                story_title = "THE DEAD",
+            }
+            local delta_v2 = {
+                timeline_event = { chapter = "THE DEAD (2/2)", event = "Gretta remembers Michael Furey.", chapter_index = 17, page = 377 }
+            }
+            p:mergeSequentialChapterDelta(delta_v2, ch_v2, ch_v2.toc_index)
+
+            -- Both virtual segment timeline events must be preserved!
+            assert.are.equal(3, #p.timeline)
+            assert.are.equal("THE DEAD (1/2)", p.timeline[2].chapter)
+            assert.are.equal("THE DEAD (2/2)", p.timeline[3].chapter)
+            assert.are.equal(420, p.book_data.story_fetch_state["toc_17"].last_fetch_page)
+        end)
+
+        it("preserves sub-chapter indices in multi-chapter stories in retagEntitiesByStory", function()
+            local p = createMockPlugin(mock_ui, {
+                book_mode_override = "anthology",
+            })
+            local story_info = {
+                story_id = "toc_5",
+                story_title = "A Study in Scarlet",
+                start_toc_idx = 5,
+                end_toc_idx = 8,
+                start_page = 50,
+                end_page = 150,
+            }
+            p.chapter_analyzer = {
+                getStoryMap = function()
+                    return {
+                        by_id = { ["toc_5"] = story_info },
+                        stories = { story_info },
+                    }
+                end
+            }
+            p.resolveEntityStory = function() return "toc_5", "A Study in Scarlet" end
+
+            p.timeline = {
+                { chapter = "Chapter 2", event = "Science of deduction", chapter_index = 6, story_id = "toc_5" },
+                { chapter = "Orphan Chapter", event = "Lost event", chapter_index = 1, story_id = "toc_5" },
+            }
+
+            p:retagEntitiesByStory()
+
+            -- Chapter 2 is within [5, 8], so its chapter_index 6 must NOT be collapsed to 5!
+            assert.are.equal(6, p.timeline[1].chapter_index)
+            -- Orphan Chapter was 1 (outside [5, 8]), so it is realigned to start_toc_idx 5
+            assert.are.equal(5, p.timeline[2].chapter_index)
+        end)
+
+        it("checkpointHorizonScan saves timeline_event_len, last_fetch_page, and story_fetch_state", function()
+            local saved_cache = nil
+            local p = {
+                ui = mock_ui,
+                book_data = {
+                    last_fetch_page = 178,
+                    story_fetch_state = { ["toc_9"] = { last_fetch_page = 178 } }
+                },
+                timeline = { { chapter = "COUNTERPARTS", event = "Test" } },
+                characters = {},
+                locations = {},
+                terms = {},
+                ai_helper = { settings = { timeline_event_len = 200 } },
+                cache_manager = {
+                    asyncSaveCache = function(self, path, cache)
+                        saved_cache = cache
+                    end
+                },
+                checkpointHorizonScan = fetch_mod.checkpointHorizonScan,
+                log = function() end,
+            }
+
+            p:checkpointHorizonScan()
+
+            assert.is_not_nil(saved_cache)
+            assert.are.equal(200, saved_cache.timeline_event_len)
+            assert.are.equal(178, saved_cache.last_fetch_page)
+            assert.is_not_nil(saved_cache.story_fetch_state["toc_9"])
+        end)
+    end)
 end)

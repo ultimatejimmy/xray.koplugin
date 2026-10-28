@@ -381,9 +381,45 @@ describe("xray_horizon_spec", function()
             assert.are.equal(2, shanker.states[1].chapter_index)
             assert.are.equal("Crucial Ally", shanker.states[2].role)
             assert.are.equal(3, shanker.states[2].chapter_index)
+
+            -- Batch responses carry timeline_event as a plain string (#157)
             assert.are.equal(2, #plugin.timeline)
+            assert.are.equal("Chapter 2", plugin.timeline[1].chapter)
             assert.are.equal("Event in chapter 2", plugin.timeline[1].event)
+            assert.are.equal(2, plugin.timeline[1].chapter_index)
+            assert.are.equal(40, plugin.timeline[1].page)
+            assert.are.equal("Chapter 3", plugin.timeline[2].chapter)
             assert.are.equal("Event in chapter 3", plugin.timeline[2].event)
+        end)
+
+        it("should not duplicate a string timeline_event when a chapter is merged twice", function()
+            local ch = { toc_index = 4, title = "Chapter 4", page = 90 }
+            plugin:mergeSequentialChapterDelta({ timeline_event = "Event in chapter 4" }, ch, 4, true)
+            plugin:mergeSequentialChapterDelta({ timeline_event = "Event in chapter 4" }, ch, 4, true)
+
+            assert.are.equal(1, #plugin.timeline)
+            assert.are.equal("Event in chapter 4", plugin.timeline[1].event)
+        end)
+
+        it("should ignore empty or malformed timeline_event values", function()
+            plugin:mergeSequentialChapterDelta({ timeline_event = "" }, { toc_index = 5, title = "Chapter 5", page = 100 }, 5, true)
+            plugin:mergeSequentialChapterDelta({ timeline_event = 42 }, { toc_index = 6, title = "Chapter 6", page = 110 }, 6, true)
+            plugin:mergeSequentialChapterDelta({ timeline_event = { chapter = "Chapter 7" } }, { toc_index = 7, title = "Chapter 7", page = 120 }, 7, true)
+            plugin:mergeSequentialChapterDelta({ timeline_event = { event = "" } }, { toc_index = 8, title = "Chapter 8", page = 130 }, 8, true)
+            plugin:mergeSequentialChapterDelta({ timeline_event = { event = 5 } }, { toc_index = 9, title = "Chapter 9", page = 140 }, 9, true)
+
+            assert.are.equal(0, #plugin.timeline)
+        end)
+
+        it("should title a string timeline_event with the chapter title and keep an object event's own chapter", function()
+            plugin:mergeSequentialChapterDelta({ timeline_event = "String event" }, { toc_index = 10, title = "The Return", page = 150 }, 10, true)
+            plugin:mergeSequentialChapterDelta({ timeline_event = { chapter = "Interlude", event = "Object event" } }, { toc_index = 11, title = "Chapter 11", page = 160 }, 11, true)
+
+            assert.are.equal(2, #plugin.timeline)
+            assert.are.equal("The Return", plugin.timeline[1].chapter)
+            assert.are.equal("String event", plugin.timeline[1].event)
+            assert.are.equal("Interlude", plugin.timeline[2].chapter)
+            assert.are.equal("Object event", plugin.timeline[2].event)
         end)
     end)
 
