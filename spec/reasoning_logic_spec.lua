@@ -39,9 +39,22 @@ describe("AI Reasoning Logic", function()
             local body = json.decode(requests[1].body)
             
             assert.is_nil(body.thinking)
-            assert.are.equal(8192, body.max_tokens)
+            assert.is_nil(body.output_config)
+            assert.are.equal(16000, body.max_tokens)
             assert.are.equal(1, #body.messages)
             assert.are.equal("user", body.messages[1].role)
+        end)
+
+        it("should default to 8192 max_tokens for legacy Claude when reasoning is unset", function()
+            AIHelper.settings.primary_ai = { provider = "claude", model = "claude-3-5-sonnet" }
+            AIHelper.settings.reasoning_effort = nil
+
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local body = json.decode(requests[1].body)
+
+            assert.is_nil(body.thinking)
+            assert.is_nil(body.output_config)
+            assert.are.equal(8192, body.max_tokens)
         end)
 
         it("should include response_format=json_object for OpenAI when reasoning is unset", function()
@@ -146,7 +159,7 @@ describe("AI Reasoning Logic", function()
             assert.is_nil(body.response_format)
         end)
 
-        it("should include thinking block for Claude and omit assistant prefill when reasoning is set", function()
+        it("should include adaptive thinking block for Claude 5.5 when reasoning is set", function()
             AIHelper.settings.primary_ai = { provider = "claude", model = "claude-sonnet-5-5" }
             AIHelper.settings.reasoning_effort = "medium"
             
@@ -154,14 +167,16 @@ describe("AI Reasoning Logic", function()
             local body = json.decode(requests[1].body)
             
             assert.is_not_nil(body.thinking)
-            assert.are.equal("enabled", body.thinking.type)
-            assert.are.equal(4096, body.thinking.budget_tokens)
-            assert.are.equal(12096, body.max_tokens)
+            assert.are.equal("adaptive", body.thinking.type)
+            assert.is_nil(body.thinking.budget_tokens)
+            assert.is_not_nil(body.output_config)
+            assert.are.equal("medium", body.output_config.effort)
+            assert.are.equal(16000, body.max_tokens)
             assert.are.equal(1, #body.messages)
             assert.are.equal("user", body.messages[1].role)
         end)
 
-        it("should cap thinking budget for claude-haiku-5-5", function()
+        it("should use adaptive thinking and 16000 max_tokens for claude-haiku-5-5 without legacy budget cap", function()
             AIHelper.settings.primary_ai = { provider = "claude", model = "claude-haiku-5-5" }
             AIHelper.settings.reasoning_effort = "high"
             
@@ -169,9 +184,39 @@ describe("AI Reasoning Logic", function()
             local body = json.decode(requests[1].body)
             
             assert.is_not_nil(body.thinking)
+            assert.are.equal("adaptive", body.thinking.type)
+            assert.is_nil(body.thinking.budget_tokens)
+            assert.is_not_nil(body.output_config)
+            assert.are.equal("high", body.output_config.effort)
+            assert.are.equal(16000, body.max_tokens)
+        end)
+
+        it("should cap thinking budget for legacy claude-haiku-4-5", function()
+            AIHelper.settings.primary_ai = { provider = "claude", model = "claude-haiku-4-5" }
+            AIHelper.settings.reasoning_effort = "high"
+
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local body = json.decode(requests[1].body)
+
+            assert.is_not_nil(body.thinking)
             assert.are.equal("enabled", body.thinking.type)
             assert.are.equal(2000, body.thinking.budget_tokens)
             assert.are.equal(8192, body.max_tokens)
+            assert.is_nil(body.output_config)
+        end)
+
+        it("should scale max_tokens for legacy claude-3-7-sonnet with thinking budget", function()
+            AIHelper.settings.primary_ai = { provider = "claude", model = "claude-3-7-sonnet" }
+            AIHelper.settings.reasoning_effort = "medium"
+
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local body = json.decode(requests[1].body)
+
+            assert.is_not_nil(body.thinking)
+            assert.are.equal("enabled", body.thinking.type)
+            assert.are.equal(4096, body.thinking.budget_tokens)
+            assert.are.equal(12096, body.max_tokens)
+            assert.is_nil(body.output_config)
         end)
     end)
 
@@ -195,6 +240,80 @@ describe("AI Reasoning Logic", function()
             assert.are.equal("high", captured.reasoning_effort)
             assert.are.equal(65000, captured.max_completion_tokens)
             assert.is_nil(captured.response_format)
+        end)
+    end)
+
+    describe("callClaude payload", function()
+        it("should serialize claude-sonnet-5-5 using adaptive thinking without budget_tokens", function()
+            local original = AIHelper.makeRequest
+            local captured
+            AIHelper.makeRequest = function(_, _, _, payload)
+                captured = json.decode(payload)
+                return nil, 400, "{}"
+            end
+            AIHelper.settings.reasoning_effort = "high"
+
+            local ok = pcall(function()
+                AIHelper:callClaude("Prompt", { api_key = "test_key" }, "claude-sonnet-5-5")
+            end)
+            AIHelper.makeRequest = original
+            assert.is_true(ok)
+            assert.are.equal("claude-sonnet-5-5", captured.model)
+            assert.are.equal("adaptive", captured.thinking.type)
+            assert.is_nil(captured.thinking.budget_tokens)
+            assert.are.equal("high", captured.output_config.effort)
+            assert.are.equal(16000, captured.max_tokens)
+        end)
+
+        it("should serialize legacy claude-haiku-4-5 using enabled thinking with budget cap", function()
+            local original = AIHelper.makeRequest
+            local captured
+            AIHelper.makeRequest = function(_, _, _, payload)
+                captured = json.decode(payload)
+                return nil, 400, "{}"
+            end
+            AIHelper.settings.reasoning_effort = "high"
+
+            local ok = pcall(function()
+                AIHelper:callClaude("Prompt", { api_key = "test_key" }, "claude-haiku-4-5")
+            end)
+            AIHelper.makeRequest = original
+            assert.is_true(ok)
+            assert.are.equal("claude-haiku-4-5", captured.model)
+            assert.are.equal("enabled", captured.thinking.type)
+            assert.are.equal(2000, captured.thinking.budget_tokens)
+            assert.are.equal(8192, captured.max_tokens)
+            assert.is_nil(captured.output_config)
+        end)
+
+        it("should automatically retry with adaptive format when 400 thinking.type.enabled is returned", function()
+            local original = AIHelper.makeRequest
+            local request_count = 0
+            local payloads = {}
+            AIHelper.makeRequest = function(_, _, _, payload)
+                request_count = request_count + 1
+                payloads[#payloads + 1] = json.decode(payload)
+                if request_count == 1 then
+                    return nil, 400, '{"type":"error","error":{"type":"invalid_request_error","message":"\\"thinking.type.enabled\\" is not supported for this model. Use \\"thinking.type.adaptive\\" and \\"output_config.effort\\" to control thinking behavior."}}'
+                else
+                    return true, 200, '{"content":[{"type":"text","text":"{\\"characters\\":[]}"}]}'
+                end
+            end
+            AIHelper.settings.reasoning_effort = "medium"
+
+            -- Test with an unclassified/custom model that triggered legacy enabled format
+            local ok, res = pcall(function()
+                return AIHelper:callClaude("Prompt", { api_key = "test_key" }, "custom-claude-unknown")
+            end)
+            AIHelper.makeRequest = original
+            assert.is_true(ok, tostring(res))
+            assert.are.equal(2, request_count)
+            assert.are.equal("enabled", payloads[1].thinking.type)
+            assert.are.equal("adaptive", payloads[2].thinking.type)
+            assert.are.equal("medium", payloads[2].output_config.effort)
+            assert.are.equal(16000, payloads[2].max_tokens)
+            assert.is_not_nil(res)
+            assert.is_table(res.characters)
         end)
     end)
 

@@ -187,6 +187,61 @@ local function is_openai_reasoning_model(model)
     return (major and major >= 5) or model:match("^o%d") ~= nil
 end
 
+local function is_claude_adaptive_model(model)
+    if not model then return false end
+    local m = model:lower()
+    -- Legacy 3.x models
+    if m:find("claude%-3") or m:find("/claude%-3") or m:find("^3[%.%-]") then
+        return false
+    end
+    -- 4.5 models (e.g. claude-haiku-4-5, claude-sonnet-4-5)
+    if m:find("4[%.-]5") then
+        return false
+    end
+    -- 4.6+ models (e.g. claude-sonnet-4-6, claude-opus-4-6)
+    if m:find("4[%.-][6-9]") then
+        return true
+    end
+    -- 5.x+ models (e.g. claude-sonnet-5, claude-sonnet-5-5, claude-haiku-5-5, claude-6, etc.)
+    local v_major = m:match("%-(%d+)[%.-]%d+") or m:match("%-(%d+)")
+    if v_major and tonumber(v_major) and tonumber(v_major) >= 5 then
+        return true
+    end
+    return false
+end
+AIHelper.isClaudeAdaptiveModel = is_claude_adaptive_model
+
+local function configure_claude_payload(req_body, model, current_effort, is_reasoning, logger)
+    local is_adaptive = is_claude_adaptive_model(model)
+    if is_adaptive then
+        req_body.max_tokens = math.max(req_body.max_tokens or 8192, 16000)
+        if current_effort then
+            req_body.thinking = { type = "adaptive" }
+            req_body.output_config = { effort = current_effort }
+        end
+    else
+        -- Extended thinking for older Claude models (e.g., 3.7, 4.5)
+        if current_effort and (model:find("sonnet") or model:find("opus") or model:find("haiku") or model:find("claude")) then
+            local effort_map = { low = 2048, medium = 4096, high = 8192 }
+            local budget = effort_map[current_effort] or 4096
+            if model:find("haiku") and budget > 2000 then
+                if logger then
+                    logger(string.format("AIHelper: Legacy Haiku detected — capping thinking budget from %d to 2000 (haiku max_tokens=8192)", budget))
+                end
+                budget = 2000
+                req_body.max_tokens = 8192
+            else
+                req_body.max_tokens = budget + 8000
+            end
+            req_body.thinking = { type = "enabled", budget_tokens = budget }
+        end
+    end
+
+    if is_reasoning then
+        req_body.max_tokens = 32000
+    end
+end
+
 function AIHelper:getChatGPTTokenConfig(model)
     -- OpenAI reasoning models (o1, o3) and newer generations (gpt-5+) REQUIRE max_completion_tokens.
     -- Modern flagship models (gpt-4o, gpt-4o-mini) also support it.
@@ -350,53 +405,20 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 
                 local system_instruction_text = (self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY.") .. " You MUST output strictly valid JSON, starting with '{'."
                 
-                local is_thinking = false
-                local thinking_budget = nil
-                if model:find("sonnet") or model:find("opus") or model:find("haiku") then
-                    local current_effort = self.settings and self.settings.reasoning_effort
-                    if current_effort then
-                        local effort_map = { low = 2048, medium = 4096, high = 8192 }
-                        local budget = effort_map[current_effort] or 4096
-                        -- Haiku has a hard max_tokens limit of 8192; silently cap budget to leave room for output.
-                        -- Claude thinking tokens count against max_tokens, so max_tokens must be > budget_tokens.
-                        if model:find("haiku") and budget > 2000 then
-                            self:log(string.format("AIHelper: Haiku detected — capping thinking budget from %d to 2000 (haiku max_tokens=8192)", budget))
-                            budget = 2000
-                        end
-                        thinking_budget = budget
-                        is_thinking = true
-                    end
-                end
-
                 local claude_messages = {
                     { role = "user", content = prompt }
                 }
 
                 local req_body = {
                     model = model,
-                    max_tokens = 8192,  -- default for non-thinking models; overridden below
+                    max_tokens = 8192,
                     system = system_instruction_text,
                     messages = claude_messages
                 }
 
-                if is_thinking then
-                    if model:find("haiku") then
-                        req_body.max_tokens = 8192
-                    else
-                        -- For sonnet/opus: dynamically scale max_tokens to always leave 8000 tokens for the JSON response.
-                        -- Without this, at 'high' effort budget_tokens==max_tokens leaving zero room for output.
-                        local output_reserve = 8000
-                        req_body.max_tokens = thinking_budget + output_reserve
-                    end
-                    -- Claude extended thinking configuration
-                    req_body.thinking = { type = "enabled", budget_tokens = thinking_budget }
-                end
-                
-                -- Per-slot "Is Reasoning Model" setting: raise token ceiling
+                local current_effort = self.settings and self.settings.reasoning_effort
                 local is_reasoning = self.settings and self.settings[ai.provider .. "_is_reasoning"]
-                if is_reasoning then
-                    req_body.max_tokens = 32000
-                end
+                configure_claude_payload(req_body, model, current_effort, is_reasoning, function(msg) self:log(msg) end)
                 if is_openrouter then
                     req_body.stream = true
                     headers["Accept"] = "text/event-stream"
@@ -781,6 +803,32 @@ function AIHelper:makeRequestAsync(request_params, result_file)
                 if code_num == 429 or code_num == 503 then
                     self:log("AIHelper Child: Transient error " .. tostring(code_num) .. " — pacing fallback (2s)")
                     socket.sleep(2)
+                end
+
+                if code_num == 400 and response_text and response_text:find("thinking%.type%.enabled") then
+                    self:log("AIHelper Child: Anthropic rejected thinking.type.enabled — retrying with adaptive thinking format")
+                    local json_req = require("json")
+                    local s, body_tbl = pcall(json_req.decode, req.body or "")
+                    if s and type(body_tbl) == "table" then
+                        local effort = self.settings and self.settings.reasoning_effort or "medium"
+                        body_tbl.thinking = { type = "adaptive" }
+                        body_tbl.output_config = { effort = effort }
+                        body_tbl.max_tokens = math.max(body_tbl.max_tokens or 8192, 16000)
+                        local new_body = json_req.encode(body_tbl)
+                        local retry_body = {}
+                        local retry_request = {
+                            url = req.url,
+                            method = "POST",
+                            headers = req.headers or {},
+                            source = ltn12_req.source.string(new_body),
+                            sink = socketutil_req.table_sink(retry_body)
+                        }
+                        ok, code, response_headers, status = http_req.request(retry_request)
+                        response_text = table.concat(retry_body)
+                        retry_body = nil
+                        code_num = tonumber(code)
+                        self:log("AIHelper Child: Anthropic retry finished with code " .. tostring(code))
+                    end
                 end
 
                 if code_num == 200 then
@@ -1873,6 +1921,9 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
         if context.book_type then
             extra_context = extra_context .. "\n\nCRITICAL: The book type is already known to be: " .. context.book_type .. ". You MUST declare \"book_type\" as \"" .. context.book_type .. "\" at the JSON root and follow the extraction rules for " .. context.book_type .. " books."
         end
+        if context.story_title and context.story_title ~= "" then
+            extra_context = extra_context .. "\n\nCRITICAL ANTHOLOGY / SHORT STORY INSTRUCTION:\nThis book is a collection of short stories / anthology. The current extraction is strictly for the story titled \"" .. context.story_title .. "\". Extract entities, terms, and timeline events EXCLUSIVELY from this story. Do not merge with or reference other stories in the collection."
+        end
         -- Merge mode: tell AI what we already know
         local has_merge_data = false
         local _merge_char_len = (self.settings and self.settings.char_desc_len) or 200
@@ -2241,22 +2292,6 @@ function AIHelper:callClaude(prompt, config, current_model)
     
     local system_instruction_text = (self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY.") .. " You MUST output strictly valid JSON, starting with '{'."
     
-    local is_thinking = false
-    local thinking_budget = nil
-    -- Support thinking config for Claude models if enabled/supported
-    if model:find("sonnet") or model:find("opus") or model:find("haiku") then
-        local current_effort = self.settings and self.settings.reasoning_effort
-        if current_effort then
-            local effort_map = { low = 2048, medium = 4096, high = 8192 }
-            local budget = effort_map[current_effort] or 4096
-            if model:find("haiku") and budget > 2000 then
-                budget = 2000
-            end
-            thinking_budget = budget
-            is_thinking = true
-        end
-    end
-
     local claude_messages = {
         { role = "user", content = prompt }
     }
@@ -2268,15 +2303,6 @@ function AIHelper:callClaude(prompt, config, current_model)
         messages = claude_messages
     }
 
-    if is_thinking then
-        if model:find("haiku") then
-            req_body.max_tokens = 8192
-        else
-            req_body.max_tokens = thinking_budget + 8000
-        end
-        req_body.thinking = { type = "enabled", budget_tokens = thinking_budget }
-    end
-    
     local provider_id = nil
     for p_id, p_config in pairs(self.providers) do
         if p_config == config then
@@ -2284,13 +2310,10 @@ function AIHelper:callClaude(prompt, config, current_model)
             break
         end
     end
-    
-    if provider_id then
-        local is_reasoning = self.settings and self.settings[provider_id .. "_is_reasoning"]
-        if is_reasoning then
-            req_body.max_tokens = 32000
-        end
-    end
+
+    local current_effort = self.settings and self.settings.reasoning_effort
+    local is_reasoning = provider_id and self.settings and self.settings[provider_id .. "_is_reasoning"]
+    configure_claude_payload(req_body, model, current_effort, is_reasoning, function(msg) self:log(msg) end)
     
     local request_body = json.encode(req_body)
     self:log("AIHelper: Sending Anthropic request (" .. #request_body .. " bytes)")
@@ -2320,6 +2343,18 @@ function AIHelper:callClaude(prompt, config, current_model)
     local code_num = tonumber(code)
     self:log("AIHelper: Anthropic Response Code: " .. tostring(code_num))
     self:log("AIHelper: Anthropic Response received (" .. (response_text and #response_text or 0) .. " bytes)")
+    
+    if code_num == 400 and response_text and response_text:find("thinking%.type%.enabled") then
+        self:log("AIHelper: Anthropic rejected thinking.type.enabled — retrying with adaptive thinking format")
+        local effort = self.settings and self.settings.reasoning_effort or "medium"
+        req_body.thinking = { type = "adaptive" }
+        req_body.output_config = { effort = effort }
+        req_body.max_tokens = math.max(req_body.max_tokens or 8192, 16000)
+        request_body = json.encode(req_body)
+        ok, code, response_text = self:makeRequest(url, headers, request_body)
+        code_num = tonumber(code)
+        self:log("AIHelper: Anthropic Retry Response Code: " .. tostring(code_num))
+    end
     
     if code_num == 200 and response_text then
         local success, data = pcall(json.decode, response_text)
@@ -2725,33 +2760,44 @@ function AIHelper:setUnifiedModel(type, provider, model)
     return true
 end
 
-function AIHelper:findDuplicates(title, author, entities, entity_type_label, reading_percent, book_text)
-    if not self.prompts then self:loadLanguage() end
-    local template = self.prompts.find_duplicates
-    if not template then return nil, "no_prompt", "find_duplicates prompt missing" end
-
-    -- Build compact list string
+function AIHelper:buildDuplicateListText(entities, scope_story_id)
     local lines = {}
-    for _, e in ipairs(entities) do
+    local has_out_of_scope = false
+    for _, e in ipairs(entities or {}) do
         local line = "- " .. (e.name or "?")
-        -- Include aliases if present (characters)
+        if scope_story_id and e.story_id and e.story_id ~= scope_story_id then
+            has_out_of_scope = true
+            line = line .. " [from: " .. (e.story_title or "another story") .. "]"
+        end
         if e.aliases and type(e.aliases) == "table" and #e.aliases > 0 then
             line = line .. " (aka: " .. table.concat(e.aliases, ", ") .. ")"
         end
-        -- Include a truncated description for context
         local desc = e.description or e.biography or ""
         if #desc > 0 then
             line = line .. ": " .. desc:sub(1, 100)
         end
         table.insert(lines, line)
     end
+    return table.concat(lines, "\n"), has_out_of_scope
+end
 
+function AIHelper:findDuplicates(title, author, entities, entity_type_label, reading_percent, book_text, scope_story_id)
+    if not self.prompts then self:loadLanguage() end
+    local template = self.prompts.find_duplicates
+    if not template then return nil, "no_prompt", "find_duplicates prompt missing" end
+
+    local list_text, has_out_of_scope = self:buildDuplicateListText(entities, scope_story_id)
     local p = reading_percent or 100
     local prompt = string.format(template,
         title or "Unknown", author or "Unknown",
         p, entity_type_label or "entities",
-        table.concat(lines, "\n"), p
+        list_text, p
     )
+
+    if has_out_of_scope then
+        prompt = prompt .. "\n\nNOTE: Entries marked [from: ...] are recurring entities from earlier stories in this collection. Pair one with a current-story entry only if the text clearly refers to the same entity."
+    end
+
     prompt = self:sanitize_utf8(prompt)
 
     if book_text and #book_text > 0 then
@@ -2765,31 +2811,23 @@ function AIHelper:findDuplicates(title, author, entities, entity_type_label, rea
     return nil, err_code or "error_parse", err_msg or "No duplicate_pairs in response"
 end
 
-function AIHelper:findDuplicatesAsync(title, author, entities, entity_type_label, reading_percent, result_file, book_text)
+function AIHelper:findDuplicatesAsync(title, author, entities, entity_type_label, reading_percent, result_file, book_text, scope_story_id)
     if not self.prompts then self:loadLanguage() end
     local template = self.prompts.find_duplicates
     if not template then return nil, "no_prompt", "find_duplicates prompt missing" end
 
-    -- Build compact list string
-    local lines = {}
-    for _, e in ipairs(entities) do
-        local line = "- " .. (e.name or "?")
-        if e.aliases and type(e.aliases) == "table" and #e.aliases > 0 then
-            line = line .. " (aka: " .. table.concat(e.aliases, ", ") .. ")"
-        end
-        local desc = e.description or e.biography or ""
-        if #desc > 0 then
-            line = line .. ": " .. desc:sub(1, 100)
-        end
-        table.insert(lines, line)
-    end
-
+    local list_text, has_out_of_scope = self:buildDuplicateListText(entities, scope_story_id)
     local p = reading_percent or 100
     local prompt = string.format(template,
         title or "Unknown", author or "Unknown",
         p, entity_type_label or "entities",
-        table.concat(lines, "\n"), p
+        list_text, p
     )
+
+    if has_out_of_scope then
+        prompt = prompt .. "\n\nNOTE: Entries marked [from: ...] are recurring entities from earlier stories in this collection. Pair one with a current-story entry only if the text clearly refers to the same entity."
+    end
+
     prompt = self:sanitize_utf8(prompt)
 
     if book_text and #book_text > 0 then
@@ -2813,6 +2851,31 @@ function AIHelper:detectBookTypeAsync(title, author, series, description, result
         author or "Unknown",
         series or "None",
         description or "None"
+    )
+    prompt = self:sanitize_utf8(prompt)
+
+    local requests, error_code, error_msg = self:buildComprehensiveRequest(nil, nil, nil, prompt)
+    if not requests then return nil, error_code or "error_build", error_msg or "Failed to build request" end
+
+    local pid = self:makeRequestAsync(requests, result_file)
+    return pid
+end
+
+function AIHelper:detectAnthologyAsync(title, author, subjects, description, toc_summary, result_file)
+    if not self.prompts then self:loadLanguage() end
+    local template = self.prompts and self.prompts.anthology_detect
+    if not template then
+        local en_prompts = require(plugin_path .. "prompts/en")
+        template = en_prompts and en_prompts.anthology_detect
+    end
+    if not template then return nil, "no_prompt", "anthology_detect prompt missing" end
+
+    local prompt = string.format(template,
+        title or "Unknown",
+        author or "Unknown",
+        subjects or "None",
+        description or "None",
+        toc_summary or "None"
     )
     prompt = self:sanitize_utf8(prompt)
 

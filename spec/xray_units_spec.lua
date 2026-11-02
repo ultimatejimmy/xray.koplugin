@@ -1063,5 +1063,110 @@ describe("xray_units", function()
         end)
     end)
 
+    describe("Unit Converter Prompt & Gating (Issue #159)", function()
+        local XRayPlugin = dofile("xray.koplugin/main.lua")
+        local UIManager = require("ui/uimanager")
+
+        it("does not prompt with new feature card when unit converter is disabled", function()
+            local prompt_called = false
+            local scheduled_fn
+            local orig_sched = UIManager.scheduleIn
+            UIManager.scheduleIn = function(self_ui, delay, fn)
+                if delay == 1.5 then
+                    scheduled_fn = fn
+                end
+            end
+
+            local p = setmetatable({
+                destroyed = false,
+                ui = { document = { file = "/test.epub" } },
+                loc = { t = function() return "" end },
+                ai_helper = {
+                    hasApiKey = function() return true end,
+                    settings = {
+                        unit_converter_enabled = false,
+                        unit_new_feature_prompt_seen = false,
+                    }
+                },
+                autoLoadCache = function() end,
+                clearPendingBackgroundFetch = function() end,
+                applyLanguageLogic = function() end,
+                showUnitConverterNewFeatureCard = function()
+                    prompt_called = true
+                end,
+            }, { __index = XRayPlugin })
+
+            p:onReaderReady()
+            if scheduled_fn then scheduled_fn() end
+
+            assert.is_false(prompt_called)
+            UIManager.scheduleIn = orig_sched
+        end)
+
+        it("prompts with new feature card when unit converter is enabled and prompt was not seen", function()
+            local prompt_called = false
+            local scheduled_fn
+            local orig_sched = UIManager.scheduleIn
+            UIManager.scheduleIn = function(self_ui, delay, fn)
+                if delay == 1.5 then
+                    scheduled_fn = fn
+                end
+            end
+
+            local p = setmetatable({
+                destroyed = false,
+                ui = { document = { file = "/test.epub" } },
+                loc = { t = function() return "" end },
+                ai_helper = {
+                    hasApiKey = function() return true end,
+                    settings = {
+                        unit_converter_enabled = true,
+                        unit_new_feature_prompt_seen = false,
+                    }
+                },
+                autoLoadCache = function() end,
+                clearPendingBackgroundFetch = function() end,
+                applyLanguageLogic = function() end,
+                showUnitConverterNewFeatureCard = function()
+                    prompt_called = true
+                end,
+            }, { __index = XRayPlugin })
+
+            p:onReaderReady()
+            if scheduled_fn then scheduled_fn() end
+
+            assert.is_true(prompt_called)
+            UIManager.scheduleIn = orig_sched
+        end)
+
+        it("resets in-memory unit scan state on new book in onReaderReady", function()
+            local orig_sched = UIManager.scheduleIn
+            UIManager.scheduleIn = function() end
+
+            local p = setmetatable({
+                destroyed = false,
+                ui = { document = { file = "/test.epub" } },
+                loc = { t = function() return "" end },
+                ai_helper = {
+                    hasApiKey = function() return true end,
+                    settings = {}
+                },
+                autoLoadCache = function() end,
+                clearPendingBackgroundFetch = function() end,
+                applyLanguageLogic = function() end,
+                unit_xp_matches = { { original = "5 km" } },
+                unit_conversion_boxes = { { x = 10, y = 20 } },
+                last_settings_state = { enabled = true },
+            }, { __index = XRayPlugin })
+
+            p:onReaderReady()
+
+            assert.is_nil(p.unit_xp_matches)
+            assert.is_nil(p.unit_conversion_boxes)
+            assert.is_nil(p.last_settings_state)
+            UIManager.scheduleIn = orig_sched
+        end)
+    end)
+
 end)
 

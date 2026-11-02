@@ -926,11 +926,12 @@ function SeriesManager:syncBookToSeriesCache(slug, index, book_data, book_path, 
 
     if not changed then
         logger.info("SeriesManager: Book " .. tostring(index) .. " already up-to-date in series cache for slug '" .. tostring(slug) .. "' (skipping save)")
-        return true
+        return true, cache_data
     end
 
     logger.info("SeriesManager: Synced Book " .. tostring(index) .. " to series cache for slug '" .. tostring(slug) .. "'")
-    return self:saveSeriesCache(slug, cache_data)
+    local ok = self:saveSeriesCache(slug, cache_data)
+    return ok, cache_data
 end
 
 -- Safely read a Lua cache file returning a table or nil
@@ -956,13 +957,30 @@ function SeriesManager:findLocalBookXRay(series_info, target_index, current_book
 
     local slug = series_info.slug
 
-    -- Priority 1: Check existing SeriesCache for an entry marked as local_xray
+    -- Priority 1: Check existing SeriesCache for an entry with entities
     local cache_data = self:loadSeriesCache(slug)
     if cache_data and cache_data.books and cache_data.books[target_index] then
         local entry = cache_data.books[target_index]
-        if entry.source == "local_xray" and SeriesManager.hasBookEntities(entry) then
-            logger.info("SeriesManager: Found local_xray entry in SeriesCache for book index " .. tostring(target_index))
-            return entry
+        if SeriesManager.hasBookEntities(entry) then
+            local tracked_path = cache_data.book_paths and cache_data.book_paths[target_index]
+            local sidecar_newer = false
+            if tracked_path and lfs and lfs.attributes then
+                local s_path = self:getSeriesCachePath(slug)
+                local s_attr = s_path and lfs.attributes(s_path)
+                local cand_dirs = self:getCandidateSidecarDirs(tracked_path)
+                for _, sdr_dir in ipairs(cand_dirs) do
+                    local sdr_file = sdr_dir .. "/xray_cache.lua"
+                    local c_attr = lfs.attributes(sdr_file)
+                    if c_attr and s_attr and c_attr.modification > s_attr.modification then
+                        sidecar_newer = true
+                        break
+                    end
+                end
+            end
+            if not sidecar_newer then
+                logger.info("SeriesManager: Found up-to-date entry in SeriesCache for book index " .. tostring(target_index))
+                return entry
+            end
         end
     end
 
@@ -982,8 +1000,7 @@ function SeriesManager:findLocalBookXRay(series_info, target_index, current_book
             end
         end
         if loaded and SeriesManager.hasBookEntities(loaded) then
-            self:syncBookToSeriesCache(slug, target_index, loaded, tracked_path)
-            local updated = self:loadSeriesCache(slug)
+            local ok, updated = self:syncBookToSeriesCache(slug, target_index, loaded, tracked_path)
             return updated and updated.books and updated.books[target_index]
         end
     end
@@ -1028,8 +1045,7 @@ function SeriesManager:findLocalBookXRay(series_info, target_index, current_book
 
         if index_matches and ((loaded.characters and #loaded.characters > 0) or (loaded.timeline and #loaded.timeline > 0)) then
             logger.info("SeriesManager: Discovered local X-Ray cache for Book " .. tostring(target_index) .. " at: " .. tostring(candidate_file))
-            self:syncBookToSeriesCache(slug, target_index, loaded, candidate_file)
-            local updated = self:loadSeriesCache(slug)
+            local ok, updated = self:syncBookToSeriesCache(slug, target_index, loaded, candidate_file)
             return updated and updated.books and updated.books[target_index]
         end
         return nil

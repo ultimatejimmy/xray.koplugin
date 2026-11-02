@@ -220,6 +220,67 @@ function M:sortDataByFrequency(list, text, key)
     return list
 end
 
+M.TITLE_CLASSES = {
+    ["dr"] = "dr", ["dr."] = "dr", ["doctor"] = "dr",
+    ["mr"] = "mr", ["mr."] = "mr", ["mister"] = "mr",
+    ["mrs"] = "mrs", ["mrs."] = "mrs", ["missus"] = "mrs",
+    ["ms"] = "ms", ["ms."] = "ms", ["miss"] = "ms",
+    ["sir"] = "sir",
+    ["lady"] = "lady",
+    ["lord"] = "lord",
+    ["dame"] = "dame",
+    ["prof"] = "prof", ["prof."] = "prof", ["professor"] = "prof",
+    ["capt"] = "capt", ["capt."] = "capt", ["captain"] = "capt",
+    ["col"] = "col", ["col."] = "col", ["colonel"] = "col",
+    ["sgt"] = "sgt", ["sgt."] = "sgt", ["sergeant"] = "sgt",
+    ["lt"] = "lt", ["lt."] = "lt", ["lieutenant"] = "lt",
+    ["rev"] = "rev", ["rev."] = "rev", ["reverend"] = "rev",
+    ["insp"] = "insp", ["insp."] = "insp", ["inspector"] = "insp",
+    ["mme"] = "mme", ["mme."] = "mme", ["madame"] = "mme",
+    ["mlle"] = "mlle", ["mlle."] = "mlle", ["mademoiselle"] = "mlle",
+    ["monsieur"] = "monsieur",
+    ["herr"] = "herr",
+    ["frau"] = "frau",
+}
+
+M.NAME_SUFFIXES = {
+    ["jr"] = true, ["jr."] = true,
+    ["sr"] = true, ["sr."] = true,
+    ["ii"] = true, ["iii"] = true,
+    ["esq"] = true, ["esq."] = true,
+}
+
+local canon_memo, canon_memo_n = {}, 0
+
+function M:canonicalNameKey(name)
+    if type(name) ~= "string" or name == "" then return "", nil end
+    local hit = canon_memo[name]
+    if hit then return hit[1], hit[2] end
+    local s = name:lower():gsub("[%.,]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+    local tokens = {}
+    for w in s:gmatch("%S+") do tokens[#tokens + 1] = w end
+    if #tokens > 1 and tokens[1] == "the" then table.remove(tokens, 1) end
+    local title = nil
+    while #tokens > 1 and M.TITLE_CLASSES[tokens[1]] do
+        title = title or M.TITLE_CLASSES[tokens[1]]
+        table.remove(tokens, 1)
+    end
+    while #tokens > 1 and M.NAME_SUFFIXES[tokens[#tokens]] do table.remove(tokens) end
+    local core = table.concat(tokens, " ")
+    if core == "" then core = s end
+    canon_memo_n = canon_memo_n + 1
+    if canon_memo_n > 2000 then canon_memo, canon_memo_n = {}, 1 end
+    canon_memo[name] = { core, title }
+    return core, title
+end
+
+function M:namesMatchCanonical(a, b)
+    local ca, ta = self:canonicalNameKey(a)
+    local cb, tb = self:canonicalNameKey(b)
+    if ca == "" or ca ~= cb then return false end
+    return ta == nil or tb == nil or ta == tb
+end
+
 function M:isMoreCompleteName(new_name, old_name)
     if not new_name or not old_name then return false end
     if #new_name <= #old_name then return false end
@@ -259,50 +320,108 @@ function M:promoteName(entity, new_name)
     entity._norm_aliases = nil
 end
 
-function M:deduplicateByName(list, key)
+function M:deduplicateByName(list, key, caller)
     key = key or "name"
     if not list or #list == 0 then return list end
-    local seen = {}       -- canonical names (lowercased) -> item ref
-    local alias_map = {}  -- known alias (lowercased) -> item ref
+    caller = caller or self
+    local is_anthology = caller.isAnthologyMode and caller:isAnthologyMode()
+    local seen = {}       -- canonical names (lowercased) -> array of items
+    local alias_map = {}  -- known alias (lowercased) -> array of items
     local deduped = {}
 
+    local function makeKey(k_str, item)
+        if is_anthology and item and item.story_id then
+            return tostring(item.story_id) .. "::" .. tostring(k_str)
+        end
+        return tostring(k_str)
+    end
+
+    local function findCompatible(bucket, title)
+        if not bucket then return nil end
+        for _, it in ipairs(bucket) do
+            local it_title = it._dedup_title
+            if it_title == nil or title == nil or it_title == title then
+                return it
+            end
+        end
+        return nil
+    end
+
     for _, item in ipairs(list) do
-        local k = (item[key] or ""):lower()
-        if k == "" then
+        if is_anthology and not item.story_id and caller.resolveEntityStory then
+            pcall(caller.resolveEntityStory, caller, item)
+        end
+
+        local raw_val = item[key] or ""
+        local raw_k, title
+        if key == "name" then
+            raw_k, title = self:canonicalNameKey(raw_val)
+        else
+            raw_k = raw_val:lower()
+            title = nil
+        end
+
+        if raw_k == "" then
             table.insert(deduped, item)
         else
-            -- Check 1: exact canonical name duplicate
-            local existing = seen[k]
+            local k = makeKey(raw_k, item)
+            -- Check 1: exact/canonical name duplicate
+            local existing = findCompatible(seen[k], title)
 
             -- Check 2: canonical name matches a known alias of an accepted entry
             if not existing then
-                existing = alias_map[k]
+                existing = findCompatible(alias_map[k], title)
             end
 
             -- Check 3: first-name component of canonical name matches a known alias
             if not existing then
-                local first = k:match("^(%S+)")
-                if first and first ~= k and #first >= 5 then
-                    existing = alias_map[first]
+                local first = raw_k:match("^(%S+)")
+                if first and first ~= raw_k and #first >= 5 then
+                    existing = findCompatible(alias_map[makeKey(first, item)], title)
                 end
             end
 
             if not existing then
-                seen[k] = item
+                item._dedup_title = title
+                seen[k] = seen[k] or {}
+                table.insert(seen[k], item)
                 table.insert(deduped, item)
                 -- Register all aliases of this accepted entry
                 if item.aliases and type(item.aliases) == "table" then
                     for _, alias in ipairs(item.aliases) do
                         if type(alias) == "string" and alias ~= "" then
-                            alias_map[alias:lower()] = item
+                            local a_core, a_title
+                            if key == "name" then
+                                a_core, a_title = self:canonicalNameKey(alias)
+                            else
+                                a_core = alias:lower()
+                                a_title = nil
+                            end
+                            if a_core ~= "" then
+                                local ak = makeKey(a_core, item)
+                                alias_map[ak] = alias_map[ak] or {}
+                                table.insert(alias_map[ak], item)
+                            end
                         end
                     end
                 end
             else
                 -- Handle duplicate: dynamically promote name if incoming is more complete
                 if key == "name" and self:isMoreCompleteName(item.name, existing.name) then
+                    local old_name = existing.name
                     self:promoteName(existing, item.name)
-                    seen[item.name:lower()] = existing
+                    if caller.migrateStoryPresence then
+                        caller:migrateStoryPresence(old_name, existing.name)
+                    end
+                    local new_k, new_title = self:canonicalNameKey(existing.name)
+                    existing._dedup_title = new_title
+                    local new_key = makeKey(new_k, existing)
+                    seen[new_key] = seen[new_key] or {}
+                    local already_in_bucket = false
+                    for _, b_it in ipairs(seen[new_key]) do
+                        if b_it == existing then already_in_bucket = true; break end
+                    end
+                    if not already_in_bucket then table.insert(seen[new_key], existing) end
                 end
                 
                 -- Merge aliases from incoming duplicate
@@ -319,14 +438,38 @@ function M:deduplicateByName(list, key)
                             if not found and new_alias:lower() ~= existing.name:lower() then
                                 table.insert(existing.aliases, new_alias)
                                 existing._norm_aliases = nil
-                                alias_map[new_alias:lower()] = existing
+                                local a_core, a_title
+                                if key == "name" then
+                                    a_core, a_title = self:canonicalNameKey(new_alias)
+                                else
+                                    a_core = new_alias:lower()
+                                    a_title = nil
+                                end
+                                if a_core ~= "" then
+                                    local ak = makeKey(a_core, existing)
+                                    alias_map[ak] = alias_map[ak] or {}
+                                    table.insert(alias_map[ak], existing)
+                                end
                             end
                         end
+                    end
+                end
+
+                -- Merge mentions from incoming duplicate
+                if item.mentions and type(item.mentions) == "table" then
+                    existing.mentions = existing.mentions or {}
+                    for _, new_m in ipairs(item.mentions) do
+                        table.insert(existing.mentions, new_m)
                     end
                 end
             end
         end
     end
+
+    for _, it in ipairs(deduped) do
+        it._dedup_title = nil
+    end
+
     return deduped
 end
 
@@ -400,25 +543,27 @@ function M:assignTimelinePages(timeline, raw_toc, allow_findtext)
         table.insert(t[key].list, val)
     end
 
-    for _, entry in ipairs(toc) do
+    for i, entry in ipairs(toc) do
         if entry.page and entry.title then
             local p = tonumber(entry.page)
             if p then
+                local toc_idx = entry.toc_index or i
+                local info = { page = p, toc_index = toc_idx, entry = entry }
                 local norm = self:normalizeChapterName(entry.title)
-                push(q_norm, norm, p)
+                push(q_norm, norm, info)
 
                 local num = norm:match("^(%d+)")
-                if num then push(q_number, num, p) end
+                if num then push(q_number, num, info) end
 
                 local suffix = norm:match("^%d+[%s%.%:%-]+(.+)$")
-                if suffix and suffix ~= "" then push(q_suffix, suffix, p) end
+                if suffix and suffix ~= "" then push(q_suffix, suffix, info) end
 
-                table.insert(all_toc, { norm = norm, page = p, used = false })
+                table.insert(all_toc, { norm = norm, info = info, used = false })
             end
         end
     end
 
-    -- Pop the next unused page for a key (consumes in order)
+    -- Pop the next unused item for a key (consumes in order)
     local function pop(q, key)
         local bucket = q[key]
         if not bucket then return nil end
@@ -426,52 +571,59 @@ function M:assignTimelinePages(timeline, raw_toc, allow_findtext)
         return bucket.list[bucket.idx]
     end
 
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+
     for _, ev in ipairs(timeline) do
         if ev.source ~= "series_prior" then
             local norm = self:normalizeChapterName(ev.chapter or "")
-            local page = nil
+            local matched_info = nil
 
             -- Strategy 1: Exact normalized title (queue-based)
             if q_norm[norm] then
-                page = pop(q_norm, norm)
+                matched_info = pop(q_norm, norm)
             end
 
             -- Strategy 2: Leading number (queue-based)
-            if not page then
+            if not matched_info then
                 local num = norm:match("^(%d+)")
                 if num and q_number[num] then
-                    page = pop(q_number, num)
+                    matched_info = pop(q_number, num)
                 end
             end
 
             -- Strategy 3: AI suffix vs TOC suffix or norm (queue-based)
-            if not page then
+            if not matched_info then
                 local ai_suffix = norm:match("^%d+[%s%.%:%-]+(.+)$")
                 if ai_suffix then
                     if q_suffix[ai_suffix] then
-                        page = pop(q_suffix, ai_suffix)
+                        matched_info = pop(q_suffix, ai_suffix)
                     elseif q_norm[ai_suffix] then
-                        page = pop(q_norm, ai_suffix)
+                        matched_info = pop(q_norm, ai_suffix)
                     end
                 end
             end
 
             -- Strategy 4: AI title as suffix (queue-based)
-            if not page and q_suffix[norm] then
-                page = pop(q_suffix, norm)
+            if not matched_info and q_suffix[norm] then
+                matched_info = pop(q_suffix, norm)
             end
 
             -- Strategy 5: Substring match (linear scan, consume each TOC entry once)
-            if not page and #norm > 2 then
+            if not matched_info and #norm > 2 then
                 for _, t in ipairs(all_toc) do
                     if not t.used then
                         if t.norm:find(norm, 1, true) or norm:find(t.norm, 1, true) then
-                            page = t.page
+                            matched_info = t.info
                             t.used = true
                             break
                         end
                     end
                 end
+            end
+
+            local page = matched_info and matched_info.page or nil
+            if matched_info and matched_info.toc_index then
+                ev.chapter_index = tonumber(matched_info.toc_index)
             end
 
             -- Strategy 6: NO-TOC FALLBACK - search document text for the chapter heading.
@@ -488,6 +640,20 @@ function M:assignTimelinePages(timeline, raw_toc, allow_findtext)
 
             if page then
                 ev.page = tonumber(page)
+            end
+
+            if is_anthology and self.chapter_analyzer then
+                local story = nil
+                if ev.page then
+                    story = self.chapter_analyzer:getStoryForPage(self.ui, ev.page)
+                end
+                if not story and ev.chapter_index then
+                    story = self.chapter_analyzer:getStoryForTocIndex(self.ui, ev.chapter_index)
+                end
+                if story then
+                    ev.story_id = story.story_id
+                    ev.story_title = story.story_title
+                end
             end
         end
     end
@@ -542,17 +708,18 @@ function M:sortTimelineByTOC(timeline)
     for _, ev in ipairs(timeline) do ev._sort_idx = nil end
 end
 
-function M:mergeEntries(list, primary_name, secondary_name, ai_merged_desc)
-    local primary, secondary, sec_idx = nil, nil, nil
+function M:mergeEntryItems(list, primary, secondary, ai_merged_desc)
+    if not primary or not secondary or primary == secondary then return false end
+    local sec_idx = nil
     for i, item in ipairs(list) do
-        if item.name and item.name:lower() == primary_name:lower() then
-            primary = item
-        elseif item.name and item.name:lower() == secondary_name:lower() then
-            secondary = item
+        if item == secondary then
             sec_idx = i
+            break
         end
     end
-    if not primary or not secondary then return false end
+    if not sec_idx then return false end
+
+    local old_primary_name = primary.name
 
     -- 1. Check for Name Promotion (if secondary name is more complete)
     if self:isMoreCompleteName(secondary.name, primary.name) then
@@ -591,9 +758,67 @@ function M:mergeEntries(list, primary_name, secondary_name, ai_merged_desc)
             .. "\n[Also known as " .. secondary.name .. ": " .. secondary.description .. "]"
     end
 
-    -- 4. Remove secondary from list
+    -- 4. Merge mentions from secondary into primary
+    if secondary.mentions and type(secondary.mentions) == "table" then
+        primary.mentions = primary.mentions or {}
+        for _, m in ipairs(secondary.mentions) do
+            table.insert(primary.mentions, m)
+        end
+    end
+
+    -- 5. Remove secondary from list
     table.remove(list, sec_idx)
-    return true
+    return true, old_primary_name
+end
+
+function M:mergeEntries(list, primary_name, secondary_name, ai_merged_desc, story_id)
+    local primary, secondary = nil, nil
+    for _, item in ipairs(list) do
+        local matches_story = not story_id or (item.story_id == story_id)
+        if matches_story and item.name and item.name:lower() == primary_name:lower() and not primary then
+            primary = item
+        elseif matches_story and item.name and item.name:lower() == secondary_name:lower() and not secondary then
+            secondary = item
+        end
+    end
+    if not primary or not secondary then return false end
+    return self:mergeEntryItems(list, primary, secondary, ai_merged_desc)
+end
+
+function M:linkEntriesAcrossStories(list, anchor, local_item)
+    if not anchor or not local_item or anchor == local_item then return nil end
+    local local_sid = local_item.story_id
+
+    -- If the local story already holds an entry matching the anchor name, merge into it.
+    for _, it in ipairs(list) do
+        if it ~= local_item and it ~= anchor and it.story_id == local_sid
+           and self:namesMatchCanonical(it.name, anchor.name) then
+            self:mergeEntryItems(list, it, local_item)
+            it.is_recurring = true
+            anchor.is_recurring = true
+            return it
+        end
+    end
+
+    if (local_item.name or ""):lower() ~= (anchor.name or ""):lower() then
+        self:promoteName(local_item, anchor.name) -- old name becomes alias
+    end
+    local_item.aliases = local_item.aliases or {}
+    local existing_aliases = {}
+    for _, a in ipairs(local_item.aliases) do
+        if type(a) == "string" then existing_aliases[a:lower()] = true end
+    end
+    for _, a in ipairs(anchor.aliases or {}) do
+        if type(a) == "string" and a ~= "" and not existing_aliases[a:lower()] and a:lower() ~= local_item.name:lower() then
+            table.insert(local_item.aliases, a)
+            existing_aliases[a:lower()] = true
+        end
+    end
+    local_item._norm_name = nil
+    local_item._norm_aliases = nil
+    local_item.is_recurring = true
+    anchor.is_recurring = true
+    return local_item
 end
 
 function M:isNonFictionBook(props, text_sample)

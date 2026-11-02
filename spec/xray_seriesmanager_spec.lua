@@ -1513,6 +1513,46 @@ return {
             assert.is_false(SeriesManager.hasBookEntities(cache3.books[3.5]))
         end)
 
+        it("syncBookToSeriesCache returns true and updated cache_data table", function()
+            local slug = "mistborn"
+            local book_data = {
+                title = "The Final Empire",
+                author = "Brandon Sanderson",
+                characters = { { name = "Kelsier", role = "Leader" } },
+                timeline = { { chapter = "Ch 1", event = "Heist begins" } }
+            }
+            local ok, returned_cache = manager:syncBookToSeriesCache(slug, 1, book_data, "/books/Mistborn1.epub", true)
+            assert.is_true(ok)
+            assert.is_not_nil(returned_cache)
+            assert.are.equal("mistborn", returned_cache.series_slug)
+            assert.is_not_nil(returned_cache.books[1])
+            assert.are.equal("The Final Empire", returned_cache.books[1].title)
+            assert.are.equal("local_xray", returned_cache.books[1].source)
+            assert.are.equal(1, #returned_cache.books[1].characters)
+            assert.are.equal("Kelsier", returned_cache.books[1].characters[1].name)
+        end)
+
+        it("findLocalBookXRay returns existing entry with entities without scanning disk", function()
+            local slug = "mistborn"
+            local series_cache = {
+                series_slug = slug,
+                books = {
+                    [1] = { title = "The Final Empire", source = "local_xray", characters = { { name = "Kelsier" } } }
+                },
+                book_paths = {
+                    [1] = "/books/Mistborn1.epub"
+                }
+            }
+            manager:saveSeriesCache(slug, series_cache)
+
+            local series_info = { name = "Mistborn", index = 2, slug = slug }
+            local entry = manager:findLocalBookXRay(series_info, 1, "/books/Mistborn2.epub")
+            assert.is_not_nil(entry)
+            assert.are.equal("The Final Empire", entry.title)
+            assert.are.equal(1, #entry.characters)
+            assert.are.equal("Kelsier", entry.characters[1].name)
+        end)
+
         it("getPriorBookList returns all 5 prior books including 2.5 and 3.5 when reading Book 4", function()
             local slug = "the_stormlight_archive"
             local series_cache = {
