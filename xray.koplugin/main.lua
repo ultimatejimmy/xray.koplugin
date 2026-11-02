@@ -1536,9 +1536,8 @@ function XRayPlugin:scheduleBackgroundCatchUp(delay)
         end
         if not self.ai_helper or not self.ai_helper:hasApiKey() then return end
 
-        -- SILENT NETWORK CHECK: strictly passive check, NEVER show white-box popups or dialogs
-        local NetworkMgr = require("ui/network/manager")
-        if not NetworkMgr:isConnected() or not NetworkMgr:isOnline() then
+        -- SILENT NETWORK CHECK: strictly passive route check, NEVER block on DNS or show Wi-Fi dialogs
+        if not utils:isSilentNetworkAvailable() then
             -- Still offline: keep pending_background_fetch = true, do NOT poll
             return
         end
@@ -1613,8 +1612,7 @@ function XRayPlugin:scheduleBackgroundCatchUp(delay)
                 self:clearPendingBackgroundFetch()
             else
                 -- If failed, wait for next network event or reschedule if still online
-                local net = require("ui/network/manager")
-                if net:isConnected() and net:isOnline() then
+                if utils:isSilentNetworkAvailable() then
                     self:scheduleBackgroundCatchUp(catchup_cd)
                 end
             end
@@ -1630,6 +1628,7 @@ function XRayPlugin:checkPrefetchHorizon()
     local horizon = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.prefetch_horizon_chapters or 0
     if horizon <= 0 then return end
     if not self.ai_helper or not self.ai_helper.hasApiKey or not self.ai_helper:hasApiKey() then return end
+    if not utils:isSilentNetworkAvailable() then return end
 
     local cur_page = self.getCurrentDocPage and self:getCurrentDocPage() or (self.ui.getCurrentPage and self.ui:getCurrentPage()) or 1
 
@@ -1946,9 +1945,8 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
     if not self.ui or not self.ui.document then return end
 
 
-    -- SILENT NETWORK CHECK: use isOnline() instead of runWhenOnline to avoid "white box" connecting dialogs
-    local NetworkMgr = require("ui/network/manager")
-    if NetworkMgr:isConnected() and NetworkMgr:isOnline() then
+    -- SILENT NETWORK CHECK: use hasDefaultRoute() via helper to avoid DNS freezes and Wi-Fi dialogs
+    if utils:isSilentNetworkAvailable() then
         -- Safety Check: Ensure API keys are configured before background activity
         if not self.ai_helper:hasApiKey() then
             return

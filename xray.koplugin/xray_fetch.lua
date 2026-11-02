@@ -2391,20 +2391,55 @@ function M:fetchAuthorInfo()
     end)
 end
 
-function M:checkWeeklyUpdate()
+function M:checkWeeklyUpdate(retry_count)
     if not self.ai_helper or not self.ai_helper.settings then return end
-    
+
     local last_check = self.ai_helper.settings.last_update_check or 0
     local now = os.time()
     local week_seconds = 7 * 24 * 60 * 60
-    
+
     if (now - last_check) > week_seconds then
-        local NetworkMgr = require("ui/network/manager")
-        if NetworkMgr:isConnected() and NetworkMgr:isOnline() then
+        -- Busy check: defer if another AI request or unit scan is running
+        local is_busy = self.bg_fetch_pending or self.bg_fetch_active or self._unit_scan_in_progress
+            or self.is_sequential_scan_active
+            or self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid)
+        if is_busy then
+            local current_retry = retry_count or 0
+            if current_retry < 3 then
+                self:log("XRayPlugin: Deferring weekly update check because background activity is active (attempt " .. tostring(current_retry + 1) .. "/3)")
+                UIManager:scheduleIn(15, function()
+                    if self.destroyed or not self.ui or not self.ui.document then return end
+                    self:checkWeeklyUpdate(current_retry + 1)
+                end)
+                return
+            end
+        end
+
+        local utils = require(plugin_path .. "xray_utils")
+        if utils and utils.isSilentNetworkAvailable and utils:isSilentNetworkAvailable() then
             self:log("XRayPlugin: Triggering weekly silent update check")
-            self.ai_helper:saveSettings({ last_update_check = now })
+            local document = self.ui and self.ui.document
             local updater = require(plugin_path .. "xray_updater")
-            updater.checkSilentForUpdates(self.loc, self.ai_helper.settings.beta_channel_enabled)
+
+            updater.checkSilentForUpdates(self.loc, self.ai_helper.settings.beta_channel_enabled, {
+                should_show = function()
+                    return not self.destroyed and self.ui and self.ui.document == document
+                end,
+                on_done = function(status, release)
+                    if self.destroyed then return end
+                    local done_now = os.time()
+                    if status == "shown" or status == "up_to_date" then
+                        self:log("XRayPlugin: Weekly update check finished with status '" .. tostring(status) .. "', stamping 7-day interval")
+                        self.ai_helper:saveSettings({ last_update_check = done_now })
+                    elseif status == "error" then
+                        self:log("XRayPlugin: Weekly update check failed with error, backing off for 24 hours")
+                        -- Stamp 24 hours retry backoff (now - 6 days)
+                        self.ai_helper:saveSettings({ last_update_check = done_now - week_seconds + (24 * 60 * 60) })
+                    elseif status == "suppressed_update" then
+                        self:log("XRayPlugin: Weekly update found but dialog suppressed (book closed/inactive), leaving timestamp unstamped")
+                    end
+                end,
+            })
         else
             self:log("XRayPlugin: Skipping weekly update check (offline)")
         end
@@ -3854,6 +3889,12 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         end
 
         local utils = require(plugin_path .. "xray_utils")
+        if not self.active_sequential_is_manual and utils and utils.isSilentNetworkAvailable and not utils:isSilentNetworkAvailable() then
+            self:log("XRayPlugin: Silent prefetch horizon paused because network route is unavailable.")
+            finishScan(false)
+            return
+        end
+
         if utils and utils.isLowMemory and utils:isLowMemory() then
             collectgarbage("collect")
             if utils:isLowMemory() then

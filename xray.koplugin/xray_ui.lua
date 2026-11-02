@@ -7107,8 +7107,7 @@ function M:checkSeriesContext()
                 return
             end
 
-            local NetworkMgr = require("ui/network/manager")
-            if not NetworkMgr:isConnected() or not NetworkMgr:isOnline() then
+            if not utils:isSilentNetworkAvailable() then
                 self:log("XRayPlugin: Series: Prior books missing from cache and device is offline, skipping silently.")
                 return
             end
@@ -7125,8 +7124,7 @@ function M:checkSeriesContext()
     end
 
     -- 2. Fallback to AI (performed asynchronously to prevent UI freeze, requires network)
-    local NetworkMgr = require("ui/network/manager")
-    if not NetworkMgr:isConnected() or not NetworkMgr:isOnline() then
+    if not utils:isSilentNetworkAvailable() then
         self:log("XRayPlugin: Series: Device is offline, skipping async AI series check silently.")
         return
     end

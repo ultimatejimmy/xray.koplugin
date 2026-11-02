@@ -389,6 +389,7 @@ describe("xray_ui", function()
             -- Mock NetworkMgr
             package.loaded["ui/network/manager"] = {
                 isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
                 isOnline = function() return true end
             }
             -- Mock series manager detectSeries
@@ -423,6 +424,7 @@ describe("xray_ui", function()
             -- Mock NetworkMgr
             package.loaded["ui/network/manager"] = {
                 isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
                 isOnline = function() return true end
             }
             -- Mock series manager detectSeries
@@ -495,6 +497,30 @@ describe("xray_ui", function()
             -- Verify no popup prompt shown because it was merged automatically offline
             local last = _G.ui_tracker.last_shown
             assert.is_nil(last)
+        end)
+
+        it("should never invoke isOnline during checkSeriesContext", function()
+            local online_called = false
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
+                isOnline = function()
+                    online_called = true
+                    error("isOnline should not be called!")
+                end
+            }
+            plugin.series_manager = {
+                detectSeries = function()
+                    return { name = "Mistborn", index = 2, slug = "mistborn" }
+                end
+            }
+            plugin.ai_helper = {
+                settings = { series_context_enabled = true }
+            }
+            plugin.book_data = {}
+
+            plugin:checkSeriesContext()
+            assert.is_false(online_called)
         end)
     end)
 

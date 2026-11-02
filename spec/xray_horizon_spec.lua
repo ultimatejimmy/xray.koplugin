@@ -3,6 +3,7 @@
 -- Issue #133 (Offline Prefetch Horizon), and Issue #150 (Spoiler-Free Boundaries).
 
 require("spec/spec_helper")
+local main_plugin = dofile("xray.koplugin/main.lua")
 local xray_ui = require("xray_ui")
 local xray_fetch = require("xray_fetch")
 local xray_mentions = require("xray_mentions")
@@ -13,6 +14,7 @@ describe("xray_horizon_spec", function()
 
     before_each(function()
         plugin = createMockPlugin()
+        for k, v in pairs(main_plugin) do plugin[k] = v end
         for k, v in pairs(xray_ui) do plugin[k] = v end
         for k, v in pairs(xray_fetch) do plugin[k] = v end
         for k, v in pairs(xray_mentions) do plugin[k] = v end
@@ -758,6 +760,32 @@ describe("xray_horizon_spec", function()
             assert.are.equal("Cormoran Strike", overlay.items[1].name)
             assert.are.equal("Robin Ellacott", overlay.items[2].name)
             assert.are.equal("Emma Daniels", overlay.items[3].name)
+        end)
+
+        it("checkPrefetchHorizon halts early when silent network route is unavailable", function()
+            local orig_net = package.loaded["ui/network/manager"]
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return false end,
+                hasDefaultRoute = function() return false end,
+                isOnline = function() return false end,
+            }
+
+            local queue_called = false
+            plugin.queueSequentialChapterScan = function()
+                queue_called = true
+            end
+            plugin.ai_helper = {
+                settings = { prefetch_horizon_chapters = 2 },
+                hasApiKey = function() return true end,
+            }
+            plugin._getFlatToc = function()
+                return { { title = "Ch 1", page = 1 }, { title = "Ch 2", page = 20 } }
+            end
+
+            plugin:checkPrefetchHorizon()
+            assert.is_false(queue_called)
+
+            package.loaded["ui/network/manager"] = orig_net
         end)
     end)
 end)

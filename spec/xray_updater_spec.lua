@@ -84,9 +84,11 @@ describe("xray_updater", function()
     end)
 
     describe("_showUpdateDialog", function()
-        it("should not show dialog if version is up to date", function()
+        it("should show up to date toast and not show update dialog if version is up to date", function()
             updater._showUpdateDialog({ version = "1.0.0" }, "1.0.0")
-            assert.is_nil(_G.ui_tracker.last_shown)
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("InfoMessage", last.type)
         end)
 
         it("should display a ButtonDialog with 1 button row when notes are short", function()
@@ -171,6 +173,125 @@ describe("xray_updater", function()
             local dlg = _G.ui_tracker.last_shown
             assert.are.equal("ButtonDialog", dlg.type)
             assert.is_not_nil(dlg.info_face)
+        end)
+    end)
+
+    describe("checkSilentForUpdates", function()
+        local orig_ffiutil, orig_datastorage
+        local scheduled = {}
+        local orig_schedule
+
+        before_each(function()
+            scheduled = {}
+            orig_schedule = UIManager.scheduleIn
+            UIManager.scheduleIn = function(_, delay, cb)
+                table.insert(scheduled, { delay = delay, cb = cb })
+            end
+        end)
+
+        after_each(function()
+            UIManager.scheduleIn = orig_schedule
+            package.loaded["ffi/util"] = orig_ffiutil
+        end)
+
+        it("forks subprocess when ffiutil.runInSubProcess is available and shows dialog on update", function()
+            local pid_started = 12345
+            local pipe_read_fd = 99
+            local sub_done = false
+            local terminated = false
+
+            package.loaded["ffi/util"] = {
+                runInSubProcess = function(child_fn, with_pipe)
+                    assert.is_true(with_pipe)
+                    return pid_started, pipe_read_fd
+                end,
+                isSubProcessDone = function(pid)
+                    return sub_done
+                end,
+                getNonBlockingReadSize = function(fd)
+                    return sub_done and 50 or 0
+                end,
+                readAllFromFD = function(fd)
+                    return '{"version": "99.0.0", "download_url": "https://example.com/dl.zip", "notes": "New version"}'
+                end,
+                terminateSubProcess = function(pid)
+                    terminated = true
+                end
+            }
+
+            local status_reported = nil
+            updater.checkSilentForUpdates(nil, false, {
+                on_done = function(status)
+                    status_reported = status
+                end
+            })
+
+            -- Poller scheduled
+            assert.are.equal(1, #scheduled)
+            assert.is_nil(status_reported)
+
+            -- Simulate subprocess completing
+            sub_done = true
+            scheduled[1].cb()
+
+            assert.are.equal("shown", status_reported)
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("ButtonDialog", last.type)
+        end)
+
+        it("suppresses dialog when should_show returns false", function()
+            package.loaded["ffi/util"] = {
+                runInSubProcess = function(child_fn, with_pipe)
+                    return 12345, 99
+                end,
+                isSubProcessDone = function(pid) return true end,
+                getNonBlockingReadSize = function(fd) return 50 end,
+                readAllFromFD = function(fd)
+                    return '{"version": "99.0.0", "download_url": "https://example.com/dl.zip"}'
+                end,
+                terminateSubProcess = function() end
+            }
+
+            local status_reported = nil
+            updater.checkSilentForUpdates(nil, false, {
+                should_show = function() return false end,
+                on_done = function(status) status_reported = status end
+            })
+
+            assert.are.equal(1, #scheduled)
+            scheduled[1].cb()
+
+            assert.are.equal("suppressed_update", status_reported)
+            assert.is_nil(_G.ui_tracker.last_shown)
+        end)
+
+        it("reports error and terminates subprocess on timeout", function()
+            local terminated = false
+            package.loaded["ffi/util"] = {
+                runInSubProcess = function(child_fn, with_pipe)
+                    return 12345, 99
+                end,
+                isSubProcessDone = function(pid) return false end,
+                getNonBlockingReadSize = function(fd) return 0 end,
+                readAllFromFD = function() end,
+                terminateSubProcess = function() terminated = true end
+            }
+
+            local status_reported = nil
+            updater.checkSilentForUpdates(nil, false, {
+                on_done = function(status) status_reported = status end
+            })
+
+            -- Step through 90 poll loops
+            for i = 1, 90 do
+                local next_item = table.remove(scheduled, 1)
+                assert.is_not_nil(next_item)
+                next_item.cb()
+            end
+
+            assert.is_true(terminated)
+            assert.are.equal("error", status_reported)
         end)
     end)
 end)

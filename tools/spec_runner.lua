@@ -170,6 +170,7 @@ local specs = {
     "spec/xray_story_groups_spec.lua",
     "spec/xray_anthology_detection_spec.lua",
     "spec/xray_anthology_duplicates_spec.lua",
+    "spec/xray_updater_spec.lua",
 }
 
 if arg and arg[1] then

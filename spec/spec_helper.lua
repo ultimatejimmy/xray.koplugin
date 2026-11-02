@@ -396,12 +396,23 @@ package.loaded["gettext"] = {
     getLanguage = function() return "en" end
 }
 package.loaded["ui/trapper"] = {
-    dismissableRunInSubprocess = function(_, _, f) return true, f() end
+    wrap = function(_, fn) if fn then fn() end; return true end,
+    dismissableRunInSubprocess = function(_, task, widget)
+        if type(task) == "function" then
+            return true, task()
+        elseif type(widget) == "function" then
+            return true, widget()
+        end
+        return true
+    end
 }
 package.loaded["xray_logger"] = {
     log = function(...) end,
 }
 package.loaded["ui/network/manager"] = {
+    isConnected = function() return true end,
+    hasDefaultRoute = function() return true end,
+    isOnline = function() return true end,
     runWhenOnline = function(self, fn)
         local callback = type(self) == "function" and self or fn
         if callback then callback() end

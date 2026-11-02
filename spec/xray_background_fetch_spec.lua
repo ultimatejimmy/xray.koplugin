@@ -60,6 +60,7 @@ describe("X-Ray Background Catch-Up", function()
         end
         package.loaded["ui/network/manager"] = {
             isConnected = function() return connected end,
+            hasDefaultRoute = function() return online end,
             isOnline = function() return online end,
         }
 
@@ -463,6 +464,28 @@ describe("X-Ray Background Catch-Up", function()
             local batch_end2, title2, is_final2 = plugin:getNextCatchUpBatch(165, 100)
             assert.is_nil(batch_end2)
             assert.is_true(is_final2)
+        end)
+
+        it("never invokes isOnline during triggerBackgroundMergeFetch and background catch-up", function()
+            local online_called = false
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
+                isOnline = function()
+                    online_called = true
+                    error("isOnline should not be called!")
+                end,
+            }
+
+            plugin.pending_background_fetch = true
+            plugin:scheduleBackgroundCatchUp(0)
+            advance(2)
+            assert.is_false(online_called)
+
+            plugin.last_bg_fetch_time = 0
+            plugin:triggerBackgroundMergeFetch("Chapter 4")
+            advance(2)
+            assert.is_false(online_called)
         end)
     end)
 end)

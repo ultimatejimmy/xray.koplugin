@@ -397,11 +397,12 @@ describe("Anthology / Short Story Collection Mode", function()
         end)
 
         it("handleLookup disambiguates candidate buttons with story title", function()
+            local orig_btn_dlg = package.loaded["ui/widget/buttondialog"]
             local shown_dialog = nil
             package.loaded["ui/widget/buttondialog"] = {
                 new = function(self, opts)
                     shown_dialog = opts
-                    return opts
+                    return { type = "ButtonDialog", args = opts, buttons = opts and opts.buttons }
                 end
             }
 
@@ -413,6 +414,7 @@ describe("Anthology / Short Story Collection Mode", function()
             assert.are.equal("Jonathan Small (The Sign of Four)", buttons[1][1].text)
             -- Button 2: Other story (A Study in Scarlet)
             assert.are.equal("Jonathan Small (A Study in Scarlet)", buttons[2][1].text)
+            package.loaded["ui/widget/buttondialog"] = orig_btn_dlg
         end)
     end)
 

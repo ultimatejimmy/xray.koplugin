@@ -595,4 +595,33 @@ function M:isLowMemory(threshold_kb, meminfo_path)
     return mem.available_kb < threshold_kb, mem.available_kb, mem.total_kb
 end
 
+function M:isSilentNetworkAvailable()
+    local ok_net, NetworkMgr = pcall(require, "ui/network/manager")
+    if not ok_net or not NetworkMgr then
+        return false
+    end
+    if NetworkMgr.isConnected then
+        local ok_conn, connected = pcall(NetworkMgr.isConnected, NetworkMgr)
+        if not ok_conn or not connected then
+            return false
+        end
+    end
+    if NetworkMgr.hasDefaultRoute then
+        local ok_route, has_route = pcall(NetworkMgr.hasDefaultRoute, NetworkMgr)
+        if ok_route and has_route ~= nil then
+            return has_route == true
+        end
+    end
+    if Device and Device.hasWifiToggle and not Device:hasWifiToggle() then
+        return true
+    end
+    if NetworkMgr.isOnline then
+        local ok_online, online = pcall(NetworkMgr.isOnline, NetworkMgr)
+        if ok_online then
+            return online == true
+        end
+    end
+    return false
+end
+
 return M

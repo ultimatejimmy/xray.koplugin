@@ -1275,6 +1275,108 @@ describe("xray_fetch", function()
             assert.is_not_nil(plugin.characters[1].description:find("%[From Book 1%] Bridge Four leader."))
         end)
     end)
+
+    describe("checkWeeklyUpdate", function()
+        local orig_time, orig_schedule
+        local now, scheduled
+
+        before_each(function()
+            now = 1000000
+            scheduled = {}
+            orig_time = os.time
+            orig_schedule = require("ui/uimanager").scheduleIn
+            os.time = function() return now end
+            require("ui/uimanager").scheduleIn = function(_, delay, cb)
+                table.insert(scheduled, { time = now + delay, cb = cb })
+            end
+        end)
+
+        after_each(function()
+            os.time = orig_time
+            require("ui/uimanager").scheduleIn = orig_schedule
+        end)
+
+        it("never invokes isOnline and stamps 7-day interval on success", function()
+            local online_called = false
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
+                isOnline = function()
+                    online_called = true
+                    error("isOnline should not be called!")
+                end,
+            }
+
+            local saved_settings = nil
+            plugin.ai_helper = {
+                settings = { last_update_check = 0, beta_channel_enabled = false },
+                saveSettings = function(_, s) saved_settings = s end,
+            }
+
+            local updater = require("xray_updater")
+            local orig_check = updater.checkSilentForUpdates
+            updater.checkSilentForUpdates = function(loc, use_beta, opts)
+                if opts and opts.on_done then
+                    opts.on_done("shown", { version = "2.0.0" })
+                end
+            end
+
+            plugin:checkWeeklyUpdate()
+            assert.is_false(online_called)
+            assert.is_not_nil(saved_settings)
+            assert.are.equal(now, saved_settings.last_update_check)
+
+            updater.checkSilentForUpdates = orig_check
+        end)
+
+        it("backs off 24 hours when silent update check reports an error", function()
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
+                isOnline = function() return true end,
+            }
+
+            local saved_settings = nil
+            plugin.ai_helper = {
+                settings = { last_update_check = 0, beta_channel_enabled = false },
+                saveSettings = function(_, s) saved_settings = s end,
+            }
+
+            local updater = require("xray_updater")
+            local orig_check = updater.checkSilentForUpdates
+            updater.checkSilentForUpdates = function(loc, use_beta, opts)
+                if opts and opts.on_done then
+                    opts.on_done("error", { error = "dns timeout" })
+                end
+            end
+
+            plugin:checkWeeklyUpdate()
+            assert.is_not_nil(saved_settings)
+            -- now - 7 days + 1 day = now - 6 days
+            local expected = now - (7 * 24 * 3600) + (24 * 3600)
+            assert.are.equal(expected, saved_settings.last_update_check)
+
+            updater.checkSilentForUpdates = orig_check
+        end)
+
+        it("defers by 15 seconds when background AI or unit scan is active", function()
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
+                isOnline = function() return true end,
+            }
+
+            plugin.ai_helper = {
+                settings = { last_update_check = 0, beta_channel_enabled = false },
+                _async_child_pid = 1234,
+                saveSettings = function() end,
+            }
+
+            plugin:checkWeeklyUpdate()
+            assert.are.equal(1, #scheduled)
+            assert.are.equal(now + 15, scheduled[1].time)
+        end)
+    end)
 end)
 
 

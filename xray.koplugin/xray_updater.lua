@@ -26,7 +26,15 @@ local M = {}
 -- Store a reference to the localization object
 M.loc = nil
 
--- Plugin directory (resolved from this file's path)
+local _silent_check_active = false
+
+local function _runWithTrapper(Trapper, fn)
+    if Trapper and Trapper.wrap then
+        Trapper:wrap(fn)
+    else
+        fn()
+    end
+end
 local _plugin_dir = (debug.getinfo(1, "S").source or ""):match("^@(.+)/[^/]+$")
     or "/mnt/us/extensions/xray.koplugin"
 
@@ -521,18 +529,19 @@ local function _applyUpdate(download_url, new_version)
     end
 
     if ok_tr and Trapper and Trapper.dismissableRunInSubprocess then
-        local completed, result = Trapper:dismissableRunInSubprocess(
-            doDownloadAndInstall,
-            progress_msg,
-            function(res) handleInstallResult(res) end
-        )
-        if completed and result then
-            UIManager:scheduleIn(0.2, function() handleInstallResult(result) end)
-        elseif completed == false then
-            _closeWidget(progress_msg)
-            pcall(os.remove, tmp_zip)
-            _toast(t("updater_cancelled_update"))
-        end
+        _runWithTrapper(Trapper, function()
+            local completed, result = Trapper:dismissableRunInSubprocess(
+                doDownloadAndInstall,
+                progress_msg
+            )
+            if completed then
+                UIManager:scheduleIn(0.2, function() handleInstallResult(result) end)
+            elseif completed == false then
+                _closeWidget(progress_msg)
+                pcall(os.remove, tmp_zip)
+                _toast(t("updater_cancelled_update"))
+            end
+        end)
     else
         UIManager:scheduleIn(0.3, function()
             handleInstallResult(doDownloadAndInstall())
@@ -807,17 +816,18 @@ function M._doCheckForUpdates(current, use_beta)
     end
 
     if ok_tr and Trapper and Trapper.dismissableRunInSubprocess then
-        local completed, result = Trapper:dismissableRunInSubprocess(
-            function() return _doFetch(use_beta) end,
-            checking_msg,
-            function(res) handleCheckResult(res) end
-        )
-        if completed and result then
-            UIManager:scheduleIn(0.2, function() handleCheckResult(result) end)
-        elseif completed == false then
-            _closeWidget(checking_msg)
-            _toast(t("updater_cancelled_check"))
-        end
+        _runWithTrapper(Trapper, function()
+            local completed, result = Trapper:dismissableRunInSubprocess(
+                function() return _doFetch(use_beta) end,
+                checking_msg
+            )
+            if completed then
+                UIManager:scheduleIn(0.2, function() handleCheckResult(result) end)
+            elseif completed == false then
+                _closeWidget(checking_msg)
+                _toast(t("updater_cancelled_check"))
+            end
+        end)
     else
         UIManager:scheduleIn(0.3, function()
             handleCheckResult(_doFetch(use_beta))
@@ -839,15 +849,161 @@ function M.checkForUpdates(loc, use_beta)
     M._doCheckForUpdates(current, use_beta)
 end
 
-function M.checkSilentForUpdates(loc, use_beta)
+function M.checkSilentForUpdates(loc, use_beta, opts)
     M.loc = loc
-    local current = _currentVersion()
-    local release = _doFetch(use_beta)
-    
-    if release and not release.error then
-        if _versionLessThan(current, release.version) then
-            _showUpdateDialog(release, current)
+    opts = opts or {}
+    local on_done = opts.on_done
+    local should_show = opts.should_show
+
+    local function finish(status, release)
+        _silent_check_active = false
+        if on_done then
+            pcall(on_done, status, release)
         end
+    end
+
+    if _silent_check_active then
+        logger.info("xray updater: silent check already in progress, skipping")
+        return
+    end
+
+    local current = _currentVersion()
+
+    -- 1. Try cache first on UI thread (no network/fork needed)
+    local cached = _loadCache(use_beta)
+    if cached then
+        logger.info("xray updater: using cached release for silent check")
+        if cached.error then
+            finish("error", cached)
+            return
+        end
+        if _versionLessThan(current, cached.version) then
+            if not should_show or should_show() then
+                _showUpdateDialog(cached, current)
+                finish("shown", cached)
+            else
+                finish("suppressed_update", cached)
+            end
+        else
+            finish("up_to_date", cached)
+        end
+        return
+    end
+
+    -- 2. Try ffiutil.runInSubProcess to run HTTP fetch off the UI thread
+    local ok_ffi, ffiutil = pcall(require, "ffi/util")
+    if ok_ffi and ffiutil and ffiutil.runInSubProcess then
+        _silent_check_active = true
+        local child_logic = function(pid, child_write_fd)
+            local res = _doFetch(use_beta)
+            local ok_j, json = pcall(require, "json")
+            local output_str = ""
+            if ok_j and json and json.encode then
+                local ok_enc, encoded = pcall(json.encode, res)
+                if ok_enc and encoded then
+                    output_str = encoded
+                end
+            end
+            if ffiutil.writeToFD then
+                ffiutil.writeToFD(child_write_fd, output_str, true)
+            end
+        end
+
+        local pid, parent_read_fd = ffiutil.runInSubProcess(child_logic, true)
+        if pid and pid > 0 then
+            local poll_count = 0
+            local max_polls = 90 -- 45 seconds at 0.5s intervals
+            local poll
+
+            poll = function()
+                if not _silent_check_active then
+                    if parent_read_fd then
+                        pcall(ffiutil.readAllFromFD, parent_read_fd)
+                        parent_read_fd = nil
+                    end
+                    return
+                end
+
+                local subprocess_done = ffiutil.isSubProcessDone(pid)
+                local stuff_to_read = parent_read_fd and (ffiutil.getNonBlockingReadSize(parent_read_fd) or 0) ~= 0
+
+                if subprocess_done or stuff_to_read then
+                    local ret_str = ""
+                    if parent_read_fd then
+                        ret_str = ffiutil.readAllFromFD(parent_read_fd) or ""
+                        parent_read_fd = nil
+                    end
+
+                    if not subprocess_done then
+                        local collect_and_clean
+                        collect_and_clean = function()
+                            if not ffiutil.isSubProcessDone(pid) then
+                                UIManager:scheduleIn(1, collect_and_clean)
+                            end
+                        end
+                        UIManager:scheduleIn(1, collect_and_clean)
+                    end
+
+                    local ok_j, json = pcall(require, "json")
+                    local ok_dec, release
+                    if ok_j and json and json.decode and ret_str ~= "" then
+                        ok_dec, release = pcall(json.decode, ret_str)
+                    end
+
+                    if not ok_dec or type(release) ~= "table" or release.error or not release.version then
+                        finish("error", release)
+                        return
+                    end
+
+                    if _versionLessThan(current, release.version) then
+                        if not should_show or should_show() then
+                            _showUpdateDialog(release, current)
+                            finish("shown", release)
+                        else
+                            finish("suppressed_update", release)
+                        end
+                    else
+                        finish("up_to_date", release)
+                    end
+                    return
+                end
+
+                poll_count = poll_count + 1
+                if poll_count < max_polls then
+                    UIManager:scheduleIn(0.5, poll)
+                else
+                    logger.warn("xray updater: silent update check timed out, terminating")
+                    ffiutil.terminateSubProcess(pid)
+                    if parent_read_fd then
+                        pcall(ffiutil.readAllFromFD, parent_read_fd)
+                        parent_read_fd = nil
+                    end
+                    finish("error", { error = "timeout" })
+                end
+            end
+
+            UIManager:scheduleIn(0.5, poll)
+            return
+        end
+        _silent_check_active = false
+    end
+
+    -- 3. Synchronous fallback if subprocess is unavailable
+    local release = _doFetch(use_beta)
+    if not release or release.error or not release.version then
+        finish("error", release)
+        return
+    end
+
+    if _versionLessThan(current, release.version) then
+        if not should_show or should_show() then
+            _showUpdateDialog(release, current)
+            finish("shown", release)
+        else
+            finish("suppressed_update", release)
+        end
+    else
+        finish("up_to_date", release)
     end
 end
 

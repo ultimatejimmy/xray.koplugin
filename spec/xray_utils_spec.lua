@@ -330,4 +330,92 @@ describe("xray_utils", function()
             assert.is_nil(utils:languageFromIso639_2("slovenian"))
         end)
     end)
+
+    describe("isSilentNetworkAvailable", function()
+        local orig_net, orig_device
+
+        before_each(function()
+            orig_net = package.loaded["ui/network/manager"]
+            orig_device = package.loaded["device"]
+        end)
+
+        after_each(function()
+            package.loaded["ui/network/manager"] = orig_net
+            package.loaded["device"] = orig_device
+        end)
+
+        it("returns true when connected and has default route, never calling isOnline", function()
+            local online_called = false
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return true end,
+                isOnline = function()
+                    online_called = true
+                    error("isOnline should never be called for silent checks!")
+                end,
+            }
+            package.loaded["device"] = { hasWifiToggle = function() return true end }
+
+            assert.is_true(utils:isSilentNetworkAvailable())
+            assert.is_false(online_called)
+        end)
+
+        it("returns false when connected but hasDefaultRoute is false, never calling isOnline", function()
+            local online_called = false
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return false end,
+                isOnline = function()
+                    online_called = true
+                    error("isOnline should not be called!")
+                end,
+            }
+            package.loaded["device"] = { hasWifiToggle = function() return true end }
+
+            assert.is_false(utils:isSilentNetworkAvailable())
+            assert.is_false(online_called)
+        end)
+
+        it("returns false when disconnected, without checking hasDefaultRoute or isOnline", function()
+            local route_called = false
+            local online_called = false
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return false end,
+                hasDefaultRoute = function()
+                    route_called = true
+                    return true
+                end,
+                isOnline = function()
+                    online_called = true
+                    return true
+                end,
+            }
+            package.loaded["device"] = { hasWifiToggle = function() return true end }
+
+            assert.is_false(utils:isSilentNetworkAvailable())
+            assert.is_false(route_called)
+            assert.is_false(online_called)
+        end)
+
+        it("returns true on desktop (!hasWifiToggle) when hasDefaultRoute returns nil", function()
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                hasDefaultRoute = function() return nil end,
+                isOnline = function() return true end,
+            }
+            package.loaded["device"] = { hasWifiToggle = function() return false end }
+
+            assert.is_true(utils:isSilentNetworkAvailable())
+        end)
+
+        it("falls back to isOnline when hasDefaultRoute is absent", function()
+            package.loaded["ui/network/manager"] = {
+                isConnected = function() return true end,
+                isOnline = function() return true end,
+            }
+            package.loaded["device"] = { hasWifiToggle = function() return true end }
+
+            assert.is_true(utils:isSilentNetworkAvailable())
+        end)
+    end)
 end)
