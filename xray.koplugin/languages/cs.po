@@ -1413,6 +1413,10 @@ msgstr "Předgenerovat nadcházející kapitoly na pozadí při připojení, s o
 msgid "pregenerate_confirm_text"
 msgstr "Toto spustí postupné skenování a analýzu všech %d kapitol na pozadí. Nově objevené stavy postav, místa a pojmy zůstanou bez spoilerů, dokud k nim nedojdete.\n\nPokračovat?"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "Všechny kapitoly jsou již aktuální."
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "Předgenerování dokončeno!"
@@ -1481,6 +1485,10 @@ msgstr "Znovu vytvořit data X-Ray"
 msgid "refresh"
 msgstr "Obnovit"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "Znovu vygenerovat vše"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Odmítnout"
@@ -1488,6 +1496,10 @@ msgstr "Odmítnout"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Znovu vyhledat '%s'"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "Pokračovat (%d zbývá)"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

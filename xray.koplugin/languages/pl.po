@@ -1413,6 +1413,10 @@ msgstr "Generuj nadchodzące rozdziały w tle podczas pracy online, utrzymując 
 msgid "pregenerate_confirm_text"
 msgstr "To działanie przeskanuje i przeanalizuje wszystkie %d rozdziałów w tle. Nowo odkryte stany postaci, lokalizacje i terminy pozostaną wolne od spoilerów, dopóki do nich nie dotrzesz.\n\nKontynuować?"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "Wszystkie rozdziały są już aktualne."
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "Generowanie zakończone!"
@@ -1481,6 +1485,10 @@ msgstr "Odbuduj dane X-Ray"
 msgid "refresh"
 msgstr "Odśwież"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "Wygeneruj wszystko ponownie"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Reject"
@@ -1488,6 +1496,10 @@ msgstr "Reject"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Wyszukaj ponownie '%s'"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "Wznów (%d pozostało)"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

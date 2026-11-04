@@ -344,8 +344,15 @@ local function getRoleScore(role)
     return 20
 end
 
-local function getEntityRole(entity)
+local function getEntityRole(entity, plugin)
     if not entity then return nil end
+    if plugin and plugin.resolveEntityState then
+        local is_full_book = (plugin.ai_helper and plugin.ai_helper.settings and plugin.ai_helper.settings.spoiler_setting == "full_book")
+        if not is_full_book then
+            local r = plugin:resolveEntityState(entity)
+            if r and r ~= "" then return r end
+        end
+    end
     if entity.role and entity.role ~= "" then return entity.role end
     if entity.states and #entity.states > 0 then
         for i = #entity.states, 1, -1 do
@@ -376,8 +383,8 @@ local function getChapterCount(entity)
     return count
 end
 
-local function calculateImportanceScore(entity)
-    local r_score = getRoleScore(getEntityRole(entity))
+local function calculateImportanceScore(entity, plugin)
+    local r_score = getRoleScore(getEntityRole(entity, plugin))
     local ch_count = getChapterCount(entity)
     local m_count = (entity.mentions and #entity.mentions) or 0
     if m_count > 0 then
@@ -769,28 +776,30 @@ function EntityListOverlay:prepareItems()
                 end
             end
         elseif self.mode == "timeline" then
-            if is_anthology then
-                local st_role, in_cur = p.getEntityStoryRole and p:getEntityStoryRole(entity, cur_story and cur_story.story_id)
-                if in_cur or st_role == "current" then
-                    if is_spoiler_free then
-                        if it.chapter_index and cur_chap and it.chapter_index > cur_chap then
+            if is_spoiler_free then
+                local gate = {
+                    chapter_index = it.chapter_index,
+                    page_hint = it.end_page or it.page,
+                    chapter_pct = it.chapter_pct,
+                    ch_start_page = it.page,
+                    ch_end_page = it.end_page,
+                }
+                if p and p.isPositionGateUnlocked then
+                    visible = p:isPositionGateUnlocked(gate, cur_chap, cur_page, { is_state_update = true })
+                else
+                    if it.chapter_index and cur_chap and it.chapter_index > cur_chap then
+                        visible = false
+                    elseif (it.end_page or it.page) and cur_page and tonumber(it.end_page or it.page) and tonumber(it.end_page or it.page) > cur_page then
+                        if not (it.chapter_index and cur_chap and it.chapter_index < cur_chap) then
                             visible = false
-                        elseif it.page and cur_page and tonumber(it.page) and tonumber(it.page) > cur_page then
-                            if not (it.chapter_index and cur_chap and it.chapter_index < cur_chap) then
-                                visible = false
-                            end
                         end
                     end
-                elseif not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent(entity, cur_story) then
-                    visible = false
                 end
-            elseif is_spoiler_free then
-                if it.chapter_index and cur_chap and it.chapter_index > cur_chap then
+            end
+            if is_anthology and visible then
+                local st_role, in_cur = p.getEntityStoryRole and p:getEntityStoryRole(entity, cur_story and cur_story.story_id)
+                if not (in_cur or st_role == "current") and not show_all and is_spoiler_free and cur_story and p.isStoryAfterCurrent and p:isStoryAfterCurrent(entity, cur_story) then
                     visible = false
-                elseif it.page and cur_page and tonumber(it.page) and tonumber(it.page) > cur_page then
-                    if not (it.chapter_index and cur_chap and it.chapter_index < cur_chap) then
-                        visible = false
-                    end
                 end
             end
         else
@@ -815,8 +824,24 @@ function EntityListOverlay:prepareItems()
         if visible then
             unfiltered_visible_count = unfiltered_visible_count + 1
             local name = (entity.name or entity.chapter or ""):lower()
-            local desc = (entity.description or entity.definition or entity.biography or entity.event or entity.snippet or ""):lower()
-            if not q or (name:find(q, 1, true) or desc:find(q, 1, true)) then
+            local desc_resolved = (p and p.resolveDescriptionForPage and p:resolveDescriptionForPage(entity, cur_page))
+            if not desc_resolved or desc_resolved == "---" then
+                desc_resolved = entity.description or entity.definition or entity.biography or entity.event or entity.snippet or ""
+            end
+            local desc = desc_resolved:lower()
+            local alias_match = false
+            if q then
+                local unl_aliases = (p and p.getUnlockedAliases and p:getUnlockedAliases(entity, cur_chap, cur_page)) or entity.aliases
+                if unl_aliases then
+                    for _, a in ipairs(unl_aliases) do
+                        if type(a) == "string" and a:lower():find(q, 1, true) then
+                            alias_match = true
+                            break
+                        end
+                    end
+                end
+            end
+            if not q or (name:find(q, 1, true) or desc:find(q, 1, true) or alias_match) then
                 table.insert(entries, { item = it, _orig_idx = idx })
             end
         end
@@ -863,8 +888,8 @@ function EntityListOverlay:prepareItems()
                 end
 
                 -- Tie breaker for characters introduced in the same chapter: importance score
-                local sa = calculateImportanceScore(ea)
-                local sb = calculateImportanceScore(eb)
+                local sa = calculateImportanceScore(ea, self.plugin)
+                local sb = calculateImportanceScore(eb, self.plugin)
                 if sa ~= sb then
                     return sa > sb
                 end
@@ -892,8 +917,8 @@ function EntityListOverlay:prepareItems()
                 end
 
                 -- 3. Composite importance score (Role weight + Chapter presence)
-                local sa = calculateImportanceScore(ea)
-                local sb = calculateImportanceScore(eb)
+                local sa = calculateImportanceScore(ea, self.plugin)
+                local sb = calculateImportanceScore(eb, self.plugin)
                 if sa ~= sb then
                     return sa > sb
                 end
@@ -1961,19 +1986,25 @@ function EntityListOverlay:renderRow(item, content_w, row_h, is_focused, idx)
     elseif is_mentions then
         desc_str = item.snippet or ""
     elseif is_linked then
-        if item_type == "term" then
-            desc_str = actual_item.definition or actual_item.description or ""
-        elseif item_type == "historical" then
-            desc_str = actual_item.biography or actual_item.description or ""
-        else
-            if p and p.resolveDescriptionForPage then
-                desc_str = p:resolveDescriptionForPage(actual_item) or ""
+        if p and p.resolveDescriptionForPage then
+            desc_str = p:resolveDescriptionForPage(actual_item) or ""
+        end
+        if not desc_str or desc_str == "" or desc_str == "---" then
+            if item_type == "term" then
+                desc_str = actual_item.definition or actual_item.description or ""
+            elseif item_type == "historical" then
+                desc_str = actual_item.biography or actual_item.description or ""
             else
                 desc_str = actual_item.description or actual_item.biography or ""
             end
         end
     elseif self.mode == "terms" then
-        desc_str = item.definition or item.description or ""
+        if p and p.resolveDescriptionForPage then
+            desc_str = p:resolveDescriptionForPage(item) or ""
+        end
+        if not desc_str or desc_str == "" or desc_str == "---" then
+            desc_str = item.definition or item.description or ""
+        end
     else
         if p and p.resolveDescriptionForPage then
             desc_str = p:resolveDescriptionForPage(item) or ""

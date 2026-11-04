@@ -1091,12 +1091,153 @@ describe("xray_fetch", function()
             end
 
             local done_called = false
-            plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true, nil, function(success)
+            local ret_batches = nil
+            plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true, nil, function(success, err, batches)
                 done_called = true
+                ret_batches = batches
             end)
 
             assert.is_true(done_called)
+            assert.are.equal(0, ret_batches)
             assert.is_false(dupe_check_called)
+        end)
+
+        it("force_rescan re-analyzes chapters even if present in chapters_fetched or timeline", function()
+            plugin.timeline = {
+                { chapter = "Chapter 1", page = 5, chapter_index = 1, event = "Old event" }
+            }
+            plugin.chapters_fetched = { ["Chapter 1_5"] = true }
+            local raw_toc = {
+                { title = "Chapter 1", page = 5 },
+                { title = "Chapter 2", page = 15 }
+            }
+            plugin.ui.document.getToc = function() return raw_toc end
+
+            local ChapterAnalyzer = require("xray_chapteranalyzer")
+            local orig_getText = ChapterAnalyzer.getSingleChapterText
+            ChapterAnalyzer.getSingleChapterText = function()
+                return string.rep("Sample chapter content for analysis test. ", 10)
+            end
+
+            local scanned = false
+            plugin.ai_helper = {
+                hasApiKey = function() return true end,
+                settings = {},
+                buildChapterDeltaPrompt = function()
+                    scanned = true
+                    return "mock_prompt"
+                end,
+                buildBatchChapterDeltaPrompt = function()
+                    scanned = true
+                    return "mock_prompt"
+                end,
+                buildComprehensiveRequest = function()
+                    return { url = "mock" }
+                end,
+                makeRequestAsync = function()
+                    -- Return nil with custom mock error to stop loop without hang
+                    return nil, "error_test", "Test stop"
+                end,
+            }
+
+            local done_called = false
+            local reported_err = nil
+            local ok, err_run = pcall(function()
+                plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true, nil, function(success, err)
+                    done_called = true
+                    reported_err = err
+                end, true) -- force_rescan = true
+            end)
+
+            ChapterAnalyzer.getSingleChapterText = orig_getText
+
+            if not ok then error(err_run) end
+            assert.is_true(done_called)
+            assert.is_true(scanned) -- Chapter was NOT skipped!
+            assert.are.equal("Test stop", reported_err)
+        end)
+
+        it("pre-empts background book-type detection when manual pregeneration starts", function()
+            plugin._book_type_detecting = true
+            local cancel_called = false
+            plugin.ai_helper = {
+                hasApiKey = function() return true end,
+                settings = {},
+                cancelAsyncChild = function()
+                    cancel_called = true
+                    return true
+                end,
+                buildChapterDeltaPrompt = function() return "prompt" end,
+                buildBatchChapterDeltaPrompt = function() return "prompt" end,
+                buildComprehensiveRequest = function() return { url = "mock" } end,
+                makeRequestAsync = function() return nil, "error_test", "Stop" end,
+            }
+
+            plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true)
+
+            assert.is_true(cancel_called)
+            assert.is_nil(plugin._book_type_detecting)
+        end)
+
+        it("retries when makeRequestAsync returns error_busy instead of immediately failing", function()
+            local UIManager = require("ui/uimanager")
+            local ChapterAnalyzer = require("xray_chapteranalyzer")
+            local orig_getText = ChapterAnalyzer.getSingleChapterText
+            ChapterAnalyzer.getSingleChapterText = function()
+                return string.rep("Sample chapter content for analysis test. ", 10)
+            end
+
+            local attempts = 0
+            local scheduled_delay = nil
+            local scheduled_cb = nil
+            local orig_schedule = UIManager.scheduleIn
+            UIManager.scheduleIn = function(self_ui, delay, cb)
+                scheduled_delay = delay
+                scheduled_cb = cb
+            end
+
+            plugin.timeline = nil
+            plugin.chapters_fetched = {}
+            plugin.ui.document.getToc = function() return { { title = "Chapter 1", page = 5 } } end
+
+            plugin.ai_helper = {
+                hasApiKey = function() return true end,
+                settings = {},
+                buildChapterDeltaPrompt = function() return "prompt" end,
+                buildBatchChapterDeltaPrompt = function() return "prompt" end,
+                buildComprehensiveRequest = function() return { url = "mock" } end,
+                makeRequestAsync = function()
+                    attempts = attempts + 1
+                    if attempts == 1 then
+                        return nil, "error_busy", "Another AI request is already in progress"
+                    else
+                        return 12345 -- successfully dispatched on attempt 2
+                    end
+                end,
+                checkAsyncResult = function()
+                    return nil -- still running
+                end,
+            }
+
+            local ok, err_run = pcall(function()
+                plugin:queueSequentialChapterScan({ { title = "Chapter 1", page = 5, toc_index = 1 } }, true)
+
+                assert.are.equal(1, attempts)
+                assert.are.equal(2, scheduled_delay)
+                assert.is_not_nil(scheduled_cb)
+
+                -- Invoke scheduled retry
+                scheduled_cb()
+                assert.are.equal(2, attempts)
+                assert.is_true(plugin.is_sequential_scan_active)
+            end)
+
+            -- Restore schedule & analyzer
+            UIManager.scheduleIn = orig_schedule
+            ChapterAnalyzer.getSingleChapterText = orig_getText
+            plugin:cancelSequentialChapterScan()
+
+            if not ok then error(err_run) end
         end)
 
         it("subdivides oversized Part-only TOC chapters into virtual segments", function()

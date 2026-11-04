@@ -1157,6 +1157,104 @@ function ChapterAnalyzer:getSingleChapterText(ui, chapter, next_chapter, current
     return ""
 end
 
+-- Inject lightweight [PAGE N] markers proportionally across single-chapter text (#150 intra-chapter gating)
+function ChapterAnalyzer:injectPageMarkers(raw_text, start_page, end_page)
+    if type(raw_text) ~= "string" or #raw_text == 0 then
+        return raw_text
+    end
+    start_page = tonumber(start_page)
+    end_page = tonumber(end_page) or start_page
+    if not start_page then
+        return raw_text
+    end
+    if end_page < start_page then
+        end_page = start_page
+    end
+    if end_page == start_page then
+        return string.format("[PAGE %d]\n%s", start_page, raw_text)
+    end
+
+    local total_pages = end_page - start_page + 1
+    local text_len = #raw_text
+    if text_len < total_pages * 10 then
+        -- Text too short for meaningful page subdivisions; tag with start_page
+        return string.format("[PAGE %d]\n%s", start_page, raw_text)
+    end
+
+    local parts = {}
+    local prev_pos = 1
+
+    for i = 1, total_pages - 1 do
+        local target_pos = math.floor((text_len * i) / total_pages)
+        local best_pos = nil
+        local best_dist = 999999
+
+        -- Search for \n in window [target_pos - 160 .. target_pos + 160]
+        local win_start = math.max(prev_pos + 1, target_pos - 160)
+        local win_end = math.min(text_len - 1, target_pos + 160)
+        local sub = raw_text:sub(win_start, win_end)
+
+        local match_start = 1
+        while true do
+            local nl_idx = sub:find("\n", match_start, true)
+            if not nl_idx then break end
+            local candidate = win_start + nl_idx -- character right after \n
+            local dist = math.abs(candidate - target_pos)
+            if dist < best_dist then
+                best_dist = dist
+                best_pos = candidate
+            end
+            match_start = nl_idx + 1
+        end
+
+        -- If no newline found, search for whitespace within ±80 bytes
+        if not best_pos then
+            win_start = math.max(prev_pos + 1, target_pos - 80)
+            win_end = math.min(text_len - 1, target_pos + 80)
+            sub = raw_text:sub(win_start, win_end)
+            match_start = 1
+            while true do
+                local s_idx = sub:find("%s", match_start)
+                if not s_idx then break end
+                local candidate = win_start + s_idx
+                local dist = math.abs(candidate - target_pos)
+                if dist < best_dist then
+                    best_dist = dist
+                    best_pos = candidate
+                end
+                match_start = s_idx + 1
+            end
+        end
+
+        local split_at = best_pos or target_pos
+        -- Ensure split does not slice through multi-byte UTF-8 continuation bytes (0x80..0xBF)
+        while split_at <= text_len and split_at > prev_pos do
+            local byte = raw_text:byte(split_at)
+            if byte and byte >= 0x80 and byte <= 0xBF then
+                split_at = split_at + 1
+            else
+                break
+            end
+        end
+
+        if split_at > prev_pos and split_at <= text_len then
+            local page_num = start_page + i - 1
+            table.insert(parts, string.format("[PAGE %d]\n", page_num))
+            table.insert(parts, raw_text:sub(prev_pos, split_at - 1))
+            if not parts[#parts]:match("\n$") then
+                table.insert(parts, "\n")
+            end
+            prev_pos = split_at
+        end
+    end
+
+    local last_page = end_page
+    table.insert(parts, string.format("[PAGE %d]\n", last_page))
+    table.insert(parts, raw_text:sub(prev_pos))
+
+    return table.concat(parts)
+end
+
 -- Get detailed samples (Start/Mid/End) from each chapter
 function ChapterAnalyzer:getDetailedChapterSamples(ui, max_chapters, total_limit, is_full_book, start_page, known_chapters, resolved_current_page, story_bounds)
     if not ui or not ui.document then return nil, nil end

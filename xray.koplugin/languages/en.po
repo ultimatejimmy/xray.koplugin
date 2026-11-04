@@ -1061,6 +1061,9 @@ msgstr "Pre-generate upcoming chapters in the background while online, keeping d
 msgid "pregenerate_confirm_text"
 msgstr "This will sequentially scan and analyze all %d chapters in the background. Newly discovered character states, locations, and glossary terms will remain spoiler-free until you reach them.\n\nContinue?"
 
+msgid "pregeneration_already_up_to_date"
+msgstr "All chapters are already up to date."
+
 msgid "pregeneration_complete"
 msgstr "Pre-generation complete!"
 
@@ -1112,11 +1115,17 @@ msgstr "Rebuild X-Ray Data"
 msgid "refresh"
 msgstr "Refresh"
 
+msgid "regenerate_all"
+msgstr "Re-generate All"
+
 msgid "reject_pair"
 msgstr "Reject"
 
 msgid "relookup_button"
 msgstr "Re-lookup '%s'"
+
+msgid "resume_remaining"
+msgstr "Resume (%d remaining)"
 
 msgid "review"
 msgstr "Review"

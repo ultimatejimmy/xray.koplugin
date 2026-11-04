@@ -157,6 +157,9 @@ function Evolution.build(entity, ctx)
                     chapter_index = ch_idx,
                     chapter_title = ch_title,
                     page = pg,
+                    chapter_pct = s.chapter_pct,
+                    ch_start_page = s.ch_start_page,
+                    ch_end_page = s.ch_end_page,
                     role = safe_str(s.role),
                     status = safe_str(s.status),
                     description = safe_str(s.description),
@@ -292,6 +295,9 @@ function Evolution.build(entity, ctx)
             description = it.description,
             evidence = it.evidence,
             change = it.change,
+            chapter_pct = it.chapter_pct,
+            ch_start_page = it.ch_start_page,
+            ch_end_page = it.ch_end_page,
             new_terms = {},
             new_sentences = {},
         }
@@ -374,6 +380,16 @@ function Evolution.build(entity, ctx)
     for idx, m in ipairs(milestones) do
         if show_all then
             m.is_locked = false
+        elseif plugin and plugin.isPositionGateUnlocked then
+            local is_upd = (idx > 1) or (entity and (entity.is_series or entity.from_series))
+            local gate = {
+                chapter_index = m.chapter_index,
+                page_hint = m.page,
+                chapter_pct = m.chapter_pct,
+                ch_start_page = m.ch_start_page,
+                ch_end_page = m.ch_end_page,
+            }
+            m.is_locked = not plugin:isPositionGateUnlocked(gate, cur_chap, cur_page, { is_state_update = is_upd })
         else
             local locked = false
             if m.chapter_index and cur_chap then

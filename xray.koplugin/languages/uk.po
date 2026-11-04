@@ -1413,6 +1413,10 @@ msgstr "Попередньо генеруйте майбутні розділи 
 msgid "pregenerate_confirm_text"
 msgstr "Це запустить послідовне сканування та аналіз усіх %d розділів у фоновому режимі. Нові стани персонажів, локації та терміни будуть приховані, поки ви не дійдете до них.\n\nПродовжити?"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "Усі розділи вже оновлені."
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "Попередню генерацію завершено!"
@@ -1481,6 +1485,10 @@ msgstr "Перебудувати дані X-Ray"
 msgid "refresh"
 msgstr "Оновити"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "Перегенерувати все"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Reject"
@@ -1488,6 +1496,10 @@ msgstr "Reject"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Повторити пошук '%s'"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "Продовжити (залишилося %d)"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

@@ -398,8 +398,12 @@ RULES:
    - DO NOT create an update in `character_state_updates` simply because an existing character appeared, spoke, or performed routine actions in this chapter.
    - ONLY generate an update if there is a substantive, lasting transformation in their narrative arc, identity, relationships, employment, allegiance, or condition (e.g. killed, injured, arrested, betrayed, engaged, promoted, revealed to be the culprit, major secret or motive uncovered).
    - If an update IS justified, the updated `description` must be a rich, cumulative character overview that incorporates the new developments while retaining their core identity and established story context—NOT a summary of an isolated scene.
-4. EVIDENCE: Provide a brief reference or quote excerpt from this chapter explaining why the update occurred.
-5. TIMELINE: Provide exactly one event summary of the main plot actions in this chapter.
+4. INTRA-CHAPTER PAGE MARKERS ([PAGE N]) & ZERO-SPOILER GATING:
+   - Chapter texts contain [PAGE N] markers indicating page progression.
+   - For `new_characters`, `new_locations`, and `new_terms`: provide "first_page" (integer N from the [PAGE N] marker where first mentioned), "intro_role" (for characters), and "intro_description" (1-2 sentences strictly limited to what is known upon their first introduction at [PAGE first_page]—with ZERO knowledge of later twists, secrets, or outcomes occurring on later pages). Also provide "page" (the [PAGE N] marker where the fuller cumulative "description" applies, typically the chapter's final page).
+   - For `character_state_updates`, `location_state_updates`, and `term_state_updates`: provide "page" (integer N from the [PAGE N] marker where the revelation/transition completes; do NOT reveal facts before this page).
+5. EVIDENCE: Provide a brief reference or quote excerpt from this chapter explaining why the update occurred.
+6. TIMELINE: Provide exactly one event summary of the main plot actions in this chapter.
 
 REQUIRED JSON FORMAT:
 {
@@ -407,6 +411,10 @@ REQUIRED JSON FORMAT:
     {
       "name": "Full Name",
       "aliases": ["Alias 1", "Alias 2"],
+      "first_page": 80,
+      "intro_role": "Initial role (e.g. Village Clerk, Stranger, Client)",
+      "intro_description": "Initial 1-2 sentence impression strictly at first introduction, zero spoilers from later pages.",
+      "page": 99,
       "role": "Narrative role / importance (e.g. Protagonist, Private Investigator, Partner, Antagonist, Victim, Client, Suspect, Secondary Character, Minor Character)",
       "status": "alive",
       "description": "Rich, specific character description (background, relationships, narrative stakes). Avoid generic blurbs and trivial errand logs.",
@@ -416,6 +424,7 @@ REQUIRED JSON FORMAT:
   "character_state_updates": [
     {
       "name": "Name matching known manifest",
+      "page": 95,
       "role": "Updated narrative role / importance (e.g. Protagonist, Partner, Antagonist, Secondary Character, etc.)",
       "status": "alive",
       "change": "One short sentence naming what changed since the previous state (e.g. 'Promoted to partner after the Shacklewell case')",
@@ -426,6 +435,9 @@ REQUIRED JSON FORMAT:
   "new_locations": [
     {
       "name": "Location Name",
+      "first_page": 80,
+      "intro_description": "Initial impression at first mention.",
+      "page": 99,
       "description": "Description of location",
       "evidence": "Short excerpt"
     }
@@ -433,6 +445,7 @@ REQUIRED JSON FORMAT:
   "location_state_updates": [
     {
       "name": "Name matching known manifest",
+      "page": 95,
       "change": "One short sentence naming what changed (e.g. 'Destroyed during the battle of Oakhaven')",
       "description": "Updated evolved description",
       "evidence": "Short excerpt"
@@ -441,6 +454,9 @@ REQUIRED JSON FORMAT:
   "new_terms": [
     {
       "name": "Term Name",
+      "first_page": 80,
+      "intro_description": "Initial definition at first mention.",
+      "page": 99,
       "description": "Definition or lore explanation",
       "evidence": "Short excerpt"
     }
@@ -448,6 +464,7 @@ REQUIRED JSON FORMAT:
   "term_state_updates": [
     {
       "name": "Name matching known manifest",
+      "page": 95,
       "change": "One short sentence naming what changed in understanding or usage",
       "description": "Updated definition",
       "evidence": "Short excerpt"
@@ -492,8 +509,12 @@ RULES:
    - DO NOT create an update in `character_state_updates` simply because an existing character appeared, spoke, or performed routine actions in a chapter.
    - ONLY generate an update if there is a substantive, lasting transformation in their narrative arc, identity, relationships, employment, allegiance, or condition (e.g. killed, injured, arrested, betrayed, engaged, promoted, revealed to be the culprit, major secret or motive uncovered).
    - If an update IS justified, the updated `description` must be a rich, cumulative character overview that incorporates the new developments while retaining their core identity and established story context—NOT a summary of an isolated scene.
-4. EVIDENCE: Provide a brief reference or quote excerpt from that specific chapter explaining why the update occurred.
-5. JSON SAFETY: Output strictly valid JSON. Properly escape double quotes inside strings.
+4. INTRA-CHAPTER PAGE MARKERS ([PAGE N]) & ZERO-SPOILER GATING:
+   - Chapter texts contain [PAGE N] markers indicating page progression.
+   - For `new_characters`, `new_locations`, and `new_terms`: provide "first_page" (integer N from the [PAGE N] marker where first mentioned), "intro_role" (for characters), and "intro_description" (1-2 sentences strictly limited to what is known upon their first introduction at [PAGE first_page]—with ZERO knowledge of later twists, secrets, or outcomes occurring on later pages). Also provide "page" (the [PAGE N] marker where the fuller cumulative "description" applies, typically the chapter's final page).
+   - For `character_state_updates`, `location_state_updates`, and `term_state_updates`: provide "page" (integer N from the [PAGE N] marker where the revelation/transition completes; do NOT reveal facts before this page).
+5. EVIDENCE: Provide a brief reference or quote excerpt from that specific chapter explaining why the update occurred.
+6. JSON SAFETY: Output strictly valid JSON. Properly escape double quotes inside strings.
 
 REQUIRED JSON FORMAT:
 {
@@ -506,6 +527,10 @@ REQUIRED JSON FORMAT:
         {
           "name": "Full Name",
           "aliases": ["Alias 1"],
+          "first_page": 80,
+          "intro_role": "Initial role (e.g. Village Clerk, Stranger, Client)",
+          "intro_description": "Initial 1-2 sentence impression strictly at first introduction, zero spoilers from later pages.",
+          "page": 99,
           "role": "Narrative role / importance (e.g. Protagonist, Private Investigator, Partner, Antagonist, Victim, Client, Suspect, Secondary Character, Minor Character)",
           "status": "alive",
           "description": "Rich, specific character description (background, relationships, narrative stakes). Avoid generic blurbs and trivial errand logs.",
@@ -515,6 +540,7 @@ REQUIRED JSON FORMAT:
       "character_state_updates": [
         {
           "name": "Name matching known manifest or character introduced in earlier chapter of this batch",
+          "page": 95,
           "role": "Updated narrative role / importance (e.g. Protagonist, Partner, Antagonist, Secondary Character, etc.)",
           "status": "alive",
           "change": "One short sentence naming what changed since the previous state (e.g. 'Promoted to partner after the Shacklewell case')",
@@ -525,6 +551,9 @@ REQUIRED JSON FORMAT:
       "new_locations": [
         {
           "name": "Location Name",
+          "first_page": 80,
+          "intro_description": "Initial impression at first mention.",
+          "page": 99,
           "description": "Description of location",
           "evidence": "Brief excerpt"
         }
@@ -532,6 +561,7 @@ REQUIRED JSON FORMAT:
       "location_state_updates": [
         {
           "name": "Name matching known manifest or location introduced in earlier chapter of this batch",
+          "page": 95,
           "change": "One short sentence naming what changed (e.g. 'Destroyed during the battle of Oakhaven')",
           "description": "Updated description",
           "evidence": "Brief excerpt"
@@ -540,6 +570,9 @@ REQUIRED JSON FORMAT:
       "new_terms": [
         {
           "name": "Term Name",
+          "first_page": 80,
+          "intro_description": "Initial definition at first mention.",
+          "page": 99,
           "description": "Definition or lore explanation",
           "evidence": "Brief excerpt"
         }
@@ -547,6 +580,7 @@ REQUIRED JSON FORMAT:
       "term_state_updates": [
         {
           "name": "Name matching known manifest or term introduced in earlier chapter of this batch",
+          "page": 95,
           "change": "One short sentence naming what changed in understanding or usage",
           "description": "Updated definition",
           "evidence": "Brief excerpt"

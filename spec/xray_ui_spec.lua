@@ -3580,6 +3580,82 @@ describe("xray_ui", function()
             assert.truthy(last.title:find("menu_pregenerate_book"))
             assert.truthy(last.title:find("pregenerate_confirm_text"))
         end)
+
+        it("startFullBookPreGeneration offers Re-generate All when all chapters are already fetched", function()
+            plugin.isSequentialChapterScanActive = function() return false end
+            plugin.is_sequential_scan_active = false
+            plugin.ui = {
+                document = {
+                    getToc = function()
+                        return {
+                            { title = "Chapter 1", page = 1 },
+                            { title = "Chapter 2", page = 10 },
+                        }
+                    end,
+                    getPageCount = function() return 20 end,
+                }
+            }
+            plugin.chapters_fetched = {
+                ["Chapter 1_1"] = true,
+                ["Chapter 2_10"] = true,
+            }
+
+            plugin:startFullBookPreGeneration()
+
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("ButtonDialog", last.type)
+            assert.truthy(last.title:find("already been scanned"))
+            assert.truthy(last.title:find("re%-generate the entire book from scratch"))
+
+            -- Check buttons include Re-generate All
+            local found_regen = false
+            for _, row in ipairs(last.buttons or {}) do
+                for _, btn in ipairs(row) do
+                    if btn.text and (btn.text == "regenerate_all" or btn.text:find("Re%-generate All")) then
+                        found_regen = true
+                    end
+                end
+            end
+            assert.is_true(found_regen)
+        end)
+
+        it("startFullBookPreGeneration offers Resume and Re-generate All when partially fetched", function()
+            plugin.isSequentialChapterScanActive = function() return false end
+            plugin.is_sequential_scan_active = false
+            plugin.ui = {
+                document = {
+                    getToc = function()
+                        return {
+                            { title = "Chapter 1", page = 1 },
+                            { title = "Chapter 2", page = 10 },
+                        }
+                    end,
+                    getPageCount = function() return 20 end,
+                }
+            }
+            plugin.chapters_fetched = {
+                ["Chapter 1_1"] = true,
+            }
+
+            plugin:startFullBookPreGeneration()
+
+            local last = _G.ui_tracker.last_shown
+            assert.is_not_nil(last)
+            assert.are.equal("ButtonDialog", last.type)
+            assert.truthy(last.title:find("1 remaining"))
+
+            local found_resume = false
+            local found_regen = false
+            for _, row in ipairs(last.buttons or {}) do
+                for _, btn in ipairs(row) do
+                    if btn.text and (btn.text == "resume_remaining" or btn.text:find("Resume")) then found_resume = true end
+                    if btn.text and (btn.text == "regenerate_all" or btn.text:find("Re%-generate All")) then found_regen = true end
+                end
+            end
+            assert.is_true(found_resume)
+            assert.is_true(found_regen)
+        end)
     end)
     describe("showSeriesContextPrompt", function()
         local loc_xray = require("localization_xray")

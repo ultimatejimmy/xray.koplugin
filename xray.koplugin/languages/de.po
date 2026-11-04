@@ -1413,6 +1413,10 @@ msgstr "Kommende Kapitel im Hintergrund online vorab generieren, Beschreibungen 
 msgid "pregenerate_confirm_text"
 msgstr "Dies scannt und analysiert nacheinander alle %d Kapitel im Hintergrund. Neu entdeckte Charakterzustände, Orte und Glossarbegriffe bleiben spoilerfrei, bis Sie diese erreichen.\n\nFortfahren?"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "Alle Kapitel sind bereits aktuell."
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "Vorab-Generierung abgeschlossen!"
@@ -1481,6 +1485,10 @@ msgstr "X-Ray-Daten neu aufbauen"
 msgid "refresh"
 msgstr "Aktualisieren"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "Alles neu generieren"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Reject"
@@ -1488,6 +1496,10 @@ msgstr "Reject"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Erneute Suche nach '%s'"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "Fortsetzen (%d verbleibend)"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

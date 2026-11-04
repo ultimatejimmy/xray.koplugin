@@ -165,6 +165,7 @@ local specs = {
     "spec/xray_book_type_spec.lua",
     "spec/xray_low_memory_guard_spec.lua",
     "spec/xray_horizon_spec.lua",
+    "spec/xray_page_gate_spec.lua",
     "spec/xray_evolution_spec.lua",
     "spec/xray_anthology_spec.lua",
     "spec/xray_story_groups_spec.lua",

@@ -1413,6 +1413,10 @@ msgstr "Pré-génère les chapitres à venir en arrière-plan en étant en ligne
 msgid "pregenerate_confirm_text"
 msgstr "Ceci va scanner et analyser séquentiellement les %d chapitres en arrière-plan. Les états de personnages, lieux et termes de glossaire nouvellement découverts resteront sans spoilers jusqu'à ce que vous les atteigniez.\n\nContinuer ?"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "Tous les chapitres sont déjà à jour."
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "Pré-génération terminée !"
@@ -1481,6 +1485,10 @@ msgstr "Reconstruire les données X-Ray"
 msgid "refresh"
 msgstr "Actualiser"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "Tout regénérer"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Reject"
@@ -1488,6 +1496,10 @@ msgstr "Reject"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Nouvelle recherche pour '%s'"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "Reprendre (%d restants)"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

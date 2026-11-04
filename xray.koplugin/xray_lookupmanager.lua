@@ -151,39 +151,19 @@ function LookupManager:getNormAliases(item)
         return nil
     end
 
-    local norm_list = item._norm_aliases
-    local needs_rebuild = not norm_list
-
-    if not needs_rebuild then
-        local valid_idx = 0
-        for _, alias in ipairs(item.aliases) do
-            if type(alias) == "string" and alias ~= "" then
-                local anorm = self:normalize(alias)
-                if anorm ~= "" then
-                    valid_idx = valid_idx + 1
-                    if norm_list[valid_idx] ~= anorm then
-                        needs_rebuild = true
-                        break
-                    end
-                end
-            end
-        end
-        if not needs_rebuild and valid_idx ~= #norm_list then
-            needs_rebuild = true
-        end
+    local raw_aliases = (self.plugin and self.plugin.getUnlockedAliases) and self.plugin:getUnlockedAliases(item) or item.aliases
+    if not raw_aliases or #raw_aliases == 0 then
+        return nil
     end
 
-    if needs_rebuild then
-        norm_list = {}
-        for _, alias in ipairs(item.aliases) do
-            if type(alias) == "string" and alias ~= "" then
-                local anorm = self:normalize(alias)
-                if anorm ~= "" then
-                    table.insert(norm_list, anorm)
-                end
+    local norm_list = {}
+    for _, alias in ipairs(raw_aliases) do
+        if type(alias) == "string" and alias ~= "" then
+            local anorm = self:normalize(alias)
+            if anorm ~= "" then
+                table.insert(norm_list, anorm)
             end
         end
-        item._norm_aliases = norm_list
     end
 
     return norm_list
@@ -207,9 +187,23 @@ function LookupManager:lookupAll(text)
     local seen = {}  -- tracks already-added items
     local final_results = {}
 
+    local function isItemLookupVisible(item)
+        if not item or not item.name then return false end
+        if self.plugin then
+            if self.plugin.isStoryAfterCurrent and self.plugin:isStoryAfterCurrent(item.story_id) then
+                return false
+            end
+            if self.plugin.isEntityVisibleAtCurrentPosition and not self.plugin:isEntityVisibleAtCurrentPosition(item) then
+                return false
+            end
+        end
+        return true
+    end
+
     local function addIfMatch(item, item_type)
         if not item or not item.name then return end
         if seen[item] then return end
+        if not isItemLookupVisible(item) then return end
 
         local norm = self:getNormName(item)
         if norm == "" then return end
@@ -293,7 +287,7 @@ function LookupManager:lookupAll(text)
         for _, cat in ipairs(categories) do
             if cat.list then
                 for _, item in ipairs(cat.list) do
-                    if item and item.name and not fallback_seen[item] and self:getNormName(item) ~= "" then
+                    if item and item.name and not fallback_seen[item] and isItemLookupVisible(item) and self:getNormName(item) ~= "" then
                         local words = itemWords(item)
                         local all_matched = #query_words > 0
                         for _, qw in ipairs(query_words) do

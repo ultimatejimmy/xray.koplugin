@@ -1413,6 +1413,10 @@ msgstr "Предварительная обработка глав в фонов
 msgid "pregenerate_confirm_text"
 msgstr "Это приведет к последовательному сканированию и анализу всех %d глав в фоновом режиме. Новые состояния персонажей, локации и термины глоссария останутся скрытыми до тех пор, пока вы не дойдете до них.\n\nПродолжить?"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "Все главы уже обновлены."
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "Обработка завершена!"
@@ -1481,6 +1485,10 @@ msgstr "Перестроить данные X-Ray"
 msgid "refresh"
 msgstr "Обновить"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "Перегенерировать все"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "Reject"
@@ -1488,6 +1496,10 @@ msgstr "Reject"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "Повторить поиск '%s'"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "Продолжить (осталось %d)"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

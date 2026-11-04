@@ -93,6 +93,13 @@ function M:sortDataByFrequency(list, text, key)
 
     local function getEntityRole(entity)
         if not entity then return nil end
+        if self and self.resolveEntityState then
+            local is_full_book = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting == "full_book")
+            if not is_full_book then
+                local r = self:resolveEntityState(entity)
+                if r and r ~= "" then return r end
+            end
+        end
         if entity.role and entity.role ~= "" then return entity.role end
         if entity.states and #entity.states > 0 then
             for i = #entity.states, 1, -1 do

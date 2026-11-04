@@ -1413,6 +1413,10 @@ msgstr "在线时在后台预生成后续章节，在您读到前保持剧透信
 msgid "pregenerate_confirm_text"
 msgstr "此操作将在后台依次扫描并分析全部 %d 个章节。新发现的角色状态、地点和词汇表项在您读到前将保持隐藏，避免剧透。\n\n是否继续？"
 
+# en-hash: 7c1e119b842516954f1738e63d2c2cca
+msgid "pregeneration_already_up_to_date"
+msgstr "所有章节已是最新。"
+
 # en-hash: 8474e54bad0a6acdfa4c577f3cce833b
 msgid "pregeneration_complete"
 msgstr "预生成完成！"
@@ -1481,6 +1485,10 @@ msgstr "重建 X-Ray 数据"
 msgid "refresh"
 msgstr "刷新"
 
+# en-hash: 50c6181a8ce0b168952945bc4029e90f
+msgid "regenerate_all"
+msgstr "重新生成全部"
+
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
 msgstr "拒绝"
@@ -1488,6 +1496,10 @@ msgstr "拒绝"
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
 msgstr "重新查询“%s”"
+
+# en-hash: 2b918509640736f9fbbb1648b9d5f754
+msgid "resume_remaining"
+msgstr "继续（剩余 %d 项）"
 
 # en-hash: 457dd55184faedb7885afd4009d70163
 msgid "review"

@@ -794,6 +794,10 @@ local function showBottomPopup(plugin, entity, opts)
     local normalized = {}
     for k, v in pairs(entity) do normalized[k] = v end
 
+    if plugin.getUnlockedAliases then
+        normalized.aliases = plugin:getUnlockedAliases(entity)
+    end
+
     if plugin.resolveEntityState and (entity.states and #entity.states > 0) then
         local r_role, r_status, r_desc = plugin:resolveEntityState(entity)
         if r_role then normalized.role = r_role end
@@ -1703,8 +1707,9 @@ function M:findRelatedEntities(text, exclude_name, source_entity)
                 local it_st = item.story_id or (self.resolveEntityStory and self:resolveEntityStory(item))
                 if it_st ~= target_story_id then pass_story = false end
             end
+            local pass_vis = not self.isEntityVisibleAtCurrentPosition or self:isEntityVisibleAtCurrentPosition(item)
             local name = item.name
-            if pass_story and name and not seen[name:lower()] then
+            if pass_story and pass_vis and name and not seen[name:lower()] then
                 local found = false
 
                 -- Strategy 1: Full name match
@@ -1713,8 +1718,9 @@ function M:findRelatedEntities(text, exclude_name, source_entity)
                 end
 
                 -- Strategy 2: Aliases (skip generic and honorific-only aliases)
-                if not found and item.aliases then
-                    for _, alias in ipairs(item.aliases) do
+                local unl_aliases = self.getUnlockedAliases and self:getUnlockedAliases(item) or item.aliases
+                if not found and unl_aliases then
+                    for _, alias in ipairs(unl_aliases) do
                         if type(alias) == "string"
                                   and not honorifics[alias:lower()]
                                   and not isTooGeneric(alias, name)
@@ -1801,9 +1807,10 @@ function M:showCharacterDetails(character, opts)
 
     -- 2. Aliases (with label, if present)
     local meaningful_aliases = {}
-    if character.aliases and type(character.aliases) == "table" and #character.aliases > 0 then
+    local char_aliases = self.getUnlockedAliases and self:getUnlockedAliases(character) or character.aliases
+    if char_aliases and type(char_aliases) == "table" and #char_aliases > 0 then
         local name_lower = (character.name or ""):lower()
-        for _, alias in ipairs(character.aliases) do
+        for _, alias in ipairs(char_aliases) do
             local al_lower = tostring(alias):lower()
             if #al_lower > 1 and not name_lower:find(al_lower, 1, true) then
                 table.insert(meaningful_aliases, alias)
@@ -2166,9 +2173,10 @@ function M:showTermDetails(term, opts)
 
     -- 2. Aliases (with label, if present)
     local meaningful_aliases = {}
-    if term.aliases and type(term.aliases) == "table" and #term.aliases > 0 then
+    local term_aliases = self.getUnlockedAliases and self:getUnlockedAliases(term) or term.aliases
+    if term_aliases and type(term_aliases) == "table" and #term_aliases > 0 then
         local name_lower = (term.name or ""):lower()
-        for _, alias in ipairs(term.aliases) do
+        for _, alias in ipairs(term_aliases) do
             local al_lower = tostring(alias):lower()
             if #al_lower > 1 and not name_lower:find(al_lower, 1, true) then
                 table.insert(meaningful_aliases, alias)
@@ -2204,7 +2212,10 @@ function M:showTermDetails(term, opts)
     end
 
     -- 4. Definition (no label)
-    local resolved_definition = term.definition
+    local resolved_definition = self:resolveDescriptionForPage(term)
+    if not resolved_definition or resolved_definition == "---" then
+        resolved_definition = term.definition
+    end
     local display_definition = resolved_definition
     local is_truncated = false
     if resolved_definition and resolved_definition ~= "" and resolved_definition ~= "---" then
@@ -3719,6 +3730,12 @@ function M:startFullBookPreGeneration()
         return
     end
 
+    if self._book_type_detecting and self.ai_helper and self.ai_helper.cancelAsyncChild then
+        self:log("XRayPlugin: Pre-empting background book-type detection for manual pregeneration.")
+        self.ai_helper:cancelAsyncChild()
+        self._book_type_detecting = nil
+    end
+
     local raw_toc
     pcall(function()
         if self.ui.document.getToc then raw_toc = self.ui.document:getToc() end
@@ -3751,16 +3768,147 @@ function M:startFullBookPreGeneration()
         return
     end
 
+    local already_fetched_count = 0
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+    for _, candidate in ipairs(narrative_chapters) do
+        local cand_idx = candidate.toc_index or 1
+        local cand_id = (candidate.title or ("Chapter " .. tostring(cand_idx))) .. "_" .. tostring(candidate.page)
+        local cand_already_fetched = self.chapters_fetched and self.chapters_fetched[cand_id]
+        if not cand_already_fetched and self.timeline then
+            for _, ev in ipairs(self.timeline) do
+                local story_match = not is_anthology or not candidate.story_id or (ev.story_id == candidate.story_id)
+                if story_match then
+                    if (ev.chapter_index and ev.chapter_index == cand_idx) or
+                       (ev.page and candidate.page and tonumber(ev.page) == tonumber(candidate.page)) then
+                        cand_already_fetched = true
+                        break
+                    end
+                end
+            end
+        end
+        if cand_already_fetched then
+            already_fetched_count = already_fetched_count + 1
+        end
+    end
+
     local ButtonDialog = require("ui/widget/buttondialog")
     local confirm_dlg
     local prompt_text
-    if #narrative_chapters > raw_chapter_count then
+    local confirm_buttons
+
+    local function startScan(force)
+        if force then
+            self:_clearAIData()
+            local doc_file = self.ui and self.ui.document and self.ui.document.file
+            if doc_file and self.cache_manager then
+                self.cache_manager:clearCache(doc_file)
+            end
+        end
+        UIManager:show(InfoMessage:new{
+            text = self.loc and self.loc:t("pregeneration_started") or "Pre-generation started in background.",
+            timeout = 3,
+        })
+        self:queueSequentialChapterScan(narrative_chapters, true, function(done, total, done_ch, total_ch)
+            local cur_ch = done_ch or done or 0
+            local max_ch = total_ch or total or 0
+            self:log(string.format("XRayPlugin: Pre-generation progress: %d of %d chapters (%d of %d segments).", cur_ch, max_ch, done or 0, total or 0))
+        end, function(success, err_msg, batches_processed)
+            if success then
+                if (batches_processed or 0) == 0 then
+                    UIManager:show(InfoMessage:new{
+                        text = self.loc and self.loc:t("pregeneration_already_up_to_date") or "All chapters are already up to date.",
+                        timeout = 4,
+                    })
+                else
+                    UIManager:show(InfoMessage:new{
+                        text = self.loc and self.loc:t("pregeneration_complete") or "Pre-generation complete!",
+                        timeout = 4,
+                    })
+                end
+            else
+                UIManager:show(InfoMessage:new{
+                    text = "Pre-generation could not be completed: " .. tostring(err_msg or "AI request failed"),
+                    timeout = 5,
+                })
+            end
+        end, force)
+    end
+
+    if already_fetched_count >= #narrative_chapters then
         prompt_text = string.format(
-            "This will sequentially scan and analyze all %d chapters (%d segments) in the background. Newly discovered character states, locations, and glossary terms will remain spoiler-free until you reach them.\n\nContinue?",
+            "All %d chapters (%d segments) have already been scanned and are stored in the X-Ray cache.\n\nWould you like to re-generate the entire book from scratch? (This will re-analyze all chapters with updated prompts and page gating)",
             raw_chapter_count, #narrative_chapters
         )
+        confirm_buttons = {
+            {
+                {
+                    text = self.loc and self.loc:t("cancel") or "Cancel",
+                    callback = function() UIManager:close(confirm_dlg) end,
+                },
+                {
+                    text = self.loc and self.loc:t("regenerate_all") or "Re-generate All (Fresh Scan)",
+                    is_enter_default = true,
+                    callback = function()
+                        UIManager:close(confirm_dlg)
+                        startScan(true)
+                    end,
+                },
+            }
+        }
+    elseif already_fetched_count > 0 then
+        local remaining = #narrative_chapters - already_fetched_count
+        prompt_text = string.format(
+            "%d of %d chapters have already been scanned (%d remaining).\n\nWould you like to resume scanning the remaining chapters, or re-generate all chapters from scratch?",
+            already_fetched_count, raw_chapter_count, remaining
+        )
+        confirm_buttons = {
+            {
+                {
+                    text = self.loc and self.loc:t("cancel") or "Cancel",
+                    callback = function() UIManager:close(confirm_dlg) end,
+                },
+                {
+                    text = string.format(self.loc and self.loc:t("resume_remaining") or "Resume (%d remaining)", remaining),
+                    is_enter_default = true,
+                    callback = function()
+                        UIManager:close(confirm_dlg)
+                        startScan(false)
+                    end,
+                },
+                {
+                    text = self.loc and self.loc:t("regenerate_all") or "Re-generate All",
+                    callback = function()
+                        UIManager:close(confirm_dlg)
+                        startScan(true)
+                    end,
+                },
+            }
+        }
     else
-        prompt_text = (self.loc and self.loc:t("pregenerate_confirm_text") or "This will sequentially scan and analyze all %d chapters in the background. Newly discovered character states, locations, and glossary terms will remain spoiler-free until you reach them.\n\nContinue?"):format(raw_chapter_count)
+        if #narrative_chapters > raw_chapter_count then
+            prompt_text = string.format(
+                "This will sequentially scan and analyze all %d chapters (%d segments) in the background. Newly discovered character states, locations, and glossary terms will remain spoiler-free until you reach them.\n\nContinue?",
+                raw_chapter_count, #narrative_chapters
+            )
+        else
+            prompt_text = (self.loc and self.loc:t("pregenerate_confirm_text") or "This will sequentially scan and analyze all %d chapters in the background. Newly discovered character states, locations, and glossary terms will remain spoiler-free until you reach them.\n\nContinue?"):format(raw_chapter_count)
+        end
+        confirm_buttons = {
+            {
+                {
+                    text = self.loc and self.loc:t("cancel") or "Cancel",
+                    callback = function() UIManager:close(confirm_dlg) end,
+                },
+                {
+                    text = self.loc and self.loc:t("start") or "Start",
+                    is_enter_default = true,
+                    callback = function()
+                        UIManager:close(confirm_dlg)
+                        startScan(false)
+                    end,
+                },
+            }
+        }
     end
 
     local dlg_title = self.loc and self.loc:t("menu_pregenerate_book") or "Pre-generate Entire Book"
@@ -3768,29 +3916,7 @@ function M:startFullBookPreGeneration()
         modal = true,
         title = dlg_title .. "\n\n" .. prompt_text,
         text = prompt_text,
-        buttons = {
-            {
-                {
-                    text = self.loc and self.loc:t("cancel") or "Cancel",
-                    callback = function() UIManager:close(confirm_dlg) end
-                },
-                {
-                    text = self.loc and self.loc:t("start") or "Start",
-                    is_enter_default = true,
-                    callback = function()
-                        UIManager:close(confirm_dlg)
-                        UIManager:show(InfoMessage:new{ text = self.loc and self.loc:t("pregeneration_started") or "Pre-generation started in background.", timeout = 3 })
-                        self:queueSequentialChapterScan(narrative_chapters, true, function(done, total, done_ch, total_ch)
-                            self:log(string.format("XRayPlugin: Pre-generation progress: %d of %d chapters (%d of %d segments).", done_ch or done, total_ch or total, done, total))
-                        end, function(success)
-                            if success then
-                                UIManager:show(InfoMessage:new{ text = self.loc and self.loc:t("pregeneration_complete") or "Pre-generation complete!", timeout = 4 })
-                            end
-                        end)
-                    end
-                }
-            }
-        }
+        buttons = confirm_buttons,
     }
     UIManager:show(confirm_dlg)
 end
@@ -7298,6 +7424,104 @@ function M:hasEntityEvolution(entity)
     return #key_milestones >= 2
 end
 
+function M:getChapterPageBounds(cur_chap)
+    cur_chap = tonumber(cur_chap)
+    if not cur_chap then return nil, nil end
+    local toc = (self._getFlatToc and self:_getFlatToc()) or (self.ui and self.ui.document and self.ui.document.getToc and utils:flattenTOC(self.ui.document:getToc()))
+    if not toc or next(toc) == nil then return nil, nil end
+    local entry = toc[cur_chap]
+    if not entry or not entry.page then return nil, nil end
+    local start_p = tonumber(entry.page)
+    local next_entry = toc[cur_chap + 1]
+    local end_p = nil
+    if next_entry and next_entry.page then
+        end_p = tonumber(next_entry.page) - 1
+    else
+        local total_p = self.ui and self.ui.document and self.ui.document.getPageCount and self.ui.document:getPageCount()
+        end_p = tonumber(total_p)
+    end
+    if end_p and start_p and end_p < start_p then
+        end_p = start_p
+    end
+    return start_p, end_p
+end
+
+function M:isPositionGateUnlocked(gate, cur_chap, cur_page, opts)
+    if not gate or type(gate) ~= "table" then return true end
+    local is_full_book = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting == "full_book")
+    if is_full_book then return true end
+
+    cur_page = tonumber(cur_page) or tonumber(self:getCurrentDocPage())
+    cur_chap = tonumber(cur_chap) or tonumber(self:getCurrentChapterIndex(cur_page)) or 1
+
+    local g_chap = tonumber(gate.chapter_index)
+    if g_chap and cur_chap then
+        if cur_chap < g_chap then
+            return false
+        elseif cur_chap > g_chap then
+            return true
+        end
+    end
+
+    local live_start, live_end = self:getChapterPageBounds(cur_chap)
+
+    if gate.chapter_pct ~= nil then
+        local g_pct = tonumber(gate.chapter_pct) or 0.0
+        local is_repaginated = live_start and live_end and live_end > live_start and gate.ch_start_page and gate.ch_end_page and (live_start ~= gate.ch_start_page or live_end ~= gate.ch_end_page)
+        if is_repaginated and cur_page then
+            local r_pct = math.max(0, math.min(1, (cur_page - live_start) / (live_end - live_start)))
+            return (r_pct + 0.0005) >= g_pct
+        end
+
+        if gate.page_hint and cur_page then
+            return cur_page >= gate.page_hint
+        elseif live_start and live_end and live_end > live_start and cur_page then
+            local r_pct = math.max(0, math.min(1, (cur_page - live_start) / (live_end - live_start)))
+            return (r_pct + 0.0005) >= g_pct
+        else
+            return g_pct <= 0.0
+        end
+    end
+
+    -- Legacy Cache Self-Healing:
+    -- If this is a state update (opts.is_state_update is true) and page_hint equals chapter start on a multi-page chapter,
+    -- gate at chapter end!
+    if opts and opts.is_state_update and live_start and live_end and live_end > live_start and cur_page then
+        local p_hint = tonumber(gate.page_hint)
+        if p_hint and p_hint == live_start then
+            return cur_page >= live_end
+        end
+    end
+
+    if gate.page_hint and cur_page then
+        return cur_page >= gate.page_hint
+    end
+
+    return true
+end
+
+function M:getUnlockedAliases(entity, cur_chap, cur_page)
+    if type(entity) ~= "table" or type(entity.aliases) ~= "table" then
+        return {}
+    end
+    local is_full_book = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting == "full_book")
+    if is_full_book or type(entity.alias_visible_from) ~= "table" then
+        return entity.aliases
+    end
+    cur_page = tonumber(cur_page) or tonumber(self:getCurrentDocPage())
+    cur_chap = tonumber(cur_chap) or tonumber(self:getCurrentChapterIndex(cur_page)) or 1
+    local unlocked = {}
+    for _, a in ipairs(entity.aliases) do
+        if a and a ~= "" then
+            local gate = entity.alias_visible_from[a:lower()]
+            if not gate or self:isPositionGateUnlocked(gate, cur_chap, cur_page, { is_state_update = true }) then
+                table.insert(unlocked, a)
+            end
+        end
+    end
+    return unlocked
+end
+
 function M:getUnlockedStateCount(entity, cur_chap, cur_page, is_full_book)
     if not entity then return 0 end
     local has_states = (entity.states and type(entity.states) == "table" and #entity.states > 0)
@@ -7316,20 +7540,9 @@ function M:getUnlockedStateCount(entity, cur_chap, cur_page, is_full_book)
 
     if has_states then
         local count = 0
-        for _, s in ipairs(entity.states) do
-            local applies = false
-            local s_chap = tonumber(s.chapter_index) or 1
-            if s_chap < cur_chap then
-                applies = true
-            elseif s_chap == cur_chap then
-                local p_hint = tonumber(s.page_hint)
-                if p_hint and cur_page then
-                    applies = (cur_page >= p_hint)
-                else
-                    applies = true
-                end
-            end
-            if applies then
+        for idx, s in ipairs(entity.states) do
+            local is_upd = (idx > 1) or has_history or (entity.is_series == true) or (entity.from_series == true)
+            if self:isPositionGateUnlocked(s, cur_chap, cur_page, { is_state_update = is_upd }) then
                 count = count + 1
             end
         end
@@ -7367,25 +7580,54 @@ function M:isEntityVisibleAtCurrentPosition(entity, current_chapter_idx, current
     if not entity then return false end
     local is_full_book = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting == "full_book")
     if is_full_book then return true end
-    if not entity.visible_from then return true end -- legacy entities are always visible
+
     current_page = current_page or self:getCurrentDocPage()
     current_chapter_idx = current_chapter_idx or self:getCurrentChapterIndex(current_page)
 
-    local v_chap = entity.visible_from.chapter_index or 1
-    if current_chapter_idx < v_chap then
-        return false
-    elseif current_chapter_idx == v_chap then
-        if entity.visible_from.page_hint and current_page then
-            return current_page >= entity.visible_from.page_hint
+    if entity.is_series or entity.from_series then
+        local b_desc = entity.description or entity.definition or ""
+        if type(b_desc) == "string" and b_desc:find("%[From Book [%d%.]+%]") then
+            return true
         end
-        return true
-    else
-        return true
     end
+
+    if entity.visible_from then
+        if not self:isPositionGateUnlocked(entity.visible_from, current_chapter_idx, current_page, { is_state_update = false }) then
+            return false
+        end
+    end
+
+    if entity.states and #entity.states > 0 then
+        local any_unlocked = false
+        for idx, st in ipairs(entity.states) do
+            local has_prior_history = (type(entity.history) == "table" and #entity.history > 0)
+            local is_upd = (idx > 1) or has_prior_history or (entity.is_series == true) or (entity.from_series == true)
+            if self:isPositionGateUnlocked(st, current_chapter_idx, current_page, { is_state_update = is_upd }) then
+                any_unlocked = true
+                break
+            end
+        end
+        if not any_unlocked then
+            if entity.history and #entity.history > 0 then
+                for _, h in ipairs(entity.history) do
+                    if h.page and current_page and h.page <= current_page then
+                        any_unlocked = true
+                        break
+                    end
+                end
+            end
+            if not any_unlocked then
+                return false
+            end
+        end
+    end
+
+    return true
 end
 
 function M:resolveEntityState(entity, current_chapter_idx, current_page)
     if not entity then return nil, nil, nil end
+    local is_full_book = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting == "full_book")
     current_page = current_page or self:getCurrentDocPage()
     current_chapter_idx = current_chapter_idx or self:getCurrentChapterIndex(current_page)
 
@@ -7419,28 +7661,32 @@ function M:resolveEntityState(entity, current_chapter_idx, current_page)
         return entity.role or entity.category, entity.status or "alive", combineWithPrior(base_desc)
     end
 
+    if is_full_book then
+        local latest_state = entity.states[#entity.states]
+        local raw_d = latest_state.description or base_desc
+        return latest_state.role or entity.role or entity.category, latest_state.status or entity.status or "alive", combineWithPrior(raw_d)
+    end
+
     local best_state = nil
-    for _, s in ipairs(entity.states) do
-        local applies = false
-        local s_chap = s.chapter_index or 1
-        if s_chap < current_chapter_idx then
-            applies = true
-        elseif s_chap == current_chapter_idx then
-            if s.page_hint and current_page then
-                applies = (current_page >= s.page_hint)
-            else
-                applies = true
-            end
-        end
+    for idx, s in ipairs(entity.states) do
+        local has_prior_history = (type(entity.history) == "table" and #entity.history > 0)
+        local is_upd = (idx > 1) or has_prior_history or (entity.is_series == true) or (entity.from_series == true)
+        local applies = self:isPositionGateUnlocked(s, current_chapter_idx, current_page, { is_state_update = is_upd })
         if applies then
             if not best_state then
                 best_state = s
             else
                 local best_chap = best_state.chapter_index or 1
+                local s_chap = s.chapter_index or 1
                 if s_chap > best_chap then
                     best_state = s
-                elseif s_chap == best_chap and (s.page_hint or 0) >= (best_state.page_hint or 0) then
-                    best_state = s
+                elseif s_chap == best_chap then
+                    local p1, p2 = s.page_hint or 0, best_state.page_hint or 0
+                    if p1 > p2 then
+                        best_state = s
+                    elseif p1 == p2 and (s.chapter_pct or 0) >= (best_state.chapter_pct or 0) then
+                        best_state = s
+                    end
                 end
             end
         end
@@ -7451,14 +7697,29 @@ function M:resolveEntityState(entity, current_chapter_idx, current_page)
         return best_state.role or entity.role or entity.category, best_state.status or entity.status or "alive", combineWithPrior(raw_d)
     end
 
-    -- If reader is earlier than all states, return first state or base
-    if #entity.states > 0 then
-        local first_state = entity.states[1]
-        local raw_d = first_state.description or base_desc
-        return first_state.role or entity.role or entity.category, first_state.status or entity.status or "alive", combineWithPrior(raw_d)
+    -- If reader is earlier than all states: do NOT return future states!
+    -- Consult history first
+    if entity.history and #entity.history > 0 and current_page then
+        local best_hist = nil
+        for _, h in ipairs(entity.history) do
+            if h.page and h.page <= current_page then
+                if not best_hist or h.page > best_hist.page then
+                    best_hist = h
+                end
+            end
+        end
+        if best_hist then
+            local raw_h = best_hist[desc_key] or best_hist.description or best_hist.event or ""
+            return best_hist.role or entity.role or entity.category, best_hist.status or entity.status or "alive", combineWithPrior(raw_h)
+        end
     end
 
-    return entity.role or entity.category, entity.status or "alive", combineWithPrior(base_desc)
+    -- If prior series section exists, show that
+    if #prior_sections > 0 then
+        return entity.role or entity.category, entity.status or "alive", combineWithPrior(nil)
+    end
+
+    return nil, nil, nil
 end
 
 function M:resolveDescriptionForPage(entity, current_page)
@@ -7471,11 +7732,12 @@ function M:resolveDescriptionForPage(entity, current_page)
         if r_desc and r_desc ~= "" and r_desc ~= "---" then
             return SeriesManager.reorderSeriesDescription(r_desc)
         end
+        return "---"
     end
 
-    -- If there's no history table, return the default description/biography
+    -- If there's no history table, return the default description/biography/definition
     if not entity.history or #entity.history == 0 then
-        local raw_d = entity[desc_key] or entity.description
+        local raw_d = entity[desc_key] or entity.description or entity.definition
         return raw_d and SeriesManager.reorderSeriesDescription(raw_d) or "---"
     end
 
@@ -7493,26 +7755,26 @@ function M:resolveDescriptionForPage(entity, current_page)
     end
 
     if best_entry then
-        local raw_d = best_entry[desc_key] or best_entry.description
-        local base_d = entity[desc_key] or entity.description
+        local raw_d = best_entry[desc_key] or best_entry.description or best_entry.definition
+        local base_d = entity[desc_key] or entity.description or entity.definition
         if raw_d and base_d and not raw_d:find("%[From Book [%d%.]+%]") and base_d:find("%[From Book [%d%.]+%]") then
             raw_d = raw_d .. "\n\n" .. base_d
         end
         return raw_d and SeriesManager.reorderSeriesDescription(raw_d) or "---"
     end
 
-    -- Fallback to the first history entry if we're somehow before any recorded history page
-    if #entity.history > 0 then
-        local raw_d = entity.history[1][desc_key] or entity.history[1].description
-        local base_d = entity[desc_key] or entity.description
+    -- Fallback to the first history entry only if spoiler_setting is full_book
+    local is_full_book = (self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.spoiler_setting == "full_book")
+    if is_full_book and #entity.history > 0 then
+        local raw_d = entity.history[1][desc_key] or entity.history[1].description or entity.history[1].definition
+        local base_d = entity[desc_key] or entity.description or entity.definition
         if raw_d and base_d and not raw_d:find("%[From Book [%d%.]+%]") and base_d:find("%[From Book [%d%.]+%]") then
             raw_d = raw_d .. "\n\n" .. base_d
         end
         return raw_d and SeriesManager.reorderSeriesDescription(raw_d) or "---"
     end
 
-    local raw_d = entity[desc_key] or entity.description
-    return raw_d and SeriesManager.reorderSeriesDescription(raw_d) or "---"
+    return "---"
 end
 
 function M:showPastEvolution(entity, opts)
