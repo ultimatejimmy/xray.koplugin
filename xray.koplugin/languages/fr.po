@@ -1825,6 +1825,18 @@ msgstr "Moyen"
 msgid "unit_manual_scan_button"
 msgstr "Scanner/Re-scanner"
 
+# en-hash: b3b24cfd3d8eba59942f1fe0a82d13d5
+msgid "unit_scan_cancelled"
+msgstr "Analyse des unités annulée"
+
+# en-hash: c5021e0e3a163d2e9957e23b6f09619f
+msgid "unit_scan_running_menu"
+msgstr "Analyse en cours…"
+
+# en-hash: 617a73ce0c977a6adf8ef2de515180ab
+msgid "unit_scan_waiting_fetch"
+msgstr "L’analyse des unités commencera une fois la récupération X-Ray terminée."
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_scan_written_disabled"
 msgstr "Désactivé"

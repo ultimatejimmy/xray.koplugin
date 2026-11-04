@@ -1370,6 +1370,15 @@ msgstr "Medium"
 msgid "unit_manual_scan_button"
 msgstr "Scan/Rescan"
 
+msgid "unit_scan_cancelled"
+msgstr "Unit scan cancelled"
+
+msgid "unit_scan_running_menu"
+msgstr "Scanning…"
+
+msgid "unit_scan_waiting_fetch"
+msgstr "Unit scan will start after the X-Ray fetch finishes."
+
 msgid "unit_scan_written_disabled"
 msgstr "Disabled"
 

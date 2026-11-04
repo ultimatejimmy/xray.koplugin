@@ -1,4 +1,6 @@
 -- spec_helper.lua
+-- Unit scanner must not fork during tests
+_G.XRAY_DISABLE_UNIT_SUBPROCESS = true
 package.path = package.path .. ";xray.koplugin/?.lua"
 package.path = package.path .. ";/home/jpautz/.luarocks/share/lua/5.1/?.lua"
 package.path = package.path .. ";/home/jpautz/.luarocks/share/lua/5.1/?/init.lua"
@@ -114,6 +116,7 @@ package.loaded["ui/uimanager"] = {
         local f = b or a
         if type(f) == "function" then f() end
     end,
+    unschedule = function(self, action) end,
     setDirty = function() end,
     forceRePaint = function() end,
     getTime = function() return 0 end,
@@ -447,6 +450,7 @@ function _G.createMockPlugin()
         ui = {
             document = {
                 file = "test_book.epub",
+                isReflowable = function() return true end,
                 getToc = function() return {} end,
                 getProps = function() return { title = "Test Title", authors = "Test Author" } end,
                 compareXPointers = function(self_doc, xp1, xp2)

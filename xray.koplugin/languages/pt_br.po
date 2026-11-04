@@ -1825,6 +1825,18 @@ msgstr "Médio"
 msgid "unit_manual_scan_button"
 msgstr "Escanear/Reescanear"
 
+# en-hash: b3b24cfd3d8eba59942f1fe0a82d13d5
+msgid "unit_scan_cancelled"
+msgstr "Verificação de unidades cancelada"
+
+# en-hash: c5021e0e3a163d2e9957e23b6f09619f
+msgid "unit_scan_running_menu"
+msgstr "Verificando…"
+
+# en-hash: 617a73ce0c977a6adf8ef2de515180ab
+msgid "unit_scan_waiting_fetch"
+msgstr "A verificação de unidades começará após o término da busca do X-Ray."
+
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_scan_written_disabled"
 msgstr "Disabled"

@@ -289,9 +289,8 @@ function XRayPlugin:destroy()
         end
     end
 
-    if self.active_unit_scan_dialog then
-        pcall(function() self.active_unit_scan_dialog:close() end)
-        self.active_unit_scan_dialog = nil
+    if self._cancelUnitScanChild then
+        pcall(function() self:_cancelUnitScanChild("plugin destroyed") end)
     end
 
     self.bg_fetch_active = false
@@ -2647,7 +2646,13 @@ function XRayPlugin:getSubMenuItems()
                         end
                     },
                     {
-                        text = self.loc:t("unit_manual_scan_button") or "Scan/Rescan",
+                        text_func = function()
+                            local base = self.loc:t("unit_manual_scan_button") or "Scan/Rescan"
+                            if self._unit_scan_in_progress then
+                                return base .. " (" .. (self.loc:t("unit_scan_running_menu") or "Scanning…") .. ")"
+                            end
+                            return base
+                        end,
                         keep_menu_open = true,
                         callback = function()
                             if self.scanBookForUnits then self:scanBookForUnits(true) end

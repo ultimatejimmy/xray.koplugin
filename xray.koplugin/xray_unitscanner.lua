@@ -63,6 +63,27 @@ end
 
 local M = {}
 
+local UNIT_SCAN_POLL_INTERVAL = 0.1 -- 100ms for responsive progress & cancel
+local UNIT_SCAN_TIMEOUT = 300       -- 5 minutes watchdog
+local UNIT_SCAN_FETCH_RETRY_DELAY = 15 -- defer if AI fetch active
+local UNIT_SCAN_FETCH_MAX_RETRIES = 20
+local UNIT_SCAN_SLICE = 0.03        -- 30ms max slice for cooperative yielding
+
+local function _getFFIUtil()
+    if _G.XRAY_DISABLE_UNIT_SUBPROCESS then return nil end
+    local ok, ffiutil = pcall(require, "ffi/util")
+    if not ok or type(ffiutil) ~= "table" then return nil end
+    if type(ffiutil.runInSubProcess) ~= "function"
+        or type(ffiutil.isSubProcessDone) ~= "function"
+        or type(ffiutil.terminateSubProcess) ~= "function"
+        or type(ffiutil.readAllFromFD) ~= "function"
+        or type(ffiutil.writeToFD) ~= "function" then
+        return nil
+    end
+    return ffiutil
+end
+M._getFFIUtil = _getFFIUtil
+
 -- Returns current page number safely
 local function _getCurrentPage(plugin)
     if plugin.last_pageno then return plugin.last_pageno end
@@ -454,7 +475,9 @@ function M:_drawUnitUnderlines(bb)
     local scan_needed, redraw_needed = _checkSettingsChanged(self)
     if scan_needed then
         log("Scanner settings changed, refreshing unit scan")
-        self:scanBookForUnits()
+        UIManager:nextTick(function()
+            if not self.destroyed then self:scanBookForUnits() end
+        end)
         self._box_cache_sig = nil
     elseif redraw_needed then
         log("Display settings changed, updating underlines state")
@@ -480,7 +503,9 @@ function M:_drawUnitUnderlines(bb)
             if not self.unit_xp_matches then
                 local cache_loaded = self:loadUnitCache()
                 if not cache_loaded and settings.unit_auto_scan_enabled ~= false then
-                    self:scanBookForUnits()
+                    UIManager:nextTick(function()
+                        if not self.destroyed then self:scanBookForUnits() end
+                    end)
                 end
             end
         end
@@ -690,10 +715,10 @@ function M:loadUnitCache(resolved_dir)
     return true
 end
 
-function M:saveUnitCache(resolved_dir)
+function M:saveUnitCache(resolved_dir, matches, suffix)
     resolved_dir = resolved_dir or _getResolvedDirection(self)
     local cache_file = self:_getUnitCachePath(resolved_dir)
-    if not cache_file then return end
+    if not cache_file then return false end
     
     local settings = self.ai_helper and self.ai_helper.settings or {}
     local signature = _getSettingsSignature(self, settings)
@@ -702,41 +727,848 @@ function M:saveUnitCache(resolved_dir)
     local dir = cache_file:match("^(.+)/[^/]+$")
     if dir then
         local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+        if not ok_lfs or not lfs then
+            ok_lfs, lfs = pcall(require, "lfs")
+        end
         if ok_lfs and lfs then
             if lfs.attributes(dir, "mode") ~= "directory" then
-                lfs.mkdir(dir)
+                pcall(function() lfs.mkdir(dir) end)
             end
         end
     end
 
+    local tmp_file = cache_file .. ".tmp." .. tostring(suffix or (os.time() .. "_" .. math.random(100000, 999999)))
+    local match_list = matches or self.unit_xp_matches or {}
+
     local ok, err = pcall(function()
-        local f, open_err = io.open(cache_file, "w")
-        if f then
-            f:write(signature .. "\n")
-            for _, m in ipairs(self.unit_xp_matches or {}) do
-                local original_clean = (m.original or ""):gsub("\r", " "):gsub("\n", " ")
-                local converted_clean = (m.converted or ""):gsub("\r", " "):gsub("\n", " ")
-                f:write(string.format("%s\t%s\t%s\t%s\t%s\n",
-                    tostring(m.start_xp or ""),
-                    tostring(m.end_xp or ""),
-                    original_clean,
-                    converted_clean,
-                    m.category or ""))
-            end
-            f:close()
-            log("saveUnitCache: Saved cache to " .. cache_file)
-        else
-            log("saveUnitCache: Failed to open cache: " .. tostring(open_err))
+        local f, open_err = io.open(tmp_file, "w")
+        if not f then
+            log("saveUnitCache: Failed to open temp cache " .. tostring(tmp_file) .. ": " .. tostring(open_err))
+            return false
         end
+        f:write(signature .. "\n")
+        for _, m in ipairs(match_list) do
+            local original_clean = (m.original or ""):gsub("\r", " "):gsub("\n", " ")
+            local converted_clean = (m.converted or ""):gsub("\r", " "):gsub("\n", " ")
+            f:write(string.format("%s\t%s\t%s\t%s\t%s\n",
+                tostring(m.start_xp or ""),
+                tostring(m.end_xp or ""),
+                original_clean,
+                converted_clean,
+                m.category or ""))
+        end
+        f:close()
+
+        local renamed = os.rename(tmp_file, cache_file)
+        if not renamed then
+            os.remove(cache_file)
+            renamed = os.rename(tmp_file, cache_file)
+        end
+        if not renamed then
+            os.remove(tmp_file)
+            log("saveUnitCache: atomic rename failed from " .. tostring(tmp_file) .. " to " .. tostring(cache_file))
+            return false
+        end
+        log("saveUnitCache: Saved cache atomically to " .. cache_file)
+        return true
     end)
     if not ok then
         log("saveUnitCache: Unexpected error writing cache: " .. tostring(err))
+        pcall(os.remove, tmp_file)
+        return false
     end
+    return ok and err == true
+end
+
+-- Pure computation: no UIManager, widgets or setDirty. Safe to run in a forked child.
+-- opts.on_progress(pct) optional, opts.yield_fn() optional (called between slices)
+function M:_computeUnitMatches(settings, opts)
+    if self.destroyed or not self.ui or not self.ui.document then return {} end
+    log("scanBookForUnits: starting whole book scan")
+    
+    local direction = settings.unit_conversion_direction or "auto"
+    log("scanBookForUnits: direction=" .. tostring(direction))
+    
+    local enabled_cats = {
+        length = settings.unit_cat_length ~= false,
+        weight = settings.unit_cat_weight ~= false,
+        temp = settings.unit_cat_temp ~= false,
+        volume = settings.unit_cat_volume ~= false,
+        speed = settings.unit_cat_speed ~= false,
+        area = settings.unit_cat_area ~= false,
+    }
+
+    local lang = self.loc and self.loc:getLanguage() or "en"
+    local aliases = xray_units.getScanAliases(direction, enabled_cats, lang)
+    if #aliases == 0 then
+        return {}
+    end
+
+    local slice_start = os.clock()
+    local function maybe_yield()
+        if opts and opts.yield_fn and (os.clock() - slice_start) > UNIT_SCAN_SLICE then
+            opts.yield_fn()
+            slice_start = os.clock()
+        end
+    end
+
+    -- Set of ambiguous unit aliases
+    local is_ambig = {
+        ["in"] = true, ["m"] = true, ["l"] = true, ["g"] = true, ["f"] = true,
+        ["t"] = true, ["c"] = true, ["oc"] = true, ["0c"] = true, ["of"] = true, ["0f"] = true
+    }
+
+    -- Sort all aliases descending by length to prevent prefix shadowing
+    local sorted_aliases = {}
+    for _, alias in ipairs(aliases) do
+        table.insert(sorted_aliases, xray_units.utf8Lower(alias))
+    end
+    table.sort(sorted_aliases, function(a, b)
+        return #a > #b
+    end)
+
+    -- Build pat_digit
+    local digit_alnum = {}
+    local digit_symbol = {}
+    for _, alias in ipairs(sorted_aliases) do
+        local esc = escape_pattern(alias)
+        if alias:match("[%w]$") then
+            table.insert(digit_alnum, esc)
+        else
+            table.insert(digit_symbol, esc)
+        end
+    end
+
+    local digit_parts = {}
+    if #digit_alnum > 0 then
+        table.insert(digit_parts, "(" .. table.concat(digit_alnum, "|") .. ")\\b")
+    end
+    if #digit_symbol > 0 then
+        table.insert(digit_parts, "(" .. table.concat(digit_symbol, "|") .. ")")
+    end
+    local digit_units = "(" .. table.concat(digit_parts, "|") .. ")"
+    local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*" .. digit_units .. ")"
+
+    -- Build word patterns only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
+    local MAX_REGEX_LEN = 4000
+    local word_chunks = {}
+    local split_on_error = false
+    local scan_written = settings.unit_scan_written_numbers
+    if scan_written == nil then
+        scan_written = not xray_utils.isLowPowerForScan()
+    end
+
+    local function build_word_pattern(items)
+        local boundary_both = {}
+        local boundary_none = {}
+        for _, item in ipairs(items) do
+            table.insert(item.bounded and boundary_both or boundary_none, item.esc)
+        end
+        local word_parts = {}
+        if #boundary_both > 0 then
+            table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
+        end
+        if #boundary_none > 0 then
+            table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
+        end
+        return "(" .. table.concat(word_parts, "|") .. ")"
+    end
+
+    if scan_written then
+        -- With a Cyrillic UI, look for written numbers before Cyrillic aliases only
+        local base_lang = tostring(lang):lower():match("^%a+") or ""
+        local cyrillic_ui = base_lang == "ru" or base_lang == "uk" or base_lang == "sr" or base_lang == "bg" or base_lang == "be"
+
+        local function is_abbreviation(alias)
+            local clean = alias:gsub("%s+", "")
+            if clean:match("%d") or clean:find("[/%.]") then
+                return true
+            end
+            for _, sym in ipairs({ "°", "º", "²", "³" }) do
+                if clean:find(sym, 1, true) then
+                    return true
+                end
+            end
+            if not cyrillic_ui and clean:find("[°º]") then
+                return true
+            end
+            if #clean < 4 and clean ~= "cup" then
+                return true
+            end
+            return false
+        end
+
+        local word_items = {}
+        for _, alias in ipairs(sorted_aliases) do
+            if not is_abbreviation(alias) and (not cyrillic_ui or alias:find("[\208\209\210]")) then
+                table.insert(word_items, {
+                    esc = escape_pattern(alias),
+                    bounded = alias:match("^[%w]") ~= nil and alias:match("[%w]$") ~= nil,
+                })
+            end
+        end
+
+        if cyrillic_ui then
+            split_on_error = true
+            local cur, len = {}, 0
+            for _, item in ipairs(word_items) do
+                if len > 0 and len + #item.esc + 1 > MAX_REGEX_LEN - 100 then
+                    table.insert(word_chunks, cur)
+                    cur, len = {}, 0
+                end
+                table.insert(cur, item)
+                len = len + #item.esc + 1
+            end
+            if #cur > 0 then
+                table.insert(word_chunks, cur)
+            end
+        elseif #word_items > 0 then
+            local pat_word = build_word_pattern(word_items)
+            if #pat_word > MAX_REGEX_LEN then
+                log("scanBookForUnits: word pattern too large (" .. #pat_word .. " chars), skipping word pass safety check")
+            else
+                table.insert(word_chunks, word_items)
+            end
+        end
+    end
+
+    log("scanBookForUnits: pat_digit=[" .. tostring(pat_digit) .. "]")
+    log("scanBookForUnits: checkpoint A — pre findAllText digit")
+    collectgarbage("collect")
+    if opts and opts.on_progress then opts.on_progress(15) end
+    local doc = self.ui.document
+    local t0 = os.clock()
+    local ok1, hits1 = pcall(function()
+        return doc:findAllText(pat_digit, true, 5, 5000, true)
+    end)
+    local t1 = os.clock()
+    log(string.format("scanBookForUnits: checkpoint B — post findAllText digit (took %.2fs), %d hits", t1 - t0, ok1 and hits1 and #hits1 or 0))
+    if opts and opts.on_progress then opts.on_progress(55) end
+    maybe_yield()
+
+    if not ok1 then
+        log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(hits1))
+        hits1 = {}
+    elseif not hits1 then
+        hits1 = {}
+    end
+
+    local function regex_error()
+        if not doc.getAndClearRegexSearchError then return 0 end
+        local ok, code = pcall(doc.getAndClearRegexSearchError, doc)
+        return ok and tonumber(code) or 0
+    end
+
+    local hits2 = {}
+    local function run_word_chunk(items, depth)
+        local pat_word = build_word_pattern(items)
+        log("scanBookForUnits: pat_word=[" .. pat_word .. "]")
+        regex_error()
+        local tp = os.clock()
+        local ok, res = pcall(function()
+            return doc:findAllText(pat_word, true, 5, 5000, true)
+        end)
+        local err = regex_error()
+        log(string.format("scanBookForUnits: word chunk (%d aliases, %d chars, depth %d) took %.2fs, %d hits, regex_error=%d",
+            #items, #pat_word, depth, os.clock() - tp, ok and type(res) == "table" and #res or 0, err))
+        if not ok then
+            log("scanBookForUnits: word findAllText pcall failed (non-fatal): " .. tostring(res))
+        end
+        maybe_yield()
+        if split_on_error and (err ~= 0 or not ok) and #items > 1 then
+            local mid = math.floor(#items / 2)
+            local left, right = {}, {}
+            for i, item in ipairs(items) do
+                table.insert(i <= mid and left or right, item)
+            end
+            run_word_chunk(left, depth + 1)
+            run_word_chunk(right, depth + 1)
+            return
+        end
+        if ok and type(res) == "table" then
+            for _, h in ipairs(res) do
+                table.insert(hits2, h)
+            end
+        end
+    end
+
+    log("scanBookForUnits: checkpoint C — pre findAllText word, " .. #word_chunks .. " chunk(s)")
+    for idx, items in ipairs(word_chunks) do
+        run_word_chunk(items, 0)
+        if opts and opts.on_progress then
+            opts.on_progress(55 + math.floor(30 * idx / #word_chunks))
+        end
+    end
+    local t2 = os.clock()
+    log(string.format("scanBookForUnits: checkpoint D — post findAllText word (took %.2fs), %d hits", t2 - t1, #hits2))
+    if opts and opts.on_progress then opts.on_progress(85) end
+    maybe_yield()
+
+    local hits = {}
+    for _, h in ipairs(hits1) do
+        table.insert(hits, h)
+    end
+    hits1 = nil
+    for _, h in ipairs(hits2) do
+        table.insert(hits, h)
+    end
+    hits2 = nil
+
+    local unique_hits = {}
+    for _, hit in ipairs(hits) do
+        local end_xp = hit["end"]
+        if not unique_hits[end_xp] or #hit.matched_text > #unique_hits[end_xp].matched_text then
+            unique_hits[end_xp] = hit
+        end
+    end
+    hits = nil
+
+    local by_start = {}
+    for _, hit in pairs(unique_hits) do
+        if not by_start[hit.start] or #hit.matched_text > #by_start[hit.start].matched_text then
+            by_start[hit.start] = hit
+        end
+    end
+
+    local deduped_hits = {}
+    for _, hit in pairs(by_start) do
+        table.insert(deduped_hits, hit)
+    end
+    unique_hits = nil
+    hits = deduped_hits
+    collectgarbage("step", 200)
+
+    local t_start_lua = os.clock()
+    log(string.format("scanBookForUnits: checkpoint E — dedup took %.2fs, %d hits", t_start_lua - t2, #hits))
+
+    local xp_matches = {}
+
+    local suffix_map = {}
+    for _, alias in ipairs(sorted_aliases) do
+        local alias_lower = alias:gsub("\194\160", " "):gsub("%s+", " ")
+        suffix_map[alias_lower] = true
+    end
+
+    local function continues_word(end_xp)
+        local ok, next_xp = pcall(doc.getNextVisibleChar, doc, end_xp)
+        if not ok or not next_xp or next_xp:gsub("%.%d+$", "") ~= end_xp:gsub("%.%d+$", "") then
+            return false
+        end
+        local ok_t, text = pcall(doc.getTextFromXPointers, doc, end_xp, next_xp)
+        return ok_t and type(text) == "string" and text:find("^[%a\208-\211]") ~= nil
+    end
+
+    local function starts_mid_word(start_xp)
+        local n = tonumber(start_xp:match("%.(%d+)$"))
+        if not n or n == 0 then return false end
+        local prev_xp = start_xp:gsub("%.%d+$", "." .. (n - 1))
+        local ok, text = pcall(doc.getTextFromXPointers, doc, prev_xp, start_xp)
+        return ok and type(text) == "string" and (text:find("%a$") or text:find("[\208-\211][\128-\191]$")) ~= nil
+    end
+
+    for _, hit in ipairs(hits) do
+        local is_range = false
+        local val, num_str
+        local val1, val2
+        local is_vague = false
+        
+        local matched_text = (hit.matched_text or "")
+        local lower_matched = xray_units.utf8Lower(matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
+        
+        local matched_alias = nil
+        for i = 1, #lower_matched do
+            local suffix = lower_matched:sub(i)
+            if suffix_map[suffix] then
+                matched_alias = suffix
+                break
+            end
+        end
+        matched_alias = matched_alias or lower_matched
+
+        local num_part = matched_text:sub(1, #matched_text - #matched_alias)
+
+        local inside_word = (matched_alias:find("[\208-\211][\128-\191]$") and continues_word(hit["end"]))
+            or (num_part == "" and matched_alias:find("^[\208-\211]") and starts_mid_word(hit.start))
+
+        local p = (hit.prev_text or "") .. num_part
+        p = p:gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+$", "")
+        for _, sep in ipairs(RANGE_SEPS) do
+            p = p:gsub(sep, "-")
+        end
+        
+        local vague = xray_units.detectVagueQuantifier(p)
+        if vague then
+            val1 = vague.low
+            val2 = vague.high
+            is_range = true
+            is_vague = true
+            num_str = vague.quantifier .. " " .. vague.multiplier
+        else
+            local lower_p = xray_units.utf8Lower(p)
+            local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
+            if not r1 then
+                for _, conn in ipairs(RANGE_WORD_CONNECTORS) do
+                    r1, r2 = lower_p:match("([0-9%.%,]+)%s+" .. conn .. "%s+([0-9%.%,]+)$")
+                    if r1 then break end
+                end
+            end
+            if r1 and r2 then
+                val1 = xray_units.parseNumberText(r1)
+                val2 = xray_units.parseNumberText(r2)
+                if val1 and val2 then
+                    is_range = true
+                    num_str = r1 .. "-" .. r2
+                end
+            else
+                local w1, w2, conn
+                for _, c in ipairs(RANGE_WORD_CONNECTORS) do
+                    local head, tail = lower_p:match("^(.*)%s+" .. c .. "%s+(.-)$")
+                    if tail then
+                        local tail_words = {}
+                        for w in tail:gmatch(WORD_CHARS .. "+") do
+                            table.insert(tail_words, strip_edge_symbols(w))
+                        end
+                        w2 = table.concat(tail_words, " ")
+                        if not xray_units.parseNumberText(w2) then
+                            head, w2 = nil, nil
+                        end
+                    end
+                    if head then
+                        local head_words = {}
+                        for w in head:gmatch(WORD_CHARS .. "+") do
+                            table.insert(head_words, strip_edge_symbols(w))
+                        end
+                        for i = #head_words, 1, -1 do
+                            local phrase = table.concat(head_words, " ", i)
+                            if not xray_units.parseNumberText(phrase) then break end
+                            w1 = phrase
+                        end
+                        conn = c
+                        break
+                    end
+                end
+                if not conn then
+                    w1, w2 = lower_p:match("(" .. WORD_CHARS .. "+)%s*%-%s*(" .. WORD_CHARS .. "+)$")
+                    if w1 then conn = "-" end
+                end
+                if w1 and w2 then
+                    w1, w2 = strip_edge_symbols(w1), strip_edge_symbols(w2)
+                    local is_compound = conn == "-" and xray_units.parseNumberText(w1 .. " " .. w2) ~= nil
+                    if not is_compound then
+                        val1 = xray_units.parseNumberText(w1)
+                        val2 = xray_units.parseNumberText(w2)
+                        if val1 and val2 then
+                            is_range = true
+                            num_str = w1 .. " " .. conn .. " " .. w2
+                        end
+                    end
+                end
+            end
+            
+            if not is_range then
+                local single = p:match("([%-−–—]?%s*[0-9%.%,]+)$")
+                if single then
+                    val = xray_units.parseNumberText(single)
+                    if val then
+                        num_str = single
+                    end
+                end
+                
+                if not val then
+                    local words = {}
+                    for w in p:gmatch("[%a\128-\255%d%-%.%,']+") do
+                        table.insert(words, strip_edge_symbols(w))
+                    end
+                    
+                    local valid_words = {}
+                    local i_w = #words
+                    local saw_digit = false
+                    while i_w >= 1 do
+                        local w = words[i_w]
+                        local clean_w = w:gsub("[%-,]$", "")
+                        if clean_w == "a" and i_w > 1 and words[i_w-1]:gsub("[%-,]$", "") == "half" then
+                            if saw_digit then break end
+                            table.insert(valid_words, 1, "half a")
+                            i_w = i_w - 2
+                        else
+                            local val_parsed = xray_units.parseNumberText(clean_w)
+                            if clean_w == "and" or val_parsed then
+                                if saw_digit then break end
+                                if clean_w:match("%d") then
+                                    saw_digit = true
+                                end
+                                table.insert(valid_words, 1, clean_w)
+                                i_w = i_w - 1
+                            else
+                                break
+                            end
+                        end
+                    end
+                    
+                    if i_w >= 1 and words[i_w] == "-" and #valid_words > 0 and saw_digit then
+                        valid_words[1] = "-" .. valid_words[1]
+                        i_w = i_w - 1
+                    end
+                    
+                    while #valid_words > 0 and valid_words[1] == "and" do
+                        table.remove(valid_words, 1)
+                    end
+                    
+                    if #valid_words > 0 then
+                        local num_phrase = table.concat(valid_words, " ")
+                        val = xray_units.parseNumberText(num_phrase)
+                        if val then
+                            num_str = num_phrase
+                        end
+                    end
+                end
+            end
+        end
+        
+        if not inside_word and (val or (val1 and val2)) then
+            local matched_unit = matched_alias
+            local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
+            if not u then
+                for _, unit_def in ipairs(xray_units.UNITS or {}) do
+                    for _, alias in ipairs(unit_def.aliases) do
+                        if xray_units.utf8Lower(alias) == matched_unit then
+                            u = unit_def
+                            break
+                        end
+                    end
+                    if u then break end
+                end
+            end
+            
+            if u and enabled_cats[u.category] then
+                local conv_str
+                if is_range then
+                    local conv_raw1 = xray_units.convert(val1, u.category, u.name, u.std_target)
+                    local conv_val1, conv_unit1 = xray_units.applySmartScaling(conv_raw1, u.category, u.std_target)
+                    local conv_raw2 = xray_units.convert(val2, u.category, u.name, u.std_target)
+                    local conv_val2, conv_unit2 = xray_units.applySmartScaling(conv_raw2, u.category, u.std_target)
+                    
+                    if conv_unit1 == "c" then conv_unit1 = "°C"
+                    elseif conv_unit1 == "f" then conv_unit1 = "°F" end
+                    if conv_unit2 == "c" then conv_unit2 = "°C"
+                    elseif conv_unit2 == "f" then conv_unit2 = "°F" end
+                    
+                    local prefix = (is_vague and "≈" or "")
+                    if conv_unit1 == conv_unit2 then
+                        conv_str = prefix .. xray_units.formatNumber(conv_val1, lang) .. "–" .. xray_units.formatNumber(conv_val2, lang) .. " " .. xray_units.pluralizeUnit(conv_val2, conv_unit2)
+                    else
+                        conv_str = prefix .. xray_units.formatNumber(conv_val1, lang) .. " " .. xray_units.pluralizeUnit(conv_val1, conv_unit1) .. "–" .. xray_units.formatNumber(conv_val2, lang) .. " " .. xray_units.pluralizeUnit(conv_val2, conv_unit2)
+                    end
+                else
+                    local sign = ""
+                    if u.category == "temp" then
+                        local before_num = (hit.prev_text or ""):match("([^%d]*)$") or ""
+                        if (before_num:match("%-") or before_num:match("−")) and val > 0 then
+                            val = -val
+                            sign = "-"
+                        end
+                    end
+                    
+                    local conv_raw = xray_units.convert(val, u.category, u.name, u.std_target)
+                    local conv_val, conv_unit = xray_units.applySmartScaling(conv_raw, u.category, u.std_target)
+                    
+                    if conv_unit == "c" then conv_unit = "°C"
+                    elseif conv_unit == "f" then conv_unit = "°F" end
+
+                    conv_str = xray_units.formatNumber(conv_val, lang) .. " " .. xray_units.pluralizeUnit(conv_val, conv_unit)
+                end
+                
+                local span_start = hit.start
+                local num_part_clean = num_part:gsub("%s+", "")
+                if num_part_clean == "" or is_range or is_vague then
+                    span_start = extend_span_start(doc, hit.start, is_range and val1 or val)
+                end
+                local ok_t, real_text = pcall(function()
+                    return doc:getTextFromXPointers(span_start, hit["end"])
+                end)
+                
+                local valid = false
+                local original_text
+                if ok_t and real_text then
+                    original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
+                    
+                    local has_newline = original_text:find("[\r\n]")
+                    if not has_newline or not is_ambig[matched_alias] then
+                        if has_newline then
+                            original_text = original_text:gsub("[\r\n]+", " "):gsub("%s+", " ")
+                        end
+                        valid = true
+                        if not is_range then
+                            local lower_orig = xray_units.utf8Lower(original_text:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
+                            local lower_num = xray_units.utf8Lower(num_str:gsub("^%s+", ""):gsub("%s+$", "")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
+                            local lower_match = xray_units.utf8Lower(hit.matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+                            
+                            if lower_orig ~= lower_match then
+                                if lower_orig:sub(1, #lower_num) == lower_num then
+                                    local suffix = lower_orig:sub(#lower_num + 1)
+                                    if suffix:sub(-#lower_match) == lower_match then
+                                        local middle = suffix:sub(1, #suffix - #lower_match)
+                                        if middle:match("[%w]") then
+                                            valid = false
+                                        end
+                                    end
+                                else
+                                    local first_idx = lower_orig:find(lower_num, 1, true)
+                                    if first_idx then
+                                        local suffix = lower_orig:sub(first_idx + #lower_num)
+                                        if suffix:sub(-#lower_match) == lower_match then
+                                            local middle = suffix:sub(1, #suffix - #lower_match)
+                                            if middle:match("[%w]") then
+                                                valid = false
+                                            end
+                                        end
+                                    else
+                                        valid = false
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                if valid then
+                    table.insert(xp_matches, {
+                        start_xp = span_start,
+                        ["end_xp"] = hit["end"],
+                        original = original_text,
+                        converted = conv_str,
+                        category = u.category
+                    })
+                end
+            end
+        end
+        maybe_yield()
+    end
+
+    hits = nil
+    collectgarbage("collect")
+    local t3 = os.clock()
+    log(string.format("scanBookForUnits: Lua processing took %.2fs, %d unit matches", t3 - t_start_lua, #xp_matches))
+    log(string.format("scanBookForUnits: TOTAL %.2fs", t3 - t0))
+    if opts and opts.on_progress then opts.on_progress(95) end
+    return xp_matches
+end
+
+function M:_cancelUnitScanChild(reason)
+    if self._unit_scan_poll_fn then
+        UIManager:unschedule(self._unit_scan_poll_fn)
+        self._unit_scan_poll_fn = nil
+    end
+    if self._unit_scan_dialog then
+        pcall(function() self._unit_scan_dialog:close() end)
+        self._unit_scan_dialog = nil
+    end
+    self.active_unit_scan_dialog = nil
+    local pid, fd = self._unit_scan_pid, self._unit_scan_read_fd
+    self._unit_scan_pid, self._unit_scan_read_fd = nil, nil
+    self._unit_scan_in_progress = false
+    pcall(function() require("device"):enableCPUCores(1) end)
+    if not pid then return end
+    log("Cancelling unit scan child " .. tostring(pid) .. ": " .. tostring(reason))
+    local ffiutil = _getFFIUtil()
+    if not ffiutil then return end
+    pcall(ffiutil.terminateSubProcess, pid)
+    local function reap()
+        local ok, done = pcall(ffiutil.isSubProcessDone, pid)
+        if not ok or done then
+            if fd then pcall(ffiutil.readAllFromFD, fd) end
+        else
+            UIManager:scheduleIn(5, reap)
+        end
+    end
+    UIManager:scheduleIn(1, reap)
+end
+
+function M:_onUnitScanFinished(resolved_dir, ok, manual)
+    if self._unit_scan_dialog then
+        pcall(function()
+            self._unit_scan_dialog:reportProgress(100)
+            self._unit_scan_dialog:close()
+        end)
+        self._unit_scan_dialog = nil
+    end
+    self.active_unit_scan_dialog = nil
+    self._unit_scan_in_progress = false
+
+    if self.destroyed or not self.ui or not self.ui.document then return end
+    local loaded = ok and self:loadUnitCache(resolved_dir)
+    if not loaded then
+        log("Unit scan finished without a usable cache (ok=" .. tostring(ok) .. ")")
+        return
+    end
+
+    if manual then
+        local Notification = require("ui/widget/notification")
+        UIManager:show(Notification:new{
+            text = tostring(#(self.unit_xp_matches or {})) .. " unit conversions found",
+            timeout = 3,
+            toast = true,
+        })
+    end
+
+    self._box_cache_sig = nil
+    if self.ui.view and self.ui.view.dialog then
+        UIManager:setDirty(self.ui.view.dialog, "ui")
+    end
+    UIManager:setDirty(nil, "ui")
+end
+
+function M:_startUnitScanSubprocess(resolved_dir, settings, manual)
+    local ffiutil = _getFFIUtil()
+    if not ffiutil then return false end
+    pcall(function() XRayLogger:flush() end)
+
+    local plugin = self
+    local pid, read_fd = ffiutil.runInSubProcess(function(_child_pid, write_fd)
+        XRayLogger._buf, XRayLogger._buf_count = {}, 0
+        local result = "err"
+        local ok, err = pcall(function()
+            local matches = plugin:_computeUnitMatches(settings, {
+                on_progress = function(pct)
+                    if write_fd then
+                        ffiutil.writeToFD(write_fd, string.format("p:%d\n", math.floor(pct or 0)))
+                    end
+                end,
+            })
+            local saved = plugin:saveUnitCache(resolved_dir, matches, "child_" .. tostring(_child_pid))
+            if saved then
+                result = "ok:" .. tostring(#matches) .. "\n"
+            end
+        end)
+        if not ok then
+            log("child scan error: " .. tostring(err))
+        end
+        pcall(function() XRayLogger:flush() end)
+        if write_fd then
+            ffiutil.writeToFD(write_fd, result, true)
+        end
+    end, true)
+
+    if not pid then
+        log("runInSubProcess failed: " .. tostring(read_fd))
+        return false
+    end
+
+    self._unit_scan_pid = pid
+    self._unit_scan_read_fd = read_fd
+    self._unit_scan_started_at = os.time()
+    self._unit_scan_manual = manual and true or false
+    pcall(function() require("device"):enableCPUCores(2) end)
+
+    local progress_buf = ""
+    local function poll()
+        self._unit_scan_poll_fn = nil
+        if self.destroyed or not self.ui or not self.ui.document then
+            self:_cancelUnitScanChild("document closed")
+            return
+        end
+        if os.time() - self._unit_scan_started_at > UNIT_SCAN_TIMEOUT then
+            self:_cancelUnitScanChild("timeout")
+            return
+        end
+
+        if read_fd and ffiutil.getNonBlockingReadSize and ffiutil.getNonBlockingReadSize(read_fd) > 0 then
+            local chunk = ffiutil.readFromFD and ffiutil.readFromFD(read_fd, 512)
+            if chunk and chunk ~= "" then
+                progress_buf = progress_buf .. chunk
+                for p_str in progress_buf:gmatch("p:(%d+)\n") do
+                    local pct = tonumber(p_str)
+                    if pct and self._unit_scan_dialog and self._unit_scan_dialog.reportProgress then
+                        self._unit_scan_dialog:reportProgress(pct)
+                    end
+                end
+            end
+        end
+
+        local ok_done, done = pcall(ffiutil.isSubProcessDone, pid)
+        if ok_done and not done then
+            self._unit_scan_poll_fn = poll
+            UIManager:scheduleIn(UNIT_SCAN_POLL_INTERVAL, poll)
+            return
+        end
+
+        local out = progress_buf
+        if read_fd then
+            local ok_r, s = pcall(ffiutil.readAllFromFD, read_fd)
+            if ok_r and type(s) == "string" then out = out .. s end
+        end
+        self._unit_scan_pid, self._unit_scan_read_fd = nil, nil
+        pcall(function() require("device"):enableCPUCores(1) end)
+
+        local success = out:find("ok:") ~= nil
+        self:_onUnitScanFinished(resolved_dir, success, manual)
+    end
+
+    self._unit_scan_poll_fn = poll
+    UIManager:scheduleIn(UNIT_SCAN_POLL_INTERVAL, poll)
+    return true
+end
+
+function M:_runUnitScanInProcess(resolved_dir, settings, manual)
+    local co
+    local function finish(matches)
+        if self.destroyed or not self.ui or not self.ui.document then
+            if self._unit_scan_dialog then
+                pcall(function() self._unit_scan_dialog:close() end)
+                self._unit_scan_dialog = nil
+            end
+            self._unit_scan_in_progress = false
+            return
+        end
+        if matches then
+            self.unit_xp_matches = matches
+            self:saveUnitCache(resolved_dir, matches)
+            self:_onUnitScanFinished(resolved_dir, true, manual)
+        else
+            self:_onUnitScanFinished(resolved_dir, false, manual)
+        end
+    end
+
+    co = coroutine.create(function()
+        return self:_computeUnitMatches(settings, {
+            on_progress = function(pct)
+                if self._unit_scan_dialog and self._unit_scan_dialog.reportProgress then
+                    self._unit_scan_dialog:reportProgress(pct)
+                end
+            end,
+            yield_fn = function()
+                coroutine.yield()
+            end
+        })
+    end)
+
+    local function step()
+        if self.destroyed or not self.ui or not self.ui.document then
+            finish(nil)
+            return
+        end
+        local ok, res = coroutine.resume(co)
+        if not ok then
+            log("in-process scan error: " .. tostring(res))
+            finish(nil)
+            return
+        end
+        if coroutine.status(co) == "dead" then
+            finish(res or {})
+        else
+            UIManager:scheduleIn(0.02, step)
+        end
+    end
+    UIManager:scheduleIn(0.1, step)
 end
 
 -- Scan the entire book and cache matches
 function M:scanBookForUnits(force)
     if not self.ui or not self.ui.document then return end
+    if self.ui.paging and not self.ui.rolling and (self.ui.document.isReflowable and not self.ui.document:isReflowable()) then
+        log("scanBookForUnits: skipped for page-based document")
+        return
+    end
     
     local settings = self.ai_helper and self.ai_helper.settings or {}
     if settings.unit_converter_enabled == false or settings.unit_underline_enabled == false then
@@ -787,705 +1619,111 @@ function M:scanBookForUnits(force)
         end
     end
 
-    -- Proactively cancel any running background AI processes to prioritize the unit scan
-    if self.ai_helper and self.ai_helper.cancelAsyncChild and self.ai_helper._async_child_pid then
-        log("scanBookForUnits: active background AI process detected, cancelling it to reclaim memory")
-        self.ai_helper:cancelAsyncChild()
-        self.bg_fetch_active = false
-    end
-
-    if self._unit_scan_in_progress then return end
-    self._unit_scan_in_progress = true
-
-    local Notification = require("ui/widget/notification")
-    local AlphaContainer = require("ui/widget/container/alphacontainer")
-    local Screen = require("device").screen
-
-    -- Temporarily redirect smallffont to ffont during dialog init to make subtitle slightly larger
-    local old_getFace = Font.getFace
-    Font.getFace = function(self, name)
-        if name == "smallffont" then
-            return old_getFace(self, "ffont")
+    -- Wait and defer if an active background AI fetch is running (never cancel AI fetch)
+    if self.ai_helper and self.ai_helper._async_child_pid then
+        self._unit_scan_fetch_retries = (self._unit_scan_fetch_retries or 0) + 1
+        if self._unit_scan_fetch_retries <= UNIT_SCAN_FETCH_MAX_RETRIES then
+            log("scanBookForUnits: active background AI process detected; deferring scan (retry " .. tostring(self._unit_scan_fetch_retries) .. ")")
+            if force then
+                local Notification = require("ui/widget/notification")
+                UIManager:show(Notification:new{
+                    text = self.loc:t("unit_scan_waiting_fetch") or "Unit scan will start after the X-Ray fetch finishes.",
+                    timeout = 3,
+                    toast = true
+                })
+            end
+            UIManager:scheduleIn(UNIT_SCAN_FETCH_RETRY_DELAY, function()
+                if self.destroyed then return end
+                self:scanBookForUnits(force)
+            end)
+        else
+            log("scanBookForUnits: reached max retries waiting for AI fetch to finish")
         end
-        return old_getFace(self, name)
+        return
     end
+    self._unit_scan_fetch_retries = 0
 
-    local progress_msg = ProgressBarDialog:new{
-        title = self.loc:t("unit_scanning_title") or "X-Ray: Unit Converter",
-        subtitle = self.loc:t("unit_scanning_book") or "Scanning book for units...",
-        progress_max = 100,
-        dismissable = false,
-        refresh_time_seconds = 0.05,
-    }
-
-    Font.getFace = old_getFace
-
-    local sw, sh = Screen:getWidth(), Screen:getHeight()
-    local dim_child = {
-        getSize = function(this)
-            return Geom:new{ w = sw, h = sh }
-        end,
-        paintTo = function(this, bb, x, y)
-            bb:paintRoundedRect(x, y, sw, sh, Blitbuffer.COLOR_BLACK, 0)
-        end
-    }
-    local dim_bg = AlphaContainer:new{
-        alpha = 0.4,
-        dim_child
-    }
-
-    -- Monkey-patch paintTo to paint the dim background before drawing progress dialog
-    local orig_paintTo = progress_msg.paintTo
-    progress_msg.paintTo = function(this, bb, x, y)
-        dim_bg:paintTo(bb, 0, 0)
-        orig_paintTo(this, bb, x, y)
-    end
-
-    -- Clean up the dim_bg blitbuffer when the progress dialog closes
-    local orig_onCloseWidget = progress_msg.onCloseWidget
-    progress_msg.onCloseWidget = function(this)
-        dim_bg:onCloseWidget()
-        if orig_onCloseWidget then
-            orig_onCloseWidget(this)
-        end
-    end
-
-    self.active_unit_scan_dialog = progress_msg
-    progress_msg:show()
-    UIManager:forceRePaint()
-
-    UIManager:scheduleIn(0.1, function()
-        if self.destroyed or not self.ui or not self.ui.document then
-            self._unit_scan_in_progress = false
-            self.active_unit_scan_dialog = nil
-            pcall(function() progress_msg:close() end)
+    if self._unit_scan_in_progress then
+        if force and self._unit_scan_pid then
+            self:_cancelUnitScanChild("restart for manual rescan")
+        else
+            log("scanBookForUnits: scan already in progress, skipping duplicate request")
             return
         end
+    end
 
-        local ok_scan, err_scan = pcall(function()
-            if self.destroyed or not self.ui or not self.ui.document then return end
-            log("scanBookForUnits: starting whole book scan")
-            
-            local direction = settings.unit_conversion_direction or "auto"
-            log("scanBookForUnits: direction=" .. tostring(direction))
-            
-            local enabled_cats = {
-                length = settings.unit_cat_length ~= false,
-                weight = settings.unit_cat_weight ~= false,
-                temp = settings.unit_cat_temp ~= false,
-                volume = settings.unit_cat_volume ~= false,
-                speed = settings.unit_cat_speed ~= false,
-                area = settings.unit_cat_area ~= false,
-            }
+    self._unit_scan_in_progress = true
+    local manual = force and true or false
 
-            local lang = self.loc and self.loc:getLanguage() or "en"
-            local aliases = xray_units.getScanAliases(direction, enabled_cats, lang)
-            if #aliases == 0 then
-                self:clearUnitUnderlines()
-                return
+    if manual then
+        -- Temporarily redirect smallffont to ffont during dialog init to make subtitle slightly larger
+        local old_getFace = Font.getFace
+        Font.getFace = function(self_font, name)
+            if name == "smallffont" then
+                return old_getFace(self_font, "ffont")
             end
-
-            -- Set of ambiguous unit aliases
-            local is_ambig = {
-                ["in"] = true, ["m"] = true, ["l"] = true, ["g"] = true, ["f"] = true,
-                ["t"] = true, ["c"] = true, ["oc"] = true, ["0c"] = true, ["of"] = true, ["0f"] = true
-            }
-
-            -- Sort all aliases descending by length to prevent prefix shadowing
-            local sorted_aliases = {}
-            for _, alias in ipairs(aliases) do
-                table.insert(sorted_aliases, xray_units.utf8Lower(alias))
-            end
-            table.sort(sorted_aliases, function(a, b)
-                return #a > #b
-            end)
-
-            -- Build pat_digit
-            local digit_alnum = {}
-            local digit_symbol = {}
-            for _, alias in ipairs(sorted_aliases) do
-                local esc = escape_pattern(alias)
-                if alias:match("[%w]$") then
-                    table.insert(digit_alnum, esc)
-                else
-                    table.insert(digit_symbol, esc)
-                end
-            end
-
-            local digit_parts = {}
-            if #digit_alnum > 0 then
-                table.insert(digit_parts, "(" .. table.concat(digit_alnum, "|") .. ")\\b")
-            end
-            if #digit_symbol > 0 then
-                table.insert(digit_parts, "(" .. table.concat(digit_symbol, "|") .. ")")
-            end
-            local digit_units = "(" .. table.concat(digit_parts, "|") .. ")"
-            local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*" .. digit_units .. ")"
-
-            -- Build word patterns only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
-            local MAX_REGEX_LEN = 4000
-            local word_chunks = {}
-            local split_on_error = false
-            local scan_written = settings.unit_scan_written_numbers
-            if scan_written == nil then
-                scan_written = not xray_utils.isLowPowerForScan()
-            end
-
-            local function build_word_pattern(items)
-                local boundary_both = {}
-                local boundary_none = {}
-                for _, item in ipairs(items) do
-                    table.insert(item.bounded and boundary_both or boundary_none, item.esc)
-                end
-                local word_parts = {}
-                if #boundary_both > 0 then
-                    table.insert(word_parts, "\\b(" .. table.concat(boundary_both, "|") .. ")\\b")
-                end
-                if #boundary_none > 0 then
-                    table.insert(word_parts, "(" .. table.concat(boundary_none, "|") .. ")")
-                end
-                return "(" .. table.concat(word_parts, "|") .. ")"
-            end
-
-            if scan_written then
-                -- With a Cyrillic UI, look for written numbers before Cyrillic aliases only
-                local base_lang = tostring(lang):lower():match("^%a+") or ""
-                local cyrillic_ui = base_lang == "ru" or base_lang == "uk" or base_lang == "sr" or base_lang == "bg" or base_lang == "be"
-
-                local function is_abbreviation(alias)
-                    local clean = alias:gsub("%s+", "")
-                    if clean:match("%d") or clean:find("[/%.]") then
-                        return true
-                    end
-                    for _, sym in ipairs({ "°", "º", "²", "³" }) do
-                        if clean:find(sym, 1, true) then
-                            return true
-                        end
-                    end
-                    -- The old byte class also drops names with some UTF-8 letters (Cyrillic а, к);
-                    -- other UIs keep it so their patterns stay under the limit
-                    if not cyrillic_ui and clean:find("[°º]") then
-                        return true
-                    end
-                    if #clean < 4 and clean ~= "cup" then
-                        return true
-                    end
-                    return false
-                end
-
-                local word_items = {}
-                for _, alias in ipairs(sorted_aliases) do
-                    if not is_abbreviation(alias) and (not cyrillic_ui or alias:find("[\208\209\210]")) then
-                        table.insert(word_items, {
-                            esc = escape_pattern(alias),
-                            bounded = alias:match("^[%w]") ~= nil and alias:match("[%w]$") ~= nil,
-                        })
-                    end
-                end
-
-                if cyrillic_ui then
-                    -- Cyrillic aliases don't fit in one pattern, so search them in chunks
-                    split_on_error = true
-                    local cur, len = {}, 0
-                    for _, item in ipairs(word_items) do
-                        if len > 0 and len + #item.esc + 1 > MAX_REGEX_LEN - 100 then
-                            table.insert(word_chunks, cur)
-                            cur, len = {}, 0
-                        end
-                        table.insert(cur, item)
-                        len = len + #item.esc + 1
-                    end
-                    if #cur > 0 then
-                        table.insert(word_chunks, cur)
-                    end
-                elseif #word_items > 0 then
-                    local pat_word = build_word_pattern(word_items)
-                    if #pat_word > MAX_REGEX_LEN then
-                        log("scanBookForUnits: word pattern too large (" .. #pat_word .. " chars), skipping word pass safety check")
-                    else
-                        table.insert(word_chunks, word_items)
-                    end
-                end
-            end
-
-            log("scanBookForUnits: pat_digit=[" .. tostring(pat_digit) .. "]")
-
-            log("scanBookForUnits: checkpoint A — pre findAllText digit")
-            collectgarbage("collect")
-            progress_msg:reportProgress(15)
-            local doc = self.ui.document
-            local t0 = os.clock()
-            local ok1, hits1 = pcall(function()
-                -- Note: findAllText regex flag is true, contextWords=5, maxResults=5000, returnXPointers=true
-                return doc:findAllText(pat_digit, true, 5, 5000, true)
-            end)
-            local t1 = os.clock()
-            log(string.format("scanBookForUnits: checkpoint B — post findAllText digit (took %.2fs), %d hits", t1 - t0, ok1 and hits1 and #hits1 or 0))
-            progress_msg:reportProgress(55)
-
-            if not ok1 then
-                log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(hits1))
-                hits1 = {}
-            elseif not hits1 then
-                hits1 = {}
-            end
-
-            local function regex_error()
-                if not doc.getAndClearRegexSearchError then return 0 end
-                local ok, code = pcall(doc.getAndClearRegexSearchError, doc)
-                return ok and tonumber(code) or 0
-            end
-
-            local hits2 = {}
-            -- In chunks, split a chunk in half and search again if the regex engine reports an error
-            local function run_word_chunk(items, depth)
-                local pat_word = build_word_pattern(items)
-                log("scanBookForUnits: pat_word=[" .. pat_word .. "]")
-                regex_error()
-                local tp = os.clock()
-                local ok, res = pcall(function()
-                    return doc:findAllText(pat_word, true, 5, 5000, true)
-                end)
-                local err = regex_error()
-                log(string.format("scanBookForUnits: word chunk (%d aliases, %d chars, depth %d) took %.2fs, %d hits, regex_error=%d",
-                    #items, #pat_word, depth, os.clock() - tp, ok and type(res) == "table" and #res or 0, err))
-                if not ok then
-                    log("scanBookForUnits: word findAllText pcall failed (non-fatal): " .. tostring(res))
-                end
-                if split_on_error and (err ~= 0 or not ok) and #items > 1 then
-                    local mid = math.floor(#items / 2)
-                    local left, right = {}, {}
-                    for i, item in ipairs(items) do
-                        table.insert(i <= mid and left or right, item)
-                    end
-                    run_word_chunk(left, depth + 1)
-                    run_word_chunk(right, depth + 1)
-                    return
-                end
-                if ok and type(res) == "table" then
-                    for _, h in ipairs(res) do
-                        table.insert(hits2, h)
-                    end
-                end
-            end
-
-            log("scanBookForUnits: checkpoint C — pre findAllText word, " .. #word_chunks .. " chunk(s)")
-            for idx, items in ipairs(word_chunks) do
-                run_word_chunk(items, 0)
-                progress_msg:reportProgress(55 + math.floor(30 * idx / #word_chunks))
-            end
-            local t2 = os.clock()
-            log(string.format("scanBookForUnits: checkpoint D — post findAllText word (took %.2fs), %d hits", t2 - t1, #hits2))
-            progress_msg:reportProgress(85)
-
-            local hits = {}
-            for _, h in ipairs(hits1) do
-                table.insert(hits, h)
-            end
-            hits1 = nil
-            for _, h in ipairs(hits2) do
-                table.insert(hits, h)
-            end
-            hits2 = nil
-
-            -- Deduplicate overlapping hits by end xpointer (keeps the longest match)
-            local unique_hits = {}
-
-            for _, hit in ipairs(hits) do
-                local end_xp = hit["end"]
-                if not unique_hits[end_xp] or #hit.matched_text > #unique_hits[end_xp].matched_text then
-                    unique_hits[end_xp] = hit
-                end
-            end
-            hits = nil
-
-            -- Chunks can match the same text with a shorter alias; keep the longest match per start
-            local by_start = {}
-            for _, hit in pairs(unique_hits) do
-                if not by_start[hit.start] or #hit.matched_text > #by_start[hit.start].matched_text then
-                    by_start[hit.start] = hit
-                end
-            end
-
-            local deduped_hits = {}
-            for _, hit in pairs(by_start) do
-                table.insert(deduped_hits, hit)
-            end
-            unique_hits = nil
-            hits = deduped_hits
-            collectgarbage("step", 200)
-
-            local t_start_lua = os.clock()
-            log(string.format("scanBookForUnits: checkpoint E — dedup took %.2fs, %d hits", t_start_lua - t2, #hits))
-
-            local xp_matches = {}
-            local lang = self.loc and self.loc:getLanguage() or "en"
-
-            -- Sort descending by length to prevent shadowing issues (e.g. "m" matching before "mm")
-            local sorted_aliases = {}
-            for _, alias in ipairs(aliases) do
-                table.insert(sorted_aliases, xray_units.utf8Lower(alias))
-            end
-            table.sort(sorted_aliases, function(a, b)
-                return #a > #b
-            end)
-
-            -- Construct suffix_map hash table: alias_lower -> true
-            local suffix_map = {}
-            for _, alias in ipairs(sorted_aliases) do
-                local alias_lower = alias:gsub("\194\160", " "):gsub("%s+", " ")
-                suffix_map[alias_lower] = true
-            end
-
-
-            -- True if a letter follows end_xp in the same text node (next_text starts at the next word)
-            local function continues_word(end_xp)
-                local ok, next_xp = pcall(doc.getNextVisibleChar, doc, end_xp)
-                if not ok or not next_xp or next_xp:gsub("%.%d+$", "") ~= end_xp:gsub("%.%d+$", "") then
-                    return false
-                end
-                local ok_t, text = pcall(doc.getTextFromXPointers, doc, end_xp, next_xp)
-                return ok_t and type(text) == "string" and text:find("^[%a\208-\211]") ~= nil
-            end
-
-            -- True if a letter precedes start_xp in the same text node
-            local function starts_mid_word(start_xp)
-                local n = tonumber(start_xp:match("%.(%d+)$"))
-                if not n or n == 0 then return false end
-                local prev_xp = start_xp:gsub("%.%d+$", "." .. (n - 1))
-                local ok, text = pcall(doc.getTextFromXPointers, doc, prev_xp, start_xp)
-                return ok and type(text) == "string" and (text:find("%a$") or text:find("[\208-\211][\128-\191]$")) ~= nil
-            end
-
-            for _, hit in ipairs(hits) do
-                local is_range = false
-                local val, num_str
-                local val1, val2
-                local is_vague = false
-                
-                local matched_text = (hit.matched_text or "")
-                local lower_matched = xray_units.utf8Lower(matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
-                
-                -- Extract unit alias using suffix_map lookup by iterating suffixes
-                local matched_alias = nil
-                for i = 1, #lower_matched do
-                    local suffix = lower_matched:sub(i)
-                    if suffix_map[suffix] then
-                        matched_alias = suffix
-                        break
-                    end
-                end
-                matched_alias = matched_alias or lower_matched
-
-                -- Extract prefix part
-                local num_part = matched_text:sub(1, #matched_text - #matched_alias)
-
-                -- Cyrillic aliases have no \b, so skip a match inside a longer word ("акробати", "мільярди")
-                local inside_word = (matched_alias:find("[\208-\211][\128-\191]$") and continues_word(hit["end"]))
-                    or (num_part == "" and matched_alias:find("^[\208-\211]") and starts_mid_word(hit.start))
-
-                local p = (hit.prev_text or "") .. num_part
-                -- No-break spaces separate words too
-                p = p:gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+$", "")
-                for _, sep in ipairs(RANGE_SEPS) do
-                    p = p:gsub(sep, "-")
-                end
-                
-                -- 1. Check for vague quantifiers (e.g. "a few hundred yards")
-                local vague = xray_units.detectVagueQuantifier(p)
-                if vague then
-                    val1 = vague.low
-                    val2 = vague.high
-                    is_range = true
-                    is_vague = true
-                    num_str = vague.quantifier .. " " .. vague.multiplier
-                else
-                    -- 2. Try prefix_word or prev_text tail
-                    -- Try digit range
-                    local lower_p = xray_units.utf8Lower(p)
-                    local r1, r2 = p:match("([0-9%.%,]+)%s*[%-–toor]+%s*([0-9%.%,]+)$")
-                    if not r1 then
-                        for _, conn in ipairs(RANGE_WORD_CONNECTORS) do
-                            r1, r2 = lower_p:match("([0-9%.%,]+)%s+" .. conn .. "%s+([0-9%.%,]+)$")
-                            if r1 then break end
-                        end
-                    end
-                    if r1 and r2 then
-                        val1 = xray_units.parseNumberText(r1)
-                        val2 = xray_units.parseNumberText(r2)
-                        if val1 and val2 then
-                            is_range = true
-                            num_str = r1 .. "-" .. r2
-                        end
-                    else
-                        -- Try written word range
-                        local w1, w2, conn
-                        for _, c in ipairs(RANGE_WORD_CONNECTORS) do
-                            -- w2 is all words after the last connector ("thirty-five", "three hundred")
-                            local head, tail = lower_p:match("^(.*)%s+" .. c .. "%s+(.-)$")
-                            if tail then
-                                local tail_words = {}
-                                for w in tail:gmatch(WORD_CHARS .. "+") do
-                                    table.insert(tail_words, strip_edge_symbols(w))
-                                end
-                                w2 = table.concat(tail_words, " ")
-                                if not xray_units.parseNumberText(w2) then
-                                    head, w2 = nil, nil
-                                end
-                            end
-                            if head then
-                                -- Take the whole compound before the connector ("twenty-five to thirty")
-                                local head_words = {}
-                                for w in head:gmatch(WORD_CHARS .. "+") do
-                                    table.insert(head_words, strip_edge_symbols(w))
-                                end
-                                for i = #head_words, 1, -1 do
-                                    local phrase = table.concat(head_words, " ", i)
-                                    if not xray_units.parseNumberText(phrase) then break end
-                                    w1 = phrase
-                                end
-                                conn = c
-                                break
-                            end
-                        end
-                        if not conn then
-                            w1, w2 = lower_p:match("(" .. WORD_CHARS .. "+)%s*%-%s*(" .. WORD_CHARS .. "+)$")
-                            if w1 then conn = "-" end
-                        end
-                        if w1 and w2 then
-                            w1, w2 = strip_edge_symbols(w1), strip_edge_symbols(w2)
-                            -- A hyphenated compound ("twenty-three") is not a range
-                            local is_compound = conn == "-" and xray_units.parseNumberText(w1 .. " " .. w2) ~= nil
-                            if not is_compound then
-                                val1 = xray_units.parseNumberText(w1)
-                                val2 = xray_units.parseNumberText(w2)
-                                if val1 and val2 then
-                                    is_range = true
-                                    num_str = w1 .. " " .. conn .. " " .. w2
-                                end
-                            end
-                        end
-                    end
-                    
-                    if not is_range then
-                        local single = p:match("([%-−–—]?%s*[0-9%.%,]+)$")
-                        if single then
-                            val = xray_units.parseNumberText(single)
-                            if val then
-                                num_str = single
-                            end
-                        end
-                        
-                        if not val then
-                            -- Single number or written compound (greedy backward accumulation)
-                            local words = {}
-                            for w in p:gmatch("[%a\128-\255%d%-%.%,']+") do
-                                table.insert(words, strip_edge_symbols(w))
-                            end
-                            
-                            local valid_words = {}
-                            local i_w = #words
-                            local saw_digit = false
-                            while i_w >= 1 do
-                                local w = words[i_w]
-                                local clean_w = w:gsub("[%-,]$", "")
-                                if clean_w == "a" and i_w > 1 and words[i_w-1]:gsub("[%-,]$", "") == "half" then
-                                    if saw_digit then break end
-                                    table.insert(valid_words, 1, "half a")
-                                    i_w = i_w - 2
-                                else
-                                    local val_parsed = xray_units.parseNumberText(clean_w)
-                                    if clean_w == "and" or val_parsed then
-                                        if saw_digit then break end
-                                        if clean_w:match("%d") then
-                                            saw_digit = true
-                                        end
-                                        table.insert(valid_words, 1, clean_w)
-                                        i_w = i_w - 1
-                                    else
-                                        break
-                                    end
-                                end
-                            end
-                            
-                            -- Check if a minus sign was left just before the matched digit (e.g. separated by space)
-                            if i_w >= 1 and words[i_w] == "-" and #valid_words > 0 and saw_digit then
-                                valid_words[1] = "-" .. valid_words[1]
-                                i_w = i_w - 1
-                            end
-                            
-                            while #valid_words > 0 and valid_words[1] == "and" do
-                                table.remove(valid_words, 1)
-                            end
-                            
-                            if #valid_words > 0 then
-                                local num_phrase = table.concat(valid_words, " ")
-                                val = xray_units.parseNumberText(num_phrase)
-                                if val then
-                                    num_str = num_phrase
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                if not inside_word and (val or (val1 and val2)) then
-                    local matched_unit = matched_alias
-                    local u = xray_units.UNIT_LOOKUP and xray_units.UNIT_LOOKUP[matched_unit]
-                    if not u then
-                        for _, unit_def in ipairs(xray_units.UNITS or {}) do
-                            for _, alias in ipairs(unit_def.aliases) do
-                                if xray_units.utf8Lower(alias) == matched_unit then
-                                    u = unit_def
-                                    break
-                                end
-                            end
-                            if u then break end
-                        end
-                    end
-                    
-                    if u and enabled_cats[u.category] then
-                        local conv_str
-                        if is_range then
-                            local conv_raw1 = xray_units.convert(val1, u.category, u.name, u.std_target)
-                            local conv_val1, conv_unit1 = xray_units.applySmartScaling(conv_raw1, u.category, u.std_target)
-                            local conv_raw2 = xray_units.convert(val2, u.category, u.name, u.std_target)
-                            local conv_val2, conv_unit2 = xray_units.applySmartScaling(conv_raw2, u.category, u.std_target)
-                            
-                            if conv_unit1 == "c" then conv_unit1 = "°C"
-                            elseif conv_unit1 == "f" then conv_unit1 = "°F" end
-                            if conv_unit2 == "c" then conv_unit2 = "°C"
-                            elseif conv_unit2 == "f" then conv_unit2 = "°F" end
-                            
-                            local prefix = (is_vague and "≈" or "")
-                            if conv_unit1 == conv_unit2 then
-                                conv_str = prefix .. xray_units.formatNumber(conv_val1, lang) .. "–" .. xray_units.formatNumber(conv_val2, lang) .. " " .. xray_units.pluralizeUnit(conv_val2, conv_unit2)
-                            else
-                                conv_str = prefix .. xray_units.formatNumber(conv_val1, lang) .. " " .. xray_units.pluralizeUnit(conv_val1, conv_unit1) .. "–" .. xray_units.formatNumber(conv_val2, lang) .. " " .. xray_units.pluralizeUnit(conv_val2, conv_unit2)
-                            end
-                        else
-                            local sign = ""
-                            if u.category == "temp" then
-                                local before_num = (hit.prev_text or ""):match("([^%d]*)$") or ""
-                                if (before_num:match("%-") or before_num:match("−")) and val > 0 then
-                                    val = -val
-                                    sign = "-"
-                                end
-                            end
-                            
-                            local conv_raw = xray_units.convert(val, u.category, u.name, u.std_target)
-                            local conv_val, conv_unit = xray_units.applySmartScaling(conv_raw, u.category, u.std_target)
-                            
-                            if conv_unit == "c" then conv_unit = "°C"
-                            elseif conv_unit == "f" then conv_unit = "°F" end
-
-                            conv_str = xray_units.formatNumber(conv_val, lang) .. " " .. xray_units.pluralizeUnit(conv_val, conv_unit)
-                        end
-                        
-                        -- Underline spans from beginning of match (the number) to end of match
-                        local span_start = hit.start
-                        local num_part_clean = num_part:gsub("%s+", "")
-                        if num_part_clean == "" or is_range or is_vague then
-                            span_start = extend_span_start(doc, hit.start, is_range and val1 or val)
-                        end
-                        local ok_t, real_text = pcall(function()
-                            return doc:getTextFromXPointers(span_start, hit["end"])
-                        end)
-                        
-                        local valid = false
-                        local original_text
-                        if ok_t and real_text then
-                            original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
-                            
-                            -- Reject if resolved text contains newlines, unless matched unit is unambiguous
-                            local has_newline = original_text:find("[\r\n]")
-                            if not has_newline or not is_ambig[matched_alias] then
-                                if has_newline then
-                                    original_text = original_text:gsub("[\r\n]+", " "):gsub("%s+", " ")
-                                end
-                                valid = true
-                                if not is_range then
-                                    local lower_orig = xray_units.utf8Lower(original_text:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
-                                    local lower_num = xray_units.utf8Lower(num_str:gsub("^%s+", ""):gsub("%s+$", "")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
-                                    local lower_match = xray_units.utf8Lower(hit.matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
-                                    
-                                    if lower_orig ~= lower_match then
-                                        if lower_orig:sub(1, #lower_num) == lower_num then
-                                            local suffix = lower_orig:sub(#lower_num + 1)
-                                            if suffix:sub(-#lower_match) == lower_match then
-                                                local middle = suffix:sub(1, #suffix - #lower_match)
-                                                if middle:match("[%w]") then
-                                                    valid = false
-                                                end
-                                            end
-                                        else
-                                            local first_idx = lower_orig:find(lower_num, 1, true)
-                                            if first_idx then
-                                                local suffix = lower_orig:sub(first_idx + #lower_num)
-                                                if suffix:sub(-#lower_match) == lower_match then
-                                                    local middle = suffix:sub(1, #suffix - #lower_match)
-                                                    if middle:match("[%w]") then
-                                                        valid = false
-                                                    end
-                                                end
-                                            else
-                                                valid = false
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                        
-                        if valid then
-                            table.insert(xp_matches, {
-                                start_xp = span_start,
-                                ["end_xp"] = hit["end"],
-                                original = original_text,
-                                converted = conv_str,
-                                category = u.category
-                            })
-                        end
-                    end
-                end
-            end
-
-            self.unit_xp_matches = xp_matches
-            hits = nil
-            collectgarbage("collect")
-            local t3 = os.clock()
-            log(string.format("scanBookForUnits: Lua processing took %.2fs, %d unit matches", t3 - t_start_lua, #xp_matches))
-            log(string.format("scanBookForUnits: TOTAL %.2fs", t3 - t0))
-            
-            log("scanBookForUnits: checkpoint F — pre notification show")
-            UIManager:show(Notification:new{
-                text = tostring(#self.unit_xp_matches) .. " unit conversions found",
-                timeout = 3,
-                toast = true,
-            })
-            if self.ui and self.ui.view then
-                if self.ui.view.dialog then
-                    UIManager:setDirty(self.ui.view.dialog, "ui")
-                end
-                UIManager:setDirty(nil, "ui")
-            end
-
-            progress_msg:reportProgress(95)
-            log("scanBookForUnits: writing cache file")
-            pcall(function() self:saveUnitCache(resolved_dir) end)
-        end)
-        
-        self._unit_scan_in_progress = false
-        self.active_unit_scan_dialog = nil
-        pcall(function()
-            progress_msg:reportProgress(100)
-            progress_msg:close()
-        end)
-        
-        if not ok_scan then
-            log("scanBookForUnits async error: " .. tostring(err_scan))
+            return old_getFace(self_font, name)
         end
-    end)
+
+        local progress_msg = ProgressBarDialog:new{
+            title = self.loc:t("unit_scanning_title") or "X-Ray: Unit Converter",
+            subtitle = self.loc:t("unit_scanning_book") or "Scanning book for units...",
+            progress_max = 100,
+            dismissable = true,
+            refresh_time_seconds = 0.05,
+        }
+        Font.getFace = old_getFace
+
+        local AlphaContainer = require("ui/widget/container/alphacontainer")
+        local sw, sh = Screen:getWidth(), Screen:getHeight()
+        local dim_child = {
+            getSize = function() return Geom:new{ w = sw, h = sh } end,
+            paintTo = function(this, bb, x, y) bb:paintRoundedRect(x, y, sw, sh, Blitbuffer.COLOR_BLACK, 0) end
+        }
+        local dim_bg = AlphaContainer:new{ alpha = 0.4, dim_child }
+
+        local orig_paintTo = progress_msg.paintTo
+        progress_msg.paintTo = function(this, bb, x, y)
+            dim_bg:paintTo(bb, 0, 0)
+            orig_paintTo(this, bb, x, y)
+        end
+
+        local orig_onCloseWidget = progress_msg.onCloseWidget
+        progress_msg.onCloseWidget = function(this)
+            dim_bg:onCloseWidget()
+            if orig_onCloseWidget then orig_onCloseWidget(this) end
+        end
+
+        local plugin_self = self
+        progress_msg.dismiss_callback = function()
+            log("Manual unit scan progress dialog dismissed by user")
+            plugin_self:_cancelUnitScanChild("user dismissed")
+            local Notification = require("ui/widget/notification")
+            UIManager:show(Notification:new{
+                text = plugin_self.loc:t("unit_scan_cancelled") or "Unit scan cancelled",
+                timeout = 2,
+                toast = true
+            })
+        end
+
+        self._unit_scan_dialog = progress_msg
+        self.active_unit_scan_dialog = progress_msg
+        progress_msg:show()
+        UIManager:forceRePaint()
+    end
+
+    if self:_startUnitScanSubprocess(resolved_dir, settings, manual) then
+        return
+    end
+
+    if _getFFIUtil() and not manual then
+        -- Fork failed at runtime on auto scan: skip silently without blocking UI
+        self._unit_scan_in_progress = false
+        log("scanBookForUnits: fork failed, auto scan skipped silently")
+        return
+    end
+
+    self:_runUnitScanInProcess(resolved_dir, settings, manual)
 end
 
 -- Find matched unit box at touch coordinate
