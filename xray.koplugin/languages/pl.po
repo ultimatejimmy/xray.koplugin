@@ -313,6 +313,10 @@ msgstr "(nieskonfigurowane — dotknij, aby skonfigurować)"
 msgid "custom_api_saved"
 msgstr "Zapisano konfigurację niestandardowego API %d."
 
+# en-hash: a18366b217ebf811ad1886e4f4f865b2
+msgid "dark"
+msgstr ""
+
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "OPISY POSTACI\n\n• Krótki (~80 znaków): Imię, rola i krótka notatka.\n• Domyślny (~200 znaków): Standardowa analiza.\n• Szczegółowy (~350 znaków): Bogaty opis postaci z cechami i motywacjami.\n• Bardzo szczegółowy (~500 znaków): Głęboka analiza.\n\nKOMPROMIS\nDłuższe opisy → mniej postaci zwracanych podczas początkowych/pełnych pobrań. Kolejne pobrania ('Pobierz więcej') nie są modyfikowane."
@@ -353,6 +357,26 @@ msgstr "Dokument niedostępny"
 msgid "dont_ask_again"
 msgstr "Nie pytaj ponownie"
 
+# en-hash: 994d06622c761cbceb384fd10a0b53f3
+msgid "entity_cat_characters"
+msgstr "Postacie"
+
+# en-hash: 60b01aa51c38e7a952d2760bf1584915
+msgid "entity_cat_historical_figures"
+msgstr "Postacie historyczne"
+
+# en-hash: eebd338ddbd547e41e4a1296de82963a
+msgid "entity_cat_locations"
+msgstr "Miejsca"
+
+# en-hash: 6f1bf85c9ebb3c7fa26251e1e335e032
+msgid "entity_cat_terms"
+msgstr "Pojęcia"
+
+# en-hash: 7f8d44e56b29adc0723f9a93b50f757f
+msgid "entity_footnotes_enabled"
+msgstr "Włącz przypisy encji"
+
 # en-hash: 2593c7ce3ff937293feb1e61c152e551
 msgid "entity_label_characters"
 msgstr "postacie"
@@ -361,9 +385,73 @@ msgstr "postacie"
 msgid "entity_label_locations"
 msgstr "lokalizacje"
 
+# en-hash: 2e507ae5d58861d457e684dfe05b9593
+msgid "entity_manual_scan_button"
+msgstr "Skanuj/Skanuj ponownie"
+
+# en-hash: 36324dd0d3b8f85672997ee73d97df2c
+msgid "entity_mention_mode_all"
+msgstr "Wszystkie wzmianki na stronie"
+
+# en-hash: 5c350c6e7c9b9cf91450fa218e6b41f5
+msgid "entity_mention_mode_first"
+msgstr "Tylko pierwsza wzmianka na stronie"
+
+# en-hash: fce740bb09cdf01950bef228e7c9eaca
+msgid "entity_mention_mode_title"
+msgstr "Tryb wyświetlania wzmianek"
+
+# en-hash: 5bbc7f5426ea73c37b8e17e100d42f11
+msgid "entity_new_feature_desc"
+msgstr "X-Ray może podkreślać postacie, postacie historyczne, miejsca i terminy w książkach. Dotknij nazwy, aby zobaczyć opis bez opuszczania strony.\n\nDo dostosowania w ustawieniach: styl podkreślenia, typ okienka (chmurka lub panel), wzmianki i kategorie."
+
+# en-hash: 577648e5ec08d775a38c0cd140bc8664
+msgid "entity_new_feature_enable"
+msgstr "Włącz podkreślanie"
+
+# en-hash: 298d15e5db70c2c72dd87d28e98f0ed8
+msgid "entity_new_feature_keep_disabled"
+msgstr "Pozostaw wyłączone"
+
+# en-hash: 23cc0a0220ed5c21f92dd9ff994caaba
+msgid "entity_new_feature_title"
+msgstr "Przypisy encji"
+
+# en-hash: 2f87b6e0ed7427b4a49f4e0836064b66
+msgid "entity_no_description"
+msgstr "Brak opisu."
+
 # en-hash: b972b14200d0fad941304c0b361a18f0
 msgid "entity_not_found"
 msgstr "'%s' nie został znaleziony jako postać ani miejsce."
+
+# en-hash: c6c71afd05ba6c709f781bebdb22b111
+msgid "entity_popup_style_footnote"
+msgstr "Panel przypisu (Pełne akcje)"
+
+# en-hash: 8646c8be3ff422d04e609616e0a3b9fd
+msgid "entity_popup_style_title"
+msgstr "Styl wyświetlania okna"
+
+# en-hash: f207506358ab76beee7772026219bc64
+msgid "entity_popup_style_tooltip"
+msgstr "Kompaktowa dymka"
+
+# en-hash: e13ea94df0db0d6ba838b2d1cc9cba92
+msgid "entity_scanning_book"
+msgstr "Skanowanie książki w poszukiwaniu przypisów..."
+
+# en-hash: 758d09329b7f85865be8292d836efe97
+msgid "entity_scanning_title"
+msgstr "X-Ray: Przypisy encji"
+
+# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
+msgid "entity_style_card_title"
+msgstr "Styl przypisów encji"
+
+# en-hash: 37a611b3aed746b1f20cd611500496f2
+msgid "entity_style_settings"
+msgstr "Ustawienia stylu i podkreślenia"
 
 # en-hash: 76a40e4f974fd895a0a2598c1cee28b4
 msgid "entity_type_character"
@@ -741,6 +829,10 @@ msgstr "Język został zmieniony. Otwórz ponownie menu, aby zobaczyć zmiany."
 msgid "later"
 msgstr "Później"
 
+# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
+msgid "light"
+msgstr ""
+
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
 msgstr "Połącz"
@@ -873,6 +965,10 @@ msgstr "Tom #"
 msgid "manual_pick"
 msgstr "Manual Pick"
 
+# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
+msgid "medium"
+msgstr ""
+
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -996,6 +1092,14 @@ msgstr "Ustawienia wyświetlania i interfejsu"
 # en-hash: bd44df2bee626fbc7db133d886c1cf63
 msgid "menu_enter_custom_model"
 msgstr "Wprowadź niestandardowy model..."
+
+# en-hash: 5d8cafb3474ef8ffde41bb6e85bf5acc
+msgid "menu_entity_categories"
+msgstr "Kategorie encji"
+
+# en-hash: 23cc0a0220ed5c21f92dd9ff994caaba
+msgid "menu_entity_footnotes"
+msgstr "Przypisy encji"
 
 # en-hash: c78507f1735096000bbc8f4b4ddfc289
 msgid "menu_entity_ui_mode"
@@ -1436,6 +1540,10 @@ msgstr "Wstępne generowanie zatrzymane."
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"
 msgstr "Poprz."
+
+# en-hash: 31fde7b05ac8952dacf4af8a704074ec
+msgid "preview"
+msgstr ""
 
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
@@ -2153,3 +2261,6 @@ msgstr "Dodaje przycisk 'X-Ray' do menu słownika i wyboru w celu natychmiastowe
 msgid "yes"
 msgstr "Tak"
 
+# en-hash: f16624ed874e9b9c1c11222e2ed2e3c2
+msgid "entity_style_preview_text"
+msgstr "Pchnąć w tę łódź jeża lub ośm skrzyń fig."

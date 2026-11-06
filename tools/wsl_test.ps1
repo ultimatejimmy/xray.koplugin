@@ -106,7 +106,8 @@ function Run-Workflow {
 
     # 4. Restart KOReader
     Write-Host "Restarting KOReader..." -ForegroundColor Cyan
-    wsl pkill -9 -f koreader 2>$null
+    wsl pkill -9 -f "reader.lua" 2>$null
+    wsl pkill -9 -f "koreader" 2>$null
     Start-Sleep -Seconds 1
 
     # Define start command

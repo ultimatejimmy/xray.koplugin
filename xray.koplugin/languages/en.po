@@ -236,6 +236,9 @@ msgstr "(not configured — tap to set up)"
 msgid "custom_api_saved"
 msgstr "Custom API %d configuration saved."
 
+msgid "dark"
+msgstr "Dark"
+
 msgid "desc_len_about_chars"
 msgstr "Controls how much detail the AI includes in each character's profile.\n\n[B]Size options[/B]\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Full deep analysis.\n\n[B]Trade-off[/B]\nLonger descriptions consume more tokens, meaning [B]fewer[/B] characters are returned during initial fetches."
 
@@ -266,14 +269,77 @@ msgstr "Document unavailable"
 msgid "dont_ask_again"
 msgstr "Don't ask again"
 
+msgid "entity_cat_characters"
+msgstr "Characters"
+
+msgid "entity_cat_historical_figures"
+msgstr "Historical Figures"
+
+msgid "entity_cat_locations"
+msgstr "Locations"
+
+msgid "entity_cat_terms"
+msgstr "Terms"
+
+msgid "entity_footnotes_enabled"
+msgstr "Enable Entity Underlining"
+
 msgid "entity_label_characters"
 msgstr "characters"
 
 msgid "entity_label_locations"
 msgstr "locations"
 
+msgid "entity_manual_scan_button"
+msgstr "Scan/Rescan"
+
+msgid "entity_mention_mode_all"
+msgstr "All Mentions per Page"
+
+msgid "entity_mention_mode_first"
+msgstr "First Mention per Page Only"
+
+msgid "entity_mention_mode_title"
+msgstr "Mention Display Mode"
+
+msgid "entity_new_feature_desc"
+msgstr "X-Ray can underline characters, historical figures, locations, and terms in your books. Tap any underlined name for an instant description popup without leaving your page.\n\nCustomizable in settings: underline style, popup type (tooltip bubble or bottom panel), mentions frequency, and entity categories."
+
+msgid "entity_new_feature_enable"
+msgstr "Enable Underlining"
+
+msgid "entity_new_feature_keep_disabled"
+msgstr "Keep Disabled"
+
+msgid "entity_new_feature_title"
+msgstr "Entity Underlining"
+
+msgid "entity_no_description"
+msgstr "No description available yet."
+
 msgid "entity_not_found"
 msgstr "'%s' was not found as a character or location."
+
+msgid "entity_popup_style_footnote"
+msgstr "Footnote Panel (Full Actions)"
+
+msgid "entity_popup_style_title"
+msgstr "Popup Display Style"
+
+msgid "entity_popup_style_tooltip"
+msgstr "Compact Tooltip (Bubble)"
+
+msgid "entity_scanning_book"
+msgstr "Scanning book for underlines..."
+
+msgid "entity_scanning_title"
+msgstr "X-Ray: Entity Underlining"
+
+msgid "entity_style_card_title"
+msgstr "Entity Underline Style"
+
+msgid "entity_style_settings"
+msgstr "Style & Underline Settings"
 
 msgid "entity_type_character"
 msgstr "Character"
@@ -557,6 +623,9 @@ msgstr "Language changed."
 msgid "later"
 msgstr "Later"
 
+msgid "light"
+msgstr "Light"
+
 msgid "link_button"
 msgstr "Link"
 
@@ -656,6 +725,9 @@ msgstr "Volume #"
 msgid "manual_pick"
 msgstr "Manual Pick"
 
+msgid "medium"
+msgstr "Medium"
+
 msgid "mention_dismiss_btn"
 msgstr "✕"
 
@@ -748,6 +820,12 @@ msgstr "Display & UI Settings"
 
 msgid "menu_enter_custom_model"
 msgstr "Enter custom model..."
+
+msgid "menu_entity_categories"
+msgstr "Entity Categories"
+
+msgid "menu_entity_footnotes"
+msgstr "Entity Underlining"
 
 msgid "menu_entity_ui_mode"
 msgstr "Entity Description Style"
@@ -1078,6 +1156,9 @@ msgstr "Pre-generation stopped."
 
 msgid "prev"
 msgstr "Prev"
+
+msgid "preview"
+msgstr "Preview"
 
 msgid "quick_menu_title"
 msgstr "X-Ray Quick Menu"

@@ -4231,6 +4231,16 @@ function M:clearCache()
     if self.image_manager and self.image_manager.clearSpineCache then
         self.image_manager:clearSpineCache()
     end
+    if self.clearEntityUnderlines then
+        self:clearEntityUnderlines()
+    end
+    local entity_cache_file = self._getEntityCachePath and self:_getEntityCachePath()
+    if entity_cache_file then
+        pcall(os.remove, entity_cache_file)
+    end
+    if self.clearUnitUnderlines then
+        self:clearUnitUnderlines()
+    end
     UIManager:show(InfoMessage:new{ text = self.loc:t("cache_cleared"), timeout = 3 })
 end
 

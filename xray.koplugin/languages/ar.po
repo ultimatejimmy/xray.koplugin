@@ -313,6 +313,10 @@ msgstr "(غير مكوّن — انقر للإعداد)"
 msgid "custom_api_saved"
 msgstr "تم حفظ إعدادات واجهة API المخصصة %d."
 
+# en-hash: a18366b217ebf811ad1886e4f4f865b2
+msgid "dark"
+msgstr ""
+
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "أوصاف الشخصيات\n\n• قصير (~80 حرفًا): الاسم، الدور، وملاحظة قصيرة.\n• افتراضي (~200 حرفًا): تحليل قياسي.\n• مفصل (~350 حرفًا): دراسة غنية للشخصية مع السمات والدوافع.\n• مفصل جدًا (~500 حرفًا): تحليل عميق.\n\nالمفاضلة\nأوصاف أطول ← شخصيات أقل يتم إرجاعها أثناء عمليات الجلب الأولية/الكاملة. لا تتأثر عمليات 'جلب المزيد' اللاحقة."
@@ -353,6 +357,26 @@ msgstr "المستند غير متوفر"
 msgid "dont_ask_again"
 msgstr "لا تسألني مرة أخرى"
 
+# en-hash: 994d06622c761cbceb384fd10a0b53f3
+msgid "entity_cat_characters"
+msgstr "الشخصيات"
+
+# en-hash: 60b01aa51c38e7a952d2760bf1584915
+msgid "entity_cat_historical_figures"
+msgstr "شخصيات تاريخية"
+
+# en-hash: eebd338ddbd547e41e4a1296de82963a
+msgid "entity_cat_locations"
+msgstr "المواقع"
+
+# en-hash: 6f1bf85c9ebb3c7fa26251e1e335e032
+msgid "entity_cat_terms"
+msgstr "المصطلحات"
+
+# en-hash: 7f8d44e56b29adc0723f9a93b50f757f
+msgid "entity_footnotes_enabled"
+msgstr "تمكين حواشي الكيانات"
+
 # en-hash: 2593c7ce3ff937293feb1e61c152e551
 msgid "entity_label_characters"
 msgstr "الشخصيات"
@@ -361,9 +385,73 @@ msgstr "الشخصيات"
 msgid "entity_label_locations"
 msgstr "المواقع"
 
+# en-hash: 2e507ae5d58861d457e684dfe05b9593
+msgid "entity_manual_scan_button"
+msgstr "مسح/إعادة مسح"
+
+# en-hash: 36324dd0d3b8f85672997ee73d97df2c
+msgid "entity_mention_mode_all"
+msgstr "جميع الإشارات في الصفحة"
+
+# en-hash: 5c350c6e7c9b9cf91450fa218e6b41f5
+msgid "entity_mention_mode_first"
+msgstr "الإشارة الأولى في الصفحة فقط"
+
+# en-hash: fce740bb09cdf01950bef228e7c9eaca
+msgid "entity_mention_mode_title"
+msgstr "وضع عرض الإشارات"
+
+# en-hash: 5bbc7f5426ea73c37b8e17e100d42f11
+msgid "entity_new_feature_desc"
+msgstr "يمكن لـ X-Ray تسطير الشخصيات والشخصيات التاريخية والأماكن والمصطلحات في كتبك. انقر على أي اسم لعرض وصفه دون مغادرة صفحتك.\n\nقابل للتخصيص في الإعدادات: نمط التسطير، ونوع النافذة المنبثقة (فقاعة أو لوحة)، والإشارات، والفئات."
+
+# en-hash: 577648e5ec08d775a38c0cd140bc8664
+msgid "entity_new_feature_enable"
+msgstr "تفعيل التسطير"
+
+# en-hash: 298d15e5db70c2c72dd87d28e98f0ed8
+msgid "entity_new_feature_keep_disabled"
+msgstr "إبقاء معطل"
+
+# en-hash: 23cc0a0220ed5c21f92dd9ff994caaba
+msgid "entity_new_feature_title"
+msgstr "حواشي الكيانات"
+
+# en-hash: 2f87b6e0ed7427b4a49f4e0836064b66
+msgid "entity_no_description"
+msgstr "لا يوجد وصف متاح حتى الآن."
+
 # en-hash: b972b14200d0fad941304c0b361a18f0
 msgid "entity_not_found"
 msgstr "لم يتم العثور على '%s' كشخصية أو موقع."
+
+# en-hash: c6c71afd05ba6c709f781bebdb22b111
+msgid "entity_popup_style_footnote"
+msgstr "لوحة الحاشية (إجراءات كاملة)"
+
+# en-hash: 8646c8be3ff422d04e609616e0a3b9fd
+msgid "entity_popup_style_title"
+msgstr "نمط عرض النافذة المنبثقة"
+
+# en-hash: f207506358ab76beee7772026219bc64
+msgid "entity_popup_style_tooltip"
+msgstr "تلميح مضغوط (فقاعة)"
+
+# en-hash: e13ea94df0db0d6ba838b2d1cc9cba92
+msgid "entity_scanning_book"
+msgstr "جاري مسح الكتاب بحثًا عن الحواشي..."
+
+# en-hash: 758d09329b7f85865be8292d836efe97
+msgid "entity_scanning_title"
+msgstr "X-Ray: حواشي الكيانات"
+
+# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
+msgid "entity_style_card_title"
+msgstr "نمط حاشية الكيان"
+
+# en-hash: 37a611b3aed746b1f20cd611500496f2
+msgid "entity_style_settings"
+msgstr "إعدادات النمط والتسطير"
 
 # en-hash: 76a40e4f974fd895a0a2598c1cee28b4
 msgid "entity_type_character"
@@ -741,6 +829,10 @@ msgstr "تغيرت اللغة. أعد فتح القائمة لرؤية التغ�
 msgid "later"
 msgstr "لاحقًا"
 
+# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
+msgid "light"
+msgstr ""
+
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
 msgstr "ربط"
@@ -873,6 +965,10 @@ msgstr "رقم المجلد"
 msgid "manual_pick"
 msgstr "اختيار يدوي"
 
+# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
+msgid "medium"
+msgstr ""
+
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -996,6 +1092,14 @@ msgstr "إعدادات الشاشة وواجهة المستخدم"
 # en-hash: bd44df2bee626fbc7db133d886c1cf63
 msgid "menu_enter_custom_model"
 msgstr "أدخل نموذجًا مخصصًا..."
+
+# en-hash: 5d8cafb3474ef8ffde41bb6e85bf5acc
+msgid "menu_entity_categories"
+msgstr "فئات الكيانات"
+
+# en-hash: 23cc0a0220ed5c21f92dd9ff994caaba
+msgid "menu_entity_footnotes"
+msgstr "حواشي الكيانات"
 
 # en-hash: c78507f1735096000bbc8f4b4ddfc289
 msgid "menu_entity_ui_mode"
@@ -1436,6 +1540,10 @@ msgstr "تم إيقاف الإنشاء المسبق."
 # en-hash: 14230d11143a03f4330c6433d5032a9d
 msgid "prev"
 msgstr "السابق"
+
+# en-hash: 31fde7b05ac8952dacf4af8a704074ec
+msgid "preview"
+msgstr ""
 
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
@@ -2153,3 +2261,6 @@ msgstr "يضيف زر 'X-Ray' إلى القواميس وقوائم التحدي�
 msgid "yes"
 msgstr "نعم"
 
+# en-hash: 6ce7ac4d6b40735807f9d37ce97cadd1
+msgid "entity_style_preview_text"
+msgstr "الثعلب البني السريع يقفز فوق الكلب الكسول."

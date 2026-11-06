@@ -1705,6 +1705,14 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         UIManager:show(success_dialog)
     end
 
+    if self.scanBookForEntities and self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.entity_footnotes_enabled == true then
+        UIManager:scheduleIn(2, function()
+            if not self.destroyed and self.scanBookForEntities then
+                self:scanBookForEntities()
+            end
+        end)
+    end
+
 end
 
 function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent, book_text)
