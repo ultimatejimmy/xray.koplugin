@@ -289,10 +289,22 @@ function ChapterAnalyzer:getPageBasedText(ui)
     end
     
     logger.info("ChapterAnalyzer: Current chapter:", current_chapter.title)
+
+    local next_chapter = nil
+    local min_next_page = math.huge
+    for _, chapter in ipairs(toc) do
+        if chapter.page then
+            local p = tonumber(chapter.page)
+            if p and p > max_chapter_page and p < min_next_page then
+                min_next_page = p
+                next_chapter = chapter
+            end
+        end
+    end
     
     -- Get text from current chapter start to next chapter start (or end)
     local start_page = current_chapter.page
-    local end_page = next_chapter and next_chapter.page - 1 or ui.document:getPageCount()
+    local end_page = next_chapter and (tonumber(next_chapter.page) - 1) or ui.document:getPageCount()
     
     -- Limit to reasonable range (max 50 pages for performance)
     if end_page - start_page > 50 then

@@ -282,6 +282,32 @@ describe("Evolution Module", function()
                 assert.is_false(m.is_locked)
             end
         end)
+
+        it("uses plugin:isPositionGateUnlocked when plugin is provided in ctx", function()
+            local gate_calls = {}
+            local mock_plugin = {
+                isPositionGateUnlocked = function(_, gate, cur_chap, cur_page, opts)
+                    table.insert(gate_calls, { gate = gate, cur_chap = cur_chap, cur_page = cur_page, opts = opts })
+                    if gate.chapter_index and cur_chap and gate.chapter_index < cur_chap then
+                        return true
+                    elseif gate.chapter_index and cur_chap and gate.chapter_index == cur_chap then
+                        local ph = gate.page_hint or gate.page
+                        return not ph or not cur_page or ph <= cur_page
+                    end
+                    return false
+                end
+            }
+            local milestones = Evolution.build(entity, {
+                cur_chap = 2,
+                cur_page = 50,
+                plugin = mock_plugin,
+            })
+            assert.is_true(#gate_calls > 0)
+            assert.is_false(milestones[1].is_locked)
+            assert.is_false(milestones[2].is_locked)
+            assert.is_true(milestones[3].is_locked)
+            assert.is_true(milestones[4].is_locked)
+        end)
     end)
 
     describe("Overlay Integration: Font Size & Eye Toggle", function()

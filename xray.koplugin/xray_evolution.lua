@@ -130,6 +130,7 @@ end
 function Evolution.build(entity, ctx)
     if not entity or type(entity) ~= "table" then return {} end
     ctx = ctx or {}
+    local plugin = ctx.plugin
     local cur_chap = tonumber(ctx.cur_chap)
     local cur_page = tonumber(ctx.cur_page)
     local is_full_book = (ctx.is_full_book == true)

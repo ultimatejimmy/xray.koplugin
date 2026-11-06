@@ -1595,6 +1595,7 @@ end
 -- ── Mosaic Card (No Titles, Overlapped 3-Dot Menu, 100% Uncut Natural Aspect Ratio)
 function ImageGallery:renderMosaicCard(img, cell_w, is_focused_or_idx, opt_idx)
     local idx = opt_idx or (type(is_focused_or_idx) == "number" and is_focused_or_idx) or 1
+    local is_focused = (type(is_focused_or_idx) == "boolean" and is_focused_or_idx) or (self.focused_card_idx == idx)
     local p = self.plugin
     local book_path = p.ui and p.ui.document and p.ui.document.file
 
@@ -1844,6 +1845,7 @@ end
 -- ── Storefront Style Grid Card (No Outer Borders, Clean Rounded Thumbnail & Spaced Footer)
 function ImageGallery:renderGridCard(img, cell_w, is_focused_or_idx, opt_idx)
     local idx = opt_idx or (type(is_focused_or_idx) == "number" and is_focused_or_idx) or 1
+    local is_focused = (type(is_focused_or_idx) == "boolean" and is_focused_or_idx) or (self.focused_card_idx == idx)
     local p = self.plugin
     local book_path = p.ui and p.ui.document and p.ui.document.file
 
@@ -2086,6 +2088,7 @@ end
 -- ── Storefront Style List Row ────────────────────────────────────────────────
 function ImageGallery:renderListRow(img, content_w, is_focused_or_idx, opt_idx)
     local idx = opt_idx or (type(is_focused_or_idx) == "number" and is_focused_or_idx) or 1
+    local is_focused = (type(is_focused_or_idx) == "boolean" and is_focused_or_idx) or (self.focused_card_idx == idx)
     local p = self.plugin
     local book_path = p.ui and p.ui.document and p.ui.document.file
 

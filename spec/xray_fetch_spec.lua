@@ -1329,11 +1329,15 @@ describe("xray_fetch", function()
         it("markSeriesSyncDirty and flushSeriesSync defer series writing until flushed", function()
             local sync_called = false
             local synced_slug, synced_index
+            local synced_book_data, synced_doc_file, synced_has_explicit
             plugin.series_manager = {
-                syncBookToSeriesCache = function(_, slug, index, title, author, book_data, doc_file, has_explicit)
+                syncBookToSeriesCache = function(_, slug, index, book_data, doc_file, has_explicit)
                     sync_called = true
                     synced_slug = slug
                     synced_index = index
+                    synced_book_data = book_data
+                    synced_doc_file = doc_file
+                    synced_has_explicit = has_explicit
                     return true
                 end
             }
@@ -1347,7 +1351,209 @@ describe("xray_fetch", function()
             assert.is_true(sync_called)
             assert.are.equal("the_stormlight_archive", synced_slug)
             assert.are.equal(3, synced_index)
+            assert.are.equal("/books/Oathbringer.epub", synced_doc_file)
+            assert.is_true(synced_has_explicit)
+            assert.is_table(synced_book_data)
+            assert.are.equal("Oathbringer", synced_book_data.title)
+            assert.are.equal("Brandon Sanderson", synced_book_data.author)
             assert.is_nil(plugin._pending_series_sync)
+        end)
+
+        it("flushSeriesSync with real SeriesManager correctly tracks multiple books by same author without deleting or corrupting slots", function()
+            local SeriesManager = require("xray_seriesmanager")
+            local real_mgr = SeriesManager:new()
+            
+            local store = {}
+            real_mgr.loadSeriesCache = function(_, slug)
+                return store[slug]
+            end
+            real_mgr.saveSeriesCache = function(_, slug, cache_data)
+                store[slug] = cache_data
+                return true
+            end
+
+            plugin.series_manager = real_mgr
+
+            -- Step 1: Book 1 of Red Rising
+            plugin.book_data = {
+                title = "Red Rising",
+                author = "Pierce Brown",
+                characters = { { name = "Darrow", description = "Helldiver" } }
+            }
+            plugin:markSeriesSyncDirty("red_rising", 1, "Red Rising", "Pierce Brown", "/books/red_rising.epub", true)
+            plugin:flushSeriesSync()
+
+            local series_cache = store["red_rising"]
+            assert.is_not_nil(series_cache)
+            assert.is_not_nil(series_cache.books[1])
+            assert.are.equal("Red Rising", series_cache.books[1].title)
+            assert.are.equal("Pierce Brown", series_cache.books[1].author)
+            assert.are.equal("/books/red_rising.epub", series_cache.book_paths[1])
+            assert.are.equal(1, #series_cache.books[1].characters)
+            assert.are.equal("Darrow", series_cache.books[1].characters[1].name)
+
+            -- Step 2: Book 2 of Red Rising (same author!)
+            plugin.book_data = {
+                title = "Golden Son",
+                author = "Pierce Brown",
+                characters = { { name = "Mustang", description = "Gold Sovereign" } }
+            }
+            plugin:markSeriesSyncDirty("red_rising", 2, "Golden Son", "Pierce Brown", "/books/golden_son.epub", true)
+            plugin:flushSeriesSync()
+
+            series_cache = store["red_rising"]
+            assert.is_not_nil(series_cache.books[1], "Book 1 must not be deleted when Book 2 by the same author is synced!")
+            assert.are.equal("Red Rising", series_cache.books[1].title)
+            assert.are.equal("Pierce Brown", series_cache.books[1].author)
+            assert.are.equal("/books/red_rising.epub", series_cache.book_paths[1])
+
+            assert.is_not_nil(series_cache.books[2])
+            assert.are.equal("Golden Son", series_cache.books[2].title)
+            assert.are.equal("Pierce Brown", series_cache.books[2].author)
+            assert.are.equal("/books/golden_son.epub", series_cache.book_paths[2])
+            assert.are.equal(1, #series_cache.books[2].characters)
+            assert.are.equal("Mustang", series_cache.books[2].characters[1].name)
+
+            -- Step 3: Guard for non-explicit (guessed) index (#134 case)
+            plugin.book_data = {
+                title = "Iron Gold",
+                author = "Pierce Brown",
+                characters = { { name = "Lysander" } }
+            }
+            plugin:markSeriesSyncDirty("red_rising", 1, "Iron Gold", "Pierce Brown", "/books/iron_gold.epub", false)
+            plugin:flushSeriesSync()
+
+            assert.are.equal("Red Rising", store["red_rising"].books[1].title)
+            assert.are.equal("/books/red_rising.epub", store["red_rising"].book_paths[1])
+        end)
+
+        it("finalizeXRayData propagates merged series context and series_context_loaded to saved cache on initial fetch", function()
+            local SeriesManager = require("xray_seriesmanager")
+            local series_mgr = SeriesManager:new()
+            plugin.series_manager = series_mgr
+            series_mgr.getSeriesInfo = function()
+                return { slug = "stormlight", index = 2, has_explicit_index = true, name = "The Stormlight Archive" }
+            end
+            series_mgr.loadSeriesCache = function()
+                return {
+                    slug = "stormlight",
+                    books = {
+                        [1] = {
+                            title = "The Way of Kings",
+                            characters = {
+                                { name = "Dalinar", description = "Highprince of War." }
+                            }
+                        }
+                    }
+                }
+            end
+
+            local saved_payload = nil
+            plugin.cache_manager = {
+                asyncSaveCache = function(_, doc_file, data_to_save)
+                    saved_payload = data_to_save
+                    return true
+                end,
+                loadCache = function() return {} end
+            }
+            plugin.ui = {
+                document = {
+                    file = "/books/words_of_radiance.epub",
+                    getProps = function() return { title = "Words of Radiance", authors = "Brandon Sanderson" } end,
+                    getToc = function() return {} end,
+                    getPageCount = function() return 100 end,
+                }
+            }
+
+            local initial_data = {
+                characters = {
+                    { name = "Kaladin", description = "Windrunner." }
+                }
+            }
+
+            plugin:finalizeXRayData(initial_data, "Words of Radiance", "Brandon Sanderson", "Kaladin Windrunner", false, true, 1)
+
+            assert.is_not_nil(saved_payload)
+            assert.is_true(saved_payload.series_context_loaded)
+            assert.is_true(plugin.series_context_loaded)
+            -- Both Kaladin and merged Dalinar should be present in saved_payload.characters
+            local found_dalinar = false
+            for _, c in ipairs(saved_payload.characters or {}) do
+                if c.name == "Dalinar" then found_dalinar = true end
+            end
+            assert.is_true(found_dalinar)
+        end)
+
+        it("autoLoadCache detects and heals damaged series cache entries", function()
+            local Main = require("main")
+            local dirty_marked = false
+            local dirty_slug, dirty_idx, dirty_title, dirty_author, dirty_path
+            local mock_p = createMockPlugin()
+            for k, v in pairs(data) do mock_p[k] = v end
+            for k, v in pairs(fetch) do mock_p[k] = v end
+            mock_p.autoLoadCache = Main.autoLoadCache
+            mock_p.isAnthologyMode = function() return false end
+            mock_p.ui = {
+                document = {
+                    file = "/books/iron_gold.epub",
+                    getProps = function() return { title = "Iron Gold", authors = "Pierce Brown" } end,
+                    getToc = function() return {} end,
+                    getPageCount = function() return 100 end,
+                }
+            }
+            mock_p.markSeriesSyncDirty = function(_, slug, index, title, author, book_path, is_explicit)
+                dirty_marked = true
+                dirty_slug = slug
+                dirty_idx = index
+                dirty_title = title
+                dirty_author = author
+                dirty_path = book_path
+            end
+            mock_p.cache_manager = {
+                loadCache = function()
+                    return {
+                        title = "Iron Gold",
+                        author = "Pierce Brown",
+                        series = "Red Rising",
+                        series_slug = "red_rising",
+                        series_index = 4,
+                        cached_at = 1000,
+                        characters = { { name = "Darrow", description = "Reaper" } },
+                    }
+                end
+            }
+            mock_p.series_manager = {
+                getSeriesInfo = function()
+                    return { slug = "red_rising", index = 4, has_explicit_index = true, name = "Red Rising" }
+                end,
+                getSeriesCachePath = function()
+                    return "/tmp/series_red_rising.lua"
+                end,
+                loadSeriesCache = function()
+                    -- Damaged series cache from 26.11.5: title is nil, path is author name
+                    return {
+                        series_slug = "red_rising",
+                        books = {
+                            [4] = { title = nil, characters = {} }
+                        },
+                        book_paths = {
+                            [4] = "Pierce Brown"
+                        }
+                    }
+                end,
+                hasBookEntities = function(entry)
+                    return entry and entry.characters and #entry.characters > 0
+                end
+            }
+
+            mock_p:autoLoadCache()
+
+            assert.is_true(dirty_marked)
+            assert.are.equal("red_rising", dirty_slug)
+            assert.are.equal(4, dirty_idx)
+            assert.are.equal("Iron Gold", dirty_title)
+            assert.are.equal("Pierce Brown", dirty_author)
+            assert.are.equal("/books/iron_gold.epub", dirty_path)
         end)
 
         it("mergeSeriesContext respects skip_save and does not save cache or call getTextForAnalysis", function()

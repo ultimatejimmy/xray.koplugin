@@ -8046,6 +8046,8 @@ function M:showManageSeriesDialog()
         UIManager:show(active_edit_menu)
     end
 
+    local rebuildMenu
+
     local function openFileChooserToAdd()
         local start_dir = doc_file and (doc_file:match("^(.*)[/\\][^/\\]+$") or doc_file) or "/sdcard/Books"
         if start_dir:match("%.sdr$") then
@@ -8273,7 +8275,7 @@ function M:showManageSeriesDialog()
         })
     end
 
-    function rebuildMenu()
+    rebuildMenu = function()
         closePickerMenu()
         closeEditMenu()
         if active_series_menu then

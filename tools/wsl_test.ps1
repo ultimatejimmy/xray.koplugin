@@ -48,9 +48,12 @@ Write-Host "Using KOReader installation path: $SquashPath" -ForegroundColor Yell
 function Run-Workflow {
     Write-Host "`n--- Starting Verification Workflow ---" -ForegroundColor Cyan
     
-    # 1. Syntax Check
+    # 1. Syntax Check (Fast luac with Python fallback)
     Write-Host "Checking Lua syntax..." -NoNewline
-    $syntaxResult = python -X utf8 $SyntaxScript $PluginDir
+    $syntaxResult = wsl bash -c "if command -v luac >/dev/null 2>&1; then luac -p xray.koplugin/*.lua; else exit 99; fi"
+    if ($LASTEXITCODE -eq 99) {
+        $syntaxResult = python -X utf8 $SyntaxScript $PluginDir
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Host " FAILED" -ForegroundColor Red
         Write-Host $syntaxResult
@@ -64,6 +67,16 @@ function Run-Workflow {
     if ($LASTEXITCODE -ne 0) {
         Write-Host " FAILED" -ForegroundColor Red
         Write-Host $transResult
+        return $false
+    }
+    Write-Host " PASSED" -ForegroundColor Green
+
+    # 1.7 Static Scope Analysis (Luacheck)
+    Write-Host "Checking Lua variable scopes (Luacheck)..." -NoNewline
+    $luacheckResult = wsl bash -c "if [ -x /home/jimmy/.luarocks/bin/luacheck ]; then /home/jimmy/.luarocks/bin/luacheck xray.koplugin/*.lua --only 113; elif command -v luacheck >/dev/null 2>&1; then luacheck xray.koplugin/*.lua --only 113; else exit 0; fi"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host " FAILED" -ForegroundColor Red
+        Write-Host $luacheckResult
         return $false
     }
     Write-Host " PASSED" -ForegroundColor Green

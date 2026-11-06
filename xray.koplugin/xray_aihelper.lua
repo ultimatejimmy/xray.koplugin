@@ -44,7 +44,8 @@ end
 -- Optimization: Use rapidjson if available
 local json_ok, json = pcall(require, "json")
 if not json_ok then
-    rapidjson_ok, json = pcall(require, "rapidjson")
+    local _
+    _, json = pcall(require, "rapidjson")
 end
 
 -- Single source of truth for default AI models
@@ -2637,10 +2638,10 @@ function AIHelper:parseAIResponse(text)
              local fixed = fixTruncatedJSON(extracted)
              
              success, data = pcall(json.decode, fixed)
-             if not success and rapidjson_ok then
-                 local standard_json = require("json")
-                 if standard_json and standard_json ~= json then 
-                     success, data = pcall(standard_json.decode, fixed) 
+             if not success then
+                 local ok_std, standard_json = pcall(require, "json")
+                 if ok_std and standard_json and standard_json ~= json then
+                     success, data = pcall(standard_json.decode, fixed)
                  end
              end
         end

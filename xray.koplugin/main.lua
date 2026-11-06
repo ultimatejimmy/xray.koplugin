@@ -738,7 +738,6 @@ function XRayPlugin:detectAnthologyFromMetadata(props, title)
     if props.title then table.insert(fields, tostring(props.title)) end
     if props.keywords then table.insert(fields, tostring(props.keywords)) end
     if props.subject then table.insert(fields, tostring(props.subject)) end
-    if props.description then table.insert(fields, tostring(props.description)) end
     if props.genre then table.insert(fields, tostring(props.genre)) end
     if props.series then table.insert(fields, tostring(props.series)) end
     if props.tag then table.insert(fields, tostring(props.tag)) end
@@ -2256,6 +2255,19 @@ function XRayPlugin:autoLoadCache()
                             end
                         end
                     end
+                    if not needs_sync and s_path then
+                        local s_cache = self.series_manager:loadSeriesCache(series_info.slug)
+                        if s_cache then
+                            local entry = s_cache.books and s_cache.books[series_info.index]
+                            local tracked_path = s_cache.book_paths and s_cache.book_paths[series_info.index]
+                            local has_entities_fn = self.series_manager.hasBookEntities
+                            local book_has_ent = has_entities_fn and has_entities_fn(cached_data)
+                            local entry_has_ent = entry and has_entities_fn and has_entities_fn(entry)
+                            if not entry or not entry.title or tracked_path ~= book_path or (book_has_ent and not entry_has_ent) then
+                                needs_sync = true
+                            end
+                        end
+                    end
                     if needs_sync and self.markSeriesSyncDirty then
                         self:markSeriesSyncDirty(series_info.slug, series_info.index, title, author, book_path, true)
                     end
@@ -3706,6 +3718,7 @@ function XRayPlugin:showUnitConverterNewFeatureCard()
     local settings = self.ai_helper and self.ai_helper.settings or {}
     local is_enabled = settings.unit_converter_enabled ~= false
     local selected_action = is_enabled and "keep_enabled" or "disable"
+    local focused_index = 1
 
     local function span()
         return VerticalSpan:new{ width = xray_theme.gap }
