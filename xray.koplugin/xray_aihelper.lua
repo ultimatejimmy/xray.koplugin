@@ -1346,10 +1346,18 @@ function AIHelper:saveStoredConfig(stored_cfg)
     end
 
     local f = io.open(path, "w")
-    if f then
-        f:write(json.encode(stored_cfg or {}))
-        f:close()
+    local encoded = json.encode(stored_cfg or {})
+    if utils and type(utils.atomicWriteFile) == "function" then
+        return utils:atomicWriteFile(path, encoded)
+    else
+        local f = io.open(path, "w")
+        if f then
+            f:write(encoded)
+            f:close()
+            return true
+        end
     end
+    return false
 end
 
 function AIHelper:writeConfigToFile(merged_config)
@@ -1395,11 +1403,15 @@ return {
         end
     end
 
-    local out_f = io.open(config_file, "w")
-    if out_f then
-        out_f:write(text)
-        out_f:close()
-        return true
+    if utils and type(utils.atomicWriteFile) == "function" then
+        return utils:atomicWriteFile(config_file, text)
+    else
+        local out_f = io.open(config_file, "w")
+        if out_f then
+            out_f:write(text)
+            out_f:close()
+            return true
+        end
     end
     return false
 end
@@ -1579,6 +1591,17 @@ function AIHelper:loadSettings()
             for k, v in pairs(decoded) do
                 settings[k] = v
             end
+        elseif content and #content > 0 then
+            self:log("AIHelper: Warning - settings.json is corrupted or invalid JSON, ignoring")
+            pcall(function()
+                local bak_path = settings_file .. ".corrupted"
+                local bak_f = io.open(bak_path, "w")
+                if bak_f then
+                    bak_f:write(content)
+                    bak_f:close()
+                    self:log("AIHelper: Backed up corrupted settings to " .. bak_path)
+                end
+            end)
         end
     end
     
@@ -1865,10 +1888,18 @@ function AIHelper:saveSettings(new_settings, keys_to_delete)
     end
     
     local settings_file = xray_dir .. "/settings.json"
-    local f = io.open(settings_file, "w")
-    if f then
-        f:write(json.encode(self.settings))
-        f:close()
+    local encoded = json.encode(self.settings)
+    if utils and type(utils.atomicWriteFile) == "function" then
+        local ok_write, err = utils:atomicWriteFile(settings_file, encoded)
+        if not ok_write then
+            self:log("AIHelper: Failed to save settings atomically: " .. tostring(err))
+        end
+    else
+        local f = io.open(settings_file, "w")
+        if f then
+            f:write(encoded)
+            f:close()
+        end
     end
 end
 

@@ -753,6 +753,7 @@ describe("AIHelper", function()
                         write = function(self, content)
                             written_content = content
                         end,
+                        flush = function() end,
                         close = function() end
                     }
                 end

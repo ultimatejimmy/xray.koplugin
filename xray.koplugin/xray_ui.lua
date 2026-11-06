@@ -1333,7 +1333,7 @@ function M:applyLanguageLogic()
         self.loc:setLanguage(resolved)
     end
     
-    if self.ai_helper then
+    if self.ai_helper and (self.ai_helper.current_language ~= resolved or not self.ai_helper.prompts) then
         self.ai_helper.current_language = resolved
         self.ai_helper:loadLanguage()
     end
