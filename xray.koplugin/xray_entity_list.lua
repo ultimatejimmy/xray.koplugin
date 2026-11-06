@@ -738,6 +738,7 @@ function EntityListOverlay:prepareItems()
                 is_full_book = not is_spoiler_free,
                 show_all = (self.reveal_future == true) or (not is_spoiler_free),
                 resolveChapter = resolveChapter,
+                plugin = p,
             }
             local all_milestones = Evolution.build(self.entity, ctx)
             self.all_milestones = all_milestones

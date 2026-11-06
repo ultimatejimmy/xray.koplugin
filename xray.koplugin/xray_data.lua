@@ -143,8 +143,10 @@ function M:sortDataByFrequency(list, text, key)
             -- Signal 2: Frequency in text (normalized by name length to prevent
             -- short first-name references inflating minor character scores)
             local freq = 0
+            local count = 0
             if lower_text ~= "" then
-                local _, count = string.gsub(lower_text, lower_name, "")
+                local _
+                _, count = string.gsub(lower_text, lower_name, "")
                 
                 -- Signal 2.1: Always check first and last name fallbacks (very common in prose)
                 local first_name = name:match("^(%S+)")

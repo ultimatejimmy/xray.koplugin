@@ -72,6 +72,31 @@ describe("Anthology Detection & Edge Case Handling", function()
             }
             assert.is_false(plugin:detectAnthologyFromMetadata(props, props.title))
         end)
+
+        it("does not falsely trigger on novel blurbs mentioning stories in description", function()
+            local plugin = createMockPlugin({})
+            local nightingale_props = {
+                title = "The Nightingale",
+                description = "With courage, grace, and powerful insight, bestselling author Kristin Hannah captures the epic panorama of WWII and illuminates an intimate part of history seldom seen: the women's war. The Nightingale tells the stories of two sisters, each embarking on her own dangerous path toward survival, love, and freedom in German-occupied, war-torn France.",
+                subject = "Historical Fiction",
+                genre = "Fiction / Historical",
+            }
+            assert.is_false(plugin:detectAnthologyFromMetadata(nightingale_props, nightingale_props.title))
+
+            local yellowface_props = {
+                title = "Yellowface",
+                description = "Athena Liu is a literary darling and June Hayward is literally nobody. Who would believe her if she tells the stories she never lived?",
+                subject = "Literary Fiction",
+            }
+            assert.is_false(plugin:detectAnthologyFromMetadata(yellowface_props, yellowface_props.title))
+
+            local little_prince_props = {
+                title = "The Little Prince",
+                description = "Few stories are as widely read and as universally cherished by children and adults alike.",
+                subject = "Fiction",
+            }
+            assert.is_false(plugin:detectAnthologyFromMetadata(little_prince_props, little_prince_props.title))
+        end)
     end)
 
     describe("Poetry Keyword Bug Regression", function()

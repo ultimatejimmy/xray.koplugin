@@ -1333,7 +1333,7 @@ function M:applyLanguageLogic()
         self.loc:setLanguage(resolved)
     end
     
-    if self.ai_helper then
+    if self.ai_helper and (self.ai_helper.current_language ~= resolved or not self.ai_helper.prompts) then
         self.ai_helper.current_language = resolved
         self.ai_helper:loadLanguage()
     end
@@ -8056,6 +8056,8 @@ function M:showManageSeriesDialog()
         UIManager:show(active_edit_menu)
     end
 
+    local rebuildMenu
+
     local function openFileChooserToAdd()
         local start_dir = doc_file and (doc_file:match("^(.*)[/\\][^/\\]+$") or doc_file) or "/sdcard/Books"
         if start_dir:match("%.sdr$") then
@@ -8283,7 +8285,7 @@ function M:showManageSeriesDialog()
         })
     end
 
-    function rebuildMenu()
+    rebuildMenu = function()
         closePickerMenu()
         closeEditMenu()
         if active_series_menu then

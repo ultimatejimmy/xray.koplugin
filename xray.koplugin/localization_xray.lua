@@ -623,17 +623,21 @@ function Localization:loadLanguage()
     -- 2. Read from settings.json
     local lang = migrated_lang
     local sf = io.open(settings_file, "r")
+    local file_corrupted = false
     if sf then
         local content = sf:read("*a")
         sf:close()
         local ok_j, decoded = pcall(json.decode, content)
         if ok_j and type(decoded) == "table" and decoded.language then
             lang = decoded.language  -- settings.json wins if key exists
+        elseif content and #content > 0 and (not ok_j or type(decoded) ~= "table") then
+            file_corrupted = true
+            logger.warn("Localization: settings.json is corrupted or invalid JSON")
         end
     end
     
     -- 3. If we migrated a value but settings.json didn't have one, persist it now
-    if migrated_lang and not lang then
+    if migrated_lang and not lang and not file_corrupted then
         lang = migrated_lang
         self:saveLanguageToJson(xray_dir, settings_file, lang)
     end
@@ -666,12 +670,18 @@ function Localization:setLanguage(lang_code)
         return false
     end
     
+    if self.current_language == lang_code and self.translations and next(self.translations) then
+        return true
+    end
+    
     self.current_language = lang_code
     
     local DataStorage = require("datastorage")
     local settings_dir = DataStorage:getSettingsDir()
     local xray_dir = settings_dir .. "/xray"
-    lfs.mkdir(xray_dir)
+    if lfs and lfs.mkdir then
+        pcall(lfs.mkdir, xray_dir)
+    end
     
     local settings_file = xray_dir .. "/settings.json"
     self:saveLanguageToJson(xray_dir, settings_file, lang_code)
@@ -693,14 +703,53 @@ function Localization:saveLanguageToJson(xray_dir, settings_file, lang_code)
         local content = sf:read("*a")
         sf:close()
         local ok, decoded = pcall(json.decode, content)
-        if ok and type(decoded) == "table" then existing = decoded end
+        if ok and type(decoded) == "table" then
+            existing = decoded
+        elseif content and #content > 0 then
+            logger.warn("Localization: settings.json is unreadable, not overwriting it")
+            return false
+        end
     end
+    
+    -- Never overwrite dynamic language preferences ("auto", "book") or identical language
+    if existing.language == lang_code or existing.language == "auto" or existing.language == "book" then
+        return true
+    end
+    
     existing.language = lang_code
-    local out = io.open(settings_file, "w")
-    if out then
-        out:write(json.encode(existing))
-        out:close()
+    local encoded = json.encode(existing)
+    
+    local ok_utils, utils = pcall(require, plugin_path .. "xray_utils")
+    if not ok_utils or not utils or type(utils.atomicWriteFile) ~= "function" then
+        pcall(function() utils = require("xray_utils") end)
+    end
+    
+    local ok_write, write_err
+    if utils and type(utils.atomicWriteFile) == "function" then
+        ok_write, write_err = utils:atomicWriteFile(settings_file, encoded)
+    else
+        local temp_file = settings_file .. ".tmp." .. tostring(os.time()) .. "_" .. tostring(math.random(100000, 999999))
+        local out = io.open(temp_file, "w")
+        if out then
+            out:write(encoded)
+            out:flush()
+            out:close()
+            local ren_ok = os.rename(temp_file, settings_file)
+            if not ren_ok then
+                pcall(os.remove, settings_file)
+                ren_ok = os.rename(temp_file, settings_file)
+            end
+            if not ren_ok then pcall(os.remove, temp_file) end
+            ok_write = ren_ok
+        end
+    end
+    
+    if ok_write then
         logger.info("Localization: Language saved to settings.json:", lang_code)
+        return true
+    else
+        logger.warn("Localization: Failed to save language to settings.json:", tostring(write_err))
+        return false
     end
 end
 

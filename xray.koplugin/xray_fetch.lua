@@ -624,6 +624,8 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         self.ai_helper:init(self.path)
     end
 
+    local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+
     -- Invalidate timeline if the current timeline length setting is greater than what was cached
     if not self.cache_manager then self.cache_manager = require(plugin_path .. "xray_cachemanager"):new() end
     local cached = self.book_data or self.cache_manager:loadCache(doc_file)
@@ -718,7 +720,9 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         if not self.chapter_analyzer then self.chapter_analyzer = require(plugin_path .. "xray_chapteranalyzer"):new() end
 
         local current_page = batch_end_page or self.ui:getCurrentPage()
-        local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+        if is_anthology == nil then
+            is_anthology = self.isAnthologyMode and self:isAnthologyMode()
+        end
         local current_story = nil
         if is_anthology then
             current_story = self:getCurrentStory(current_page)
@@ -734,6 +738,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
             end
         end
 
+        local is_repair_mode = false
         if is_update then
             local toc = utils:flattenTOC(self.ui.document:getToc())
             local candidate_chapters = {}
@@ -748,7 +753,6 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     end
                 end
             end
-            local is_repair_mode = false
             for _, entry in ipairs(candidate_chapters) do
                 local norm = self:normalizeChapterName(entry.title)
                 local found = false
@@ -1061,12 +1065,17 @@ function M:flushSeriesSync()
     end
     if not book_data then return end
 
+    if pending.title and not (book_data.title or book_data.book_title) then
+        book_data.book_title = pending.title
+    end
+    if pending.author and not (book_data.author or book_data.book_author or book_data.authors) then
+        book_data.author = pending.author
+    end
+
     pcall(function()
         self.series_manager:syncBookToSeriesCache(
             pending.slug,
             pending.index,
-            pending.title,
-            pending.author,
             book_data,
             pending.doc_file,
             pending.has_explicit_index
@@ -1654,6 +1663,11 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                             if all_priors_cached then
                                 self:log("XRayPlugin: Series: Post-fetch auto-restoring cached series context for " .. tostring(slug))
                                 self:mergeSeriesContext(cache_data, series_info, book_text, true)
+                                updated_data.characters = self.characters
+                                updated_data.locations = self.locations
+                                updated_data.terms = self.terms
+                                updated_data.timeline = self.timeline
+                                updated_data.series_context_loaded = self.series_context_loaded
                             end
                         end
                     end

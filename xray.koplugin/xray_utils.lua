@@ -624,4 +624,42 @@ function M:isSilentNetworkAvailable()
     return false
 end
 
+function M:atomicRename(temp_file, target_file)
+    local ren_ok, ren_err = os.rename(temp_file, target_file)
+    if not ren_ok then
+        -- Fallback for platforms where os.rename cannot overwrite an existing destination (e.g. Windows CRT)
+        pcall(os.remove, target_file)
+        ren_ok, ren_err = os.rename(temp_file, target_file)
+    end
+    return ren_ok, ren_err
+end
+
+function M:atomicWriteFile(filepath, content)
+    if not filepath or not content then
+        return false, "invalid arguments"
+    end
+    local temp_file = filepath .. ".tmp." .. tostring(os.time()) .. "_" .. tostring(math.random(100000, 999999))
+    local f, open_err = io.open(temp_file, "w")
+    if not f then
+        return false, "failed to open temp file: " .. tostring(open_err)
+    end
+    local write_ok, write_err = f:write(content)
+    if type(f.flush) == "function" then
+        pcall(f.flush, f)
+    end
+    if type(f.close) == "function" then
+        pcall(f.close, f)
+    end
+    if write_ok == false then
+        pcall(os.remove, temp_file)
+        return false, "failed to write to temp file: " .. tostring(write_err)
+    end
+    local ren_ok, ren_err = self:atomicRename(temp_file, filepath)
+    if not ren_ok then
+        pcall(os.remove, temp_file)
+        return false, "failed to rename temp file to target: " .. tostring(ren_err)
+    end
+    return true
+end
+
 return M
