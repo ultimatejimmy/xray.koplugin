@@ -554,6 +554,16 @@ function M:_processSingleWordResult(result, text, book_text, current_page)
             if doc_file then
                 self.cache_manager:asyncSaveCache(doc_file, updated)
             end
+
+            -- Update entity underlines for the newly fetched entity if feature is enabled
+            local settings = self.ai_helper and self.ai_helper.settings or {}
+            if settings.entity_footnotes_enabled == true then
+                if self.addEntityToUnderlines then
+                    self:addEntityToUnderlines(item, item_type)
+                elseif self.scanBookForEntities then
+                    self:scanBookForEntities()
+                end
+            end
         end
         
         -- Always show result if it's valid, even if it didn't merge into a target_list
@@ -2204,6 +2214,14 @@ function M:fetchMoreEntities(entity_type)
                     updated_data.images = (self.images and #self.images > 0 and self.images) or updated_data.images or (self.book_data and self.book_data.images)
 
                     self.cache_manager:asyncSaveCache(doc_file, updated_data)
+
+                    if self.scanBookForEntities and self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.entity_footnotes_enabled == true then
+                        UIManager:scheduleIn(1, function()
+                            if not self.destroyed and self.scanBookForEntities then
+                                self:scanBookForEntities()
+                            end
+                        end)
+                    end
 
                     if not is_terms then
                         local cur_p = self.ui and self.ui.getCurrentPage and self.ui:getCurrentPage() or 1

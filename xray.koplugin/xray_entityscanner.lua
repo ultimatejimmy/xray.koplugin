@@ -832,6 +832,148 @@ function M:_resolveEntityHighlightBoxes()
     self.entity_boxes = resolved
 end
 
+function M:addEntityToUnderlines(entity, category)
+    if self.destroyed or not self.ui or not self.ui.document then return end
+    if not entity or not entity.name or entity.name == "" then return end
+
+    local settings = self.ai_helper and self.ai_helper.settings or {}
+    if settings.entity_footnotes_enabled == false then return end
+
+    -- Check if this category is enabled in settings
+    local cat_enabled = true
+    if category == "character" and settings.entity_cat_characters == false then cat_enabled = false
+    elseif category == "historical_figure" and settings.entity_cat_historical_figures == false then cat_enabled = false
+    elseif category == "location" and settings.entity_cat_locations == false then cat_enabled = false
+    elseif category == "term" and settings.entity_cat_terms == false then cat_enabled = false
+    end
+    if not cat_enabled then return end
+
+    -- If no matches exist yet, trigger full scan
+    if not self.entity_xp_matches then
+        if self.scanBookForEntities then
+            self:scanBookForEntities()
+        end
+        return
+    end
+
+    local doc = self.ui.document
+
+    -- Collect all name/alias variants for this entity
+    local names = { entity.name }
+    if entity.aliases and type(entity.aliases) == "table" then
+        for _, a in ipairs(entity.aliases) do
+            if type(a) == "string" and a ~= "" then
+                table.insert(names, a)
+            end
+        end
+    end
+
+    local terms = {}
+    local seen_terms = {}
+    local function add_term(t)
+        if t and #t >= MIN_TERM_LEN and not seen_terms[t] then
+            seen_terms[t] = true
+            table.insert(terms, t)
+        end
+    end
+
+    for _, n in ipairs(names) do
+        local clean = _normalize(n)
+        if #clean >= MIN_TERM_LEN then
+            add_term(clean)
+            local upper = clean:upper()
+            if upper ~= clean then
+                add_term(upper)
+            end
+            local title = clean:gsub("(%a)([%w_']*)", function(first, rest)
+                return first:upper() .. rest
+            end)
+            if title ~= clean and title ~= upper then
+                add_term(title)
+            end
+        end
+    end
+
+    if #terms == 0 then return end
+
+    local patterns = _buildChunks(terms)
+    local new_hits = {}
+    for _, pattern in ipairs(patterns) do
+        local ok, chunk_hits = pcall(function()
+            return doc:findAllText(pattern, false, 0, 50000, true)
+        end)
+        if ok and chunk_hits and type(chunk_hits) == "table" then
+            for _, hit in ipairs(chunk_hits) do
+                local start_xp = hit.start or hit.start0
+                local end_xp = hit["end"]
+                local raw_text = hit.matched_text or hit.text
+                if start_xp and end_xp and raw_text then
+                    local matched_text = _normalize(raw_text)
+                    local page = nil
+                    if doc.getPageFromXPointer then
+                        local ok_p, pg = pcall(doc.getPageFromXPointer, doc, start_xp)
+                        if ok_p and pg then page = pg end
+                    end
+                    table.insert(new_hits, {
+                        start_xp = start_xp,
+                        end_xp = end_xp,
+                        matched_text = matched_text,
+                        category = category,
+                        entity_name = entity.name,
+                        page = page,
+                    })
+                end
+            end
+        end
+    end
+
+    if #new_hits == 0 then return end
+
+    -- Merge into self.entity_xp_matches avoiding duplicates by end_xp
+    local existing_by_end = {}
+    for _, m in ipairs(self.entity_xp_matches) do
+        if m.end_xp then
+            existing_by_end[m.end_xp] = true
+        end
+    end
+
+    self.entity_matches_by_page = self.entity_matches_by_page or {}
+    local added_any = false
+    for _, hit in ipairs(new_hits) do
+        if not existing_by_end[hit.end_xp] then
+            existing_by_end[hit.end_xp] = true
+            table.insert(self.entity_xp_matches, hit)
+            if hit.page then
+                self.entity_matches_by_page[hit.page] = self.entity_matches_by_page[hit.page] or {}
+                table.insert(self.entity_matches_by_page[hit.page], hit)
+            end
+            added_any = true
+        end
+    end
+
+    if added_any then
+        -- Invalidate bounding box cache so current page immediately recalculates
+        self._entity_box_cache_sig = nil
+        self:_resolveEntityHighlightBoxes()
+
+        -- Save updated cache to disk with updated signature
+        local sidecar = DocSettings:getSidecarDir(doc.file)
+        if sidecar then
+            local expected_sig = _getEntitySettingsSignature(self, settings)
+            self:saveEntityCache(sidecar, self.entity_xp_matches, nil, expected_sig)
+        end
+
+        -- Refresh view
+        if self.ui and self.ui.view then
+            if self.ui.view.dialog then
+                UIManager:setDirty(self.ui.view.dialog, "ui")
+            end
+            UIManager:setDirty(nil, "ui")
+        end
+        log(string.format("addEntityToUnderlines: added %d occurrences for '%s'", #new_hits, entity.name))
+    end
+end
+
 -- ===== Overlay Underline Drawing =====
 
 function M:clearEntityUnderlines()

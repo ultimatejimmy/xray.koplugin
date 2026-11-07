@@ -348,4 +348,72 @@ describe("xray_entityscanner async background scanning & overlay", function()
         assert.is_not_nil(lookup["regulator"])
         assert.are.equal("Atmospheric Regulator", lookup["regulator"].canonical)
     end)
+
+    it("addEntityToUnderlines incrementally updates matches and underlines when enabled", function()
+        plugin.ai_helper = {
+            settings = {
+                entity_footnotes_enabled = true,
+                entity_cat_characters = true,
+                entity_cat_locations = true,
+            }
+        }
+        plugin.entity_xp_matches = {
+            { start_xp = "/1/1", end_xp = "/1/2", matched_text = "Sherlock Holmes", entity_name = "Sherlock Holmes", category = "character", page = 1 }
+        }
+        plugin.entity_matches_by_page = {
+            [1] = { plugin.entity_xp_matches[1] }
+        }
+
+        local new_loc = { name = "Houston", description = "NASA Mission Control" }
+        table.insert(plugin.locations, new_loc)
+
+        -- Mock doc:findAllText to return a hit for Houston
+        local orig_findAllText = plugin.ui.document.findAllText
+        plugin.ui.document.findAllText = function(self_doc, pattern, case_ins, nb_ctx, max_h, is_regex)
+            if pattern:find("Houston") or pattern:find("HOUSTON") then
+                return {
+                    { start = "/2/1", ["end"] = "/2/2", matched_text = "HOUSTON" }
+                }
+            end
+            return {}
+        end
+
+        local saved_cache = false
+        plugin.saveEntityCache = function()
+            saved_cache = true
+            return true
+        end
+
+        plugin:addEntityToUnderlines(new_loc, "location")
+
+        -- Check that HOUSTON was added to entity_xp_matches
+        assert.are.equal(2, #plugin.entity_xp_matches)
+        assert.are.equal("HOUSTON", plugin.entity_xp_matches[2].matched_text)
+        assert.are.equal("Houston", plugin.entity_xp_matches[2].entity_name)
+        assert.are.equal("location", plugin.entity_xp_matches[2].category)
+
+        -- Check that page buckets were updated
+        assert.is_not_nil(plugin.entity_matches_by_page[1])
+        assert.are.equal(2, #plugin.entity_matches_by_page[1])
+
+        -- Check that cache was saved
+        assert.is_true(saved_cache)
+
+        -- Restore
+        plugin.ui.document.findAllText = orig_findAllText
+    end)
+
+    it("addEntityToUnderlines does nothing when entity_footnotes_enabled is false", function()
+        plugin.ai_helper = {
+            settings = {
+                entity_footnotes_enabled = false,
+            }
+        }
+        plugin.entity_xp_matches = {
+            { start_xp = "/1/1", end_xp = "/1/2", matched_text = "Sherlock Holmes", entity_name = "Sherlock Holmes", category = "character", page = 1 }
+        }
+        local new_loc = { name = "Houston", description = "NASA Mission Control" }
+        plugin:addEntityToUnderlines(new_loc, "location")
+        assert.are.equal(1, #plugin.entity_xp_matches)
+    end)
 end)
