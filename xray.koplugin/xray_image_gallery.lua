@@ -30,6 +30,7 @@ local ok_ds, DataStorage = pcall(require, "datastorage")
 
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local theme = require(plugin_path .. "xray_theme")
+local xray_utils = require(plugin_path .. "xray_utils")
 
 local function sc(val)
     return (Screen and Screen.scaleBySize and Screen:scaleBySize(val)) or val
@@ -37,65 +38,7 @@ end
 
 -- Fast binary header parser for PNG, JPEG, and GIF dimensions
 local function getImageDimensions(file_path)
-    if not file_path then return nil, nil end
-    local f = io.open(file_path, "rb")
-    if not f then return nil, nil end
-    local header = f:read(32)
-    if not header or #header < 8 then
-        f:close()
-        return nil, nil
-    end
-
-    -- PNG: bytes 17-24 (width, height in big-endian)
-    if header:sub(1, 8) == "\137PNG\r\n\26\n" then
-        local w1, w2, w3, w4, h1, h2, h3, h4 = header:byte(17, 24)
-        f:close()
-        if w1 and h4 then
-            local w = (w1 * 16777216) + (w2 * 65536) + (w3 * 256) + w4
-            local h = (h1 * 16777216) + (h2 * 65536) + (h3 * 256) + h4
-            return w, h
-        end
-        return nil, nil
-    end
-
-    -- GIF: bytes 7-10 (width, height in little-endian)
-    if header:sub(1, 3) == "GIF" then
-        local w1, w2, h1, h2 = header:byte(7, 10)
-        f:close()
-        if w1 and h2 then
-            local w = w1 + (w2 * 256)
-            local h = h1 + (h2 * 256)
-            return w, h
-        end
-        return nil, nil
-    end
-
-    -- JPEG: scan for SOF0/SOF2 marker
-    if header:byte(1) == 0xFF and header:byte(2) == 0xD8 then
-        f:seek("set", 2)
-        while true do
-            local marker_data = f:read(4)
-            if not marker_data or #marker_data < 4 then break end
-            local m1, m2 = marker_data:byte(1, 2)
-            if m1 ~= 0xFF then break end
-            local len = marker_data:byte(3) * 256 + marker_data:byte(4)
-            if (m2 >= 0xC0 and m2 <= 0xC3) or (m2 >= 0xC5 and m2 <= 0xC7) or (m2 >= 0xC9 and m2 <= 0xCB) or (m2 >= 0xCD and m2 <= 0xCF) then
-                local sof = f:read(5)
-                f:close()
-                if sof and #sof >= 5 then
-                    local h = sof:byte(2) * 256 + sof:byte(3)
-                    local w = sof:byte(4) * 256 + sof:byte(5)
-                    return w, h
-                end
-                break
-            else
-                f:seek("cur", len - 2)
-            end
-        end
-    end
-
-    f:close()
-    return nil, nil
+    return xray_utils:getImageDimensions(file_path)
 end
 
 local _asset_path_cache = {}

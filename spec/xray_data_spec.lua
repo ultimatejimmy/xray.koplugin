@@ -52,6 +52,14 @@ describe("xray_data", function()
         it("should return false if names are unrelated", function()
             assert.is_false(xray_data:isMoreCompleteName("Sherlock", "Watson"))
         end)
+
+        it("should return false for possessive, relational, or partial-word matches", function()
+            assert.is_false(xray_data:isMoreCompleteName("Nicks Dad", "Nick"))
+            assert.is_false(xray_data:isMoreCompleteName("Nick's Dad", "Nick"))
+            assert.is_false(xray_data:isMoreCompleteName("Nick’s Dad", "Nick"))
+            assert.is_false(xray_data:isMoreCompleteName("Nicholas", "Nick"))
+            assert.is_true(xray_data:isMoreCompleteName("Nick Carraway", "Nick"))
+        end)
     end)
 
     describe("deduplicateByName", function()
@@ -67,6 +75,17 @@ describe("xray_data", function()
             for _, a in ipairs(result[1].aliases) do aliases[a:lower()] = true end
             assert.is_true(aliases["doctor"])
             assert.is_true(aliases["watson"])
+        end)
+
+        it("should keep distinct characters like Nick and Nicks Dad separate", function()
+            local list = {
+                { name = "Nick", aliases = {} },
+                { name = "Nicks Dad", aliases = {} }
+            }
+            local result = xray_data:deduplicateByName(list, "name")
+            assert.are.equal(2, #result)
+            assert.are.equal("Nick", result[1].name)
+            assert.are.equal("Nicks Dad", result[2].name)
         end)
     end)
 

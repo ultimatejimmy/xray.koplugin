@@ -29,7 +29,7 @@ LIST:
 
 RULES:
 - A duplicate exists when two entries clearly refer to the same entity (e.g., "The Grand Library" and "Grand Library", or "John" and "John Doe").
-- Do NOT flag entries that are merely related or similar but distinct.
+- Do NOT flag entries that are merely related or similar but distinct (e.g., "Nick" and "Nicks Dad" or "John" and "John's Father" are two different people).
 - Do NOT flag entries unless you are highly confident they are the same entity.
 - If no duplicates exist, return an empty array.
 - SPOILER RULE: Do not use knowledge from beyond %d%% reading progress.
@@ -74,8 +74,8 @@ Step 5. Summarize that specific chapter in the `event` field. {TIMELINE_DETAIL_G
 Step 6. NO SPOILERS: Stop exactly at the %d%% mark. Do not include events past this progress.
 
 ALGORITHM FOR CHARACTERS & HISTORICAL FIGURES:
-Step 1. Extract important characters using both text blocks. ({NUM_CHARS} normal, MAX 10 if omnibus).
-Step 2. You MUST use their FULL, formal names (e.g., "Abraham Van Helsing"). Do NOT use casual nicknames as the main name.
+Step 1. Extract important characters using both text blocks. ({NUM_CHARS} normal, MAX 10 if omnibus). Always include the main character / protagonist by name, even in first-person POV ("I"/"me") narratives where their name appears infrequently.
+Step 2. You MUST use their FULL, formal names (e.g., "Abraham Van Helsing"). Do NOT use casual nicknames as the main name. Never merge or subsume a character under a possessive/relational reference (e.g., "Nicks Dad" and "Nick" are separate characters).
 Step 3. Provide up to 3 alternative names, titles, or nicknames this character goes by in an `aliases` array. Include their common first name and last name if used. IMPORTANT: If a last name is shared by multiple characters (e.g., family members), DO NOT include it as an alias for either character.
 Step 4. Actively scan for up to {NUM_HIST} NOTABLE REAL people from human history (e.g., Presidents, Authors, Generals). Add them to `historical_figures`.
 CRITICAL for Characters & Historical Figures:

@@ -781,10 +781,10 @@ describe("AIHelper", function()
     end)
 
     describe("DEFAULT_AI configuration", function()
-        it("should have gemini-3.8-flash as default primary model", function()
-            local primary = AIHelper.settings.primary_ai or { provider = "gemini", model = "gemini-3.8-flash" }
+        it("should have gemini-4-hydrogen as default primary model", function()
+            local primary = AIHelper.settings.primary_ai or { provider = "gemini", model = "gemini-4-hydrogen" }
             assert.are.equal("gemini", primary.provider)
-            assert.are.equal("gemini-3.8-flash", primary.model)
+            assert.are.equal("gemini-4-hydrogen", primary.model)
         end)
 
         it("should have gemini-3.5-flash-lite as default secondary model", function()
@@ -1181,6 +1181,39 @@ custom1_model = google/gemini-2.5-flash
             assert.are.equal("deepseek-flash", req.model)
 
             AIHelper.makeRequest = original_makeRequest
+        end)
+    end)
+
+    describe("protagonist and relational name prompt safeguards", function()
+        it("injects protagonist and relational name rules into character prompts", function()
+            local orig_prompts = AIHelper.prompts
+            AIHelper.prompts = dofile("xray.koplugin/prompts/en.lua")
+            local prompt = AIHelper:createPrompt("Test Book", "Test Author", { reading_percent = 50 }, "comprehensive_xray")
+            AIHelper.prompts = orig_prompts
+            assert.is_truthy(prompt:find("PROTAGONIST & RELATIONAL NAME RULES", 1, true))
+            assert.is_truthy(prompt:find("first-person POV", 1, true))
+            assert.is_truthy(prompt:find("Nicks Dad", 1, true))
+        end)
+
+        it("injects relational distinctness note into duplicate check prompts", function()
+            local orig_prompts = AIHelper.prompts
+            AIHelper.prompts = dofile("xray.koplugin/prompts/en.lua")
+            local orig_exec = AIHelper.executeUnifiedRequest
+            local captured_prompt
+            AIHelper.executeUnifiedRequest = function(self, p)
+                captured_prompt = p
+                return { duplicate_pairs = {} }
+            end
+
+            AIHelper:findDuplicates("Test Book", "Test Author", {
+                { name = "Nick", description = "Main character" },
+                { name = "Nicks Dad", description = "Nick's father" },
+            }, "characters", 50)
+
+            AIHelper.executeUnifiedRequest = orig_exec
+            AIHelper.prompts = orig_prompts
+            assert.is_truthy(captured_prompt)
+            assert.is_truthy(captured_prompt:find("DISTINCT people", 1, true))
         end)
     end)
 end)

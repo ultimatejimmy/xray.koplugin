@@ -1724,6 +1724,81 @@ describe("xray_fetch", function()
             assert.are.equal(now + 15, scheduled[1].time)
         end)
     end)
+
+    describe("populateBatchTemporalGates (Ultra & Manual modes)", function()
+        it("populates text-anchored visible_from and states for Ultra/Manual fetches and appends evolved states on update", function()
+            plugin.ui.document.getToc = function()
+                return {
+                    { title = "Stave 1", page = 2 },
+                    { title = "Stave 3", page = 58 },
+                }
+            end
+            plugin.ui.document.findAllText = function(self_doc, pat)
+                local hits = {}
+                if pat:find("Scrooge") then
+                    table.insert(hits, { matched_text = "Scrooge", start = "xp_p2" })
+                end
+                if pat:find("Ghost") then
+                    table.insert(hits, { matched_text = "Ghost of Christmas Present", start = "xp_p84" })
+                end
+                return hits
+            end
+            plugin.ui.document.getPageFromXPointer = function(self_doc, xp)
+                if xp == "xp_p2" then return 2 end
+                if xp == "xp_p84" then return 84 end
+                return 1
+            end
+            plugin.getCurrentChapterIndex = function(self_p, p)
+                return (p and p >= 58) and 2 or 1
+            end
+
+            -- Batch 1: Ultra fetch at page 7 (window 1..7)
+            local batch1 = {
+                characters = {
+                    { name = "Ebenezer Scrooge", aliases = { "Scrooge" }, description = "Stave 1 miser" }
+                },
+                locations = {},
+                historical_figures = {},
+                terms = {
+                    { name = "Stave", definition = "Chapter" }
+                },
+                timeline = {},
+            }
+            plugin:finalizeXRayData(batch1, "A Christmas Carol", "Dickens", "Scrooge", false, true, 7, 1)
+
+            local scrooge = plugin.characters[1]
+            assert.is_not_nil(scrooge.visible_from)
+            assert.are.equal(2, scrooge.visible_from.page_hint)
+            assert.are.equal(1, #scrooge.states)
+            assert.are.equal(2, scrooge.states[1].page_hint)
+            assert.are.equal("Stave 1 miser", scrooge.states[1].description)
+
+            -- Batch 2: Ultra update at page 106 (window 58..106)
+            local batch2 = {
+                characters = {
+                    { name = "Ebenezer Scrooge", aliases = { "Scrooge" }, description = "Stave 3 penitent" },
+                    { name = "Ghost of Christmas Present", aliases = { "Spirit" }, description = "Jolly giant" },
+                },
+                locations = {},
+                historical_figures = {},
+                terms = {},
+                timeline = {},
+            }
+            plugin:finalizeXRayData(batch2, "A Christmas Carol", "Dickens", "Scrooge Ghost", true, true, 106, 58)
+
+            local updated_scrooge = plugin.characters[1]
+            assert.are.equal(2, updated_scrooge.visible_from.page_hint)
+            assert.are.equal(2, #updated_scrooge.states)
+            assert.are.equal(2, updated_scrooge.states[1].page_hint)
+            assert.are.equal(106, updated_scrooge.states[2].page_hint)
+            assert.are.equal("Stave 3 penitent", updated_scrooge.states[2].description)
+
+            local present = plugin.characters[2]
+            assert.is_not_nil(present.visible_from)
+            assert.are.equal(84, present.visible_from.page_hint)
+            assert.are.equal(2, present.visible_from.chapter_index)
+        end)
+    end)
 end)
 
 

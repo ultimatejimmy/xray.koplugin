@@ -17,18 +17,22 @@ describe("xray_entityscanner async background scanning & overlay", function()
     local mock_time
 
     local function advance_time(seconds)
-        mock_time = mock_time + seconds
-        local i = 1
-        while i <= #scheduled_tasks do
-            local task = scheduled_tasks[i]
-            if task.target <= mock_time then
-                table.remove(scheduled_tasks, i)
-                task.fn()
-                i = 1
-            else
-                i = i + 1
+        local end_time = mock_time + seconds
+        while true do
+            local next_idx = nil
+            local next_target = nil
+            for i, task in ipairs(scheduled_tasks) do
+                if task.target <= end_time and (not next_target or task.target < next_target) then
+                    next_idx = i
+                    next_target = task.target
+                end
             end
+            if not next_idx then break end
+            local task = table.remove(scheduled_tasks, next_idx)
+            mock_time = task.target
+            task.fn()
         end
+        mock_time = end_time
     end
 
     before_each(function()
@@ -191,7 +195,7 @@ describe("xray_entityscanner async background scanning & overlay", function()
         local f = io.open("/tmp/test_entity_book.epub.sdr/xray_entity_cache.cache", "r")
         assert.is_not_nil(f)
         local sig = f:read("*l")
-        assert.is_true(sig:find("^v3|") ~= nil)
+        assert.is_true(sig:find("^v[345]|") ~= nil)
         f:close()
     end)
 
@@ -415,5 +419,234 @@ describe("xray_entityscanner async background scanning & overlay", function()
         local new_loc = { name = "Houston", description = "NASA Mission Control" }
         plugin:addEntityToUnderlines(new_loc, "location")
         assert.are.equal(1, #plugin.entity_xp_matches)
+    end)
+
+    describe("Sub-name derivation & deduplication", function()
+        it("derives unambiguous person sub-names and rejects ambiguous shared surnames", function()
+            plugin.characters = {
+                { name = "Martha Cratchit" },
+                { name = "Bob Cratchit" },
+                { name = "Master Peter Cratchit" },
+            }
+            plugin.historical_figures = {}
+            plugin.locations = {}
+            plugin.terms = {}
+            local settings = { entity_cat_characters = true }
+
+            local terms, lookup = plugin._collectEntityTerms(plugin, settings)
+
+            -- Martha and Peter should be derived because only one entity claims each
+            assert.is_not_nil(lookup["martha"])
+            assert.are.equal("Martha Cratchit", lookup["martha"].canonical)
+            assert.is_not_nil(lookup["peter"])
+            assert.are.equal("Master Peter Cratchit", lookup["peter"].canonical)
+            assert.is_not_nil(lookup["master peter"])
+            assert.are.equal("Master Peter Cratchit", lookup["master peter"].canonical)
+
+            -- Cratchit is claimed by 3 entities, so it MUST NOT be registered as a derived term!
+            assert.is_nil(lookup["cratchit"])
+        end)
+
+        it("deduplicates overlapping character intervals on the same text node keeping longest match", function()
+            local hits = {
+                {
+                    start_xp = "/body/div/p[1]/text().0",
+                    end_xp = "/body/div/p[1]/text().12",
+                    matched_text = "Bob Cratchit",
+                    entity_name = "Bob Cratchit",
+                },
+                {
+                    start_xp = "/body/div/p[1]/text().0",
+                    end_xp = "/body/div/p[1]/text().3",
+                    matched_text = "Bob",
+                    entity_name = "Bob Cratchit",
+                },
+                {
+                    start_xp = "/body/div/p[1]/text().20",
+                    end_xp = "/body/div/p[1]/text().26",
+                    matched_text = "Martha",
+                    entity_name = "Martha Cratchit",
+                },
+            }
+
+            local deduped = plugin._deduplicateEntityHits(hits)
+            assert.are.equal(2, #deduped)
+            local texts = {}
+            for _, h in ipairs(deduped) do
+                table.insert(texts, h.matched_text)
+            end
+            table.sort(texts)
+            assert.are.same({ "Bob Cratchit", "Martha" }, texts)
+        end)
+
+        it("_rebuildEntityPageBuckets updates page buckets when pagination changes", function()
+            plugin.entity_xp_matches = {
+                { start_xp = "/body/div/p[1]/text().0", end_xp = "/body/div/p[1]/text().10", matched_text = "Scrooge", page = 1 },
+                { start_xp = "/body/div/p[2]/text().0", end_xp = "/body/div/p[2]/text().10", matched_text = "Martha", page = 1 },
+            }
+            plugin.ui = {
+                document = {
+                    file = "/test.epub",
+                    getPageFromXPointer = function(doc, xp)
+                        if xp:find("p%[2%]") then return 2 end
+                        return 1
+                    end,
+                    getPageCount = function() return 2 end,
+                    getDocumentRenderingHash = function() return "hash_new" end,
+                }
+            }
+
+            plugin:_rebuildEntityPageBuckets()
+
+            assert.is_not_nil(plugin.entity_matches_by_page[1])
+            assert.are.equal(1, #plugin.entity_matches_by_page[1])
+            assert.are.equal("Scrooge", plugin.entity_matches_by_page[1][1].matched_text)
+
+            assert.is_not_nil(plugin.entity_matches_by_page[2])
+            assert.are.equal(1, #plugin.entity_matches_by_page[2])
+            assert.are.equal("Martha", plugin.entity_matches_by_page[2][1].matched_text)
+        end)
+
+        it("skips generic single-word stopword/honorific person aliases like 'Spirit' and keeps 'Scrooge'", function()
+            plugin.characters = {
+                { name = "Ebenezer Scrooge", aliases = { "Scrooge" }, description = "Miser" },
+                { name = "Ghost of Christmas Present", aliases = { "The Ghost of Christmas Present", "Spirit" }, description = "Spirit of Christmas" },
+            }
+            plugin.locations = {}
+            plugin.terms = {}
+            plugin.historical_figures = {}
+
+            local _, lookup = plugin._collectEntityTerms(plugin, {
+                entity_cat_characters = true,
+                entity_cat_historical_figures = true,
+                entity_cat_locations = true,
+                entity_cat_terms = true,
+            })
+
+            assert.is_not_nil(lookup["scrooge"])
+            assert.are.equal("Ebenezer Scrooge", lookup["scrooge"].canonical)
+            assert.is_nil(lookup["spirit"])
+        end)
+
+        it("prefers history[1] before entity.description in showEntityFootnote when resolveDescriptionForPage returns '---'", function()
+            local UIManager = require("ui/uimanager")
+            local shown_widget = nil
+            local orig_show = UIManager.show
+            UIManager.show = function(_, w) shown_widget = w end
+
+            plugin.ai_helper.settings.entity_popup_style = "tooltip"
+            plugin.characters = {
+                {
+                    name = "Ebenezer Scrooge",
+                    description = "Stave 3 late spoiler description",
+                    history = {
+                        { page = 7, description = "Stave 1 early description" },
+                        { page = 106, description = "Stave 3 late spoiler description" },
+                    },
+                }
+            }
+            plugin.resolveDescriptionForPage = function() return "---" end
+            plugin:showEntityFootnote({ entity_name = "Ebenezer Scrooge", category = "character", x = 10, y = 10, w = 50, h = 20 })
+
+            UIManager.show = orig_show
+            assert.is_not_nil(shown_widget)
+            assert.are.equal("Stave 1 early description", shown_widget.description_text)
+        end)
+    end)
+
+    describe("Entity scan lifecycle & opt-in defaults", function()
+        it("does not permanently block lazy scan when characters are initially empty", function()
+            plugin.ai_helper = {
+                settings = {
+                    entity_footnotes_enabled = true,
+                }
+            }
+            plugin.characters = {}
+            plugin.historical_figures = {}
+            plugin.locations = {}
+            plugin.terms = {}
+            plugin._entity_scan_attempted = nil
+
+            plugin:scanBookForEntities()
+            assert.is_nil(plugin._entity_scan_attempted)
+
+            -- Now populate characters and verify scanBookForEntities marks attempted and proceeds
+            plugin.characters = { { name = "Nick Carraway" } }
+            plugin.loadEntityCache = function() return true end
+            plugin:scanBookForEntities()
+            assert.is_true(plugin._entity_scan_attempted)
+        end)
+
+        it("skips scanning and clears underlines when entity_footnotes_enabled is nil (off by default)", function()
+            plugin.ai_helper = { settings = {} }
+            plugin.characters = { { name = "Nick Carraway" } }
+            plugin.entity_xp_matches = { { start_xp = "/1/1", end_xp = "/1/2", matched_text = "Nick", entity_name = "Nick Carraway", category = "character", page = 1 } }
+            plugin._entity_scan_attempted = nil
+
+            plugin:scanBookForEntities()
+            assert.is_nil(plugin._entity_scan_attempted)
+            assert.is_nil(plugin.entity_xp_matches)
+        end)
+
+        it("triggers scanBookForEntities after sequential chapter scan completes with batches", function()
+            local UIManager = require("ui/uimanager")
+            local fetch_mod = require("xray_fetch")
+            local ChapterAnalyzer = require("xray_chapteranalyzer")
+            local scheduled = {}
+            local orig_schedule = UIManager.scheduleIn
+            local orig_get_text = ChapterAnalyzer.getSingleChapterText
+            UIManager.scheduleIn = function(_, delay, fn)
+                table.insert(scheduled, { delay = delay, fn = fn })
+                return fn
+            end
+            ChapterAnalyzer.getSingleChapterText = function()
+                return string.rep("Nick went home and talked with his friends. ", 5)
+            end
+
+            local scan_called = false
+            local mock_plugin = {
+                destroyed = false,
+                ui = {
+                    document = { getPageCount = function() return 10 end },
+                    getCurrentPage = function() return 1 end,
+                },
+                ai_helper = {
+                    settings = { entity_footnotes_enabled = true },
+                    buildChapterDeltaPrompt = function() return "prompt" end,
+                    buildBatchChapterDeltaPrompt = function() return "prompt" end,
+                    buildComprehensiveRequest = function() return { url = "x" } end,
+                    makeRequestAsync = function() return 123 end,
+                    checkAsyncResult = function()
+                        return {
+                            new_characters = { { name = "Nick", description = "Main character" } },
+                            timeline_event = { chapter = "Ch 1", event = "Intro" }
+                        }
+                    end,
+                },
+                mergeSequentialChapterDelta = fetch_mod.mergeSequentialChapterDelta,
+                checkpointHorizonScan = function() end,
+                runPostFetchDuplicateCheck = function() end,
+                buildCompactEntityManifest = function() return "" end,
+                scanBookForEntities = function() scan_called = true end,
+                log = function() end,
+                chapters_fetched = {},
+            }
+
+            fetch_mod.queueSequentialChapterScan(mock_plugin, {
+                { toc_index = 1, title = "Ch 1", page = 1, end_page = 5, unique_id = "ch1" }
+            }, true)
+
+            -- Drive the scheduled callbacks (pollResult -> 3s cooldown -> processNext -> finishScan -> 0.5s scanBookForEntities)
+            local safety = 0
+            while #scheduled > 0 and safety < 20 do
+                safety = safety + 1
+                local item = table.remove(scheduled, 1)
+                item.fn()
+            end
+
+            UIManager.scheduleIn = orig_schedule
+            ChapterAnalyzer.getSingleChapterText = orig_get_text
+            assert.is_true(scan_called)
+        end)
     end)
 end)

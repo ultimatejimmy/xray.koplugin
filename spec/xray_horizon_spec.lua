@@ -75,6 +75,20 @@ describe("xray_horizon_spec", function()
             plugin.ai_helper = { settings = { spoiler_setting = "full_book" } }
             assert.is_true(plugin:isEntityVisibleAtCurrentPosition(future_char, 1, 10))
         end)
+
+        it("should keep legacy history-only entities visible on pages earlier than their fetch cursor", function()
+            local history_char = {
+                name = "Ebenezer Scrooge",
+                history = {
+                    { page = 7, description = "Stave 1 fetch" }
+                }
+            }
+            -- Ultra / incremental fetch stamps history[1].page with batch end (7),
+            -- so pages 1-6 of the same window must remain visible.
+            assert.is_true(plugin:isEntityVisibleAtCurrentPosition(history_char, 1, 1))
+            assert.is_true(plugin:isEntityVisibleAtCurrentPosition(history_char, 1, 2))
+            assert.is_true(plugin:isEntityVisibleAtCurrentPosition(history_char, 1, 7))
+        end)
     end)
 
     describe("resolveEntityState", function()

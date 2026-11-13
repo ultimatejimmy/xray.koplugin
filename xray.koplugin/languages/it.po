@@ -313,13 +313,9 @@ msgstr "(non configurato: tocca per configurare)"
 msgid "custom_api_saved"
 msgstr "Configurazione API personalizzata %d salvata."
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
-msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
+msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
 
 # en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
@@ -444,10 +440,6 @@ msgstr "Scansione del libro per le note a piè di pagina..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: Note a piè di pagina entità"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "Stile nota entità"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "Preferiti"
 msgid "img_tab_series"
 msgstr "Serie"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "Immagine"
 
@@ -829,10 +821,6 @@ msgstr "La lingua è cambiata. Riapri il menu per vedere le modifiche."
 msgid "later"
 msgstr "Più tardi"
 
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
-
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
 msgstr "Collega"
@@ -859,7 +847,7 @@ msgstr "Abilitato"
 
 # en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
-msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
+msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
 
 # en-hash: 75c2e35dd42abd75cdb8a9d4b0da8c20
 msgid "linked_none"
@@ -965,10 +953,6 @@ msgstr "Volume n°"
 msgid "manual_pick"
 msgstr "Selezione manuale"
 
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
-
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -1011,7 +995,7 @@ msgstr "Scansione in corso... %1 di %2 capitoli"
 
 # en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
-msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
+msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
 
 # en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
@@ -1541,10 +1525,6 @@ msgstr "Pre-generazione interrotta."
 msgid "prev"
 msgstr "Precedente"
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "Menu rapido di X-Ray"
@@ -1559,7 +1539,7 @@ msgstr "Motivo"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
-msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
+msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
 
 # en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
@@ -1613,7 +1593,7 @@ msgstr "Riprendi (%d rimanenti)"
 msgid "review"
 msgstr "Rivedi"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "Salva"
 
@@ -2261,6 +2241,3 @@ msgstr "Aggiunge un pulsante 'X-Ray' ai menu del dizionario e di selezione per c
 msgid "yes"
 msgstr "SÌ"
 
-# en-hash: 733d79045bb6a57ecefe24fda695489b
-msgid "entity_style_preview_text"
-msgstr "Quel vizioso d'un barone un dì cercò caraffe di latte."

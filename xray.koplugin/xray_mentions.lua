@@ -495,8 +495,9 @@ function M:highlightMentionsOnPage(page, entity)
                 end
             end
             
-            if entity.aliases and type(entity.aliases) == "table" then
-                for _, alias in ipairs(entity.aliases) do
+            local effective_aliases = (self.getUnlockedAliases and self:getUnlockedAliases(entity)) or entity.aliases
+            if effective_aliases and type(effective_aliases) == "table" then
+                for _, alias in ipairs(effective_aliases) do
                     if type(alias) == "string" and alias ~= "" then
                         table.insert(names_to_search, alias)
                         -- Also split multi-word aliases

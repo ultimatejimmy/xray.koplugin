@@ -313,10 +313,6 @@ msgstr "(niet geconfigureerd — tik om in te stellen)"
 msgid "custom_api_saved"
 msgstr "Aangepaste API %d configuratie opgeslagen."
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "PERSONAGEBESCHRIJVINGEN\n\n• Kort (~80 tekens): Naam, rol en een korte notitie.\n• Standaard (~200 tekens): Standaardanalyse.\n• Gedetailleerd (~350 tekens): Rijke personagestudie met eigenschappen en motivaties.\n• Zeer gedetailleerd (~500 tekens): Diepgaande analyse.\n\nAFWEGING\nLangere beschrijvingen → minder personages geretourneerd tijdens initiële/volledige ophaalacties. Latere ophaalacties ('Meer ophalen') worden niet beïnvloed."
@@ -444,10 +440,6 @@ msgstr "Boek scannen voor voetnoten..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: Entiteit-voetnoten"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "Stijl entiteit-voetnoot"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "Favorieten"
 msgid "img_tab_series"
 msgstr "Reeksen"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "Afbeelding"
 
@@ -828,10 +820,6 @@ msgstr "Taal gewijzigd. Open het menu opnieuw om de wijzigingen te zien."
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Später"
-
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
 
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
@@ -964,10 +952,6 @@ msgstr "Deel #"
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Manual Pick"
-
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1541,10 +1525,6 @@ msgstr "Pre-generatie gestopt."
 msgid "prev"
 msgstr "Vorige"
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "X-Ray Snelmenu"
@@ -1613,7 +1593,7 @@ msgstr "Hervatten (%d resterend)"
 msgid "review"
 msgstr "Review"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "Opslaan"
 
@@ -2261,6 +2241,3 @@ msgstr "Voegt een 'X-Ray'-knop toe aan woordenboek- en selectiemenu's voor direc
 msgid "yes"
 msgstr "Ja"
 
-# en-hash: c1b57e56ce2af1ba228062269e018ac1
-msgid "entity_style_preview_text"
-msgstr "De snelle bruine vos springt over de luie hond."

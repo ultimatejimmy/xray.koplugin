@@ -65,14 +65,17 @@ package.loaded["logger"] = {
     info = function(...) end,
     warn = function(...) end,
     err = function(...) end,
+    error = function(...) end,
     debug = function(...) end
 }
 
 package.loaded["xray_logger"] = {
+    init = function(...) end,
     log = function(...) end,
     info = function(...) end,
     warn = function(...) end,
     err = function(...) end,
+    error = function(...) end,
 }
 
 package.loaded["datastorage"] = {
@@ -408,9 +411,6 @@ package.loaded["ui/trapper"] = {
         end
         return true
     end
-}
-package.loaded["xray_logger"] = {
-    log = function(...) end,
 }
 package.loaded["ui/network/manager"] = {
     isConnected = function() return true end,

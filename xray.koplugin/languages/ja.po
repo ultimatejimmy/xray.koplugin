@@ -313,10 +313,6 @@ msgstr "(未設定 — タップして設定)"
 msgid "custom_api_saved"
 msgstr "カスタムAPI %dの設定を保存しました。"
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "各キャラクターのプロフィール詳細度を設定します。\n\n[B]サイズオプション[/B]\n• 短め (~80文字): 名前、役割、簡単なメモ。\n• 標準 (~200文字): 標準的な分析。\n• 詳細 (~350文字): 特徴や動機を含む詳細なキャラクター考察。\n• かなり詳細 (~500文字): 包括的な詳細分析。\n\n[B]トレードオフ[/B]\n説明が長いほどトークンを消費するため、初期フェッチで取得できるキャラクターの数が[B]減少[/B]します。"
@@ -444,10 +440,6 @@ msgstr "脚注をスキャン中..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: エンティティ脚注"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "エンティティ脚注スタイル"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "お気に入り"
 msgid "img_tab_series"
 msgstr "シリーズ"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "画像"
 
@@ -828,10 +820,6 @@ msgstr "言語設定を変更しました。"
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "後で"
-
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
 
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
@@ -964,10 +952,6 @@ msgstr "巻数"
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "手動選択"
-
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1541,10 +1525,6 @@ msgstr "事前生成を停止しました。"
 msgid "prev"
 msgstr "前へ"
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "X-Ray クイックメニュー"
@@ -1613,7 +1593,7 @@ msgstr "再開（残り%d）"
 msgid "review"
 msgstr "レビュー"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "保存"
 
@@ -2261,6 +2241,3 @@ msgstr "辞書および選択メニューに「X-Ray」ボタンを追加し、�
 msgid "yes"
 msgstr "はい"
 
-# en-hash: 1ca89c4a2ca3de4280d8f2d2502c0109
-msgid "entity_style_preview_text"
-msgstr "素早い茶色のキツネが怠惰な犬を飛び越える。"

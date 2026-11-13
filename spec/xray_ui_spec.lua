@@ -1923,12 +1923,16 @@ describe("xray_ui", function()
             assert.is_not_nil(deepseek_item)
 
             local gemini_menu = gemini_item.sub_item_table_func()
-            assert.is_not_nil(gemini_menu[1].text:find("gemini%-3%.8%-flash"))
-            assert.is_not_nil(gemini_menu[2].text:find("gemini%-3%.6%-flash"))
+            assert.is_not_nil(gemini_menu[1].text:find("gemini%-4%-hydrogen"))
+            assert.is_not_nil(gemini_menu[2].text:find("gemini%-3%.8%-flash"))
+            assert.is_not_nil(gemini_menu[3].text:find("gemini%-3%.6%-flash"))
+            local found_argon = false
             for _, item in ipairs(gemini_menu) do
+                if item.text:find("gemini%-4%-argon") then found_argon = true end
                 assert.is_nil(item.text:match("gemini%-3%.7%-flash$"))
                 assert.is_nil(item.text:match("gemini%-3%.5%-flash$"))
             end
+            assert.is_true(found_argon)
 
             local chatgpt_menu = chatgpt_item.sub_item_table_func()
             assert.is_not_nil(chatgpt_menu[1].text:find("gpt%-6%-luna"))

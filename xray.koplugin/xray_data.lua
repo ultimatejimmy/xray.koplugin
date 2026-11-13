@@ -291,17 +291,24 @@ function M:namesMatchCanonical(a, b)
 end
 
 function M:isMoreCompleteName(new_name, old_name)
-    if not new_name or not old_name then return false end
+    if not new_name or not old_name or old_name == "" then return false end
     if #new_name <= #old_name then return false end
-    
+
     local nl = new_name:lower()
     local ol = old_name:lower()
     local escaped_ol = ol:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
-    if nl:find("%f[%w]" .. escaped_ol .. "%f[%W]") then
-        return true
-    end
-    if nl:find("^" .. escaped_ol) or nl:find(escaped_ol .. "$") then
-        return true
+    local pat = "%f[%w]" .. escaped_ol .. "%f[%W]"
+    local init = 1
+    while true do
+        local s, e = nl:find(pat, init)
+        if not s then break end
+        -- Reject possessive forms like "Nick's Dad" or "Nick’s Dad"
+        local after1 = nl:sub(e + 1, e + 1)
+        local after3 = nl:sub(e + 1, e + 3)
+        if after1 ~= "'" and after3 ~= "\226\128\153" then
+            return true
+        end
+        init = e + 1
     end
     return false
 end
@@ -471,6 +478,9 @@ function M:deduplicateByName(list, key, caller)
                         table.insert(existing.mentions, new_m)
                     end
                 end
+
+                -- Merge temporal states, history, alias visibility, and earliest visible_from
+                self:mergeEntityTemporalData(existing, item)
             end
         end
     end
@@ -717,6 +727,96 @@ function M:sortTimelineByTOC(timeline)
     for _, ev in ipairs(timeline) do ev._sort_idx = nil end
 end
 
+-- Preserve and merge all temporal, evolution, and gating data across entity records
+function M:mergeEntityTemporalData(target, source)
+    if not target or not source or target == source then return end
+
+    -- 1. Preserve earliest visible_from (first introduction)
+    if source.visible_from then
+        if not target.visible_from then
+            target.visible_from = source.visible_from
+        else
+            local t_ch = target.visible_from.chapter_index or 999999
+            local s_ch = source.visible_from.chapter_index or 999999
+            local t_pg = target.visible_from.page_hint or 999999
+            local s_pg = source.visible_from.page_hint or 999999
+            if s_ch < t_ch or (s_ch == t_ch and s_pg < t_pg) then
+                target.visible_from = source.visible_from
+            end
+        end
+    end
+
+    -- 2. Merge states (chapter evolution records)
+    if source.states and type(source.states) == "table" and #source.states > 0 then
+        target.states = target.states or {}
+        local seen_state_ch = {}
+        for _, s in ipairs(target.states) do
+            local ch = s.chapter_index or 0
+            local p = s.page_hint or 0
+            seen_state_ch[tostring(ch) .. ":" .. tostring(p)] = true
+        end
+        for _, s in ipairs(source.states) do
+            local ch = s.chapter_index or 0
+            local p = s.page_hint or 0
+            if not seen_state_ch[tostring(ch) .. ":" .. tostring(p)] then
+                table.insert(target.states, s)
+                seen_state_ch[tostring(ch) .. ":" .. tostring(p)] = true
+            end
+        end
+        if #target.states > 1 then
+            table.sort(target.states, function(s1, s2)
+                local ch1, ch2 = s1.chapter_index or 0, s2.chapter_index or 0
+                if ch1 ~= ch2 then return ch1 < ch2 end
+                local p1, p2 = s1.page_hint or 0, s2.page_hint or 0
+                if p1 ~= p2 then return p1 < p2 end
+                return (s1.chapter_pct or 0) < (s2.chapter_pct or 0)
+            end)
+        end
+    end
+
+    -- 3. Merge history
+    if source.history and type(source.history) == "table" and #source.history > 0 then
+        target.history = target.history or {}
+        local seen_h = {}
+        for _, h in ipairs(target.history) do
+            local txt = h.description or h.text or ""
+            if txt ~= "" then seen_h[txt] = true end
+        end
+        for _, h in ipairs(source.history) do
+            local txt = h.description or h.text or ""
+            if txt == "" or not seen_h[txt] then
+                table.insert(target.history, h)
+                if txt ~= "" then seen_h[txt] = true end
+            end
+        end
+    end
+
+    -- 4. Merge alias_visible_from
+    if source.alias_visible_from and type(source.alias_visible_from) == "table" then
+        target.alias_visible_from = target.alias_visible_from or {}
+        for a_low, gate in pairs(source.alias_visible_from) do
+            if not target.alias_visible_from[a_low] then
+                target.alias_visible_from[a_low] = gate
+            else
+                local t_ch = target.alias_visible_from[a_low].chapter_index or 999999
+                local s_ch = gate.chapter_index or 999999
+                if s_ch < t_ch then
+                    target.alias_visible_from[a_low] = gate
+                end
+            end
+        end
+    end
+end
+
+-- Centralized cache save helper with automatic document validation and graceful fallbacks
+function M:saveCurrentBookCache(data, on_done_cb)
+    local doc_file = self.ui and self.ui.document and self.ui.document.file
+    if not doc_file or not self.cache_manager then return false end
+    data = data or self.book_data
+    if not data then return false end
+    return self.cache_manager:asyncSaveCache(doc_file, data, on_done_cb)
+end
+
 function M:mergeEntryItems(list, primary, secondary, ai_merged_desc)
     if not primary or not secondary or primary == secondary then return false end
     local sec_idx = nil
@@ -775,7 +875,10 @@ function M:mergeEntryItems(list, primary, secondary, ai_merged_desc)
         end
     end
 
-    -- 5. Remove secondary from list
+    -- 5. Merge temporal states, history, alias visibility, and earliest visible_from
+    self:mergeEntityTemporalData(primary, secondary)
+
+    -- 6. Remove secondary from list
     table.remove(list, sec_idx)
     return true, old_primary_name
 end

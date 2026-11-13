@@ -313,10 +313,6 @@ msgstr "(não configurado — toque para configurar)"
 msgid "custom_api_saved"
 msgstr "Configuração da Custom API %d salva."
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "DESCRIÇÕES DE PERSONAGENS\n\n• Curto (~80 caracteres): Nome, papel e uma nota breve.\n• Padrão (~200 caracteres): Análise padrão.\n• Detalhado (~350 caracteres): Estudo detalhado de personagem com traços e motivações.\n• Muito detalhado (~500 caracteres): Análise profunda.\n\nCOMPENSAÇÃO\nDescrições mais longas → menos personagens retornados durante buscas iniciais/completas. Buscas subsequentes ('Obter mais') não são afetadas."
@@ -444,10 +440,6 @@ msgstr "Escaneando livro em busca de notas de rodapé..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: Notas de Rodapé de Entidades"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "Estilo de Nota de Entidade"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "Favoritas"
 msgid "img_tab_series"
 msgstr "Séries"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "Imagem"
 
@@ -828,10 +820,6 @@ msgstr "Idioma alterado. Reabra o menu para ver as alterações."
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Later"
-
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
 
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
@@ -964,10 +952,6 @@ msgstr "Volume #"
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Manual Pick"
-
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1541,10 +1525,6 @@ msgstr "Pré-geração parada."
 msgid "prev"
 msgstr "Ant."
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "Menu rápido do X-Ray"
@@ -1613,7 +1593,7 @@ msgstr "Continuar (%d restantes)"
 msgid "review"
 msgstr "Review"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "Salvar"
 
@@ -2261,6 +2241,3 @@ msgstr "Adiciona um botão 'X-Ray' aos menus de dicionário e seleção para con
 msgid "yes"
 msgstr "Sim"
 
-# en-hash: 124fb9962879e54250353bd3303aa253
-msgid "entity_style_preview_text"
-msgstr "Um pequeno jabuti xereta viu dez cegonhas felizes."

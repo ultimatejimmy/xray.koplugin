@@ -23,20 +23,7 @@ local function _truncateSafe(text, limit)
 end
 
 local function _getCurrentPage(plugin)
-    if not plugin or not plugin.ui then return 1 end
-    if plugin.ui.getCurrentPage then
-        local ok, p = pcall(function() return plugin.ui:getCurrentPage() end)
-        if ok and type(p) == "number" then return p end
-    end
-    if plugin.ui.paging and plugin.ui.paging.getCurrentPage then
-        local ok, p = pcall(function() return plugin.ui.paging:getCurrentPage() end)
-        if ok and type(p) == "number" then return p end
-    end
-    if plugin.ui.document and plugin.ui.document.getCurrentPage then
-        local ok, p = pcall(function() return plugin.ui.document:getCurrentPage() end)
-        if ok and type(p) == "number" then return p end
-    end
-    return 1
+    return utils:getCurrentPage(plugin)
 end
 
 local M = {}
@@ -58,6 +45,10 @@ function M:cancelActiveAIRequest(reason)
     if self.ai_helper and self.ai_helper._async_child_pid then
         self.ai_helper:cancelAsyncChild()
     end
+    if self._active_sequential_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+        self.ai_helper:cancelAsyncChild(self._active_sequential_pid)
+        self._active_sequential_pid = nil
+    end
     self._active_ai_cancel = nil
     if self._active_ai_dialog then
         UIManager:close(self._active_ai_dialog)
@@ -69,9 +60,7 @@ function M:cancelActiveAIRequest(reason)
 end
 
 local function sanitizeMetadata(val)
-    if type(val) == "string" then return val
-    elseif type(val) == "table" then return table.concat(val, ", ")
-    else return "Unknown" end
+    return utils:sanitizeMetadata(val)
 end
 
 function M:fetchFromAI()
@@ -1018,7 +1007,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                 else
                     if wait_msg then UIManager:close(wait_msg) end
                     finishActiveRequest()
-                    self:finalizeXRayData(data, title, author, book_text, is_update, is_silent, current_page)
+                    self:finalizeXRayData(data, title, author, book_text, is_update, is_silent, current_page, first_missing_page)
                     notifyComplete(true)
                 end
             end
@@ -1094,7 +1083,180 @@ function M:flushSeriesSync()
     end)
 end
 
-function M:finalizeXRayData(final_book_data, title, author, book_text, is_update, is_silent, current_page)
+function M:populateBatchTemporalGates(final_book_data, current_page, window_start_page)
+    if not final_book_data or type(final_book_data) ~= "table" then return end
+    local cur_p = tonumber(current_page) or 1
+    local win_start = math.max(1, tonumber(window_start_page) or 1)
+    if win_start > cur_p then win_start = cur_p end
+
+    local doc = self.ui and self.ui.document
+    local first_narrative_page = 1
+    if doc and doc.getToc then
+        local ok_toc, raw_toc = pcall(doc.getToc, doc)
+        if ok_toc and raw_toc then
+            local flat = utils:flattenTOC(raw_toc)
+            for _, ch in ipairs(flat or {}) do
+                if ch.page and (not self.isNonNarrativeChapter or not self:isNonNarrativeChapter(ch.title or "")) then
+                    first_narrative_page = math.max(1, tonumber(ch.page) or 1)
+                    break
+                end
+            end
+        end
+    end
+
+    local stop_words = {
+        ["the"] = true, ["of"] = true, ["and"] = true, ["spirit"] = true, ["ghost"] = true,
+        ["present"] = true, ["past"] = true, ["future"] = true, ["man"] = true, ["woman"] = true,
+        ["mr"] = true, ["mrs"] = true, ["ms"] = true, ["miss"] = true, ["dr"] = true,
+        ["sir"] = true, ["lord"] = true, ["lady"] = true, ["master"] = true, ["king"] = true,
+    }
+
+    local term_to_entities = {}
+    local all_terms = {}
+    local seen_terms = {}
+    local entity_lists = {
+        { list = final_book_data.characters, is_term = false, desc_key = "description" },
+        { list = final_book_data.historical_figures, is_term = false, desc_key = "biography" },
+        { list = final_book_data.locations, is_term = false, desc_key = "description" },
+        { list = final_book_data.terms, is_term = true, desc_key = "definition" },
+    }
+
+    local function registerSearchTerm(t, entity)
+        if type(t) ~= "string" then return end
+        local clean = t:match("^%s*(.-)%s*$")
+        if #clean < 3 then return end
+        local low = clean:lower()
+        term_to_entities[low] = term_to_entities[low] or {}
+        table.insert(term_to_entities[low], entity)
+        if not seen_terms[clean] then
+            seen_terms[clean] = true
+            table.insert(all_terms, clean)
+        end
+    end
+
+    for _, grp in ipairs(entity_lists) do
+        for _, e in ipairs(grp.list or {}) do
+            if not e.visible_from then
+                if e.name and e.name ~= "" then
+                    registerSearchTerm(e.name, e)
+                end
+                if type(e.aliases) == "table" then
+                    for _, a in ipairs(e.aliases) do
+                        if type(a) == "string" then
+                            local clean_a = a:match("^%s*(.-)%s*$")
+                            local low_a = clean_a:lower()
+                            if #clean_a >= 3 and (clean_a:find("%s") or not stop_words[low_a]) then
+                                registerSearchTerm(clean_a, e)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local earliest_in_win = {}
+    local earliest_any = {}
+    if doc and type(doc.findAllText) == "function" and type(doc.getPageFromXPointer) == "function" and #all_terms > 0 then
+        table.sort(all_terms, function(a, b) return #a > #b end)
+        local chunks, cur_chunk, cur_len = {}, {}, 0
+        for _, t in ipairs(all_terms) do
+            local esc = t:gsub("([%^%$%.%*%+%?%(%)%[%]%{%}|\\])", "\\%1"):gsub("%s+", "\\s+")
+            if cur_len + #esc + 1 > 2200 and #cur_chunk > 0 then
+                table.insert(chunks, "\\b(?:" .. table.concat(cur_chunk, "|") .. ")\\b")
+                cur_chunk, cur_len = {}, 0
+            end
+            table.insert(cur_chunk, esc)
+            cur_len = cur_len + #esc + 1
+        end
+        if #cur_chunk > 0 then
+            table.insert(chunks, "\\b(?:" .. table.concat(cur_chunk, "|") .. ")\\b")
+        end
+
+        for _, pat in ipairs(chunks) do
+            local ok, hits = pcall(doc.findAllText, doc, pat, false, 0, 50000, true)
+            if ok and type(hits) == "table" then
+                for _, h in ipairs(hits) do
+                    local raw = h.matched_text or h.text
+                    local xp = h.start or h.start0
+                    if raw and xp then
+                        local ents = term_to_entities[raw:match("^%s*(.-)%s*$"):lower()]
+                        if ents then
+                            local ok_p, pg = pcall(doc.getPageFromXPointer, doc, xp)
+                            pg = ok_p and tonumber(pg) or nil
+                            if pg and pg >= first_narrative_page and pg <= cur_p then
+                                for _, e in ipairs(ents) do
+                                    if not earliest_any[e] or pg < earliest_any[e] then
+                                        earliest_any[e] = pg
+                                    end
+                                    if pg >= win_start and (not earliest_in_win[e] or pg < earliest_in_win[e]) then
+                                        earliest_in_win[e] = pg
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local function buildGateForPage(p)
+        local ch_idx = (self.getCurrentChapterIndex and self:getCurrentChapterIndex(p)) or 1
+        local ch_start, ch_end = nil, nil
+        if self.getChapterPageBounds then
+            ch_start, ch_end = self:getChapterPageBounds(ch_idx)
+        end
+        local pct = 0.0
+        if ch_start and ch_end and ch_end > ch_start then
+            pct = math.max(0, math.min(1, math.floor(((p - ch_start) / (ch_end - ch_start)) * 10000 + 0.5) / 10000))
+        end
+        return {
+            chapter_index = ch_idx,
+            page_hint = p,
+            chapter_pct = pct,
+            ch_start_page = ch_start or p,
+            ch_end_page = ch_end or p,
+        }
+    end
+
+    for _, grp in ipairs(entity_lists) do
+        for _, e in ipairs(grp.list or {}) do
+            local first_p = earliest_in_win[e] or earliest_any[e] or win_start
+            local gate = buildGateForPage(first_p)
+            if not e.visible_from then
+                e.visible_from = {
+                    chapter_index = gate.chapter_index,
+                    page_hint = gate.page_hint,
+                    chapter_pct = gate.chapter_pct,
+                    ch_start_page = gate.ch_start_page,
+                    ch_end_page = gate.ch_end_page,
+                }
+            end
+            if not grp.is_term and (not e.states or #e.states == 0) then
+                local desc_val = e[grp.desc_key] or e.description or ""
+                if desc_val ~= "" then
+                    e.states = {
+                        {
+                            chapter_index = gate.chapter_index,
+                            chapter_title = "",
+                            page_hint = gate.page_hint,
+                            chapter_pct = gate.chapter_pct,
+                            ch_start_page = gate.ch_start_page,
+                            ch_end_page = gate.ch_end_page,
+                            role = e.role,
+                            status = e.status or "alive",
+                            description = desc_val,
+                            evidence = "First appearance",
+                        }
+                    }
+                end
+            end
+        end
+    end
+end
+
+function M:finalizeXRayData(final_book_data, title, author, book_text, is_update, is_silent, current_page, window_start_page)
     if self.destroyed or not self.ui or not self.ui.document then return end
     final_book_data.book_title = title
     final_book_data.author = author
@@ -1174,6 +1336,8 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         end
     end
 
+    self:populateBatchTemporalGates(final_book_data, current_page, window_start_page)
+
     if is_update then
         -- Ensure tables exist before attempting to merge/insert
         self.characters = self.characters or {}
@@ -1227,6 +1391,47 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                     if new_char.description and new_char.description ~= "" then
                         local clean_desc = self:updateEntityDescPreservingPrior(existing_char, new_char.description, "description")
                         
+                        if not existing_char.visible_from and new_char.visible_from then
+                            existing_char.visible_from = new_char.visible_from
+                        end
+                        if (not existing_char.states or #existing_char.states == 0) and existing_char.description and existing_char.description ~= "" then
+                            local b_page = (existing_char.visible_from and existing_char.visible_from.page_hint)
+                                or (existing_char.history and existing_char.history[1] and existing_char.history[1].page) or 1
+                            local b_chap = (existing_char.visible_from and existing_char.visible_from.chapter_index)
+                                or (self.getCurrentChapterIndex and self:getCurrentChapterIndex(b_page)) or 1
+                            existing_char.states = {
+                                {
+                                    chapter_index = b_chap,
+                                    chapter_title = "",
+                                    page_hint = b_page,
+                                    chapter_pct = (existing_char.visible_from and existing_char.visible_from.chapter_pct) or 0.0,
+                                    role = existing_char.role,
+                                    status = existing_char.status or "alive",
+                                    description = existing_char.description,
+                                    evidence = "Initial appearance",
+                                }
+                            }
+                        end
+                        if existing_char.states and current_page then
+                            local upd_chap = (self.getCurrentChapterIndex and self:getCurrentChapterIndex(current_page)) or 1
+                            local last_st = existing_char.states[#existing_char.states]
+                            local upd_desc = clean_desc or new_char.description
+                            if not last_st or (last_st.page_hint or 0) < current_page then
+                                table.insert(existing_char.states, {
+                                    chapter_index = upd_chap,
+                                    chapter_title = chapter_title or "",
+                                    page_hint = current_page,
+                                    chapter_pct = 0.0,
+                                    role = new_char.role or existing_char.role,
+                                    status = new_char.status or existing_char.status or "alive",
+                                    description = upd_desc,
+                                    evidence = "Incremental update",
+                                })
+                            elseif last_st and last_st.page_hint == current_page then
+                                last_st.description = upd_desc
+                            end
+                        end
+
                         -- Record history with clean current-book description
                         existing_char.history = existing_char.history or {}
                         local dup = false
@@ -1821,6 +2026,9 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent,
         local function poll()
             if self.destroyed or not self.ui or not self.ui.document then
                 pcall(function() os.remove(result_file) end)
+                if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                    self.ai_helper:cancelAsyncChild(pid)
+                end
                 return
             end
             poll_count = poll_count + 1
@@ -1831,6 +2039,9 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent,
                 else
                     self:log("XRayPlugin: Async duplicate check for " .. list_name .. " timed out")
                     pcall(function() os.remove(result_file) end)
+                    if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                        self.ai_helper:cancelAsyncChild(pid)
+                    end
                     on_done(nil)
                 end
             elseif data == false then
@@ -2764,6 +2975,10 @@ function M:mergeSeriesContext(cache_data, series_info, book_text, skip_save)
             self.book_data = cache
         end
     end
+    local settings = self.ai_helper and self.ai_helper.settings or {}
+    if self.scanBookForEntities and settings.entity_footnotes_enabled == true then
+        self:scanBookForEntities()
+    end
 end
 
 function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
@@ -3224,7 +3439,13 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
     local ch_story_id = chapter.story_id
     local ch_story_title = chapter.story_title
     if is_anthology and not ch_story_id then
-        local st = self:getCurrentStory(ch_page or (chapter_idx and self.chapter_analyzer and self.chapter_analyzer:getStoryForTocIndex(self.ui, chapter_idx)))
+        local st = nil
+        if ch_page then
+            st = self:getCurrentStory(ch_page)
+        elseif chapter_idx and self.chapter_analyzer and self.chapter_analyzer.getStoryForTocIndex then
+            local custom_depth = self.book_data and self.book_data.story_toc_depth
+            st = self.chapter_analyzer:getStoryForTocIndex(self.ui, chapter_idx, custom_depth)
+        end
         if st then
             ch_story_id = st.story_id
             ch_story_title = st.story_title
@@ -3427,6 +3648,39 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
         end
     end
 
+    local function buildDeltaEntityStates(item, first_p, first_pc, full_p, full_pc, def_role, def_status)
+        local intro_desc = type(item.intro_description) == "string" and item.intro_description:match("^%s*(.-)%s*$") or ""
+        local full_desc = item.description or item.definition or ""
+        local states = {}
+
+        local function makeState(p_hint, p_pct, role, status, desc)
+            local s = {
+                chapter_index = chapter_idx,
+                chapter_title = ch_title,
+                page_hint = p_hint,
+                chapter_pct = p_pct,
+                ch_start_page = ch_page,
+                ch_end_page = ch_end_page,
+                xpointer = ch_xp,
+                description = desc or "",
+                evidence = item.evidence or ""
+            }
+            if role or def_role then s.role = role or def_role end
+            if status or def_status then s.status = status or def_status end
+            return s
+        end
+
+        if is_multi_page and intro_desc ~= "" and intro_desc ~= full_desc and full_p and first_p and full_p > first_p then
+            table.insert(states, makeState(first_p, first_pc, item.intro_role or item.role, item.intro_status or item.status, intro_desc))
+            table.insert(states, makeState(full_p, full_pc, item.role, item.status, full_desc))
+        elseif is_multi_page and intro_desc == "" and full_p and first_p and full_p > first_p then
+            table.insert(states, makeState(full_p, full_pc, item.role, item.status, full_desc))
+        else
+            table.insert(states, makeState(first_p, first_pc, item.role, item.status, full_desc))
+        end
+        return states, full_desc
+    end
+
     -- 1. Characters: new
     if delta_data.new_characters and type(delta_data.new_characters) == "table" then
         for _, c in ipairs(delta_data.new_characters) do
@@ -3472,66 +3726,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     updateEntityDescPreservingPrior(existing, c.description)
                 else
                     new_chars = new_chars + 1
-                    local intro_desc = type(c.intro_description) == "string" and c.intro_description:match("^%s*(.-)%s*$") or ""
-                    local full_desc = c.description or ""
-                    local states = {}
-
-                    if is_multi_page and intro_desc ~= "" and intro_desc ~= full_desc and full_page and first_page and full_page > first_page then
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = first_page,
-                            chapter_pct = first_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            role = c.intro_role or c.role or "Character",
-                            status = c.intro_status or c.status or "alive",
-                            description = intro_desc,
-                            evidence = c.evidence or ""
-                        })
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = full_page,
-                            chapter_pct = full_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            role = c.role or "Character",
-                            status = c.status or "alive",
-                            description = full_desc,
-                            evidence = c.evidence or ""
-                        })
-                    elseif is_multi_page and intro_desc == "" and full_page and first_page and full_page > first_page then
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = full_page,
-                            chapter_pct = full_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            role = c.role or "Character",
-                            status = c.status or "alive",
-                            description = full_desc,
-                            evidence = c.evidence or ""
-                        })
-                    else
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = first_page,
-                            chapter_pct = first_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            role = c.role or "Character",
-                            status = c.status or "alive",
-                            description = full_desc,
-                            evidence = c.evidence or ""
-                        })
-                    end
+                    local states, full_desc = buildDeltaEntityStates(c, first_page, first_pct, full_page, full_pct, "Character", "alive")
 
                     local new_char = {
                         id = c.id or makeId("char", c.name),
@@ -3689,58 +3884,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     updateEntityDescPreservingPrior(existing, l.description)
                 else
                     new_locs = new_locs + 1
-                    local intro_desc = type(l.intro_description) == "string" and l.intro_description:match("^%s*(.-)%s*$") or ""
-                    local full_desc = l.description or ""
-                    local states = {}
-
-                    if is_multi_page and intro_desc ~= "" and intro_desc ~= full_desc and full_page and first_page and full_page > first_page then
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = first_page,
-                            chapter_pct = first_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = intro_desc,
-                            evidence = l.evidence or ""
-                        })
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = full_page,
-                            chapter_pct = full_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = full_desc,
-                            evidence = l.evidence or ""
-                        })
-                    elseif is_multi_page and intro_desc == "" and full_page and first_page and full_page > first_page then
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = full_page,
-                            chapter_pct = full_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = full_desc,
-                            evidence = l.evidence or ""
-                        })
-                    else
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = first_page,
-                            chapter_pct = first_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = full_desc,
-                            evidence = l.evidence or ""
-                        })
-                    end
+                    local states, full_desc = buildDeltaEntityStates(l, first_page, first_pct, full_page, full_pct)
 
                     table.insert(self.locations, {
                         id = l.id or makeId("loc", l.name),
@@ -3856,58 +4000,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     updateEntityDescPreservingPrior(existing, desc, "definition")
                 else
                     new_terms = new_terms + 1
-                    local intro_desc = type(t.intro_description) == "string" and t.intro_description:match("^%s*(.-)%s*$") or ""
-                    local full_desc = t.description or t.definition or ""
-                    local states = {}
-
-                    if is_multi_page and intro_desc ~= "" and intro_desc ~= full_desc and full_page and first_page and full_page > first_page then
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = first_page,
-                            chapter_pct = first_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = intro_desc,
-                            evidence = t.evidence or ""
-                        })
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = full_page,
-                            chapter_pct = full_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = full_desc,
-                            evidence = t.evidence or ""
-                        })
-                    elseif is_multi_page and intro_desc == "" and full_page and first_page and full_page > first_page then
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = full_page,
-                            chapter_pct = full_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = full_desc,
-                            evidence = t.evidence or ""
-                        })
-                    else
-                        table.insert(states, {
-                            chapter_index = chapter_idx,
-                            chapter_title = ch_title,
-                            page_hint = first_page,
-                            chapter_pct = first_pct,
-                            ch_start_page = ch_page,
-                            ch_end_page = ch_end_page,
-                            xpointer = ch_xp,
-                            description = full_desc,
-                            evidence = t.evidence or ""
-                        })
-                    end
+                    local states, full_desc = buildDeltaEntityStates(t, first_page, first_pct, full_page, full_pct)
 
                     table.insert(self.terms, {
                         id = t.id or makeId("term", t.name),
@@ -4282,6 +4375,14 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                     local r_pct = tot_p and tot_p > 0 and math.floor((cur_p / tot_p) * 100) or 100
                     self:runPostFetchDuplicateCheck(nil, nil, r_pct, true)
                 end)
+                local settings = self.ai_helper and self.ai_helper.settings or {}
+                if self.scanBookForEntities and settings.entity_footnotes_enabled == true then
+                    UIManager:scheduleIn(0.5, function()
+                        if not self.destroyed and self.scanBookForEntities then
+                            self:scanBookForEntities()
+                        end
+                    end)
+                end
             else
                 self:log("XRayPlugin: Sequential scan completed with 0 new batches processed; skipping post-fetch duplicate check.")
             end
@@ -4502,6 +4603,7 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
 
         self:log(string.format("XRayPlugin: Prompt generated (%d chars, manifest: %d entities). Dispatched async AI request (PID %s)...",
             prompt_chars, manifest_count, tostring(pid)))
+        self._active_sequential_pid = pid
 
         local start_t = os.time()
         local last_logged_elapsed = 0
@@ -4509,6 +4611,10 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         local function pollResult()
             if self.destroyed or self.active_sequential_cancelled then
                 pcall(function() os.remove(result_file) end)
+                if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                    self.ai_helper:cancelAsyncChild(pid)
+                end
+                self._active_sequential_pid = nil
                 finishScan(false, "Pre-generation cancelled")
                 return
             end
@@ -4523,11 +4629,16 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
                     UIManager:scheduleIn(2, pollResult)
                 else
                     pcall(function() os.remove(result_file) end)
+                    if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                        self.ai_helper:cancelAsyncChild(pid)
+                    end
+                    self._active_sequential_pid = nil
                     self:log("XRayPlugin: Sequential chapter scan timed out for batch starting at: " .. tostring(batch_items[1].title))
                     finishScan(false, "AI request timed out")
                 end
             else
                 pcall(function() os.remove(result_file) end)
+                self._active_sequential_pid = nil
                 local duration = math.max(0, os.time() - start_t)
                 if type(data) == "table" then
                     batches_processed = batches_processed + 1
@@ -4615,6 +4726,10 @@ end
 
 function M:cancelSequentialChapterScan()
     self.active_sequential_cancelled = true
+    if self._active_sequential_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+        self.ai_helper:cancelAsyncChild(self._active_sequential_pid)
+    end
+    self._active_sequential_pid = nil
     self.active_sequential_queue = nil
     self.active_sequential_current_batch = nil
     self.active_sequential_batch_start_time = nil

@@ -313,10 +313,6 @@ msgstr "(nenastavené — ťuknite pre nastavenie)"
 msgid "custom_api_saved"
 msgstr "Nastavenie vlastného API %d uložené."
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "Určuje, koľko podrobností AI uvedie v profile každej postavy.\n\n[B]Možnosti dĺžky[/B]\n• Krátky (~80 znakov): Meno, rola a krátka poznámka.\n• Predvolený (~200 znakov): Štandardná analýza.\n• Podrobný (~350 znakov): Bohatý rozbor postavy s vlastnosťami a motiváciami.\n• Veľmi podrobný (~500 znakov): Úplná hĺbková analýza.\n\n[B]Kompromis[/B]\nDlhšie popisy spotrebujú viac tokenov, takže pri prvom načítaní sa vráti [B]menej[/B] postáv."
@@ -444,10 +440,6 @@ msgstr "Skenovanie knihy pre poznámky pod čiarou..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: Poznámky entít pod čiarou"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "Štýl poznámky entity"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "Obľúbené"
 msgid "img_tab_series"
 msgstr "Séria"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "Obrázok"
 
@@ -828,10 +820,6 @@ msgstr "Jazyk bol zmenený."
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Neskôr"
-
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
 
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
@@ -964,10 +952,6 @@ msgstr "Zväzok č."
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Ručný výber"
-
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1541,10 +1525,6 @@ msgstr "Predbežná generácia zastavená."
 msgid "prev"
 msgstr "Späť"
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "Rýchla ponuka X-Ray"
@@ -1613,7 +1593,7 @@ msgstr "Pokračovať (zostáva %d)"
 msgid "review"
 msgstr "Skontrolovať"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "Uložiť"
 
@@ -2261,6 +2241,3 @@ msgstr "Pridá tlačidlo 'X-Ray' do slovníka a ponúk výberu textu pre okamži
 msgid "yes"
 msgstr "Áno"
 
-# en-hash: abba56b24e8474135151009eba8efa69
-msgid "entity_style_preview_text"
-msgstr "Kŕdeľ šťastných ďatľov učí pri ústí Váhu mĺkveho koňa obhrýzať kôru."

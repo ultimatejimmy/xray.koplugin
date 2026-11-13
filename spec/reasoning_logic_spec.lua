@@ -114,6 +114,28 @@ describe("AI Reasoning Logic", function()
             assert.are.equal("high", body.generationConfig.thinkingConfig.thinkingLevel)
         end)
 
+        it("should include thinkingLevel for gemini-4-hydrogen", function()
+            AIHelper.settings.primary_ai = { provider = "gemini", model = "gemini-4-hydrogen" }
+            AIHelper.settings.reasoning_effort = "medium"
+            
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local body = json.decode(requests[1].body)
+            
+            assert.are.equal("medium", body.generationConfig.thinkingConfig.thinkingLevel)
+            assert.is_nil(body.generationConfig.thinkingConfig.thinkingBudget)
+        end)
+
+        it("should include thinkingLevel for gemini-4-argon", function()
+            AIHelper.settings.primary_ai = { provider = "gemini", model = "gemini-4-argon" }
+            AIHelper.settings.reasoning_effort = "high"
+            
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            local body = json.decode(requests[1].body)
+            
+            assert.are.equal("high", body.generationConfig.thinkingConfig.thinkingLevel)
+            assert.is_nil(body.generationConfig.thinkingConfig.thinkingBudget)
+        end)
+
         it("should include reasoning_effort for OpenAI and drop json_object", function()
             AIHelper.settings.primary_ai = { provider = "chatgpt", model = "gpt-5.4-mini" }
             AIHelper.settings.reasoning_effort = "medium"

@@ -236,9 +236,6 @@ msgstr "(not configured — tap to set up)"
 msgid "custom_api_saved"
 msgstr "Custom API %d configuration saved."
 
-msgid "dark"
-msgstr "Dark"
-
 msgid "desc_len_about_chars"
 msgstr "Controls how much detail the AI includes in each character's profile.\n\n[B]Size options[/B]\n• Short (~80 chars): Name, role, and a brief note.\n• Default (~200 chars): Standard analysis.\n• Detailed (~350 chars): Rich character study with traits and motivations.\n• Very Detailed (~500 chars): Full deep analysis.\n\n[B]Trade-off[/B]\nLonger descriptions consume more tokens, meaning [B]fewer[/B] characters are returned during initial fetches."
 
@@ -334,9 +331,6 @@ msgstr "Scanning book for underlines..."
 
 msgid "entity_scanning_title"
 msgstr "X-Ray: Entity Underlining"
-
-msgid "entity_style_card_title"
-msgstr "Entity Underline Style"
 
 msgid "entity_style_settings"
 msgstr "Style & Underline Settings"
@@ -555,7 +549,7 @@ msgid "img_tab_series"
 msgstr "Series"
 
 msgid "img_untitled"
-msgstr "Image"
+msgstr "Untitled"
 
 msgid "import_file_not_found"
 msgstr "No xray_key.txt file found in storage root or settings directory."
@@ -622,9 +616,6 @@ msgstr "Language changed."
 
 msgid "later"
 msgstr "Later"
-
-msgid "light"
-msgstr "Light"
 
 msgid "link_button"
 msgstr "Link"
@@ -724,9 +715,6 @@ msgstr "Volume #"
 
 msgid "manual_pick"
 msgstr "Manual Pick"
-
-msgid "medium"
-msgstr "Medium"
 
 msgid "mention_dismiss_btn"
 msgstr "✕"
@@ -1157,9 +1145,6 @@ msgstr "Pre-generation stopped."
 msgid "prev"
 msgstr "Prev"
 
-msgid "preview"
-msgstr "Preview"
-
 msgid "quick_menu_title"
 msgstr "X-Ray Quick Menu"
 
@@ -1212,7 +1197,7 @@ msgid "review"
 msgstr "Review"
 
 msgid "save"
-msgstr "Save"
+msgstr "Save Series"
 
 msgid "search"
 msgstr "search"

@@ -1166,6 +1166,24 @@ describe("xray_units", function()
             assert.is_nil(p.last_settings_state)
             UIManager.scheduleIn = orig_sched
         end)
+
+        it("falls back to solid paintRect when wavy tile is nil", function()
+            local painted_rects = {}
+            local mock_bb = {
+                paintRect = function(this, x, y, w, h, color)
+                    table.insert(painted_rects, { x = x, y = y, w = w, h = h, color = color })
+                end,
+                alphablitFrom = function() end,
+            }
+            local box = { x = 10, y = 20, w = 100, h = 16 }
+            local unitscanner = require("xray_unitscanner")
+            -- plugin_path with no assets/wavy-underline.svg causes wavy_tile to fail
+            unitscanner._draw_underline(mock_bb, box, "wavy", 150, 2, 2, "/nonexistent/path/")
+            assert.are.equal(1, #painted_rects)
+            assert.are.equal(10, painted_rects[1].x)
+            assert.are.equal(100, painted_rects[1].w)
+            assert.are.equal(2, painted_rects[1].h)
+        end)
     end)
 
 end)

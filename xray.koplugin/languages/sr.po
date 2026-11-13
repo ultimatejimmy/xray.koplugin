@@ -313,10 +313,6 @@ msgstr "(није конфигурисано — додирните за под�
 msgid "custom_api_saved"
 msgstr "Конфигурација за прилагођени АПИ %d је сачувана."
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "ОПИСИ ЛИКОВА\n\n• Кратки (~80 карактера): Име, улога и кратка белешка.\n• Подразумевани (~200 карактера): Стандардна анализа.\n• Детаљни (~350 карактера): Богата анализа лика са особинама и мотивацијама.\n• Веома детаљни (~500 карактера): Дубока анализа.\n\nОДНОС\nДужи описи → мање ликова враћених током почетних/комплетних преузимања. Накнадна покретања 'Преузми више' су без утицаја."
@@ -444,10 +440,6 @@ msgstr "Скенирање књиге за фусноте..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: Фусноте ентитета"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "Стил фусноте ентитета"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "Omiljeno"
 msgid "img_tab_series"
 msgstr "Серије"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "Slika"
 
@@ -828,10 +820,6 @@ msgstr "Језик промењен. Поново отворите мени да
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "Касније"
-
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
 
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
@@ -964,10 +952,6 @@ msgstr "Tom br."
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "Manual Pick"
-
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1541,10 +1525,6 @@ msgstr "Predgenerisanje zaustavljeno."
 msgid "prev"
 msgstr "Претх."
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "Брзи мени за X-Ray"
@@ -1613,7 +1593,7 @@ msgstr "Настави (%d преостало)"
 msgid "review"
 msgstr "Прегледај"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "Сачувај"
 
@@ -2261,6 +2241,3 @@ msgstr "Додаје дугме 'X-Ray' у речнике и селекцион�
 msgid "yes"
 msgstr "Да"
 
-# en-hash: 485bc3423230d97b368c4af1189a2157
-msgid "entity_style_preview_text"
-msgstr "Брза вижљаста лисица скаче преко лењог пса."

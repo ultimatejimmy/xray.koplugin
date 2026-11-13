@@ -313,10 +313,6 @@ msgstr "(غير مكوّن — انقر للإعداد)"
 msgid "custom_api_saved"
 msgstr "تم حفظ إعدادات واجهة API المخصصة %d."
 
-# en-hash: a18366b217ebf811ad1886e4f4f865b2
-msgid "dark"
-msgstr ""
-
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
 msgstr "أوصاف الشخصيات\n\n• قصير (~80 حرفًا): الاسم، الدور، وملاحظة قصيرة.\n• افتراضي (~200 حرفًا): تحليل قياسي.\n• مفصل (~350 حرفًا): دراسة غنية للشخصية مع السمات والدوافع.\n• مفصل جدًا (~500 حرفًا): تحليل عميق.\n\nالمفاضلة\nأوصاف أطول ← شخصيات أقل يتم إرجاعها أثناء عمليات الجلب الأولية/الكاملة. لا تتأثر عمليات 'جلب المزيد' اللاحقة."
@@ -444,10 +440,6 @@ msgstr "جاري مسح الكتاب بحثًا عن الحواشي..."
 # en-hash: 758d09329b7f85865be8292d836efe97
 msgid "entity_scanning_title"
 msgstr "X-Ray: حواشي الكيانات"
-
-# en-hash: e157c0ee9cacabd7cf05dfab8d2a2825
-msgid "entity_style_card_title"
-msgstr "نمط حاشية الكيان"
 
 # en-hash: 37a611b3aed746b1f20cd611500496f2
 msgid "entity_style_settings"
@@ -737,7 +729,7 @@ msgstr "المفضلة"
 msgid "img_tab_series"
 msgstr "السلاسل"
 
-# en-hash: be53a0541a6d36f6ecb879fa2c584b08
+# en-hash: 911af7aa209e00b49f3d6fd2afa92564
 msgid "img_untitled"
 msgstr "صورة"
 
@@ -828,10 +820,6 @@ msgstr "تغيرت اللغة. أعد فتح القائمة لرؤية التغ�
 # en-hash: 61057a0c84605444201929bdd72014f0
 msgid "later"
 msgstr "لاحقًا"
-
-# en-hash: 9914a0ce04a7b7b6a8e39bec55064b82
-msgid "light"
-msgstr ""
 
 # en-hash: 97e7c9a7d06eac006a28bf05467fcc8b
 msgid "link_button"
@@ -964,10 +952,6 @@ msgstr "رقم المجلد"
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
 msgstr "اختيار يدوي"
-
-# en-hash: 87f8a6ab85c9ced3702b4ea641ad4bb5
-msgid "medium"
-msgstr ""
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1541,10 +1525,6 @@ msgstr "تم إيقاف الإنشاء المسبق."
 msgid "prev"
 msgstr "السابق"
 
-# en-hash: 31fde7b05ac8952dacf4af8a704074ec
-msgid "preview"
-msgstr ""
-
 # en-hash: 136dbfc383f7b6799dbdcb4b37c65d13
 msgid "quick_menu_title"
 msgstr "قائمة X-Ray السريعة"
@@ -1613,7 +1593,7 @@ msgstr "استئناف (%d متبقي)"
 msgid "review"
 msgstr "مراجعة"
 
-# en-hash: c9cc8cce247e49bae79f15173ce97354
+# en-hash: 1ab68556edc631c3b7691ceeae8134ab
 msgid "save"
 msgstr "حفظ"
 
@@ -2261,6 +2241,3 @@ msgstr "يضيف زر 'X-Ray' إلى القواميس وقوائم التحدي�
 msgid "yes"
 msgstr "نعم"
 
-# en-hash: 6ce7ac4d6b40735807f9d37ce97cadd1
-msgid "entity_style_preview_text"
-msgstr "الثعلب البني السريع يقفز فوق الكلب الكسول."

@@ -17,19 +17,22 @@ describe("xray_unitscanner async and background execution", function()
     local mock_time
 
     local function advance_time(seconds)
-        mock_time = mock_time + seconds
-        local i = 1
-        while i <= #scheduled_tasks do
-            local task = scheduled_tasks[i]
-            if task.target <= mock_time then
-                table.remove(scheduled_tasks, i)
-                task.fn()
-                -- restart scan as fn may have scheduled new tasks
-                i = 1
-            else
-                i = i + 1
+        local end_time = mock_time + seconds
+        while true do
+            local next_idx = nil
+            local next_target = nil
+            for i, task in ipairs(scheduled_tasks) do
+                if task.target <= end_time and (not next_target or task.target < next_target) then
+                    next_idx = i
+                    next_target = task.target
+                end
             end
+            if not next_idx then break end
+            local task = table.remove(scheduled_tasks, next_idx)
+            mock_time = task.target
+            task.fn()
         end
+        mock_time = end_time
     end
 
     before_each(function()

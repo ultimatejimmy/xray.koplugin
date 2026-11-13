@@ -50,7 +50,7 @@ end
 
 -- Single source of truth for default AI models
 local DEFAULT_AI = {
-    primary   = { provider = "gemini", model = "gemini-3.8-flash" },
+    primary   = { provider = "gemini", model = "gemini-4-hydrogen" },
     secondary = { provider = "gemini", model = "gemini-3.5-flash-lite" },
 }
 
@@ -121,6 +121,7 @@ function AIHelper:isAnthropic(provider, endpoint)
     end
     return false
 end
+
 
 -- Strip invalid UTF-8 sequences and disallowed control bytes from a string.
 -- Byte-based string.sub() throughout the plugin can slice multi-byte UTF-8
@@ -340,10 +341,10 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 local gen_config = { temperature = 0.2, maxOutputTokens = 16384 } -- default
                 local current_effort = self.settings and self.settings.reasoning_effort
                 
-                -- Check for thinking support (Gemini 2.5 series and Gemini 3 series)
-                if current_effort and (model:find("thinking") or model:find("2%.5") or model:find("3%.0") or model:find("3%.1") or model:find("pro") or model:find("flash")) then
-                    if model:find("gemini%-3") then
-                        -- Gemini 3 series uses thinkingLevel
+                -- Check for thinking support (Gemini 2.5, 3, and 4 series)
+                if current_effort and (model:find("thinking") or model:find("2%.5") or model:find("3%.0") or model:find("3%.1") or model:find("gemini%-4") or model:find("pro") or model:find("flash")) then
+                    if model:find("gemini%-3") or model:find("gemini%-4") then
+                        -- Gemini 3 and 4 series use thinkingLevel
                         local level_map = { low = "low", medium = "medium", high = "high" }
                         gen_config.thinkingConfig = { 
                             includeThoughts = true,
@@ -1914,21 +1915,6 @@ function AIHelper:loadLanguage()
     end
 end
 
-function AIHelper:isAnthropic(provider, endpoint)
-    if provider == "claude" then return true end
-    if (provider == "custom1" or provider == "custom2") then
-        local prov = self.providers[provider]
-        if prov and prov.format == "anthropic" then
-            return true
-        elseif prov and prov.format == "openai" then
-            return false
-        end
-        if endpoint then
-            return endpoint:find("/v1/messages") ~= nil or endpoint:find("/messages") ~= nil
-        end
-    end
-    return false
-end
 
 function AIHelper:createPrompt(title, author, context, section_name, targeted_word)
     if not self.prompts then self:loadLanguage() end
@@ -2143,6 +2129,10 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
         success, final_prompt = pcall(string.format, template, enhanced_title, enhanced_author, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p, p)
     end
 
+    if section_name == "comprehensive_xray" or section_name == "character_section" or section_name == "more_characters"
+       or section_name == "chapter_delta" or section_name == "batch_chapter_delta" then
+        extra_context = extra_context .. "\n\nPROTAGONIST & RELATIONAL NAME RULES (CRITICAL):\n- Always identify and extract the main character / protagonist by name—even in first-person POV narratives (\"I\"/\"me\"/\"my\") where their name appears infrequently (e.g., only in dialogue or relational references).\n- NEVER omit, merge, or alias a character with a possessive or relational reference to them (e.g., if the text mentions \"Nicks Dad\" or \"Nick's Dad\", extract BOTH \"Nick\" and \"Nicks Dad\" as separate character entries, and do NOT list \"Nick\" merely as an alias of \"Nicks Dad\")."
+    end
     if section_name == "comprehensive_xray" or section_name == "more_terms" then
         extra_context = extra_context .. "\n- For each term, provide up to 3 alternative names, acronyms, or synonyms in an 'aliases' array. CRITICAL: These aliases MUST be variations or names that actually appear in the provided book text; do not hallucinate external synonyms."
     elseif section_name == "series_book_summary" then
@@ -2829,6 +2819,7 @@ function AIHelper:findDuplicates(title, author, entities, entity_type_label, rea
     if has_out_of_scope then
         prompt = prompt .. "\n\nNOTE: Entries marked [from: ...] are recurring entities from earlier stories in this collection. Pair one with a current-story entry only if the text clearly refers to the same entity."
     end
+    prompt = prompt .. "\n\nNOTE: Possessive or relational entries (e.g., \"Nick\" and \"Nicks Dad\" or \"Nick's Dad\") refer to DISTINCT people and must NEVER be flagged as duplicates."
 
     prompt = self:sanitize_utf8(prompt)
 
@@ -2859,6 +2850,7 @@ function AIHelper:findDuplicatesAsync(title, author, entities, entity_type_label
     if has_out_of_scope then
         prompt = prompt .. "\n\nNOTE: Entries marked [from: ...] are recurring entities from earlier stories in this collection. Pair one with a current-story entry only if the text clearly refers to the same entity."
     end
+    prompt = prompt .. "\n\nNOTE: Possessive or relational entries (e.g., \"Nick\" and \"Nicks Dad\" or \"Nick's Dad\") refer to DISTINCT people and must NEVER be flagged as duplicates."
 
     prompt = self:sanitize_utf8(prompt)
 
@@ -3106,7 +3098,7 @@ function AIHelper:validateProviderKey(provider_id)
             or prov.primary_model
             or DEFAULT_AI.primary.model
         if model == "gemini-2.5-flash" or model == "gemini-2.5-flash-lite" or model == "gemini-3.5-flash" then
-            model = "gemini-3.8-flash"
+            model = DEFAULT_AI.primary.model
         end
         url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent"
         headers = { ["Content-Type"] = "application/json", ["x-goog-api-key"] = key }

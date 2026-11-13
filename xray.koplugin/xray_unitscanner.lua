@@ -86,16 +86,14 @@ M._getFFIUtil = _getFFIUtil
 
 -- Returns current page number safely
 local function _getCurrentPage(plugin)
-    if plugin.last_pageno then return plugin.last_pageno end
-    if plugin.ui and plugin.ui.paging and plugin.ui.paging.getCurrentPage then
-        local ok, pg = pcall(function() return plugin.ui.paging:getCurrentPage() end)
-        if ok then return pg end
-    end
-    if plugin.ui and plugin.ui.pageno then
-        return plugin.ui.pageno
-    end
-    return 1
+    if plugin and plugin.last_pageno then return plugin.last_pageno end
+    return xray_utils:getCurrentPage(plugin) or 1
 end
+
+-- Tile caches for underline rendering
+local _wavy_svg_template
+local _wavy_tile_cache = {}
+local _circle_tile_cache = {}
 
 -- Clear underlines overlay
 function M:clearTileCaches()
@@ -121,22 +119,40 @@ function M:clearUnitUnderlines()
     self.unit_conversion_boxes = nil
     self.unit_xp_matches = nil
     self:clearTileCaches()
+    if self.ui and self.ui.view and self.ui.view.view_modules then
+        self.ui.view.view_modules["xray_unit_underlines"] = nil
+    end
     if self.ui and self.ui.view and self.ui.view.dialog then
         UIManager:setDirty(self.ui.view.dialog, "ui")
     end
 end
 
--- Paint overlay underlines using monkey-patched view.paintTo
+-- Paint overlay underlines using registerViewModule or fallback to view.paintTo
 function M:mountUnderlineOverlay()
     log("mountUnderlineOverlay called")
-    if self._paintTo_wrapped then
-        log("mountUnderlineOverlay: already wrapped")
-        return
-    end
     local plugin = self
     local view = self.ui and self.ui.view
     if not view then
         log("mountUnderlineOverlay: no self.ui.view found")
+        return
+    end
+
+    if view.registerViewModule then
+        view:registerViewModule("xray_unit_underlines", {
+            paintTo = function(_this, bb, _x, _y)
+                if plugin.destroyed or not plugin.ui or not plugin.ui.document then return end
+                local ok, err = pcall(function() plugin:_drawUnitUnderlines(bb) end)
+                if not ok then
+                    log("draw error: " .. tostring(err))
+                end
+            end
+        })
+        log("mountUnderlineOverlay: registered view module xray_unit_underlines")
+        return
+    end
+
+    if self._paintTo_wrapped then
+        log("mountUnderlineOverlay: already wrapped")
         return
     end
     local orig = view.paintTo
@@ -210,23 +226,29 @@ function M:_resolveHighlightBoxes()
     log("Resolved " .. tostring(#resolved) .. " visual conversion boxes on screen")
 end
 
-local _wavy_svg_template
-local _wavy_tile_cache = {}
-local _circle_tile_cache = {}
 local _sidecar_dir_created = false
 
 local function _ensure_sidecar_dir(dir)
     if _sidecar_dir_created then return end
-    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
-    if not ok_lfs or type(lfs) ~= "table" then
-        ok_lfs, lfs = pcall(require, "lfs")
-    end
-    if ok_lfs and lfs and lfs.mkdir then
-        pcall(function() lfs.mkdir(dir) end)
+    local ok_util, util = pcall(require, "util")
+    if ok_util and util and util.makePath then
+        pcall(util.makePath, dir)
     else
-        pcall(function() os.execute("mkdir -p " .. dir) end)
+        local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+        if not ok_lfs or type(lfs) ~= "table" then
+            ok_lfs, lfs = pcall(require, "lfs")
+        end
+        if ok_lfs and lfs and lfs.mkdir then
+            pcall(function() lfs.mkdir(dir) end)
+        else
+            pcall(function() os.execute("mkdir -p " .. dir) end)
+        end
     end
-    _sidecar_dir_created = true
+    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+    if not ok_lfs or not lfs then ok_lfs, lfs = pcall(require, "lfs") end
+    if ok_lfs and lfs and lfs.attributes and lfs.attributes(dir, "mode") == "directory" then
+        _sidecar_dir_created = true
+    end
 end
 
 local function _load_wavy_template(plugin_path)
@@ -360,6 +382,9 @@ local function _draw_underline(bb, box, style, grey, thickness, raw_thickness, p
                 x = x + tw
             end
             return
+        else
+            -- SVG rendering unavailable or failed: fall back gracefully to solid line
+            style = "solid"
         end
     end
 
@@ -726,13 +751,18 @@ function M:saveUnitCache(resolved_dir, matches, suffix)
     -- Ensure sidecar directory exists before writing
     local dir = cache_file:match("^(.+)/[^/]+$")
     if dir then
-        local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
-        if not ok_lfs or not lfs then
-            ok_lfs, lfs = pcall(require, "lfs")
-        end
-        if ok_lfs and lfs then
-            if lfs.attributes(dir, "mode") ~= "directory" then
-                pcall(function() lfs.mkdir(dir) end)
+        local ok_util, util = pcall(require, "util")
+        if ok_util and util and util.makePath then
+            pcall(util.makePath, dir)
+        else
+            local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+            if not ok_lfs or not lfs then
+                ok_lfs, lfs = pcall(require, "lfs")
+            end
+            if ok_lfs and lfs then
+                if lfs.attributes and lfs.attributes(dir, "mode") ~= "directory" then
+                    pcall(function() lfs.mkdir(dir) end)
+                end
             end
         end
     end
@@ -1399,6 +1429,13 @@ function M:_onUnitScanFinished(resolved_dir, ok, manual)
     local loaded = ok and self:loadUnitCache(resolved_dir)
     if not loaded then
         log("Unit scan finished without a usable cache (ok=" .. tostring(ok) .. ")")
+        if not self._unit_scan_fallback_used and not self.destroyed and self.ui and self.ui.document then
+            self._unit_scan_fallback_used = true
+            log("Unit scan: attempting in-process fallback scan")
+            local settings = self.ai_helper and self.ai_helper.settings or {}
+            self:_runUnitScanInProcess(resolved_dir, settings, manual)
+            return
+        end
         return
     end
 
@@ -1560,6 +1597,11 @@ function M:_runUnitScanInProcess(resolved_dir, settings, manual)
         end
     end
     UIManager:scheduleIn(0.1, step)
+end
+
+-- Compatibility alias: apply cached unit underlines or load cache if present
+function M:applyUnitUnderlines()
+    return self:scanBookForUnits(false)
 end
 
 -- Scan the entire book and cache matches
@@ -1977,7 +2019,7 @@ end
 
 function UnitTooltip:dismiss()
     if self.timer_handle then
-        pcall(function() self.timer_handle:cancel() end)
+        pcall(function() UIManager:unschedule(self.timer_handle) end)
         self.timer_handle = nil
     end
     if not self._closed then

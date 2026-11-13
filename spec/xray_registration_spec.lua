@@ -244,6 +244,35 @@ describe("X-Ray Lifecycle Hooks", function()
         plugin:onExit()
         assert.is_true(plugin.destroyed)
     end)
+
+    it("verifies real main.lua lifecycle functions clean up state properly", function()
+        local main_plugin = dofile("xray.koplugin/main.lua")
+        local real_plugin = createMockPlugin()
+        for k, v in pairs(main_plugin) do real_plugin[k] = v end
+
+        real_plugin.bg_fetch_active = true
+        real_plugin.bg_fetch_pending = true
+        real_plugin._unit_scan_in_progress = true
+        real_plugin._unit_scan_fetch_retries = 3
+
+        local unit_cancelled = false
+        real_plugin._cancelUnitScanChild = function() unit_cancelled = true end
+        local unit_underlines_cleared = false
+        real_plugin.clearUnitUnderlines = function() unit_underlines_cleared = true end
+        local entity_cancelled = false
+        real_plugin._cancelEntityScanChild = function() entity_cancelled = true end
+        local entity_underlines_cleared = false
+        real_plugin.clearEntityUnderlines = function() entity_underlines_cleared = true end
+
+        real_plugin:onCloseDocument()
+
+        assert.is_true(real_plugin.destroyed)
+        assert.is_false(real_plugin.bg_fetch_active)
+        assert.is_false(real_plugin.bg_fetch_pending)
+        assert.is_false(real_plugin._unit_scan_in_progress)
+        assert.is_true(unit_cancelled)
+        assert.is_true(unit_underlines_cleared)
+    end)
 end)
 
 describe("X-Ray Highlight Interception (Issue #152)", function()

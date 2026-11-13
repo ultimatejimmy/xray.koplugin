@@ -31,7 +31,10 @@ _G.describe = function(name, fn)
     push_context()
     local ok, err = pcall(fn)
     if not ok then
-        print("Error in describe " .. table.concat(current_describe, " -> ") .. ": " .. tostring(err))
+        local full_desc = table.concat(current_describe, " -> ")
+        print("Error in describe " .. full_desc .. ": " .. tostring(err))
+        stats.failed = stats.failed + 1
+        table.insert(stats.errors, { name = full_desc, err = err })
     end
     pop_context()
     table.remove(current_describe)
@@ -39,36 +42,64 @@ end
 
 _G.it = function(name, fn)
     local full_name = table.concat(current_describe, " -> ") .. " -> " .. name
+    local test_err = nil
     
     -- Run all before_each
     for _, level in ipairs(before_each_stack) do
         for _, before_fn in ipairs(level) do
-            pcall(before_fn)
+            local b_ok, b_err = pcall(before_fn)
+            if not b_ok and not test_err then
+                test_err = "before_each failed: " .. tostring(b_err)
+            end
         end
     end
     
-    -- Run test
-    local ok, err = pcall(fn)
+    -- Run test if before_each succeeded
+    if not test_err then
+        local ok, err = pcall(fn)
+        if not ok then
+            test_err = err
+        end
+    end
     
     -- Run all after_each
     for _, level in ipairs(after_each_stack) do
         for _, after_fn in ipairs(level) do
-            pcall(after_fn)
+            local a_ok, a_err = pcall(after_fn)
+            if not a_ok and not test_err then
+                test_err = "after_each failed: " .. tostring(a_err)
+            end
         end
     end
     
-    if ok then
+    if not test_err then
         stats.passed = stats.passed + 1
     else
         stats.failed = stats.failed + 1
-        table.insert(stats.errors, { name = full_name, err = err })
+        table.insert(stats.errors, { name = full_name, err = test_err })
         print("[FAIL] " .. full_name)
-        print("       " .. tostring(err))
+        print("       " .. tostring(test_err))
     end
 end
 
-_G.setup = function(fn) pcall(fn) end
-_G.teardown = function(fn) pcall(fn) end
+_G.setup = function(fn)
+    local ok, err = pcall(fn)
+    if not ok then
+        local full_desc = table.concat(current_describe, " -> ") .. " [setup]"
+        stats.failed = stats.failed + 1
+        table.insert(stats.errors, { name = full_desc, err = err })
+        print("Error in setup: " .. tostring(err))
+    end
+end
+_G.teardown = function(fn)
+    local ok, err = pcall(fn)
+    if not ok then
+        local full_desc = table.concat(current_describe, " -> ") .. " [teardown]"
+        stats.failed = stats.failed + 1
+        table.insert(stats.errors, { name = full_desc, err = err })
+        print("Error in teardown: " .. tostring(err))
+    end
+end
 
 local function deep_compare(t1, t2)
     if type(t1) ~= type(t2) then return false end
@@ -175,6 +206,7 @@ local specs = {
     "spec/xray_unitscanner_async_spec.lua",
     "spec/xray_entityscanner_async_spec.lua",
     "spec/localization_xray_spec.lua",
+    "spec/xray_architecture_contract_spec.lua",
 }
 
 if arg and arg[1] then
@@ -186,8 +218,15 @@ for _, spec_path in ipairs(specs) do
     print("Loading " .. spec_path .. "...")
     local fn, err = loadfile(spec_path)
     if fn then
-        fn()
+        local run_ok, run_err = pcall(fn)
+        if not run_ok then
+            stats.failed = stats.failed + 1
+            table.insert(stats.errors, { name = spec_path .. " [run]", err = run_err })
+            print("Error executing spec file " .. spec_path .. ": " .. tostring(run_err))
+        end
     else
+        stats.failed = stats.failed + 1
+        table.insert(stats.errors, { name = spec_path .. " [load]", err = err })
         print("Error loading spec file: " .. tostring(err))
     end
 end

@@ -662,4 +662,119 @@ function M:atomicWriteFile(filepath, content)
     return true
 end
 
+-- Resolve the current document page number safely across reader interfaces
+function M:getCurrentPage(plugin)
+    if not plugin or not plugin.ui then return 1 end
+    if plugin.ui.getCurrentPage then
+        local ok, p = pcall(function() return plugin.ui:getCurrentPage() end)
+        if ok and type(p) == "number" then return p end
+    end
+    if plugin.ui.paging and plugin.ui.paging.getCurrentPage then
+        local ok, p = pcall(function() return plugin.ui.paging:getCurrentPage() end)
+        if ok and type(p) == "number" then return p end
+    end
+    if plugin.ui.document and plugin.ui.document.getCurrentPage then
+        local ok, p = pcall(function() return plugin.ui.document:getCurrentPage() end)
+        if ok and type(p) == "number" then return p end
+    end
+    if plugin.ui.pageno and type(plugin.ui.pageno) == "number" then
+        return plugin.ui.pageno
+    end
+    return 1
+end
+
+-- Normalize and format metadata (title, author) strings or string tables safely
+function M:sanitizeMetadata(val)
+    if type(val) == "string" then return val
+    elseif type(val) == "table" then return table.concat(val, ", ")
+    else return "Unknown" end
+end
+
+-- Fast binary header parser for PNG, JPEG, GIF dimensions without loading native decode buffers
+function M:getImageDimensions(file_path)
+    if not file_path then return nil, nil end
+    local f = io.open(file_path, "rb")
+    if not f then return nil, nil end
+    local header = f:read(32)
+    if not header or #header < 8 then
+        f:close()
+        return nil, nil
+    end
+
+    -- PNG: bytes 17-24 (width, height in big-endian)
+    if header:sub(1, 8) == "\137PNG\r\n\26\n" then
+        local w1, w2, w3, w4, h1, h2, h3, h4 = header:byte(17, 24)
+        f:close()
+        if w1 and h4 then
+            local w = (w1 * 16777216) + (w2 * 65536) + (w3 * 256) + w4
+            local h = (h1 * 16777216) + (h2 * 65536) + (h3 * 256) + h4
+            return w, h
+        end
+        return nil, nil
+    end
+
+    -- GIF: bytes 7-10 (width, height in little-endian)
+    if header:sub(1, 3) == "GIF" then
+        local w1, w2, h1, h2 = header:byte(7, 10)
+        f:close()
+        if w1 and h2 then
+            local w = w1 + (w2 * 256)
+            local h = h1 + (h2 * 256)
+            return w, h
+        end
+        return nil, nil
+    end
+
+    -- JPEG: scan for SOF0/SOF2 marker
+    if header:sub(1, 2) == "\255\216" then
+        f:seek("set", 2)
+        local buf = f:read(65536)
+        f:close()
+        if not buf then return nil, nil end
+
+        local pos = 1
+        local len = #buf
+        while pos < len do
+            local byte = buf:byte(pos)
+            if byte == 0xFF then
+                local marker = buf:byte(pos + 1)
+                if marker and marker ~= 0xFF and marker ~= 0x00 then
+                    -- SOF0 (0xC0), SOF1 (0xC1), SOF2 (0xC2)
+                    if marker == 0xC0 or marker == 0xC1 or marker == 0xC2 then
+                        if pos + 8 <= len then
+                            local h_hi, h_lo, w_hi, w_lo = buf:byte(pos + 5, pos + 8)
+                            if h_hi and w_lo then
+                                local h = (h_hi * 256) + h_lo
+                                local w = (w_hi * 256) + w_lo
+                                return w, h
+                            end
+                        end
+                        break
+                    end
+                    -- Skip this segment
+                    if pos + 3 <= len then
+                        local len_hi, len_lo = buf:byte(pos + 2, pos + 3)
+                        if len_hi and len_lo then
+                            local seg_len = (len_hi * 256) + len_lo
+                            pos = pos + 2 + seg_len
+                        else
+                            break
+                        end
+                    else
+                        break
+                    end
+                else
+                    pos = pos + 1
+                end
+            else
+                pos = pos + 1
+            end
+        end
+        return nil, nil
+    end
+
+    f:close()
+    return nil, nil
+end
+
 return M
