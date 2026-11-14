@@ -189,4 +189,79 @@ describe("Localization and Atomic File Operations (Issue #164)", function()
             assert.are.equal(corrupted_content, backed_up_content)
         end)
     end)
+
+    describe("Malay localization and language mandate enforcement", function()
+        local orig_aihelper_mod
+        local orig_loc_mod
+        local AIHelper
+
+        before_each(function()
+            orig_aihelper_mod = package.loaded["xray_aihelper"]
+            orig_loc_mod = package.loaded["localization_xray"]
+            package.loaded["xray_aihelper"] = nil
+            package.loaded["localization_xray"] = nil
+            AIHelper = require("xray_aihelper")
+            AIHelper.path = "xray.koplugin"
+        end)
+
+        after_each(function()
+            if AIHelper then
+                AIHelper.current_language = nil
+                AIHelper.resolved_language = nil
+                AIHelper.target_book_language = nil
+                AIHelper.settings = {}
+            end
+            package.loaded["xray_aihelper"] = orig_aihelper_mod
+            package.loaded["localization_xray"] = orig_loc_mod
+        end)
+
+        it("loads Malay (ms) translations and prompt template cleanly", function()
+            local Localization = require("localization_xray")
+            Localization.path = "xray.koplugin"
+            Localization:discoverLanguages()
+
+            local found_ms = false
+            for _, code in ipairs(Localization.available_languages) do
+                if code == "ms" then
+                    found_ms = true
+                    break
+                end
+            end
+            assert.is_true(found_ms)
+            assert.is_true(Localization:setLanguage("ms"))
+            assert.are.equal("ms", Localization.current_language)
+
+            local ok_p, ms_prompts = pcall(dofile, "xray.koplugin/prompts/ms.lua")
+            assert.is_true(ok_p)
+            assert.are.equal("table", type(ms_prompts))
+            assert.are.equal("string", type(ms_prompts.system_instruction))
+        end)
+
+        it("maps ISO 639-2 Malay codes (msa, may, zsm) to ms", function()
+            assert.are.equal("ms", utils:languageFromIso639_2("msa"))
+            assert.are.equal("ms", utils:languageFromIso639_2("may"))
+            assert.are.equal("ms", utils:languageFromIso639_2("zsm"))
+        end)
+
+        it("preserves resolved current_language across loadSettings and enforces language mandates", function()
+            utils:atomicWriteFile(settings_file, json.encode({ language = "book", default_provider = "gemini" }))
+            AIHelper.current_language = "ms"
+            AIHelper:loadSettings()
+
+            assert.are.equal("ms", AIHelper.current_language)
+            assert.are.equal("ms", AIHelper:getEffectiveOutputLanguage())
+
+            local mandate_ms = AIHelper:getTargetLanguageMandate()
+            local sys_ms = AIHelper:getSystemInstructionText()
+            assert.is_true(mandate_ms:find("(ms)", 1, true) ~= nil)
+            assert.is_true(sys_ms:find("(ms)", 1, true) ~= nil)
+
+            -- Unsupported book metadata language overrides UI fallback for content generation
+            AIHelper.target_book_language = "el"
+            local mandate_el = AIHelper:getTargetLanguageMandate()
+            local sys_el = AIHelper:getSystemInstructionText()
+            assert.is_true(mandate_el:find("Greek (el)", 1, true) ~= nil)
+            assert.is_true(sys_el:find("Greek (el)", 1, true) ~= nil)
+        end)
+    end)
 end)

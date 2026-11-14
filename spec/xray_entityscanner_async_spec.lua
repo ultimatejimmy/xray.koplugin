@@ -195,7 +195,7 @@ describe("xray_entityscanner async background scanning & overlay", function()
         local f = io.open("/tmp/test_entity_book.epub.sdr/xray_entity_cache.cache", "r")
         assert.is_not_nil(f)
         local sig = f:read("*l")
-        assert.is_true(sig:find("^v[345]|") ~= nil)
+        assert.is_true(sig:find("^v[3456]|") ~= nil)
         f:close()
     end)
 
@@ -647,6 +647,122 @@ describe("xray_entityscanner async background scanning & overlay", function()
             UIManager.scheduleIn = orig_schedule
             ChapterAnalyzer.getSingleChapterText = orig_get_text
             assert.is_true(scan_called)
+        end)
+    end)
+
+    describe("Bionic Reading, Guided Dots, and Kobo guards", function()
+        local Device = require("device")
+        local orig_is_kobo
+
+        before_each(function()
+            orig_is_kobo = Device.isKobo
+        end)
+
+        after_each(function()
+            Device.isKobo = orig_is_kobo
+        end)
+
+        it("passes search_flags=1 and normalizes Guided Dots in _computeEntityMatches", function()
+            plugin.characters = {
+                { name = "Bob Cratchit", aliases = {}, description = "Clerk." }
+            }
+            plugin.locations = {}
+            plugin.terms = {}
+            plugin.historical_figures = {}
+
+            local seen_flags = {}
+            plugin.ui.document.findAllText = function(self_doc, pat, case_ins, ctx, max_hits, is_regex, search_flags)
+                table.insert(seen_flags, search_flags)
+                return {
+                    {
+                        matched_text = "Bob\194\183Cratchit",
+                        text = "Bob\194\183Cratchit",
+                        start = "xp_b1",
+                        start0 = "xp_b1",
+                        ["end"] = "xp_b2",
+                    }
+                }
+            end
+
+            local matches = plugin:_computeEntityMatches(plugin.ai_helper.settings)
+            assert.is_true(#seen_flags >= 1)
+            assert.are.equal(1, seen_flags[1])
+            assert.are.equal(1, #matches)
+            assert.are.equal("Bob Cratchit", matches[1].matched_text)
+            assert.are.equal("Bob Cratchit", matches[1].entity_name)
+        end)
+
+        it("reconstructs split Bionic word pairs via _findBionicFallbackHits", function()
+            local lookup = {
+                scrooge = { canonical = "Ebenezer Scrooge", category = "character" }
+            }
+            local mock_doc = {
+                findAllText = function(self_doc, pat)
+                    if pat == "\\bScro\\b" then
+                        return { { start = "/body/p[1]/b/text().0", ["end"] = "/body/p[1]/b/text().4" } }
+                    elseif pat == "\\boge\\b" then
+                        return { { start = "/body/p[1]/text().0", ["end"] = "/body/p[1]/text().3" } }
+                    end
+                    return {}
+                end,
+                getTextFromXPointers = function(self_doc, s_xp, e_xp)
+                    if s_xp == "/body/p[1]/b/text().0" and e_xp == "/body/p[1]/text().3" then
+                        return "Scrooge"
+                    end
+                    return ""
+                end,
+            }
+
+            local hits = plugin._findBionicFallbackHits(mock_doc, { "Scrooge" }, lookup, {})
+            assert.are.equal(1, #hits)
+            assert.are.equal("Scrooge", hits[1].matched_text)
+            assert.are.equal("Ebenezer Scrooge", hits[1].entity_name)
+        end)
+
+        it("suppresses shorter overlapping cross-node boxes with distinct XPointers while keeping shared-XPointer fixtures", function()
+            plugin.characters = {
+                { name = "Bob Cratchit", description = "Clerk." },
+                { name = "Cratchit", description = "Family." },
+                { name = "Sherlock Holmes", aliases = { "Holmes" }, description = "Detective." },
+            }
+            plugin.entity_xp_matches = {
+                { start_xp = "xp_full_s", end_xp = "xp_full_e", matched_text = "Bob Cratchit", entity_name = "Bob Cratchit", category = "character", page = 1 },
+                { start_xp = "xp_sub_s", end_xp = "xp_sub_e", matched_text = "Cratchit", entity_name = "Cratchit", category = "character", page = 1 },
+            }
+            plugin.entity_matches_by_page = { [1] = plugin.entity_xp_matches }
+            plugin.last_pageno = 1
+            plugin.ai_helper.settings.entity_mention_mode = "all"
+
+            plugin.ui.document.getScreenBoxesFromPositions = function(self_doc, start_xp, end_xp)
+                if start_xp == "xp_full_s" then
+                    return { { x = 100, y = 200, w = 140, h = 24 } }
+                elseif start_xp == "xp_sub_s" then
+                    return { { x = 140, y = 200, w = 80, h = 24 } }
+                elseif start_xp == "xp_shared_s" then
+                    return { { x = 100, y = 300, w = 120, h = 24 } }
+                end
+                return {}
+            end
+
+            plugin._entity_box_cache_sig = nil
+            plugin:_resolveEntityHighlightBoxes()
+            assert.are.equal(1, #plugin.entity_boxes)
+            assert.are.equal("Bob Cratchit", plugin.entity_boxes[1].entity_name)
+
+            -- Shared identical XPointers are kept in "all" mode for compatibility
+            plugin.entity_xp_matches = {
+                { start_xp = "xp_shared_s", end_xp = "xp_shared_e", matched_text = "Sherlock Holmes", entity_name = "Sherlock Holmes", category = "character", page = 1 },
+                { start_xp = "xp_shared_s", end_xp = "xp_shared_e", matched_text = "Holmes", entity_name = "Sherlock Holmes", category = "character", page = 1 },
+            }
+            plugin.entity_matches_by_page = { [1] = plugin.entity_xp_matches }
+            plugin._entity_box_cache_sig = nil
+            plugin:_resolveEntityHighlightBoxes()
+            assert.are.equal(2, #plugin.entity_boxes)
+        end)
+
+        it("bypasses FFI subprocess on Kobo in xray_entityscanner._getFFIUtil", function()
+            Device.isKobo = function() return true end
+            assert.is_nil(plugin._getFFIUtil())
         end)
     end)
 end)

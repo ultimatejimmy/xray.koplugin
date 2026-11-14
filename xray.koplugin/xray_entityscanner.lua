@@ -50,6 +50,10 @@ local CATEGORY_LABELS = {
 
 local function _getFFIUtil()
     if _G.XRAY_DISABLE_ENTITY_SUBPROCESS then return nil end
+    local ok_dev, Device = pcall(require, "device")
+    if ok_dev and Device and type(Device.isKobo) == "function" and Device:isKobo() then
+        return nil
+    end
     local ok, ffiutil = pcall(require, "ffi/util")
     if not ok or type(ffiutil) ~= "table" then return nil end
     if type(ffiutil.runInSubProcess) ~= "function"
@@ -72,12 +76,12 @@ end
 -- Explicitly do NOT escape '-' or '%' because SRELL returns error_escape (102).
 local function escape_pattern(s)
     local esc = s:gsub("([%^%$%.%*%+%?%(%)%[%]%{%}|\\])", "\\%1")
-    esc = esc:gsub("%s+", "\\s+")
+    esc = esc:gsub("%s+", "(?:\\s|\194\183)+")
     return esc
 end
 
 local function _normalize(s)
-    return (s or ""):gsub("\194\160", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+    return (s or ""):gsub("\194\160", " "):gsub("\194\183", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
 end
 
 local function _parseXPointerOffset(xp)
@@ -479,11 +483,14 @@ local function _getEntitySettingsSignature(self, settings)
     local cat_l = settings.entity_cat_locations ~= false
     local cat_t = settings.entity_cat_terms ~= false
 
+    local dom_fp = xray_utils.getDocumentDomFingerprint and xray_utils:getDocumentDomFingerprint(self.ui and self.ui.document) or "nofp"
+
     return table.concat({
-        "v5",
+        "v6",
         tostring(cat_c), tostring(cat_h), tostring(cat_l), tostring(cat_t),
         sig_list(self.characters), sig_list(self.historical_figures),
         sig_list(self.locations), sig_list(self.terms),
+        dom_fp,
     }, "|")
 end
 
@@ -637,6 +644,156 @@ end
 
 -- ===== Pure Computation (Child-Safe) =====
 
+-- Fallback for older KOReader builds without LDOM_FIND_TEXT_MATCH_ACROSS_TEXT_NODES
+-- where Bionic Reading splits words across inline <b>...</b> DOM nodes.
+local function _splitBionicWordPairs(word)
+    local chars = {}
+    for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+        table.insert(chars, ch)
+    end
+    local nc = #chars
+    if nc < 2 then return {} end
+
+    local mids = {}
+    local m1 = math.ceil(nc / 2)
+    mids[m1] = true
+    if nc == 3 then
+        mids[1] = true
+    end
+
+    local pairs_list = {}
+    for mid, _ in pairs(mids) do
+        if mid >= 1 and mid < nc then
+            local prefix = table.concat(chars, "", 1, mid)
+            local suffix = table.concat(chars, "", mid + 1, nc)
+            table.insert(pairs_list, { prefix = prefix, suffix = suffix })
+        end
+    end
+    return pairs_list
+end
+
+local function _xpointerBlockPrefix(xp)
+    if type(xp) ~= "string" then return nil end
+    local clean = xp:gsub("/[bB]%[?[0-9]*%]?/?text%(%)%.[0-9]+$", ""):gsub("/text%(%)%.[0-9]+$", "")
+    return clean
+end
+
+local function _findBionicFallbackHits(doc, terms, lookup, opts)
+    opts = opts or {}
+    if not doc or type(doc.findAllText) ~= "function" then return {} end
+    local fallback_hits = {}
+    local text_cache = {}
+
+    local function find_exact_node_hits(token)
+        if text_cache[token] ~= nil then return text_cache[token] end
+        local esc = escape_pattern(token)
+        local pat = (token:match("^[%w]") and token:match("[%w]$")) and ("\\b" .. esc .. "\\b") or esc
+        local ok, res = pcall(function()
+            return doc:findAllText(pat, false, 0, 5000, true)
+        end)
+        local list = (ok and type(res) == "table") and res or {}
+        text_cache[token] = list
+        return list
+    end
+
+    for _, term in ipairs(terms or {}) do
+        if opts.yield_fn then opts.yield_fn() end
+        local info = lookup and lookup[term:lower()]
+        if info then
+            local words = {}
+            for w in term:gmatch("%S+") do
+                table.insert(words, w)
+            end
+
+            if #words == 1 then
+                local w = words[1]
+                local splits = _splitBionicWordPairs(w)
+                for _, sp in ipairs(splits) do
+                    if opts.yield_fn then opts.yield_fn() end
+                    local p_hits = find_exact_node_hits(sp.prefix)
+                    if #p_hits > 0 then
+                        local s_hits = find_exact_node_hits(sp.suffix)
+                        if #s_hits > 0 then
+                            local s_idx = 1
+                            for _, ph in ipairs(p_hits) do
+                                local p_start = ph.start or ph.start0
+                                local p_block = _xpointerBlockPrefix(p_start)
+                                for j = s_idx, math.min(#s_hits, s_idx + 12) do
+                                    local sh = s_hits[j]
+                                    local s_end = sh["end"]
+                                    local s_start = sh.start or sh.start0
+                                    if p_start and s_end then
+                                        local matched = false
+                                        if type(doc.getTextFromXPointers) == "function" then
+                                            local ok_txt, span_txt = pcall(doc.getTextFromXPointers, doc, p_start, s_end)
+                                            if ok_txt and type(span_txt) == "string" and _normalize(span_txt):lower() == term:lower() then
+                                                matched = true
+                                            end
+                                        elseif p_block and p_block == _xpointerBlockPrefix(s_start) then
+                                            matched = true
+                                        end
+                                        if matched then
+                                            table.insert(fallback_hits, {
+                                                start_xp = p_start,
+                                                end_xp = s_end,
+                                                matched_text = term,
+                                                category = info.category,
+                                                entity_name = info.canonical or term,
+                                            })
+                                            s_idx = j + 1
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            elseif #words >= 2 and type(doc.getTextFromXPointers) == "function" then
+                local first_splits = _splitBionicWordPairs(words[1])
+                local last_splits = _splitBionicWordPairs(words[#words])
+                for _, fsp in ipairs(first_splits) do
+                    local f_hits = (#words[1] >= 2) and find_exact_node_hits(fsp.prefix) or {}
+                    if #f_hits > 0 then
+                        for _, lsp in ipairs(last_splits) do
+                            local l_hits = find_exact_node_hits(lsp.suffix)
+                            if #l_hits > 0 then
+                                local l_idx = 1
+                                for _, fh in ipairs(f_hits) do
+                                    local f_start = fh.start or fh.start0
+                                    local f_block = _xpointerBlockPrefix(f_start)
+                                    for j = l_idx, math.min(#l_hits, l_idx + 12) do
+                                        local lh = l_hits[j]
+                                        local l_end = lh["end"]
+                                        local l_start = lh.start or lh.start0
+                                        if f_start and l_end and f_block and f_block == _xpointerBlockPrefix(l_start) then
+                                            local ok_txt, span_txt = pcall(doc.getTextFromXPointers, doc, f_start, l_end)
+                                            if ok_txt and type(span_txt) == "string" and _normalize(span_txt):lower() == term:lower() then
+                                                table.insert(fallback_hits, {
+                                                    start_xp = f_start,
+                                                    end_xp = l_end,
+                                                    matched_text = term,
+                                                    category = info.category,
+                                                    entity_name = info.canonical or term,
+                                                })
+                                                l_idx = j + 1
+                                                break
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return fallback_hits
+end
+M._findBionicFallbackHits = _findBionicFallbackHits
+
 function M:_computeEntityMatches(settings, opts)
     opts = opts or {}
     if self.destroyed or not self.ui or not self.ui.document then return {} end
@@ -660,8 +817,9 @@ function M:_computeEntityMatches(settings, opts)
         end
 
         local ok, chunk_hits = pcall(function()
-            -- CreDocument:findAllText(pattern, case_insensitive, nb_context_words, max_hits, regex)
-            return doc:findAllText(pattern, false, 0, 50000, true)
+            -- CreDocument:findAllText(pattern, case_insensitive, nb_context_words, max_hits, regex, search_flags)
+            -- search_flags=1 enables LDOM_FIND_TEXT_MATCH_ACROSS_TEXT_NODES for inline <b> Bionic Reading tags.
+            return doc:findAllText(pattern, false, 0, 50000, true, 1)
         end)
 
         if not ok then
@@ -685,6 +843,26 @@ function M:_computeEntityMatches(settings, opts)
                         })
                     end
                 end
+            end
+        end
+    end
+
+    local dom_fp = xray_utils.getDocumentDomFingerprint and xray_utils:getDocumentDomFingerprint(doc) or ""
+    if #hits == 0 or dom_fp:find(":b1$") then
+        local seen_matched = {}
+        for _, h in ipairs(hits) do
+            if h.matched_text then seen_matched[h.matched_text:lower()] = true end
+        end
+        local unmatched = {}
+        for _, t in ipairs(terms) do
+            if not seen_matched[t:lower()] then
+                table.insert(unmatched, t)
+            end
+        end
+        if #unmatched > 0 then
+            local fb_hits = _findBionicFallbackHits(doc, unmatched, lookup, opts)
+            for _, fh in ipairs(fb_hits) do
+                table.insert(hits, fh)
             end
         end
     end
@@ -936,10 +1114,11 @@ function M:scanBookForEntities(force)
         return
     end
 
-    -- Process coordination: defer if unit scanner child or AI helper child is active
-    if (self._unit_scan_pid and self._unit_scan_pid > 0) or
+    -- Process coordination: defer if unit scanner (subprocess or in-process) or AI helper child is active
+    if (self._unit_scan_in_progress) or
+       (self._unit_scan_pid and self._unit_scan_pid > 0) or
        (self.ai_helper and self.ai_helper._async_child_pid and self.ai_helper._async_child_pid > 0) then
-        log("scanBookForEntities: child process active, deferring scan")
+        log("scanBookForEntities: active scan/AI process detected, deferring entity scan")
         UIManager:scheduleIn(5, function()
             if not self.destroyed and not self._entity_scan_in_progress then
                 self:scanBookForEntities(force)
@@ -968,6 +1147,9 @@ function M:scanBookForEntities(force)
 
     local manual = force and true or false
     self._entity_scan_in_progress = true
+    if self.ui and self.ui.doc_settings and self.ui.doc_settings.flush then
+        pcall(function() self.ui.doc_settings:flush() end)
+    end
 
     if manual then
         local progress_msg = ProgressBarDialog:new{
@@ -1118,6 +1300,8 @@ function M:_resolveEntityHighlightBoxes()
                         matched_text = match.matched_text,
                         category = match.category,
                         entity_name = match.entity_name,
+                        start_xp = match.start_xp,
+                        end_xp = match.end_xp,
                     })
                     if not top_y or box.y < top_y or (box.y == top_y and box.x < top_x) then
                         top_y, top_x = box.y, box.x
@@ -1127,24 +1311,42 @@ function M:_resolveEntityHighlightBoxes()
                     key = (match.category or "") .. "|" .. (match.entity_name or ""),
                     sort_y = top_y or 0,
                     sort_x = top_x or 0,
+                    matched_len = #(match.matched_text or ""),
+                    start_xp = match.start_xp,
+                    end_xp = match.end_xp,
                     boxes = group_boxes,
                 })
             end
         end
     end
 
-    -- Sort in reading order (top-to-bottom, then left-to-right)
+    -- Sort in reading order (top-to-bottom, then left-to-right; longer matches first on ties)
     table.sort(groups, function(a, b)
         if a.sort_y ~= b.sort_y then return a.sort_y < b.sort_y end
-        return a.sort_x < b.sort_x
+        if a.sort_x ~= b.sort_x then return a.sort_x < b.sort_x end
+        return (a.matched_len or 0) > (b.matched_len or 0)
     end)
 
-    -- Mention mode deduplication
+    -- Mention mode deduplication + cross-node Bionic sub-match overlap suppression
     local mention_mode = settings.entity_mention_mode or "all"
     local seen = {}
     local resolved = {}
     for _, group in ipairs(groups) do
-        if mention_mode ~= "first" or not seen[group.key] then
+        local suppressed = false
+        for _, other in ipairs(resolved) do
+            if (other.start_xp ~= group.start_xp or other.end_xp ~= group.end_xp)
+                and #(other.matched_text or "") > (group.matched_len or 0) then
+                for _, gbox in ipairs(group.boxes) do
+                    if gbox.x < other.x + other.w and other.x < gbox.x + gbox.w
+                        and gbox.y < other.y + other.h and other.y < gbox.y + gbox.h then
+                        suppressed = true
+                        break
+                    end
+                end
+            end
+            if suppressed then break end
+        end
+        if not suppressed and (mention_mode ~= "first" or not seen[group.key]) then
             seen[group.key] = true
             for _, box in ipairs(group.boxes) do
                 table.insert(resolved, box)
@@ -1261,7 +1463,7 @@ function M:addEntityToUnderlines(entity, category)
     local new_hits = {}
     for _, pattern in ipairs(patterns) do
         local ok, chunk_hits = pcall(function()
-            return doc:findAllText(pattern, false, 0, 50000, true)
+            return doc:findAllText(pattern, false, 0, 50000, true, 1)
         end)
         if ok and chunk_hits and type(chunk_hits) == "table" then
             for _, hit in ipairs(chunk_hits) do

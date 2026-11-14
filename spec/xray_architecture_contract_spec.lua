@@ -116,7 +116,8 @@ describe("X-Ray Architecture Contract Spec", function()
                 "scanBookForUnits", "saveUnitCache", "loadUnitCache",
                 "clearUnitUnderlines", "clearTileCaches", "findUnitBoxAtPoint",
                 "showUnitTooltip", "mountTapHandler", "_handleUnitTap",
-                "_startUnitScanSubprocess", "_cancelUnitScanChild"
+                "_startUnitScanSubprocess", "_cancelUnitScanChild",
+                "_rebuildUnitPageBuckets"
             }
             for _, m in ipairs(expected_unit_methods) do
                 assert.is_not_nil(xray_unitscanner[m], "Missing method on xray_unitscanner: " .. m)

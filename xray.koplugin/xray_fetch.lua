@@ -109,6 +109,7 @@ function M:fetchSingleWord(text, pos0, pos1)
 
     require("ui/network/manager"):runWhenOnline(function()
         if self.destroyed or not self.ui or not self.ui.document then return end
+        if self.applyLanguageLogic then pcall(function() self:applyLanguageLogic() end) end
 
         if self._active_ai_cancel or (self.ai_helper and self.ai_helper._async_child_pid) then
             self:cancelActiveAIRequest("Previous AI request replaced by single word lookup")
@@ -582,6 +583,10 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         notifyComplete(false, "cancelled")
         return
     end
+    if self.applyLanguageLogic then pcall(function() self:applyLanguageLogic() end) end
+    if self.ui.doc_settings and self.ui.doc_settings.flush then
+        pcall(function() self.ui.doc_settings:flush() end)
+    end
 
     if is_silent then
         local is_low, avail_kb = utils:isLowMemory(30 * 1024)
@@ -622,6 +627,7 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
         self.ai_helper = AIHelper
         self.ai_helper:init(self.path)
     end
+    if self.applyLanguageLogic then pcall(function() self:applyLanguageLogic() end) end
 
     local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
 
@@ -2491,6 +2497,7 @@ function M:fetchAuthorInfo()
         self.ai_helper = AIHelper
         self.ai_helper:init(self.path)
     end
+    if self.applyLanguageLogic then pcall(function() self:applyLanguageLogic() end) end
     if not self.ai_helper:hasApiKey() then
         local ButtonDialog = require("ui/widget/buttondialog")
         local key_dlg
@@ -3016,6 +3023,7 @@ function M:fetchSeriesContext(is_silent, init_wait_dialog, cancel_ref)
     local author = sanitizeMetadata(props.authors)
 
     self:log("XRayPlugin: Series: fetchSeriesContext starting for: title=" .. tostring(title) .. ", author=" .. tostring(author))
+    if self.applyLanguageLogic then pcall(function() self:applyLanguageLogic() end) end
 
     if init_wait_dialog and self.ai_helper then self.ai_helper:setTrapWidget(init_wait_dialog) end
     local series_info = (self.series_manager and self.series_manager.getSeriesInfo and self.series_manager:getSeriesInfo(self.book_data, props, title, author, self.ai_helper))
@@ -4235,6 +4243,10 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         self:log("XRayPlugin: Pre-empting background book-type detection for manual pregeneration.")
         self.ai_helper:cancelAsyncChild()
         self._book_type_detecting = nil
+    end
+    if self.applyLanguageLogic then pcall(function() self:applyLanguageLogic() end) end
+    if self.ui and self.ui.doc_settings and self.ui.doc_settings.flush then
+        pcall(function() self.ui.doc_settings:flush() end)
     end
 
     -- Resolve raw TOC

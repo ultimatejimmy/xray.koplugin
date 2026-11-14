@@ -321,6 +321,90 @@ end
 
 -- Build all possible HTTP request parameters (primary and fallback) for a comprehensive fetch.
 -- Returns: { {url, headers, body, provider, model}, ... } or nil, error_code, error_msg
+local OUTPUT_LANGUAGE_NAMES = {
+    en = "English",
+    de = "German (Deutsch)",
+    fr = "French (Français)",
+    ru = "Russian (Русский)",
+    zh_CN = "Simplified Chinese (简体中文)",
+    zh = "Chinese",
+    ja = "Japanese (日本語)",
+    tr = "Turkish (Türkçe)",
+    pt_br = "Portuguese (Português)",
+    pt = "Portuguese",
+    es = "Spanish (Español)",
+    uk = "Ukrainian (Українська)",
+    hu = "Hungarian (Magyar)",
+    nl = "Dutch (Nederlands)",
+    pl = "Polish (Polski)",
+    id = "Indonesian (Bahasa Indonesia)",
+    ms = "Malay (Bahasa Melayu)",
+    ar = "Arabic (العربية)",
+    it = "Italian (Italiano)",
+    sr = "Serbian (Српски)",
+    sk = "Slovak (Slovenčina)",
+    cs = "Czech (Čeština)",
+    ko = "Korean",
+    no = "Norwegian",
+    nb = "Norwegian",
+    sv = "Swedish",
+    da = "Danish",
+    fi = "Finnish",
+    vi = "Vietnamese",
+    th = "Thai",
+    el = "Greek",
+    he = "Hebrew",
+    hi = "Hindi",
+    ro = "Romanian",
+}
+
+function AIHelper:getEffectiveOutputLanguage()
+    local lang = self.target_book_language
+    if type(lang) == "string" and lang ~= "" and lang ~= "auto" and lang ~= "book" then
+        return lang
+    end
+    lang = self.resolved_language
+    if type(lang) == "string" and lang ~= "" and lang ~= "auto" and lang ~= "book" then
+        return lang
+    end
+    lang = self.current_language
+    if type(lang) == "string" and lang ~= "" and lang ~= "auto" and lang ~= "book" then
+        return lang
+    end
+    return "en"
+end
+
+function AIHelper:getTargetLanguageLabel(code)
+    code = code or self:getEffectiveOutputLanguage()
+    local label = OUTPUT_LANGUAGE_NAMES[code] or OUTPUT_LANGUAGE_NAMES[code:lower()]
+    if not label and code:find("[_-]") then
+        local short_code = code:match("^([^_-]+)")
+        label = short_code and OUTPUT_LANGUAGE_NAMES[short_code:lower()]
+    end
+    return label or tostring(code)
+end
+
+function AIHelper:getTargetLanguageMandate()
+    local code = self:getEffectiveOutputLanguage()
+    local label = self:getTargetLanguageLabel(code)
+    return string.format(
+        "CRITICAL OUTPUT LANGUAGE REQUIREMENT:\n- Write ALL human-readable JSON string values (including descriptions, roles, occupations, genders, biographies, definitions, expansions, categories, timeline events, state-change notes, reasons, and error messages) STRICTLY in %s (%s).\n- Keep JSON object keys, boolean values, and machine enum codes (such as `book_type` and `status` values) exact as specified.",
+        label, code
+    )
+end
+
+function AIHelper:getSystemInstructionText()
+    local base = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
+    local code = self:getEffectiveOutputLanguage()
+    local has_book_or_resolved = (type(self.target_book_language) == "string" and self.target_book_language ~= "")
+        or (type(self.resolved_language) == "string" and self.resolved_language ~= "")
+    if code ~= "en" or has_book_or_resolved then
+        local label = self:getTargetLanguageLabel(code)
+        base = base .. string.format(" Write all human-readable JSON string values strictly in %s (%s).", label, code)
+    end
+    return base
+end
+
 function AIHelper:buildComprehensiveRequest(title, author, context, prompt_override)
     local prompt = prompt_override or self:createPrompt(title, author, context, "comprehensive_xray")
     local primary = self.settings.primary_ai or DEFAULT_AI.primary
@@ -334,7 +418,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
             local resolved_model = self:resolveModel(ai.provider, ai.model)
             if ai.provider == "gemini" then
                 local model = resolved_model or DEFAULT_AI.primary.model
-                local system_instruction_text = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
+                local system_instruction_text = self:getSystemInstructionText()
                 url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent"
                 headers = { ["Content-Type"] = "application/json", ["x-goog-api-key"] = config.api_key }
                 
@@ -405,7 +489,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                     headers["X-Title"] = "KOReader X-Ray"
                 end
                 
-                local system_instruction_text = (self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY.") .. " You MUST output strictly valid JSON, starting with '{'."
+                local system_instruction_text = self:getSystemInstructionText() .. " You MUST output strictly valid JSON, starting with '{'."
                 
                 local claude_messages = {
                     { role = "user", content = prompt }
@@ -432,7 +516,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 local model = resolved_model or "gpt-4o-mini"
                 url = config.endpoint or "https://api.openai.com/v1/chat/completions"
                 headers = { ["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. config.api_key }
-                local system_instruction_text = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
+                local system_instruction_text = self:getSystemInstructionText()
                 local is_openai_reasoning = is_openai_reasoning_model(model)
                 if is_openai_reasoning then
                     system_instruction_text = system_instruction_text .. " You MUST output strictly valid JSON, starting with '{'."
@@ -1775,7 +1859,7 @@ function AIHelper:loadSettings()
             end
             
             -- Only auto-set if it's one of our supported languages
-            local supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, ja=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ar=1, it=1, sr=1, sk=1, cs=1 }
+            local supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, ja=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ms=1, ar=1, it=1, sr=1, sk=1, cs=1 }
             if supported[lang] then
                 settings.language = lang
                 migrated = true
@@ -1783,7 +1867,13 @@ function AIHelper:loadSettings()
         end
     end
 
-    self.current_language = settings.language or "en"
+    self.target_book_language = nil
+    self.resolved_language = nil
+    if settings.language and settings.language ~= "auto" and settings.language ~= "book" then
+        self.current_language = settings.language
+    elseif not self.current_language or self.current_language == "auto" or self.current_language == "book" then
+        self.current_language = "en"
+    end
     
     if settings.gemini_api_key then 
         if settings.gemini_use_ui_key ~= false then
@@ -2193,6 +2283,23 @@ function AIHelper:createPrompt(title, author, context, section_name, targeted_wo
             :gsub("{NUM_TERMS}",        tostring(num_terms))
     end
 
+    local mandate_sections = {
+        comprehensive_xray = true,
+        character_section = true,
+        more_characters = true,
+        more_terms = true,
+        single_word_lookup = true,
+        author_only = true,
+        merge_descriptions = true,
+        series_book_summary = true,
+        local_timeline_summary = true,
+        chapter_delta = true,
+        batch_chapter_delta = true,
+    }
+    if mandate_sections[section_name] then
+        final_prompt = final_prompt .. "\n\n" .. self:getTargetLanguageMandate()
+    end
+
     -- Strip invalid UTF-8 introduced by byte-based truncation of multi-byte
     -- text (Cyrillic, CJK, curly quotes, etc.) before the prompt is JSON-encoded.
     local before_len = #final_prompt
@@ -2312,7 +2419,7 @@ function AIHelper:callClaude(prompt, config, current_model)
     local model = current_model or "claude-sonnet-5"
     self:log("AIHelper: Starting Anthropic Claude request for model: " .. model)
     
-    local system_instruction_text = (self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY.") .. " You MUST output strictly valid JSON, starting with '{'."
+    local system_instruction_text = self:getSystemInstructionText() .. " You MUST output strictly valid JSON, starting with '{'."
     
     local claude_messages = {
         { role = "user", content = prompt }
@@ -2418,7 +2525,7 @@ end
 
 function AIHelper:callGemini(prompt, config, current_model)
     current_model = current_model or DEFAULT_AI.primary.model
-    local system_instruction_text = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
+    local system_instruction_text = self:getSystemInstructionText()
     self:log("AIHelper: Gemini Prompt prepared")
     
     local url = "https://generativelanguage.googleapis.com/v1beta/models/" .. current_model .. ":generateContent"
@@ -2485,7 +2592,7 @@ function AIHelper:callChatGPT(prompt, config, current_model)
     end
 
     self:log("AIHelper: ChatGPT Prompt prepared")
-    local system_instruction_text = self.prompts and self.prompts.system_instruction or "Return valid JSON ONLY."
+    local system_instruction_text = self:getSystemInstructionText()
     local is_openai_reasoning = is_openai_reasoning_model(model)
     if is_openai_reasoning then
         system_instruction_text = system_instruction_text .. " You MUST output strictly valid JSON, starting with '{'."
@@ -2820,6 +2927,7 @@ function AIHelper:findDuplicates(title, author, entities, entity_type_label, rea
         prompt = prompt .. "\n\nNOTE: Entries marked [from: ...] are recurring entities from earlier stories in this collection. Pair one with a current-story entry only if the text clearly refers to the same entity."
     end
     prompt = prompt .. "\n\nNOTE: Possessive or relational entries (e.g., \"Nick\" and \"Nicks Dad\" or \"Nick's Dad\") refer to DISTINCT people and must NEVER be flagged as duplicates."
+    prompt = prompt .. "\n\n" .. self:getTargetLanguageMandate()
 
     prompt = self:sanitize_utf8(prompt)
 
@@ -2851,6 +2959,7 @@ function AIHelper:findDuplicatesAsync(title, author, entities, entity_type_label
         prompt = prompt .. "\n\nNOTE: Entries marked [from: ...] are recurring entities from earlier stories in this collection. Pair one with a current-story entry only if the text clearly refers to the same entity."
     end
     prompt = prompt .. "\n\nNOTE: Possessive or relational entries (e.g., \"Nick\" and \"Nicks Dad\" or \"Nick's Dad\") refer to DISTINCT people and must NEVER be flagged as duplicates."
+    prompt = prompt .. "\n\n" .. self:getTargetLanguageMandate()
 
     prompt = self:sanitize_utf8(prompt)
 
@@ -2929,6 +3038,7 @@ function AIHelper:buildChapterDeltaPrompt(title, author, chapter_title, manifest
         chapter_title or "Current Chapter",
         chapter_text or ""
     )
+    prompt = prompt .. "\n\n" .. self:getTargetLanguageMandate()
     return self:sanitize_utf8(prompt)
 end
 
@@ -2964,6 +3074,7 @@ function AIHelper:buildBatchChapterDeltaPrompt(title, author, batch_chapters, ma
         manifest_text or "None",
         combined_texts
     )
+    prompt = prompt .. "\n\n" .. self:getTargetLanguageMandate()
     return self:sanitize_utf8(prompt)
 end
 

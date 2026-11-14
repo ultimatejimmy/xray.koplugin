@@ -269,4 +269,69 @@ describe("xray_unitscanner async and background execution", function()
         assert.is_false(child_ran)
         assert.is_nil(plugin.unit_xp_matches)
     end)
+
+    describe("Kobo 3-page windowing, scan serialization, and subprocess bypass", function()
+        local Device = require("device")
+        local orig_is_kobo
+
+        before_each(function()
+            orig_is_kobo = Device.isKobo
+        end)
+
+        after_each(function()
+            Device.isKobo = orig_is_kobo
+        end)
+
+        it("restricts _resolveHighlightBoxes to the 3-page window and returns {} immediately when empty", function()
+            plugin.unit_xp_matches = {
+                { start_xp = "xp_p2", end_xp = "xp_p2e", original = "10 cm", converted = "3.94 in", category = "length", page = 2 },
+                { start_xp = "xp_p10", end_xp = "xp_p10e", original = "5 kg", converted = "11 lb", category = "weight", page = 10 },
+            }
+            plugin:_rebuildUnitPageBuckets()
+
+            local box_queries = {}
+            plugin.ui.document.getScreenBoxesFromPositions = function(self_doc, start_xp)
+                table.insert(box_queries, start_xp)
+                return { { x = 10, y = 20, w = 40, h = 16 } }
+            end
+
+            plugin.last_pageno = 3
+            plugin._box_cache_sig = nil
+            plugin:_resolveHighlightBoxes()
+            assert.are.equal(1, #plugin.unit_conversion_boxes)
+            assert.are.equal(1, #box_queries)
+            assert.are.equal("xp_p2", box_queries[1])
+
+            -- Empty 3-page window (pages 19..21) returns {} with zero CREngine calls
+            box_queries = {}
+            plugin.last_pageno = 20
+            plugin._box_cache_sig = nil
+            plugin:_resolveHighlightBoxes()
+            assert.are.equal(0, #plugin.unit_conversion_boxes)
+            assert.are.equal(0, #box_queries)
+        end)
+
+        it("defers scanBookForUnits when entity scan is active and flushes doc_settings before scan", function()
+            plugin._entity_scan_in_progress = true
+            plugin._unit_scan_in_progress = false
+            plugin:scanBookForUnits(true)
+
+            assert.is_false(child_ran)
+            assert.is_false(plugin._unit_scan_in_progress)
+            assert.are.equal(1, plugin._unit_scan_entity_retries)
+
+            local flushed = false
+            plugin._entity_scan_in_progress = false
+            plugin.ui.doc_settings = { flush = function() flushed = true end }
+            plugin:scanBookForUnits(true)
+
+            assert.is_true(flushed)
+            assert.is_true(child_ran)
+        end)
+
+        it("bypasses FFI subprocess on Kobo in xray_unitscanner._getFFIUtil", function()
+            Device.isKobo = function() return true end
+            assert.is_nil(plugin._getFFIUtil())
+        end)
+    end)
 end)

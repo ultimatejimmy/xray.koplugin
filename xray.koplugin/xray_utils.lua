@@ -448,6 +448,7 @@ local ISO639_2 = {
     eng = "en", deu = "de", ger = "de", fra = "fr", fre = "fr", rus = "ru",
     zho = "zh_CN", chi = "zh_CN", jpn = "ja", tur = "tr", por = "pt_br", spa = "es",
     ukr = "uk", hun = "hu", nld = "nl", dut = "nl", pol = "pl", ind = "id",
+    msa = "ms", may = "ms", zsm = "ms",
     ara = "ar", ita = "it", srp = "sr", slk = "sk", slo = "sk", ces = "cs", cze = "cs",
 }
 
@@ -775,6 +776,31 @@ function M:getImageDimensions(file_path)
 
     f:close()
     return nil, nil
+end
+
+function M:getDocumentDomFingerprint(doc)
+    if not doc or type(doc.file) ~= "string" or doc.file == "" then
+        return "nofp"
+    end
+    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+    if not ok_lfs or not lfs then
+        ok_lfs, lfs = pcall(require, "lfs")
+    end
+    if not ok_lfs or not lfs or type(lfs.attributes) ~= "function" then
+        return "nofp"
+    end
+    local ok_attr, attr = pcall(lfs.attributes, doc.file)
+    local size = (ok_attr and type(attr) == "table" and attr.size) or 0
+    local mtime = (ok_attr and type(attr) == "table" and attr.modification) or 0
+    local bionic = "b0"
+    for _, suffix in ipairs({ ".intellireading.state", ".intellireading.orig", ".orig" }) do
+        local ok_s, s_attr = pcall(lfs.attributes, doc.file .. suffix)
+        if ok_s and s_attr ~= nil then
+            bionic = "b1"
+            break
+        end
+    end
+    return string.format("%s:%s:%s", tostring(size), tostring(mtime), bionic)
 end
 
 return M

@@ -253,6 +253,7 @@ function M:showLanguageSelection()
         nl = "Nederlands",
         pl = "Polski",
         id = "Bahasa Indonesia",
+        ms = "Bahasa Melayu",
         ar = "العربية",
         it = "Italiano",
         sr = "Српски",
@@ -290,7 +291,7 @@ function M:resolveLanguage(code)
             supported[c] = 1
         end
     else
-        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, ja=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ar=1, sr=1, sk=1, cs=1 }
+        supported = { en=1, de=1, fr=1, ru=1, zh_CN=1, ja=1, tr=1, pt_br=1, es=1, uk=1, hu=1, nl=1, pl=1, id=1, ms=1, ar=1, it=1, sr=1, sk=1, cs=1 }
     end
     
     if code == "auto" or not code then
@@ -666,9 +667,25 @@ function M:applyLanguageLogic()
         self.loc:setLanguage(resolved)
     end
     
-    if self.ai_helper and (self.ai_helper.current_language ~= resolved or not self.ai_helper.prompts) then
-        self.ai_helper.current_language = resolved
-        self.ai_helper:loadLanguage()
+    if self.ai_helper then
+        local target_book_lang = nil
+        if settings_lang == "book" and self.ui and self.ui.document then
+            local props = self.ui.document:getProps()
+            local raw_lang = props and props.language
+            if type(raw_lang) == "string" and raw_lang ~= "" then
+                local iso = utils.languageFromIso639_2 and utils:languageFromIso639_2(raw_lang)
+                local norm = iso or (utils.normalizeLangCode and utils:normalizeLangCode(raw_lang)) or raw_lang
+                if type(norm) == "string" and norm ~= "" and norm ~= resolved and resolved:sub(1, 2) ~= norm:sub(1, 2) then
+                    target_book_lang = norm
+                end
+            end
+        end
+        self.ai_helper.target_book_language = target_book_lang
+        self.ai_helper.resolved_language = resolved
+        if self.ai_helper.current_language ~= resolved or not self.ai_helper.prompts then
+            self.ai_helper.current_language = resolved
+            self.ai_helper:loadLanguage()
+        end
     end
 end
 
@@ -704,6 +721,7 @@ function M:checkBookLanguageMatch()
         nl = "Nederlands",
         pl = "Polski",
         id = "Bahasa Indonesia",
+        ms = "Bahasa Melayu",
         ar = "العربية",
         it = "Italiano",
         sr = "Српски",

@@ -573,6 +573,7 @@ function XRayPlugin:onReaderReady()
     self:clearPendingBackgroundFetch()
     self._reader_ready = true
     self.unit_xp_matches = nil
+    self.unit_matches_by_page = nil
     self.unit_conversion_boxes = nil
     self.last_settings_state = nil
     self.last_pageno = self:getCurrentPage()
@@ -583,6 +584,11 @@ function XRayPlugin:onReaderReady()
     if self.mountHighlightHandler then pcall(function() self:mountHighlightHandler() end) end
     if self.mountEntityUnderlineOverlay then pcall(function() self:mountEntityUnderlineOverlay() end) end
     if self.mountEntityTapHandler then pcall(function() self:mountEntityTapHandler() end) end
+
+    -- Initialize language before auto-fetch so AI prompts use the resolved language
+    if self.applyLanguageLogic then
+        self:applyLanguageLogic()
+    end
 
     -- Re-evaluate current page now that cache is loaded
     if self.auto_fetch_enabled then
@@ -646,9 +652,6 @@ function XRayPlugin:onReaderReady()
         end
     end)
 
-    -- Initialize language based on logic (auto, book, or manual)
-    self:applyLanguageLogic()
-    
     -- Suggest switching to book language if appropriate (gated)
     local settings_lang = settings.language or "auto"
     if settings_lang ~= "book" then
@@ -1068,6 +1071,9 @@ function XRayPlugin:onDocumentRerendered()
     self.last_pageno = self.getCurrentPage and self:getCurrentPage() or self.last_pageno
     if self._rebuildEntityPageBuckets then
         self:_rebuildEntityPageBuckets()
+    end
+    if self.unit_xp_matches and self._rebuildUnitPageBuckets then
+        self:_rebuildUnitPageBuckets()
     end
     if self.ui and self.ui.view then
         if self.ui.view.dialog then

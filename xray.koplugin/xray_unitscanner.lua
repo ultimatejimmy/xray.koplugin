@@ -56,8 +56,8 @@ end
 local function escape_pattern(alias)
     -- Escape for the regex engine, not Lua patterns
     local esc = alias:gsub("([%.%+%?%*%^%$%(%)%[%]{}|\\])", "\\%1")
-    -- Replace spaces with \s+ to match any whitespace
-    esc = esc:gsub("%s+", "\\s+")
+    -- Replace spaces with (?:\s|·)+ to match standard whitespace and KOReader Guided Dots
+    esc = esc:gsub("%s+", "(?:\\s|\194\183)+")
     return esc
 end
 
@@ -71,6 +71,8 @@ local UNIT_SCAN_SLICE = 0.03        -- 30ms max slice for cooperative yielding
 
 local function _getFFIUtil()
     if _G.XRAY_DISABLE_UNIT_SUBPROCESS then return nil end
+    local ok_dev, Device = pcall(require, "device")
+    if ok_dev and Device and Device.isKobo and Device:isKobo() then return nil end
     local ok, ffiutil = pcall(require, "ffi/util")
     if not ok or type(ffiutil) ~= "table" then return nil end
     if type(ffiutil.runInSubProcess) ~= "function"
@@ -82,6 +84,7 @@ local function _getFFIUtil()
     end
     return ffiutil
 end
+M._getFFIUtil = _getFFIUtil
 M._getFFIUtil = _getFFIUtil
 
 -- Returns current page number safely
@@ -118,6 +121,7 @@ end
 function M:clearUnitUnderlines()
     self.unit_conversion_boxes = nil
     self.unit_xp_matches = nil
+    self.unit_matches_by_page = nil
     self:clearTileCaches()
     if self.ui and self.ui.view and self.ui.view.view_modules then
         self.ui.view.view_modules["xray_unit_underlines"] = nil
@@ -186,6 +190,33 @@ local function _getCacheSig(self)
     return table.concat({ tostring(page), tostring(pos), tostring(hash), tostring(sw), tostring(sh) }, "|")
 end
 
+function M:_rebuildUnitPageBuckets()
+    local buckets = {}
+    if self.unit_xp_matches then
+        local doc = self.ui and self.ui.document
+        local can_get_page = doc and type(doc.getPageFromXPointer) == "function"
+        for _, match in ipairs(self.unit_xp_matches) do
+            local p = tonumber(match.page)
+            if not p and can_get_page and match.start_xp then
+                local ok_p, xp_page = pcall(doc.getPageFromXPointer, doc, match.start_xp)
+                if ok_p and type(xp_page) == "number" and xp_page > 0 then
+                    p = xp_page
+                    match.page = xp_page
+                end
+            end
+            if p then
+                local bucket = buckets[p]
+                if not bucket then
+                    bucket = {}
+                    buckets[p] = bucket
+                end
+                table.insert(bucket, match)
+            end
+        end
+    end
+    self.unit_matches_by_page = buckets
+end
+
 function M:_resolveHighlightBoxes()
     if self.destroyed or not self.ui or not self.ui.document then
         self.unit_conversion_boxes = {}
@@ -204,9 +235,38 @@ function M:_resolveHighlightBoxes()
         return
     end
 
+    if not self.unit_matches_by_page then
+        self:_rebuildUnitPageBuckets()
+    end
+
+    local candidates = {}
+    local by_page = self.unit_matches_by_page or {}
+    local has_buckets = next(by_page) ~= nil
+    local has_xp_page_api = type(doc.getPageFromXPointer) == "function"
+
+    if has_buckets or has_xp_page_api then
+        local cur_page = _getCurrentPage(self)
+        if type(cur_page) == "number" and cur_page > 0 then
+            for p = cur_page - 1, cur_page + 1 do
+                local bucket = by_page[p]
+                if bucket then
+                    for _, match in ipairs(bucket) do
+                        table.insert(candidates, match)
+                    end
+                end
+            end
+        end
+        if #candidates == 0 then
+            self.unit_conversion_boxes = {}
+            log("Resolved 0 visual conversion boxes on screen (empty 3-page window)")
+            return
+        end
+    else
+        candidates = self.unit_xp_matches
+    end
     
     local resolved = {}
-    for _, match in ipairs(self.unit_xp_matches) do
+    for _, match in ipairs(candidates) do
         local ok, boxes = pcall(doc.getScreenBoxesFromPositions, doc, match.start_xp, match.end_xp, true)
         if ok and boxes then
             for _, box in ipairs(boxes) do
@@ -648,15 +708,17 @@ local function _getSettingsSignature(self, settings)
     local dir = _getResolvedDirection(self)
     local lang = _getEffectiveLang(self)
     local rule_fp = xray_units.getRuleFingerprint and xray_units.getRuleFingerprint(dir, enabled_cats, lang, scan_written) or "u1"
+    local dom_fp = xray_utils.getDocumentDomFingerprint and xray_utils:getDocumentDomFingerprint(self.ui and self.ui.document) or "nofp"
     local cat_sig = table.concat({
         tostring(cat_l), tostring(cat_w), tostring(cat_t),
         tostring(cat_v), tostring(cat_s), tostring(cat_a),
     }, "|")
     return table.concat({
-        "u1:" .. rule_fp,
+        "u2:" .. rule_fp,
         cat_sig,
         (scan_written and "w1" or "w0"),
         lang,
+        dom_fp,
     }, "|")
 end
 
@@ -715,20 +777,25 @@ function M:loadUnitCache(resolved_dir)
     local matches = {}
     for line in f:lines() do
         line = line:gsub("\r", "")
-        local start_xp, end_xp, original, converted, category = line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$")
+        local start_xp, end_xp, original, converted, category, page_str = line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$")
+        if not start_xp then
+            start_xp, end_xp, original, converted, category = line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$")
+        end
         if start_xp then
             table.insert(matches, {
                 start_xp = start_xp,
                 end_xp = end_xp,
                 original = original,
                 converted = converted,
-                category = category ~= "" and category or nil
+                category = category ~= "" and category or nil,
+                page = tonumber(page_str),
             })
         end
     end
     f:close()
     
     self.unit_xp_matches = matches
+    self:_rebuildUnitPageBuckets()
     self._box_cache_sig = nil
     log("loadUnitCache: Successfully loaded " .. tostring(#self.unit_xp_matches) .. " matches from cache")
     if self.ui and self.ui.view then
@@ -780,12 +847,22 @@ function M:saveUnitCache(resolved_dir, matches, suffix)
         for _, m in ipairs(match_list) do
             local original_clean = (m.original or ""):gsub("\r", " "):gsub("\n", " ")
             local converted_clean = (m.converted or ""):gsub("\r", " "):gsub("\n", " ")
-            f:write(string.format("%s\t%s\t%s\t%s\t%s\n",
-                tostring(m.start_xp or ""),
-                tostring(m.end_xp or ""),
-                original_clean,
-                converted_clean,
-                m.category or ""))
+            if m.page ~= nil then
+                f:write(string.format("%s\t%s\t%s\t%s\t%s\t%s\n",
+                    tostring(m.start_xp or ""),
+                    tostring(m.end_xp or ""),
+                    original_clean,
+                    converted_clean,
+                    m.category or "",
+                    tostring(m.page)))
+            else
+                f:write(string.format("%s\t%s\t%s\t%s\t%s\n",
+                    tostring(m.start_xp or ""),
+                    tostring(m.end_xp or ""),
+                    original_clean,
+                    converted_clean,
+                    m.category or ""))
+            end
         end
         f:close()
 
@@ -835,8 +912,8 @@ function M:_computeUnitMatches(settings, opts)
     end
 
     local slice_start = os.clock()
-    local function maybe_yield()
-        if opts and opts.yield_fn and (os.clock() - slice_start) > UNIT_SCAN_SLICE then
+    local function maybe_yield(force_yield)
+        if opts and opts.yield_fn and (force_yield or (os.clock() - slice_start) > UNIT_SCAN_SLICE) then
             opts.yield_fn()
             slice_start = os.clock()
         end
@@ -857,7 +934,9 @@ function M:_computeUnitMatches(settings, opts)
         return #a > #b
     end)
 
-    -- Build pat_digit
+    local CHUNK_REGEX_LEN = 800
+
+    -- Build pat_digit chunks (bounded to avoid PCRE catastrophic backtracking/freezes on Kobo)
     local digit_alnum = {}
     local digit_symbol = {}
     for _, alias in ipairs(sorted_aliases) do
@@ -869,18 +948,35 @@ function M:_computeUnitMatches(settings, opts)
         end
     end
 
-    local digit_parts = {}
-    if #digit_alnum > 0 then
-        table.insert(digit_parts, "(" .. table.concat(digit_alnum, "|") .. ")\\b")
+    local digit_patterns = {}
+    local cur_alnum, alnum_len = {}, 0
+    for _, esc in ipairs(digit_alnum) do
+        if alnum_len > 0 and alnum_len + #esc + 1 > CHUNK_REGEX_LEN then
+            table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_alnum, "|") .. ")\\b))")
+            cur_alnum, alnum_len = {}, 0
+        end
+        table.insert(cur_alnum, esc)
+        alnum_len = alnum_len + #esc + 1
     end
-    if #digit_symbol > 0 then
-        table.insert(digit_parts, "(" .. table.concat(digit_symbol, "|") .. ")")
+    if #cur_alnum > 0 then
+        table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_alnum, "|") .. ")\\b))")
     end
-    local digit_units = "(" .. table.concat(digit_parts, "|") .. ")"
-    local pat_digit = "(([0-9]+[0-9\\.,]*|\\.[0-9]+)\\s*" .. digit_units .. ")"
+
+    local cur_sym, sym_len = {}, 0
+    for _, esc in ipairs(digit_symbol) do
+        if sym_len > 0 and sym_len + #esc + 1 > CHUNK_REGEX_LEN then
+            table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_sym, "|") .. ")))")
+            cur_sym, sym_len = {}, 0
+        end
+        table.insert(cur_sym, esc)
+        sym_len = sym_len + #esc + 1
+    end
+    if #cur_sym > 0 then
+        table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_sym, "|") .. ")))")
+    end
 
     -- Build word patterns only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
-    local MAX_REGEX_LEN = 4000
+    local MAX_REGEX_LEN = CHUNK_REGEX_LEN
     local word_chunks = {}
     local split_on_error = false
     local scan_written = settings.unit_scan_written_numbers
@@ -938,11 +1034,11 @@ function M:_computeUnitMatches(settings, opts)
             end
         end
 
-        if cyrillic_ui then
+        if #word_items > 0 then
             split_on_error = true
             local cur, len = {}, 0
             for _, item in ipairs(word_items) do
-                if len > 0 and len + #item.esc + 1 > MAX_REGEX_LEN - 100 then
+                if len > 0 and len + #item.esc + 1 > MAX_REGEX_LEN then
                     table.insert(word_chunks, cur)
                     cur, len = {}, 0
                 end
@@ -952,36 +1048,35 @@ function M:_computeUnitMatches(settings, opts)
             if #cur > 0 then
                 table.insert(word_chunks, cur)
             end
-        elseif #word_items > 0 then
-            local pat_word = build_word_pattern(word_items)
-            if #pat_word > MAX_REGEX_LEN then
-                log("scanBookForUnits: word pattern too large (" .. #pat_word .. " chars), skipping word pass safety check")
-            else
-                table.insert(word_chunks, word_items)
-            end
         end
     end
 
-    log("scanBookForUnits: pat_digit=[" .. tostring(pat_digit) .. "]")
-    log("scanBookForUnits: checkpoint A — pre findAllText digit")
+    log("scanBookForUnits: checkpoint A — pre findAllText digit, " .. #digit_patterns .. " chunk(s)")
     collectgarbage("collect")
     if opts and opts.on_progress then opts.on_progress(15) end
     local doc = self.ui.document
     local t0 = os.clock()
-    local ok1, hits1 = pcall(function()
-        return doc:findAllText(pat_digit, true, 5, 5000, true)
-    end)
-    local t1 = os.clock()
-    log(string.format("scanBookForUnits: checkpoint B — post findAllText digit (took %.2fs), %d hits", t1 - t0, ok1 and hits1 and #hits1 or 0))
-    if opts and opts.on_progress then opts.on_progress(55) end
-    maybe_yield()
-
-    if not ok1 then
-        log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(hits1))
-        hits1 = {}
-    elseif not hits1 then
-        hits1 = {}
+    local hits1 = {}
+    for idx, pat_digit in ipairs(digit_patterns) do
+        log("scanBookForUnits: pat_digit chunk " .. idx .. "/" .. #digit_patterns .. "=[" .. tostring(pat_digit) .. "]")
+        local ok1, res1 = pcall(function()
+            return doc:findAllText(pat_digit, true, 5, 5000, true, 1)
+        end)
+        if not ok1 then
+            log("scanBookForUnits: digit findAllText pcall failed: " .. tostring(res1))
+        elseif type(res1) == "table" then
+            for _, h in ipairs(res1) do
+                table.insert(hits1, h)
+            end
+        end
+        if opts and opts.on_progress then
+            opts.on_progress(15 + math.floor(40 * idx / math.max(1, #digit_patterns)))
+        end
+        maybe_yield(true)
     end
+    local t1 = os.clock()
+    log(string.format("scanBookForUnits: checkpoint B — post findAllText digit (took %.2fs), %d hits", t1 - t0, #hits1))
+    if opts and opts.on_progress then opts.on_progress(55) end
 
     local function regex_error()
         if not doc.getAndClearRegexSearchError then return 0 end
@@ -996,7 +1091,7 @@ function M:_computeUnitMatches(settings, opts)
         regex_error()
         local tp = os.clock()
         local ok, res = pcall(function()
-            return doc:findAllText(pat_word, true, 5, 5000, true)
+            return doc:findAllText(pat_word, true, 5, 5000, true, 1)
         end)
         local err = regex_error()
         log(string.format("scanBookForUnits: word chunk (%d aliases, %d chars, depth %d) took %.2fs, %d hits, regex_error=%d",
@@ -1004,7 +1099,7 @@ function M:_computeUnitMatches(settings, opts)
         if not ok then
             log("scanBookForUnits: word findAllText pcall failed (non-fatal): " .. tostring(res))
         end
-        maybe_yield()
+        maybe_yield(true)
         if split_on_error and (err ~= 0 or not ok) and #items > 1 then
             local mid = math.floor(#items / 2)
             local left, right = {}, {}
@@ -1075,7 +1170,7 @@ function M:_computeUnitMatches(settings, opts)
 
     local suffix_map = {}
     for _, alias in ipairs(sorted_aliases) do
-        local alias_lower = alias:gsub("\194\160", " "):gsub("%s+", " ")
+        local alias_lower = alias:gsub("\194\160", " "):gsub("\194\183", " "):gsub("%s+", " ")
         suffix_map[alias_lower] = true
     end
 
@@ -1103,7 +1198,8 @@ function M:_computeUnitMatches(settings, opts)
         local is_vague = false
         
         local matched_text = (hit.matched_text or "")
-        local lower_matched = xray_units.utf8Lower(matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
+        local matched_norm = matched_text:gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("\194\183", " "):gsub("%s+", " ")
+        local lower_matched = xray_units.utf8Lower(matched_norm)
         
         local matched_alias = nil
         for i = 1, #lower_matched do
@@ -1115,13 +1211,13 @@ function M:_computeUnitMatches(settings, opts)
         end
         matched_alias = matched_alias or lower_matched
 
-        local num_part = matched_text:sub(1, #matched_text - #matched_alias)
+        local num_part = matched_norm:sub(1, #matched_norm - #matched_alias)
 
         local inside_word = (matched_alias:find("[\208-\211][\128-\191]$") and continues_word(hit["end"]))
             or (num_part == "" and matched_alias:find("^[\208-\211]") and starts_mid_word(hit.start))
 
         local p = (hit.prev_text or "") .. num_part
-        p = p:gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+$", "")
+        p = p:gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("\194\183", " "):gsub("%s+$", "")
         for _, sep in ipairs(RANGE_SEPS) do
             p = p:gsub(sep, "-")
         end
@@ -1320,7 +1416,7 @@ function M:_computeUnitMatches(settings, opts)
                 local valid = false
                 local original_text
                 if ok_t and real_text then
-                    original_text = real_text:gsub("^%s+", ""):gsub("%s+$", "")
+                    original_text = real_text:gsub("\194\183", " "):gsub("^%s+", ""):gsub("%s+$", "")
                     
                     local has_newline = original_text:find("[\r\n]")
                     if not has_newline or not is_ambig[matched_alias] then
@@ -1329,9 +1425,9 @@ function M:_computeUnitMatches(settings, opts)
                         end
                         valid = true
                         if not is_range then
-                            local lower_orig = xray_units.utf8Lower(original_text:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
-                            local lower_num = xray_units.utf8Lower(num_str:gsub("^%s+", ""):gsub("%s+$", "")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " ")
-                            local lower_match = xray_units.utf8Lower(hit.matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+                            local lower_orig = xray_units.utf8Lower(original_text:gsub("−", "-"):gsub("–", "-"):gsub("—", "-")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("\194\183", " "):gsub("%s+", " ")
+                            local lower_num = xray_units.utf8Lower(num_str:gsub("^%s+", ""):gsub("%s+$", "")):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("\194\183", " "):gsub("%s+", " ")
+                            local lower_match = xray_units.utf8Lower(hit.matched_text):gsub("\194\160", " "):gsub("\226\128\175", " "):gsub("\194\183", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
                             
                             if lower_orig ~= lower_match then
                                 if lower_orig:sub(1, #lower_num) == lower_num then
@@ -1362,12 +1458,20 @@ function M:_computeUnitMatches(settings, opts)
                 end
                 
                 if valid then
+                    local match_page = nil
+                    if doc and type(doc.getPageFromXPointer) == "function" and span_start then
+                        local ok_p, xp_page = pcall(doc.getPageFromXPointer, doc, span_start)
+                        if ok_p and type(xp_page) == "number" and xp_page > 0 then
+                            match_page = xp_page
+                        end
+                    end
                     table.insert(xp_matches, {
                         start_xp = span_start,
                         ["end_xp"] = hit["end"],
                         original = original_text,
                         converted = conv_str,
-                        category = u.category
+                        category = u.category,
+                        page = match_page,
                     })
                 end
             end
@@ -1559,6 +1663,7 @@ function M:_runUnitScanInProcess(resolved_dir, settings, manual)
         end
         if matches then
             self.unit_xp_matches = matches
+            self:_rebuildUnitPageBuckets()
             self:saveUnitCache(resolved_dir, matches)
             self:_onUnitScanFinished(resolved_dir, true, manual)
         else
@@ -1685,6 +1790,22 @@ function M:scanBookForUnits(force)
     end
     self._unit_scan_fetch_retries = 0
 
+    -- Serialize heavy scans with entity scanner so CREngine/memory aren't contended
+    if self._entity_scan_in_progress or (self._entity_scan_pid and self._entity_scan_pid > 0) then
+        self._unit_scan_entity_retries = (self._unit_scan_entity_retries or 0) + 1
+        if self._unit_scan_entity_retries <= UNIT_SCAN_FETCH_MAX_RETRIES then
+            log("scanBookForUnits: active entity scan detected; deferring scan (retry " .. tostring(self._unit_scan_entity_retries) .. ")")
+            UIManager:scheduleIn(5, function()
+                if self.destroyed then return end
+                self:scanBookForUnits(force)
+            end)
+        else
+            log("scanBookForUnits: reached max retries waiting for entity scan to finish")
+        end
+        return
+    end
+    self._unit_scan_entity_retries = 0
+
     if self._unit_scan_in_progress then
         if force and self._unit_scan_pid then
             self:_cancelUnitScanChild("restart for manual rescan")
@@ -1692,6 +1813,10 @@ function M:scanBookForUnits(force)
             log("scanBookForUnits: scan already in progress, skipping duplicate request")
             return
         end
+    end
+
+    if self.ui and self.ui.doc_settings and type(self.ui.doc_settings.flush) == "function" then
+        pcall(self.ui.doc_settings.flush, self.ui.doc_settings)
     end
 
     self._unit_scan_in_progress = true

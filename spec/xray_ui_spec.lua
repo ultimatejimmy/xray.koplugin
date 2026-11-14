@@ -1092,7 +1092,8 @@ describe("xray_ui", function()
             local searched = {}
             for _, pat in ipairs(word_patterns) do
                 assert.is_true(#pat < 4000)
-                for alias in pat:gmatch("[^|()]+") do
+                local norm_pat = pat:gsub("%(%?:\\s|\194\183%)%+", "\\s+")
+                for alias in norm_pat:gmatch("[^|()]+") do
                     searched[alias] = true
                 end
             end
@@ -1828,9 +1829,9 @@ describe("xray_ui", function()
             end
             f:close()
 
-            -- Signature version u1 + rule fingerprint + settings categories + 2 entries
+            -- Signature version u2 + rule fingerprint + settings categories + 2 entries
             assert.are.equal(3, #lines)
-            assert.is_true(lines[1]:find("^u1:") ~= nil)
+            assert.is_true(lines[1]:find("^u[12]:") ~= nil)
             assert.are.equal("xp_1\txp_2\t10 cm\t3.94 inches\tlength", lines[2])
             assert.are.equal("xp_3\txp_4\t100 kg\t220.46  lb\tweight", lines[3])
 
