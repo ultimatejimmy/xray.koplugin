@@ -359,6 +359,48 @@ describe("xray_fetch", function()
     end)
 
     describe("finalizeXRayData", function()
+        it("preserves nameless cached terms while merging named terms", function()
+            local nameless = { definition = "Cached term without a name" }
+            plugin.terms = {
+                nameless,
+                { name = "Alchemy", definition = "Old definition" },
+            }
+            local new_data = {
+                terms = { { name = "alchemy", definition = "Updated definition" } },
+            }
+
+            plugin:finalizeXRayData(new_data, "Test Title", "Test Author", "", true, true, 10)
+
+            assert.are.equal(2, #plugin.book_data.terms)
+            assert.are.equal(nameless, plugin.book_data.terms[1])
+            assert.are.equal("Updated definition", plugin.book_data.terms[2].definition)
+        end)
+
+        it("preserves nameless incoming terms without crashing", function()
+            local nameless = { definition = "Incoming term without a name" }
+            plugin.terms = { { name = "Alchemy", definition = "Old definition" } }
+            local new_data = { terms = { nameless } }
+
+            plugin:finalizeXRayData(new_data, "Test Title", "Test Author", "", true, true, 10)
+
+            assert.are.equal(2, #plugin.book_data.terms)
+            assert.are.equal("Old definition", plugin.book_data.terms[1].definition)
+            assert.are.equal(nameless, plugin.book_data.terms[2])
+        end)
+
+        it("keeps nameless cached and incoming terms separate", function()
+            local cached = { definition = "Cached term without a name" }
+            local incoming = { definition = "Incoming term without a name" }
+            plugin.terms = { cached }
+            local new_data = { terms = { incoming } }
+
+            plugin:finalizeXRayData(new_data, "Test Title", "Test Author", "", true, true, 10)
+
+            assert.are.equal(2, #plugin.book_data.terms)
+            assert.are.equal(cached, plugin.book_data.terms[1])
+            assert.are.equal(incoming, plugin.book_data.terms[2])
+        end)
+
         it("merges new characters correctly in update mode", function()
             plugin.characters = {
                 { name = "Alice", description = "Old description" }
