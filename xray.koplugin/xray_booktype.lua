@@ -26,7 +26,7 @@ function M:detectBookTypeHeuristic()
         return "manga", true -- archive format for comics/manga: highly confident
     end
 
-    local props = self.ui.document:getProps() or {}
+    local props = (self.ui.document.getProps and self.ui.document:getProps()) or {}
     local subjects = props.subject or props.Subject or ""
     local title = (props.title or ""):lower()
     local filename = (book_path:match("([^/\\]+)$") or ""):lower()
@@ -230,7 +230,8 @@ function M:triggerBookTypeDetection()
             local author = props.authors or "Unknown"
             local series = props.series or props.Series or "None"
             local description = props.subject or props.Subject or "None"
-            local pid = self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
+            local pid = self.ai_helper and self.ai_helper.detectBookTypeAsync and
+            self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
             if pid then
                 local function pollResult()
                     if self.destroyed or not self.ui or not self.ui.document then
@@ -295,7 +296,8 @@ function M:triggerBookTypeDetection()
         local author = props.authors or "Unknown"
         local series = props.series or props.Series or "None"
         local description = props.subject or props.Subject or "None"
-        local pid = self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
+        local pid = self.ai_helper and self.ai_helper.detectBookTypeAsync and
+            self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
         if pid then
             local function pollResult()
                 if self.destroyed or not self.ui or not self.ui.document then

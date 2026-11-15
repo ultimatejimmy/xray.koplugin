@@ -117,8 +117,11 @@ function Run-Workflow {
     }
     Write-Host " SUCCESS" -ForegroundColor Green
 
-    # 4. Restart KOReader
+    # 4. Restart KOReader (SIGTERM first so CREngine saves .cr3 rendering cache cleanly)
     Write-Host "Restarting KOReader..." -ForegroundColor Cyan
+    wsl pkill -f "reader.lua" 2>$null
+    wsl pkill -f "koreader" 2>$null
+    Start-Sleep -Seconds 2
     wsl pkill -9 -f "reader.lua" 2>$null
     wsl pkill -9 -f "koreader" 2>$null
     Start-Sleep -Seconds 1

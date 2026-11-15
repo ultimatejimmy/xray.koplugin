@@ -1361,15 +1361,15 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         -- Merge characters
         local match_char = function(existing_char, new_char)
             if not match_story(existing_char, new_char) then return false end
-            local ex_name = existing_char.name and existing_char.name:lower() or ""
-            local new_name = new_char.name and new_char.name:lower() or ""
+            local ex_name = type(existing_char.name) == "string" and existing_char.name:lower() or ""
+            local new_name = type(new_char.name) == "string" and new_char.name:lower() or ""
             if ex_name ~= "" and ex_name == new_name then return true end
-            if existing_char.aliases and type(existing_char.aliases) == "table" then
+            if new_name ~= "" and existing_char.aliases and type(existing_char.aliases) == "table" then
                 for _, a in ipairs(existing_char.aliases) do
                     if type(a) == "string" and a:lower() == new_name then return true end
                 end
             end
-            if new_char.aliases and type(new_char.aliases) == "table" then
+            if ex_name ~= "" and new_char.aliases and type(new_char.aliases) == "table" then
                 for _, a in ipairs(new_char.aliases) do
                     if type(a) == "string" and a:lower() == ex_name then return true end
                 end
@@ -1385,9 +1385,11 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
                     if new_char.aliases and type(new_char.aliases) == "table" then
                         existing_char.aliases = existing_char.aliases or {}
                         local seen_a = {}
-                        for _, a in ipairs(existing_char.aliases) do seen_a[a:lower()] = true end
+                        for _, a in ipairs(existing_char.aliases) do
+                            if type(a) == "string" then seen_a[a:lower()] = true end
+                        end
                         for _, a in ipairs(new_char.aliases) do
-                            if a and a ~= "" and not seen_a[a:lower()] then
+                            if type(a) == "string" and a ~= "" and not seen_a[a:lower()] then
                                 table.insert(existing_char.aliases, a)
                                 seen_a[a:lower()] = true
                             end
@@ -1488,7 +1490,10 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, new_fig in ipairs(final_book_data.historical_figures or {}) do
             local found = false
             for _, existing_fig in ipairs(self.historical_figures or {}) do
-                if existing_fig.name:lower() == new_fig.name:lower() and match_story(existing_fig, new_fig) then
+                if type(existing_fig.name) == "string"
+                    and type(new_fig.name) == "string"
+                    and existing_fig.name:lower() == new_fig.name:lower()
+                    and match_story(existing_fig, new_fig) then
                     if new_fig.biography and new_fig.biography ~= "" then
                         existing_fig.biography = new_fig.biography
                         
@@ -1539,7 +1544,10 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, new_loc in ipairs(final_book_data.locations or {}) do
             local found = false
             for _, existing_loc in ipairs(self.locations or {}) do
-                if existing_loc.name:lower() == new_loc.name:lower() and match_story(existing_loc, new_loc) then
+                if type(existing_loc.name) == "string"
+                    and type(new_loc.name) == "string"
+                    and existing_loc.name:lower() == new_loc.name:lower()
+                    and match_story(existing_loc, new_loc) then
                     if new_loc.description and new_loc.description ~= "" then
                         local clean_desc = self:updateEntityDescPreservingPrior(existing_loc, new_loc.description, "description")
                         

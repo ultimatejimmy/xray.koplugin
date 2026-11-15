@@ -343,6 +343,7 @@ function M:getSubMenuItems()
                         end,
                         keep_menu_open = true,
                         callback = function()
+                            if self.closeAllMenus then self:closeAllMenus() end
                             if self.scanBookForUnits then self:scanBookForUnits(true) end
                         end,
                         separator = true,

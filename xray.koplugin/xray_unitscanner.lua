@@ -56,8 +56,8 @@ end
 local function escape_pattern(alias)
     -- Escape for the regex engine, not Lua patterns
     local esc = alias:gsub("([%.%+%?%*%^%$%(%)%[%]{}|\\])", "\\%1")
-    -- Replace spaces with (?:\s|·)+ to match standard whitespace and KOReader Guided Dots
-    esc = esc:gsub("%s+", "(?:\\s|\194\183)+")
+    -- Replace spaces with [\s·]+ to match standard whitespace and KOReader Guided Dots without SRELL alternation groups
+    esc = esc:gsub("%s+", "[\\s\194\183]+")
     return esc
 end
 
@@ -65,8 +65,8 @@ local M = {}
 
 local UNIT_SCAN_POLL_INTERVAL = 0.1 -- 100ms for responsive progress & cancel
 local UNIT_SCAN_TIMEOUT = 300       -- 5 minutes watchdog
-local UNIT_SCAN_FETCH_RETRY_DELAY = 15 -- defer if AI fetch active
-local UNIT_SCAN_FETCH_MAX_RETRIES = 20
+local UNIT_SCAN_FETCH_RETRY_DELAY = 3 -- defer if AI fetch active
+local UNIT_SCAN_FETCH_MAX_RETRIES = 40
 local UNIT_SCAN_SLICE = 0.03        -- 30ms max slice for cooperative yielding
 
 local function _getFFIUtil()
@@ -122,10 +122,9 @@ function M:clearUnitUnderlines()
     self.unit_conversion_boxes = nil
     self.unit_xp_matches = nil
     self.unit_matches_by_page = nil
+    self._box_cache_sig = nil
+    self._unit_cache_load_attempted = nil
     self:clearTileCaches()
-    if self.ui and self.ui.view and self.ui.view.view_modules then
-        self.ui.view.view_modules["xray_unit_underlines"] = nil
-    end
     if self.ui and self.ui.view and self.ui.view.dialog then
         UIManager:setDirty(self.ui.view.dialog, "ui")
     end
@@ -183,7 +182,7 @@ local function _getCacheSig(self)
     end
     local hash = ""
     if doc.getDocumentRenderingHash then
-        pcall(function() hash = doc:getDocumentRenderingHash() end)
+        pcall(function() hash = doc:getDocumentRenderingHash(true) end)
     end
     local sw = Screen:getWidth()
     local sh = Screen:getHeight()
@@ -596,6 +595,14 @@ function M:_drawUnitUnderlines(bb)
         end
     end
 
+    if not self.unit_xp_matches and not self._unit_scan_in_progress and not self._unit_cache_load_attempted then
+        local settings = self.ai_helper and self.ai_helper.settings or {}
+        if settings.unit_converter_enabled ~= false and settings.unit_underline_enabled ~= false then
+            self._unit_cache_load_attempted = true
+            self:loadUnitCache()
+        end
+    end
+
     self:_resolveHighlightBoxes()
     if not self.unit_conversion_boxes or #self.unit_conversion_boxes == 0 then return end
     
@@ -667,7 +674,7 @@ local function _getResolvedDirection(self)
     local settings = self.ai_helper and self.ai_helper.settings or {}
     local direction = settings.unit_conversion_direction or "auto"
     if direction == "auto" then
-        local lang = self.loc and self.loc:getLanguage() or "en"
+        local lang = self.loc and self.loc.getLanguage and self.loc:getLanguage() or "en"
         direction = xray_units.getDefaultDirection(lang)
     end
     return direction
@@ -689,7 +696,7 @@ local function _getEffectiveLang(self)
             return tostring(props.language):lower():gsub("_", "-"):match("^[a-z]+") or "en"
         end
     end
-    local ui_lang = self.loc and self.loc:getLanguage() or "en"
+    local ui_lang = self.loc and self.loc.getLanguage and self.loc:getLanguage() or "en"
     return tostring(ui_lang):lower():gsub("_", "-"):match("^[a-z]+") or "en"
 end
 
@@ -714,7 +721,7 @@ local function _getSettingsSignature(self, settings)
         tostring(cat_v), tostring(cat_s), tostring(cat_a),
     }, "|")
     return table.concat({
-        "u2:" .. rule_fp,
+        "u3:" .. rule_fp,
         cat_sig,
         (scan_written and "w1" or "w0"),
         lang,
@@ -952,27 +959,27 @@ function M:_computeUnitMatches(settings, opts)
     local cur_alnum, alnum_len = {}, 0
     for _, esc in ipairs(digit_alnum) do
         if alnum_len > 0 and alnum_len + #esc + 1 > CHUNK_REGEX_LEN then
-            table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_alnum, "|") .. ")\\b))")
+            table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)[\\s\194\183]*((" .. table.concat(cur_alnum, "|") .. ")\\b))")
             cur_alnum, alnum_len = {}, 0
         end
         table.insert(cur_alnum, esc)
         alnum_len = alnum_len + #esc + 1
     end
     if #cur_alnum > 0 then
-        table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_alnum, "|") .. ")\\b))")
+        table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)[\\s\194\183]*((" .. table.concat(cur_alnum, "|") .. ")\\b))")
     end
 
     local cur_sym, sym_len = {}, 0
     for _, esc in ipairs(digit_symbol) do
         if sym_len > 0 and sym_len + #esc + 1 > CHUNK_REGEX_LEN then
-            table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_sym, "|") .. ")))")
+            table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)[\\s\194\183]*((" .. table.concat(cur_sym, "|") .. ")))")
             cur_sym, sym_len = {}, 0
         end
         table.insert(cur_sym, esc)
         sym_len = sym_len + #esc + 1
     end
     if #cur_sym > 0 then
-        table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)(?:\\s|\194\183)*((" .. table.concat(cur_sym, "|") .. ")))")
+        table.insert(digit_patterns, "(([0-9]+[0-9\\.,]*|\\.[0-9]+)[\\s\194\183]*((" .. table.concat(cur_sym, "|") .. ")))")
     end
 
     -- Build word patterns only if unit_scan_written_numbers is enabled (defaulting to enabled on high power, disabled on low power devices)
@@ -1488,16 +1495,28 @@ function M:_computeUnitMatches(settings, opts)
     return xp_matches
 end
 
+local function _closeUnitScanDialogSafely(self, report_done)
+    local dialog = self._unit_scan_dialog
+    self._unit_scan_dialog = nil
+    self.active_unit_scan_dialog = nil
+    if not dialog then return end
+    -- Clear dismiss_callback before programmatic close so KOReader's
+    -- ProgressbarDialog:onCloseWidget() does not treat completion as user cancel.
+    dialog.dismiss_callback = nil
+    pcall(function()
+        if report_done and dialog.reportProgress then
+            dialog:reportProgress(100)
+        end
+        dialog:close()
+    end)
+end
+
 function M:_cancelUnitScanChild(reason)
     if self._unit_scan_poll_fn then
         UIManager:unschedule(self._unit_scan_poll_fn)
         self._unit_scan_poll_fn = nil
     end
-    if self._unit_scan_dialog then
-        pcall(function() self._unit_scan_dialog:close() end)
-        self._unit_scan_dialog = nil
-    end
-    self.active_unit_scan_dialog = nil
+    _closeUnitScanDialogSafely(self, false)
     local pid, fd = self._unit_scan_pid, self._unit_scan_read_fd
     self._unit_scan_pid, self._unit_scan_read_fd = nil, nil
     self._unit_scan_in_progress = false
@@ -1519,14 +1538,7 @@ function M:_cancelUnitScanChild(reason)
 end
 
 function M:_onUnitScanFinished(resolved_dir, ok, manual)
-    if self._unit_scan_dialog then
-        pcall(function()
-            self._unit_scan_dialog:reportProgress(100)
-            self._unit_scan_dialog:close()
-        end)
-        self._unit_scan_dialog = nil
-    end
-    self.active_unit_scan_dialog = nil
+    _closeUnitScanDialogSafely(self, true)
     self._unit_scan_in_progress = false
 
     if self.destroyed or not self.ui or not self.ui.document then return end
@@ -1552,6 +1564,9 @@ function M:_onUnitScanFinished(resolved_dir, ok, manual)
         })
     end
 
+    if self.ui.view and (not self.ui.view.view_modules or not self.ui.view.view_modules["xray_unit_underlines"]) then
+        self:mountUnderlineOverlay()
+    end
     self._box_cache_sig = nil
     if self.ui.view and self.ui.view.dialog then
         UIManager:setDirty(self.ui.view.dialog, "ui")
@@ -1654,10 +1669,7 @@ function M:_runUnitScanInProcess(resolved_dir, settings, manual)
     local co
     local function finish(matches)
         if self.destroyed or not self.ui or not self.ui.document then
-            if self._unit_scan_dialog then
-                pcall(function() self._unit_scan_dialog:close() end)
-                self._unit_scan_dialog = nil
-            end
+            _closeUnitScanDialogSafely(self, false)
             self._unit_scan_in_progress = false
             return
         end
@@ -1863,6 +1875,11 @@ function M:scanBookForUnits(force)
 
         local plugin_self = self
         progress_msg.dismiss_callback = function()
+            progress_msg.dismiss_callback = nil
+            if plugin_self._unit_scan_dialog == progress_msg then
+                plugin_self._unit_scan_dialog = nil
+                plugin_self.active_unit_scan_dialog = nil
+            end
             log("Manual unit scan progress dialog dismissed by user")
             plugin_self:_cancelUnitScanChild("user dismissed")
             local Notification = require("ui/widget/notification")

@@ -401,6 +401,30 @@ describe("xray_fetch", function()
             assert.are.equal(incoming, plugin.book_data.terms[2])
         end)
 
+        it("preserves nameless characters, locations, and historical figures during update merge", function()
+            local nameless_char = { description = "Nameless cached char", aliases = { "" } }
+            local nameless_loc = { description = "Nameless cached loc" }
+            local nameless_fig = { biography = "Nameless cached fig" }
+            plugin.characters = { nameless_char, { name = "Alice", description = "Old", aliases = { "Ally" } } }
+            plugin.locations = { nameless_loc, { name = "City", description = "Old loc" } }
+            plugin.historical_figures = { nameless_fig, { name = "Caesar", biography = "Old bio" } }
+
+            local new_data = {
+                characters = { { description = "Nameless incoming char" }, { name = "alice", description = "Updated" } },
+                locations = { { description = "Nameless incoming loc" }, { name = "city", description = "Updated loc" } },
+                historical_figures = { { biography = "Nameless incoming fig" }, { name = "caesar", biography = "Updated bio" } },
+            }
+
+            plugin:finalizeXRayData(new_data, "Test Title", "Test Author", "", true, true, 10)
+
+            assert.are.equal(3, #plugin.characters)
+            assert.are.equal("Updated", plugin.characters[2].description)
+            assert.are.equal(3, #plugin.locations)
+            assert.are.equal("Updated loc", plugin.locations[2].description)
+            assert.are.equal(3, #plugin.historical_figures)
+            assert.are.equal("Updated bio", plugin.historical_figures[2].biography)
+        end)
+
         it("merges new characters correctly in update mode", function()
             plugin.characters = {
                 { name = "Alice", description = "Old description" }

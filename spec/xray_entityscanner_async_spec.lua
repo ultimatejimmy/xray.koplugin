@@ -195,7 +195,7 @@ describe("xray_entityscanner async background scanning & overlay", function()
         local f = io.open("/tmp/test_entity_book.epub.sdr/xray_entity_cache.cache", "r")
         assert.is_not_nil(f)
         local sig = f:read("*l")
-        assert.is_true(sig:find("^v[3456]|") ~= nil)
+        assert.is_true(sig:find("^v[34567]|") ~= nil)
         f:close()
     end)
 

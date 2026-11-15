@@ -315,6 +315,10 @@ function XRayPlugin:destroy()
     if self.clearUnitUnderlines then
         pcall(function() self:clearUnitUnderlines() end)
     end
+    if self.ui and self.ui.view and self.ui.view.view_modules then
+        self.ui.view.view_modules["xray_unit_underlines"] = nil
+        self.ui.view.view_modules["xray_entity_underlines"] = nil
+    end
     if self.clearTileCaches then
         pcall(function() self:clearTileCaches() end)
     end
@@ -607,14 +611,18 @@ function XRayPlugin:onReaderReady()
     end
 
     -- Run offline scans independently of modal prompt cards
+    -- Defer entity scan slightly so ReaderUI's postReaderReadyCallback (e.g. enableInternalHistory) completes first
     if self.scanBookForEntities and settings.entity_footnotes_enabled == true then
-        self:scanBookForEntities()
+        UIManager:scheduleIn(0.2, function()
+            if self.destroyed or not self.ui or not self.ui.document then return end
+            self:scanBookForEntities()
+        end)
     end
     if self.scanBookForUnits and settings.unit_converter_enabled ~= false then
         local is_auto = settings.unit_auto_scan_enabled ~= false
         if is_auto then
-            -- Defer whole-book unit scanning by 20s so it doesn't collide with KOReader startup
-            UIManager:scheduleIn(20, function()
+            -- Defer whole-book unit scanning briefly so it doesn't collide with KOReader startup
+            UIManager:scheduleIn(1.5, function()
                 if self.destroyed or not self.ui or not self.ui.document then return end
                 local ok_dev, Device = pcall(require, "device")
                 local is_k = ok_dev and Device and Device.isKindle and Device:isKindle()
@@ -1619,9 +1627,14 @@ function XRayPlugin:autoLoadCache()
         self.series_context_loaded = (cached_data.series_context_loaded == true)
 
         -- Synchronize loaded book data to SeriesCache if part of a series and series file is missing/older
-        if self.series_manager and (cached_data.series_slug or cached_data.series or cached_data.series_name or (self.ui and self.ui.document)) then
+        local props = self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps() or {}
+        local has_series_hint = (cached_data.series_slug and cached_data.series_slug ~= "")
+            or (cached_data.series and cached_data.series ~= "")
+            or (cached_data.series_name and cached_data.series_name ~= "")
+            or (props.series and props.series ~= "")
+            or (props.Series and props.Series ~= "")
+        if self.series_manager and has_series_hint then
             pcall(function()
-                local props = self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps() or {}
                 local function sanitizeMetadata(val)
                     if type(val) == "string" then return val
                     elseif type(val) == "table" then return table.concat(val, ", ")

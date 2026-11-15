@@ -333,5 +333,64 @@ describe("xray_unitscanner async and background execution", function()
             Device.isKobo = function() return true end
             assert.is_nil(plugin._getFFIUtil())
         end)
+
+        it("does not fire dismiss_callback or recurse when manual scan finishes and closes ProgressBarDialog", function()
+            local ProgressBarDialog = require("ui/widget/progressbardialog")
+            local orig_new = ProgressBarDialog.new
+            local cancel_toasts = 0
+            local close_calls = 0
+
+            local orig_notif_new = package.loaded["ui/widget/notification"].new
+            package.loaded["ui/widget/notification"].new = function(self_cls, args)
+                if args and args.text and args.text:find("cancelled") then
+                    cancel_toasts = cancel_toasts + 1
+                end
+                return orig_notif_new(self_cls, args)
+            end
+
+            -- Emulate real KOReader ProgressbarDialog:onCloseWidget() firing dismiss_callback on close()
+            ProgressBarDialog.new = function(cls, opts)
+                local inst = orig_new(cls, opts)
+                inst.close = function(d)
+                    close_calls = close_calls + 1
+                    if d.dismiss_callback then
+                        d.dismiss_callback()
+                        d.dismiss_callback = nil
+                    end
+                end
+                return inst
+            end
+
+            plugin:scanBookForUnits(true)
+            advance_time(1)
+
+            assert.are.equal(1, close_calls)
+            assert.are.equal(0, cancel_toasts)
+            assert.is_nil(plugin._unit_scan_dialog)
+
+            ProgressBarDialog.new = orig_new
+            package.loaded["ui/widget/notification"].new = orig_notif_new
+        end)
+
+        it("preserves view_modules['xray_unit_underlines'] across clearUnitUnderlines() and marks dialog dirty", function()
+            local dirty_targets = {}
+            local UIManager = require("ui/uimanager")
+            local orig_setDirty = UIManager.setDirty
+            UIManager.setDirty = function(_, target)
+                table.insert(dirty_targets, target)
+            end
+
+            plugin.ui.view = {
+                dialog = { id = "reader_dialog" },
+                view_modules = { xray_unit_underlines = { paintTo = function() end } },
+            }
+
+            plugin:clearUnitUnderlines()
+
+            assert.is_not_nil(plugin.ui.view.view_modules["xray_unit_underlines"])
+            assert.are.equal(plugin.ui.view.dialog, dirty_targets[1])
+
+            UIManager.setDirty = orig_setDirty
+        end)
     end)
 end)

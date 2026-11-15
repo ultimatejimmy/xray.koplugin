@@ -1319,7 +1319,8 @@ function M:showCharacterDetails(character, opts)
             keep_menu_open = true,
             callback = function()
                 local TextViewer = require("ui/widget/textviewer")
-                local full_text = character.name .. "\n"
+                local char_name = character.name or "???"
+                local full_text = char_name .. "\n"
                 if #attrs > 0 then
                     full_text = full_text .. table.concat(attrs, " | ") .. "\n"
                 end
@@ -1332,7 +1333,7 @@ function M:showCharacterDetails(character, opts)
                 end
                 local viewer = TextViewer:new{
                     modal = true,
-                    title = character.name,
+                    title = char_name,
                     text = full_text,
                 }
                 UIManager:show(viewer)
@@ -1475,10 +1476,11 @@ function M:showLocationDetails(loc_item, opts)
             keep_menu_open = true,
             callback = function()
                 local TextViewer = require("ui/widget/textviewer")
-                local full_text = loc_item.name .. "\n\n" .. desc
+                local loc_name = loc_item.name or "???"
+                local full_text = loc_name .. "\n\n" .. desc
                 local viewer = TextViewer:new{
                     modal = true,
-                    title = loc_item.name,
+                    title = loc_name,
                     text = full_text,
                 }
                 UIManager:show(viewer)
@@ -1687,7 +1689,8 @@ function M:showTermDetails(term, opts)
             keep_menu_open = true,
             callback = function()
                 local TextViewer = require("ui/widget/textviewer")
-                local full_text = term.name .. "\n"
+                local term_name = term.name or "???"
+                local full_text = term_name .. "\n"
                 if #attrs > 0 then
                     full_text = full_text .. table.concat(attrs, " | ") .. "\n"
                 end
@@ -1697,7 +1700,7 @@ function M:showTermDetails(term, opts)
                 full_text = full_text .. "\n" .. resolved_definition
                 local viewer = TextViewer:new{
                     modal = true,
-                    title = term.name,
+                    title = term_name,
                     text = full_text,
                 }
                 UIManager:show(viewer)
@@ -3112,10 +3115,11 @@ function M:showHistoricalFigureDetails(fig, opts)
             keep_menu_open = true,
             callback = function()
                 local TextViewer = require("ui/widget/textviewer")
-                local full_text = fig.name .. "\n\n" .. bio
+                local fig_name = fig.name or "???"
+                local full_text = fig_name .. "\n\n" .. bio
                 local viewer = TextViewer:new{
                     modal = true,
-                    title = fig.name,
+                    title = fig_name,
                     text = full_text,
                 }
                 UIManager:show(viewer)

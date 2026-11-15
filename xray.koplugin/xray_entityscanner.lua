@@ -76,7 +76,7 @@ end
 -- Explicitly do NOT escape '-' or '%' because SRELL returns error_escape (102).
 local function escape_pattern(s)
     local esc = s:gsub("([%^%$%.%*%+%?%(%)%[%]%{%}|\\])", "\\%1")
-    esc = esc:gsub("%s+", "(?:\\s|\194\183)+")
+    esc = esc:gsub("%s+", "[\\s\194\183]+")
     return esc
 end
 
@@ -486,7 +486,7 @@ local function _getEntitySettingsSignature(self, settings)
     local dom_fp = xray_utils.getDocumentDomFingerprint and xray_utils:getDocumentDomFingerprint(self.ui and self.ui.document) or "nofp"
 
     return table.concat({
-        "v6",
+        "v7",
         tostring(cat_c), tostring(cat_h), tostring(cat_l), tostring(cat_t),
         sig_list(self.characters), sig_list(self.historical_figures),
         sig_list(self.locations), sig_list(self.terms),
@@ -1191,7 +1191,7 @@ local function _getEntityCacheSig(self)
     end
     local hash = ""
     if doc.getDocumentRenderingHash then
-        pcall(function() hash = doc:getDocumentRenderingHash() end)
+        pcall(function() hash = doc:getDocumentRenderingHash(true) end)
     end
     local sw = Screen:getWidth()
     local sh = Screen:getHeight()
@@ -1530,9 +1530,6 @@ function M:clearEntityUnderlines()
     self.entity_xp_matches = nil
     self.entity_matches_by_page = nil
     self._entity_box_cache_sig = nil
-    if self.ui and self.ui.view and self.ui.view.view_modules then
-        self.ui.view.view_modules["xray_entity_underlines"] = nil
-    end
     if self.ui and self.ui.view and self.ui.view.dialog then
         UIManager:setDirty(self.ui.view.dialog, "ui")
     end
