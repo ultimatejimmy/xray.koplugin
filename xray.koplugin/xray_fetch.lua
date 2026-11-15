@@ -1379,7 +1379,10 @@ function M:finalizeXRayData(final_book_data, title, author, book_text, is_update
         for _, new_term in ipairs(final_book_data.terms or {}) do
             local found = false
             for _, existing in ipairs(self.terms) do
-                if existing.name:lower() == new_term.name:lower() and match_story(existing, new_term) then
+                if type(existing.name) == "string"
+                    and type(new_term.name) == "string"
+                    and existing.name:lower() == new_term.name:lower()
+                    and match_story(existing, new_term) then
                     if new_term.definition and new_term.definition ~= "" then
                         self:updateEntityDescPreservingPrior(existing, new_term.definition, "definition")
                     end
