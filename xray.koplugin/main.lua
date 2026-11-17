@@ -611,9 +611,9 @@ function XRayPlugin:onReaderReady()
     end
 
     -- Run offline scans independently of modal prompt cards
-    -- Defer entity scan slightly so ReaderUI's postReaderReadyCallback (e.g. enableInternalHistory) completes first
+    -- Defer entity scan briefly so ReaderUI startup settles first
     if self.scanBookForEntities and settings.entity_footnotes_enabled == true then
-        UIManager:scheduleIn(0.2, function()
+        UIManager:scheduleIn(3, function()
             if self.destroyed or not self.ui or not self.ui.document then return end
             self:scanBookForEntities()
         end)
@@ -621,11 +621,12 @@ function XRayPlugin:onReaderReady()
     if self.scanBookForUnits and settings.unit_converter_enabled ~= false then
         local is_auto = settings.unit_auto_scan_enabled ~= false
         if is_auto then
-            -- Defer whole-book unit scanning briefly so it doesn't collide with KOReader startup
-            UIManager:scheduleIn(1.5, function()
+            -- Stagger whole-book unit scan after entity scan (20s on Kindle, 8s elsewhere)
+            local ok_dev, Device = pcall(require, "device")
+            local is_k = ok_dev and Device and Device.isKindle and Device:isKindle()
+            local unit_delay = is_k and 20 or 8
+            UIManager:scheduleIn(unit_delay, function()
                 if self.destroyed or not self.ui or not self.ui.document then return end
-                local ok_dev, Device = pcall(require, "device")
-                local is_k = ok_dev and Device and Device.isKindle and Device:isKindle()
                 local mem_threshold = is_k and (65 * 1024) or (35 * 1024)
                 if utils:isLowMemory(mem_threshold) then
                     self:log(string.format("XRayPlugin: Memory low (<%dMB), skipping automatic unit book scan", math.floor(mem_threshold / 1024)))

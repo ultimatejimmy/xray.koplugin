@@ -266,6 +266,15 @@ msgstr "Document unavailable"
 msgid "dont_ask_again"
 msgstr "Don't ask again"
 
+msgid "entity_bionic_note_full"
+msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+
+msgid "entity_bionic_note_menu"
+msgstr "Note: Not compatible with Bionic Reading"
+
+msgid "entity_cache_refreshing_menu"
+msgstr "Using cached underlines, refreshing…"
+
 msgid "entity_cat_characters"
 msgstr "Characters"
 
@@ -300,7 +309,7 @@ msgid "entity_mention_mode_title"
 msgstr "Mention Display Mode"
 
 msgid "entity_new_feature_desc"
-msgstr "X-Ray can underline characters, historical figures, locations, and terms in your books. Tap any underlined name for an instant description popup without leaving your page.\n\nCustomizable in settings: underline style, popup type (tooltip bubble or bottom panel), mentions frequency, and entity categories."
+msgstr "X-Ray can underline characters, historical figures, locations, and terms in your books. Tap any underlined name for an instant description popup without leaving your page.\n\nCustomizable in settings: underline style, popup type (tooltip bubble or bottom panel), mentions frequency, and entity categories.\n\nNote: Bionic Reading is not compatible with entity underlines; use a fast font instead."
 
 msgid "entity_new_feature_enable"
 msgstr "Enable Underlining"

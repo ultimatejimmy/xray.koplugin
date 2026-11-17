@@ -38,6 +38,12 @@ M.__entity_footnotes_patched = true
 local ENTITY_SCAN_POLL_INTERVAL = 0.1   -- 100ms poll for child process
 local ENTITY_SCAN_TIMEOUT = 300         -- 5 minutes watchdog
 local ENTITY_SCAN_SLICE = 0.03          -- 30ms coroutine slice for in-process fallback
+local ENTITY_SCAN_INPROC_REGEX_LEN = 600 -- Smaller regex chunks when running in-process to avoid UI stalls
+local ENTITY_LOW_MEM_MAX_RETRIES = 3    -- Max retries when deferred due to low memory
+local ENTITY_LOW_MEM_RETRY_DELAY = 60   -- Seconds between low-memory retries
+local ENTITY_AUTO_RETRY_DELAY = 30      -- Seconds before single auto-scan subprocess retry
+local ENTITY_BUCKET_SLICE_SIZE = 100    -- Matches processed per slice during async bucket rebuild
+local ENTITY_CACHE_LOGIC_VERSION = "v7"
 local MIN_TERM_LEN = 3                  -- Minimum character length for entity terms
 local MAX_REGEX_LEN = 3000              -- SRELL regex engine safe chunk size
 
@@ -76,7 +82,7 @@ end
 -- Explicitly do NOT escape '-' or '%' because SRELL returns error_escape (102).
 local function escape_pattern(s)
     local esc = s:gsub("([%^%$%.%*%+%?%(%)%[%]%{%}|\\])", "\\%1")
-    esc = esc:gsub("%s+", "[\\s\194\183]+")
+    esc = esc:gsub("%s+", "\\s+")
     return esc
 end
 
@@ -396,7 +402,8 @@ local function _collectEntityTerms(self, settings)
     return terms, lookup
 end
 
-local function _buildChunks(terms)
+local function _buildChunks(terms, max_regex_len)
+    local limit = max_regex_len or MAX_REGEX_LEN
     table.sort(terms, function(a, b) return #a > #b end)
 
     local boundary_both = {}
@@ -415,7 +422,7 @@ local function _buildChunks(terms)
         local current = {}
         local current_len = 0
         for _, esc in ipairs(list) do
-            if current_len + #esc + 1 > MAX_REGEX_LEN and #current > 0 then
+            if current_len + #esc + 1 > limit and #current > 0 then
                 table.insert(chunks, current)
                 current = {}
                 current_len = 0
@@ -486,12 +493,30 @@ local function _getEntitySettingsSignature(self, settings)
     local dom_fp = xray_utils.getDocumentDomFingerprint and xray_utils:getDocumentDomFingerprint(self.ui and self.ui.document) or "nofp"
 
     return table.concat({
-        "v7",
+        ENTITY_CACHE_LOGIC_VERSION,
         tostring(cat_c), tostring(cat_h), tostring(cat_l), tostring(cat_t),
         sig_list(self.characters), sig_list(self.historical_figures),
         sig_list(self.locations), sig_list(self.terms),
         dom_fp,
     }, "|")
+end
+
+-- Accept legacy v6 caches or v7 caches with trailing :b0/:b1 bionic fingerprint
+-- when entity lists, categories, and file size/mtime match, so underlines show immediately.
+local function _isCompatibleCacheSignature(signature, expected_sig)
+    if signature == expected_sig then
+        return true, false
+    end
+    local sig_ver, sig_rest = signature:match("^(v%d+)|(.*)$")
+    local exp_ver, exp_rest = expected_sig:match("^(v%d+)|(.*)$")
+    if (sig_ver == "v6" or sig_ver == "v7") and exp_ver == ENTITY_CACHE_LOGIC_VERSION then
+        local norm_sig = sig_rest:gsub(":b[01]$", "")
+        local norm_exp = exp_rest:gsub(":b[01]$", "")
+        if norm_sig == norm_exp then
+            return true, true, sig_ver
+        end
+    end
+    return false, false
 end
 
 function M:saveEntityCache(resolved_dir, matches, suffix, signature)
@@ -570,10 +595,16 @@ function M:loadEntityCache(resolved_dir, expected_sig)
 
     local settings = self.ai_helper and self.ai_helper.settings or {}
     expected_sig = expected_sig or _getEntitySettingsSignature(self, settings)
-    if signature ~= expected_sig then
+    local sig_ok, needs_refresh, legacy_ver = _isCompatibleCacheSignature(signature, expected_sig)
+    if not sig_ok then
         f:close()
         log("loadEntityCache: signature mismatch, cache invalidated")
         return false
+    end
+    self._entity_cache_needs_refresh = needs_refresh
+    self._entity_cache_stale_display = needs_refresh
+    if needs_refresh then
+        log("loadEntityCache: accepted compatible legacy cache (" .. tostring(legacy_ver) .. "), background refresh needed")
     end
 
     local matches = {}
@@ -625,6 +656,7 @@ end
 function M:_rebuildEntityPageBuckets()
     local doc = self.ui and self.ui.document
     if not doc or not self.entity_xp_matches then return end
+    local t0 = os.clock()
     local by_page = {}
     for _, hit in ipairs(self.entity_xp_matches) do
         if doc.getPageFromXPointer then
@@ -640,173 +672,80 @@ function M:_rebuildEntityPageBuckets()
     self._entity_bucket_page_count = doc.getPageCount and doc:getPageCount()
     self._entity_bucket_render_hash = doc.getDocumentRenderingHash and doc:getDocumentRenderingHash(true)
     self._entity_box_cache_sig = nil
+    log(string.format("_rebuildEntityPageBuckets: rebuilt %d matches in %.2fs", #self.entity_xp_matches, os.clock() - t0))
+end
+
+function M:_scheduleRebuildEntityPageBuckets(target_page_count, target_render_hash)
+    if self._entity_bucket_rebuilding then return end
+    local doc = self.ui and self.ui.document
+    local matches = self.entity_xp_matches
+    if not doc or not matches or #matches == 0 then return end
+
+    self._entity_bucket_rebuilding = true
+    local t0 = os.clock()
+    local idx = 1
+    local total = #matches
+    local new_by_page = {}
+
+    local function step()
+        if self.destroyed or not self.ui or not self.ui.document or self.entity_xp_matches ~= matches then
+            self._entity_bucket_rebuilding = nil
+            return
+        end
+        local d = self.ui.document
+        local stop_idx = math.min(total, idx + ENTITY_BUCKET_SLICE_SIZE - 1)
+        for i = idx, stop_idx do
+            local hit = matches[i]
+            if d.getPageFromXPointer then
+                local ok, pg = pcall(d.getPageFromXPointer, d, hit.start_xp)
+                if ok and pg then hit.page = pg end
+            end
+            if hit.page then
+                new_by_page[hit.page] = new_by_page[hit.page] or {}
+                table.insert(new_by_page[hit.page], hit)
+            end
+        end
+        idx = stop_idx + 1
+        if idx <= total then
+            UIManager:scheduleIn(0, step)
+            return
+        end
+
+        self.entity_matches_by_page = new_by_page
+        self._entity_bucket_page_count = target_page_count or (d.getPageCount and d:getPageCount())
+        self._entity_bucket_render_hash = target_render_hash or (d.getDocumentRenderingHash and d:getDocumentRenderingHash(true))
+        self._entity_box_cache_sig = nil
+        self._entity_bucket_rebuilding = nil
+        log(string.format("_scheduleRebuildEntityPageBuckets: rebuilt %d matches in %.2fs", total, os.clock() - t0))
+        if self.ui.view and self.ui.view.dialog then
+            UIManager:setDirty(self.ui.view.dialog, "ui")
+        end
+        UIManager:setDirty(nil, "ui")
+    end
+
+    UIManager:scheduleIn(0, step)
 end
 
 -- ===== Pure Computation (Child-Safe) =====
 
--- Fallback for older KOReader builds without LDOM_FIND_TEXT_MATCH_ACROSS_TEXT_NODES
--- where Bionic Reading splits words across inline <b>...</b> DOM nodes.
-local function _splitBionicWordPairs(word)
-    local chars = {}
-    for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
-        table.insert(chars, ch)
-    end
-    local nc = #chars
-    if nc < 2 then return {} end
-
-    local mids = {}
-    local m1 = math.ceil(nc / 2)
-    mids[m1] = true
-    if nc == 3 then
-        mids[1] = true
-    end
-
-    local pairs_list = {}
-    for mid, _ in pairs(mids) do
-        if mid >= 1 and mid < nc then
-            local prefix = table.concat(chars, "", 1, mid)
-            local suffix = table.concat(chars, "", mid + 1, nc)
-            table.insert(pairs_list, { prefix = prefix, suffix = suffix })
-        end
-    end
-    return pairs_list
-end
-
-local function _xpointerBlockPrefix(xp)
-    if type(xp) ~= "string" then return nil end
-    local clean = xp:gsub("/[bB]%[?[0-9]*%]?/?text%(%)%.[0-9]+$", ""):gsub("/text%(%)%.[0-9]+$", "")
-    return clean
-end
-
-local function _findBionicFallbackHits(doc, terms, lookup, opts)
-    opts = opts or {}
-    if not doc or type(doc.findAllText) ~= "function" then return {} end
-    local fallback_hits = {}
-    local text_cache = {}
-
-    local function find_exact_node_hits(token)
-        if text_cache[token] ~= nil then return text_cache[token] end
-        local esc = escape_pattern(token)
-        local pat = (token:match("^[%w]") and token:match("[%w]$")) and ("\\b" .. esc .. "\\b") or esc
-        local ok, res = pcall(function()
-            return doc:findAllText(pat, false, 0, 5000, true)
-        end)
-        local list = (ok and type(res) == "table") and res or {}
-        text_cache[token] = list
-        return list
-    end
-
-    for _, term in ipairs(terms or {}) do
-        if opts.yield_fn then opts.yield_fn() end
-        local info = lookup and lookup[term:lower()]
-        if info then
-            local words = {}
-            for w in term:gmatch("%S+") do
-                table.insert(words, w)
-            end
-
-            if #words == 1 then
-                local w = words[1]
-                local splits = _splitBionicWordPairs(w)
-                for _, sp in ipairs(splits) do
-                    if opts.yield_fn then opts.yield_fn() end
-                    local p_hits = find_exact_node_hits(sp.prefix)
-                    if #p_hits > 0 then
-                        local s_hits = find_exact_node_hits(sp.suffix)
-                        if #s_hits > 0 then
-                            local s_idx = 1
-                            for _, ph in ipairs(p_hits) do
-                                local p_start = ph.start or ph.start0
-                                local p_block = _xpointerBlockPrefix(p_start)
-                                for j = s_idx, math.min(#s_hits, s_idx + 12) do
-                                    local sh = s_hits[j]
-                                    local s_end = sh["end"]
-                                    local s_start = sh.start or sh.start0
-                                    if p_start and s_end then
-                                        local matched = false
-                                        if type(doc.getTextFromXPointers) == "function" then
-                                            local ok_txt, span_txt = pcall(doc.getTextFromXPointers, doc, p_start, s_end)
-                                            if ok_txt and type(span_txt) == "string" and _normalize(span_txt):lower() == term:lower() then
-                                                matched = true
-                                            end
-                                        elseif p_block and p_block == _xpointerBlockPrefix(s_start) then
-                                            matched = true
-                                        end
-                                        if matched then
-                                            table.insert(fallback_hits, {
-                                                start_xp = p_start,
-                                                end_xp = s_end,
-                                                matched_text = term,
-                                                category = info.category,
-                                                entity_name = info.canonical or term,
-                                            })
-                                            s_idx = j + 1
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            elseif #words >= 2 and type(doc.getTextFromXPointers) == "function" then
-                local first_splits = _splitBionicWordPairs(words[1])
-                local last_splits = _splitBionicWordPairs(words[#words])
-                for _, fsp in ipairs(first_splits) do
-                    local f_hits = (#words[1] >= 2) and find_exact_node_hits(fsp.prefix) or {}
-                    if #f_hits > 0 then
-                        for _, lsp in ipairs(last_splits) do
-                            local l_hits = find_exact_node_hits(lsp.suffix)
-                            if #l_hits > 0 then
-                                local l_idx = 1
-                                for _, fh in ipairs(f_hits) do
-                                    local f_start = fh.start or fh.start0
-                                    local f_block = _xpointerBlockPrefix(f_start)
-                                    for j = l_idx, math.min(#l_hits, l_idx + 12) do
-                                        local lh = l_hits[j]
-                                        local l_end = lh["end"]
-                                        local l_start = lh.start or lh.start0
-                                        if f_start and l_end and f_block and f_block == _xpointerBlockPrefix(l_start) then
-                                            local ok_txt, span_txt = pcall(doc.getTextFromXPointers, doc, f_start, l_end)
-                                            if ok_txt and type(span_txt) == "string" and _normalize(span_txt):lower() == term:lower() then
-                                                table.insert(fallback_hits, {
-                                                    start_xp = f_start,
-                                                    end_xp = l_end,
-                                                    matched_text = term,
-                                                    category = info.category,
-                                                    entity_name = info.canonical or term,
-                                                })
-                                                l_idx = j + 1
-                                                break
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return fallback_hits
-end
-M._findBionicFallbackHits = _findBionicFallbackHits
-
 function M:_computeEntityMatches(settings, opts)
     opts = opts or {}
     if self.destroyed or not self.ui or not self.ui.document then return {} end
+    local t_total = os.clock()
     log("scanBookForEntities: starting whole book entity scan")
 
+    local t_terms = os.clock()
     local terms, lookup = _collectEntityTerms(self, settings)
     if #terms == 0 then
         log("scanBookForEntities: no terms to scan")
         return {}
     end
 
-    local patterns = _buildChunks(terms)
+    local patterns = _buildChunks(terms, opts.max_regex_len)
     local total_patterns = math.max(1, #patterns)
+    log(string.format("scanBookForEntities: collected %d terms into %d regex chunk(s) in %.2fs",
+        #terms, #patterns, os.clock() - t_terms))
+
     local hits = {}
     local doc = self.ui.document
 
@@ -816,16 +755,19 @@ function M:_computeEntityMatches(settings, opts)
             opts.on_progress(math.floor(((idx - 1) / total_patterns) * 100))
         end
 
+        local t_chunk = os.clock()
         local ok, chunk_hits = pcall(function()
-            -- CreDocument:findAllText(pattern, case_insensitive, nb_context_words, max_hits, regex, search_flags)
-            -- search_flags=1 enables LDOM_FIND_TEXT_MATCH_ACROSS_TEXT_NODES for inline <b> Bionic Reading tags.
-            return doc:findAllText(pattern, false, 0, 50000, true, 1)
+            -- CreDocument:findAllText(pattern, case_insensitive, nb_context_words, max_hits, regex)
+            return doc:findAllText(pattern, false, 0, 50000, true)
         end)
+        local dt_chunk = os.clock() - t_chunk
 
         if not ok then
-            log("scanBookForEntities: findAllText failed: " .. tostring(chunk_hits))
+            log(string.format("scanBookForEntities: chunk %d/%d findAllText failed in %.2fs: %s",
+                idx, total_patterns, dt_chunk, tostring(chunk_hits)))
         elseif chunk_hits and type(chunk_hits) == "table" then
-            log(string.format("scanBookForEntities: chunk %d/%d returned %d raw hits", idx, total_patterns, #chunk_hits))
+            log(string.format("scanBookForEntities: chunk %d/%d returned %d raw hits in %.2fs",
+                idx, total_patterns, #chunk_hits, dt_chunk))
             for _, hit in ipairs(chunk_hits) do
                 local start_xp = hit.start or hit.start0
                 local end_xp = hit["end"]
@@ -847,31 +789,15 @@ function M:_computeEntityMatches(settings, opts)
         end
     end
 
-    local dom_fp = xray_utils.getDocumentDomFingerprint and xray_utils:getDocumentDomFingerprint(doc) or ""
-    if #hits == 0 or dom_fp:find(":b1$") then
-        local seen_matched = {}
-        for _, h in ipairs(hits) do
-            if h.matched_text then seen_matched[h.matched_text:lower()] = true end
-        end
-        local unmatched = {}
-        for _, t in ipairs(terms) do
-            if not seen_matched[t:lower()] then
-                table.insert(unmatched, t)
-            end
-        end
-        if #unmatched > 0 then
-            local fb_hits = _findBionicFallbackHits(doc, unmatched, lookup, opts)
-            for _, fh in ipairs(fb_hits) do
-                table.insert(hits, fh)
-            end
-        end
-    end
-
     -- Deduplicate overlapping hits by end/start and interval overlap, keeping longest match
+    local t_dedup = os.clock()
     local deduped_hits = _deduplicateEntityHits(hits)
+    local dt_dedup = os.clock() - t_dedup
 
+    local t_pages = os.clock()
     local final_matches = {}
-    for _, hit in ipairs(deduped_hits) do
+    for i, hit in ipairs(deduped_hits) do
+        if opts.yield_fn and (i % 50 == 0) then opts.yield_fn() end
         -- Pre-compute page number in child process so UI thread never needs to compute it
         local page = nil
         if doc.getPageFromXPointer then
@@ -881,9 +807,11 @@ function M:_computeEntityMatches(settings, opts)
         hit.page = page
         table.insert(final_matches, hit)
     end
+    local dt_pages = os.clock() - t_pages
 
     if opts.on_progress then opts.on_progress(100) end
-    log("scanBookForEntities: finished scan, found " .. tostring(#final_matches) .. " unique matches")
+    log(string.format("scanBookForEntities: finished scan, %d unique matches (dedup=%.2fs, pages=%.2fs, total=%.2fs)",
+        #final_matches, dt_dedup, dt_pages, os.clock() - t_total))
     return final_matches
 end
 
@@ -924,6 +852,9 @@ function M:_onEntityScanFinished(resolved_dir, ok, manual)
     if ok then
         loaded = self:loadEntityCache(resolved_dir)
         if loaded then
+            self._entity_cache_needs_refresh = false
+            self._entity_cache_stale_display = false
+            self._entity_auto_retry_used = false
             log("Entity scan finished successfully")
             if manual then
                 local Notification = require("ui/widget/notification")
@@ -937,13 +868,20 @@ function M:_onEntityScanFinished(resolved_dir, ok, manual)
     end
 
     if not loaded then
-        log("Entity scan failed or was cancelled")
-        if not self._entity_scan_fallback_used and not self.destroyed and self.ui and self.ui.document then
+        log("Entity scan failed or was cancelled (manual=" .. tostring(manual) .. ")")
+        if manual and not self._entity_scan_fallback_used and not self.destroyed and self.ui and self.ui.document then
             self._entity_scan_fallback_used = true
-            log("Entity scan: attempting in-process fallback scan")
+            log("Entity scan: manual scan attempting in-process fallback")
             local settings = self.ai_helper and self.ai_helper.settings or {}
             self:_runEntityScanInProcess(resolved_dir, settings, manual)
             return
+        elseif not manual and _getFFIUtil() and not self._entity_auto_retry_used and not self.destroyed and self.ui and self.ui.document then
+            self._entity_auto_retry_used = true
+            log(string.format("Entity scan: scheduling single background subprocess retry in %ds", ENTITY_AUTO_RETRY_DELAY))
+            UIManager:scheduleIn(ENTITY_AUTO_RETRY_DELAY, function()
+                if self.destroyed or not self.ui or not self.ui.document or self._entity_scan_in_progress then return end
+                self:scanBookForEntities(false)
+            end)
         end
     end
 
@@ -992,6 +930,7 @@ function M:_startEntityScanSubprocess(resolved_dir, settings, manual)
     self._entity_scan_pid = pid
     self._entity_scan_read_fd = read_fd
     self._entity_scan_started_at = os.time()
+    log(string.format("_startEntityScanSubprocess: started pid=%s manual=%s", tostring(pid), tostring(manual)))
     pcall(function() require("device"):enableCPUCores(2) end)
 
     local progress_buf = ""
@@ -1044,6 +983,8 @@ function M:_startEntityScanSubprocess(resolved_dir, settings, manual)
 end
 
 function M:_runEntityScanInProcess(resolved_dir, settings, manual)
+    local t_start = os.clock()
+    log(string.format("_runEntityScanInProcess: starting (manual=%s, max_regex_len=%d)", tostring(manual), ENTITY_SCAN_INPROC_REGEX_LEN))
     local co
     local last_yield = os.clock()
     local function yield_fn()
@@ -1070,6 +1011,7 @@ function M:_runEntityScanInProcess(resolved_dir, settings, manual)
             UIManager:scheduleIn(0, step)
         else
             local matches = res or {}
+            log(string.format("_runEntityScanInProcess: completed in %.2fs", os.clock() - t_start))
             self:saveEntityCache(resolved_dir, matches, "inproc")
             self:_onEntityScanFinished(resolved_dir, true, manual)
         end
@@ -1077,6 +1019,7 @@ function M:_runEntityScanInProcess(resolved_dir, settings, manual)
 
     co = coroutine.create(function()
         return self:_computeEntityMatches(settings, {
+            max_regex_len = ENTITY_SCAN_INPROC_REGEX_LEN,
             yield_fn = yield_fn,
             on_progress = function(pct)
                 if self.active_entity_scan_dialog and self.active_entity_scan_dialog.reportProgress then
@@ -1134,14 +1077,32 @@ function M:scanBookForEntities(force)
     if not force then
         local cache_loaded = self:loadEntityCache(sidecar, expected_sig)
         if cache_loaded then
-            log("scanBookForEntities: cache is up-to-date, skipping scan")
-            return
+            if not self._entity_cache_needs_refresh then
+                log("scanBookForEntities: cache is up-to-date, skipping scan")
+                return
+            end
+            if not _getFFIUtil() or (xray_utils.isLowMemory and xray_utils:isLowMemory()) then
+                log("scanBookForEntities: compatible legacy cache loaded, skipping background refresh (no fork or low memory)")
+                return
+            end
+            log("scanBookForEntities: compatible legacy cache loaded, scheduling silent background refresh")
         end
     end
 
     -- Memory safety guard on Kindle hardware (device-aware threshold via xray_utils)
     if xray_utils.isLowMemory and xray_utils:isLowMemory() and not force then
-        log("scanBookForEntities: low memory condition detected, skipping auto scan")
+        self._entity_low_mem_retries = (self._entity_low_mem_retries or 0) + 1
+        if self._entity_low_mem_retries <= ENTITY_LOW_MEM_MAX_RETRIES then
+            self._entity_scan_attempted = false
+            log(string.format("scanBookForEntities: low memory, scheduling retry %d/%d in %ds",
+                self._entity_low_mem_retries, ENTITY_LOW_MEM_MAX_RETRIES, ENTITY_LOW_MEM_RETRY_DELAY))
+            UIManager:scheduleIn(ENTITY_LOW_MEM_RETRY_DELAY, function()
+                if self.destroyed or not self.ui or not self.ui.document or self._entity_scan_in_progress then return end
+                self:scanBookForEntities(false)
+            end)
+        else
+            log("scanBookForEntities: low memory persisted after max retries, skipping auto scan")
+        end
         return
     end
 
@@ -1263,7 +1224,7 @@ function M:_resolveEntityHighlightBoxes()
     local render_hash = doc.getDocumentRenderingHash and doc:getDocumentRenderingHash(true)
     if (self._entity_bucket_page_count and page_count and self._entity_bucket_page_count ~= page_count)
         or (self._entity_bucket_render_hash and render_hash and self._entity_bucket_render_hash ~= render_hash) then
-        self:_rebuildEntityPageBuckets()
+        self:_scheduleRebuildEntityPageBuckets(page_count, render_hash)
     end
 
     local settings = self.ai_helper and self.ai_helper.settings or {}

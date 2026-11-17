@@ -472,6 +472,8 @@ function M:getSubMenuItems()
                             local base = self.loc:t("entity_manual_scan_button") or "Scan/Rescan"
                             if self._entity_scan_in_progress then
                                 return base .. " (" .. (self.loc:t("unit_scan_running_menu") or "Scanning…") .. ")"
+                            elseif self._entity_cache_stale_display then
+                                return base .. " (" .. (self.loc:t("entity_cache_refreshing_menu") or "Using cached underlines, refreshing…") .. ")"
                             end
                             return base
                         end,
@@ -550,7 +552,19 @@ function M:getSubMenuItems()
                                     if self.scanBookForEntities then self:scanBookForEntities(true) end
                                 end
                             },
-                        }
+                        },
+                        separator = true,
+                    },
+                    {
+                        text = self.loc:t("entity_bionic_note_menu") or "Note: Not compatible with Bionic Reading",
+                        keep_menu_open = true,
+                        callback = function()
+                            local UIManager = require("ui/uimanager")
+                            local InfoMessage = require("ui/widget/infomessage")
+                            UIManager:show(InfoMessage:new{
+                                text = self.loc:t("entity_bionic_note_full") or "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance.",
+                            })
+                        end,
                     }
                 },
                 separator = true,

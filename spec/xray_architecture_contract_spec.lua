@@ -130,7 +130,7 @@ describe("X-Ray Architecture Contract Spec", function()
                 "_startEntityScanSubprocess", "_cancelEntityScanChild",
                 "_resolveEntityHighlightBoxes", "_isEntityAllowedByVisibility",
                 "mountEntityTapHandler", "_handleEntityTap",
-                "_rebuildEntityPageBuckets", "_deduplicateEntityHits"
+                "_rebuildEntityPageBuckets", "_scheduleRebuildEntityPageBuckets", "_deduplicateEntityHits"
             }
             for _, m in ipairs(expected_entity_methods) do
                 assert.is_not_nil(xray_entityscanner[m], "Missing method on xray_entityscanner: " .. m)

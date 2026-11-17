@@ -353,6 +353,18 @@ msgstr "Dokument nicht verfügbar"
 msgid "dont_ask_again"
 msgstr "Für dieses Buch nicht mehr fragen"
 
+# en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
+msgid "entity_bionic_note_full"
+msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+
+# en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
+msgid "entity_bionic_note_menu"
+msgstr "Note: Not compatible with Bionic Reading"
+
+# en-hash: 5be72f3e715f611fe47bd980268ba9e9
+msgid "entity_cache_refreshing_menu"
+msgstr "Using cached underlines, refreshing…"
+
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
 msgstr "Charaktere"
@@ -397,7 +409,7 @@ msgstr "Nur erste Erwähnung pro Seite"
 msgid "entity_mention_mode_title"
 msgstr "Erwähnungs-Anzeigemodus"
 
-# en-hash: 5bbc7f5426ea73c37b8e17e100d42f11
+# en-hash: b9404d19e4d6eda964c4e8dc42e41bf0
 msgid "entity_new_feature_desc"
 msgstr "X-Ray kann Charaktere, historische Persönlichkeiten, Orte und Begriffe in Ihren Büchern unterstreichen. Tippen Sie auf einen Namen für eine Beschreibung, ohne die Seite zu verlassen.\n\nIn den Einstellungen anpassbar: Unterstreichungsstil, Popup-Typ (Blase oder Leiste), Erwähnungen und Kategorien."
 

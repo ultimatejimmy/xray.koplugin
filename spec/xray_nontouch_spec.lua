@@ -743,4 +743,113 @@ describe("X-Ray Non-Touch & Keyboard Support", function()
             assert.is_true(prev_called)
         end)
     end)
+
+    describe("Style Cards Touch-First Focus Gating", function()
+        local xray_style_cards = require("xray_style_cards")
+        local xray_theme = require("xray_theme")
+        local Device = require("device")
+        local UIManager = require("ui/uimanager")
+        local orig_isTouch, orig_show
+
+        local function count_focus_borders(widget, focus_bs, focus_bg, seen)
+            if type(widget) ~= "table" then return 0 end
+            seen = seen or {}
+            if seen[widget] then return 0 end
+            seen[widget] = true
+            local count = 0
+            if widget.type ~= "FrameContainer" and widget.bordersize == focus_bs and widget.background == focus_bg then
+                count = 1
+            end
+            if type(widget.args) == "table" then
+                count = count + count_focus_borders(widget.args, focus_bs, focus_bg, seen)
+            end
+            for _, child in ipairs(widget) do
+                count = count + count_focus_borders(child, focus_bs, focus_bg, seen)
+            end
+            return count
+        end
+
+        before_each(function()
+            orig_isTouch = Device.isTouchDevice
+            orig_show = UIManager.show
+        end)
+
+        after_each(function()
+            Device.isTouchDevice = orig_isTouch
+            UIManager.show = orig_show
+        end)
+
+        it("suppresses initial focus highlight on touch devices in showEntityStyleCard and showUnitStyleCard until D-pad key", function()
+            Device.isTouchDevice = function() return true end
+            local shown_overlay
+            UIManager.show = function(_, w) shown_overlay = w end
+
+            local saved_settings = {
+                entity_underline_style = "double",
+                unit_underline_style = "wavy",
+            }
+            local test_plugin = {
+                loc = mock_plugin.loc,
+                ai_helper = {
+                    settings = saved_settings,
+                    saveSettings = function(_, tbl)
+                        for k, v in pairs(tbl) do saved_settings[k] = v end
+                    end,
+                },
+                clearTileCaches = function() end,
+                isRTL = function() return false end,
+            }
+            for k, v in pairs(xray_style_cards) do test_plugin[k] = v end
+
+            local focus_bs = xray_theme.border_focus or 3
+            local focus_bg = xray_theme.color_focus_bg
+
+            -- Entity style card on touch device: 0 focused pills initially
+            test_plugin:showEntityStyleCard()
+            assert.is_not_nil(shown_overlay)
+            assert.are.equal(0, count_focus_borders(shown_overlay, focus_bs, focus_bg))
+
+            -- D-pad arrow activates focus on first pill (1, 1) -> 1 focused pill
+            shown_overlay:onFocusDown()
+            assert.are.equal(1, count_focus_borders(shown_overlay, focus_bs, focus_bg))
+            shown_overlay:onSelect()
+            assert.are.equal("solid", saved_settings.entity_underline_style)
+
+            -- Unit style card on touch device: 0 focused pills initially
+            shown_overlay = nil
+            test_plugin:showUnitStyleCard()
+            assert.is_not_nil(shown_overlay)
+            assert.are.equal(0, count_focus_borders(shown_overlay, focus_bs, focus_bg))
+
+            shown_overlay:onFocusRight()
+            assert.are.equal(1, count_focus_borders(shown_overlay, focus_bs, focus_bg))
+        end)
+
+        it("shows initial focus highlight immediately on non-touch devices in showEntityStyleCard and showUnitStyleCard", function()
+            Device.isTouchDevice = function() return false end
+            local shown_overlay
+            UIManager.show = function(_, w) shown_overlay = w end
+
+            local test_plugin = {
+                loc = mock_plugin.loc,
+                ai_helper = {
+                    settings = {},
+                    saveSettings = function() end,
+                },
+                clearTileCaches = function() end,
+                isRTL = function() return false end,
+            }
+            for k, v in pairs(xray_style_cards) do test_plugin[k] = v end
+
+            local focus_bs = xray_theme.border_focus or 3
+            local focus_bg = xray_theme.color_focus_bg
+
+            test_plugin:showEntityStyleCard()
+            assert.are.equal(1, count_focus_borders(shown_overlay, focus_bs, focus_bg))
+
+            shown_overlay = nil
+            test_plugin:showUnitStyleCard()
+            assert.are.equal(1, count_focus_borders(shown_overlay, focus_bs, focus_bg))
+        end)
+    end)
 end)

@@ -662,7 +662,7 @@ describe("xray_entityscanner async background scanning & overlay", function()
             Device.isKobo = orig_is_kobo
         end)
 
-        it("passes search_flags=1 and normalizes Guided Dots in _computeEntityMatches", function()
+        it("uses plain 5-arg findAllText (no search_flags=1) and normalizes Guided Dots in _computeEntityMatches", function()
             plugin.characters = {
                 { name = "Bob Cratchit", aliases = {}, description = "Clerk." }
             }
@@ -671,8 +671,10 @@ describe("xray_entityscanner async background scanning & overlay", function()
             plugin.historical_figures = {}
 
             local seen_flags = {}
+            local find_calls = 0
             plugin.ui.document.findAllText = function(self_doc, pat, case_ins, ctx, max_hits, is_regex, search_flags)
-                table.insert(seen_flags, search_flags)
+                find_calls = find_calls + 1
+                seen_flags[find_calls] = search_flags
                 return {
                     {
                         matched_text = "Bob\194\183Cratchit",
@@ -685,38 +687,121 @@ describe("xray_entityscanner async background scanning & overlay", function()
             end
 
             local matches = plugin:_computeEntityMatches(plugin.ai_helper.settings)
-            assert.is_true(#seen_flags >= 1)
-            assert.are.equal(1, seen_flags[1])
+            assert.is_true(find_calls >= 1)
+            assert.is_nil(seen_flags[1])
             assert.are.equal(1, #matches)
             assert.are.equal("Bob Cratchit", matches[1].matched_text)
             assert.are.equal("Bob Cratchit", matches[1].entity_name)
         end)
 
-        it("reconstructs split Bionic word pairs via _findBionicFallbackHits", function()
-            local lookup = {
-                scrooge = { canonical = "Ebenezer Scrooge", category = "character" }
-            }
-            local mock_doc = {
-                findAllText = function(self_doc, pat)
-                    if pat == "\\bScro\\b" then
-                        return { { start = "/body/p[1]/b/text().0", ["end"] = "/body/p[1]/b/text().4" } }
-                    elseif pat == "\\boge\\b" then
-                        return { { start = "/body/p[1]/text().0", ["end"] = "/body/p[1]/text().3" } }
-                    end
-                    return {}
-                end,
-                getTextFromXPointers = function(self_doc, s_xp, e_xp)
-                    if s_xp == "/body/p[1]/b/text().0" and e_xp == "/body/p[1]/text().3" then
-                        return "Scrooge"
-                    end
-                    return ""
-                end,
-            }
+        it("accepts compatible v6 and legacy bionic-suffixed v7 caches without invalidating underlines", function()
+            local xray_utils = require("xray_utils")
+            local orig_fp = xray_utils.getDocumentDomFingerprint
+            xray_utils.getDocumentDomFingerprint = function() return "1234:5678" end
 
-            local hits = plugin._findBionicFallbackHits(mock_doc, { "Scrooge" }, lookup, {})
-            assert.are.equal(1, #hits)
-            assert.are.equal("Scrooge", hits[1].matched_text)
-            assert.are.equal("Ebenezer Scrooge", hits[1].entity_name)
+            plugin.characters = { { name = "Sherlock Holmes", description = "Detective." } }
+            plugin.historical_figures = {}
+            plugin.locations = {}
+            plugin.terms = {}
+
+            local cache_dir = "/tmp/test_xray_legacy_cache_" .. tostring(os.time())
+            os.execute("mkdir -p " .. cache_dir)
+            local legacy_sig = "v6|true|true|true|true|Sherlock Holmes||||1234:5678:b0"
+            local ok_save = plugin:saveEntityCache(cache_dir, {
+                {
+                    start_xp = "xp_s1",
+                    end_xp = "xp_e1",
+                    matched_text = "Sherlock Holmes",
+                    category = "character",
+                    entity_name = "Sherlock Holmes",
+                    page = 1,
+                }
+            }, "legacy_test", legacy_sig)
+            assert.is_true(ok_save)
+
+            plugin.entity_xp_matches = nil
+            local loaded = plugin:loadEntityCache(cache_dir)
+            assert.is_true(loaded)
+            assert.is_true(plugin._entity_cache_needs_refresh)
+            assert.are.equal(1, #plugin.entity_xp_matches)
+            assert.are.equal("Sherlock Holmes", plugin.entity_xp_matches[1].entity_name)
+
+            os.execute("rm -rf " .. cache_dir)
+            xray_utils.getDocumentDomFingerprint = orig_fp
+        end)
+
+        it("does not run in-process fallback when auto-scan subprocess fails", function()
+            local inproc_called = false
+            local orig_inproc = plugin._runEntityScanInProcess
+            plugin._runEntityScanInProcess = function()
+                inproc_called = true
+            end
+
+            plugin._entity_scan_fallback_used = false
+            plugin._entity_auto_retry_used = false
+            plugin:_onEntityScanFinished("/tmp/nonexistent_dir", false, false)
+
+            assert.is_false(inproc_called)
+            assert.is_true(plugin._entity_auto_retry_used)
+
+            plugin._runEntityScanInProcess = orig_inproc
+        end)
+
+        it("reschedules low-memory auto scan up to 3 times and stops", function()
+            local xray_utils = require("xray_utils")
+            local orig_low_mem = xray_utils.isLowMemory
+            xray_utils.isLowMemory = function() return true end
+
+            plugin.characters = { { name = "Sherlock Holmes", description = "Detective." } }
+            plugin.ai_helper.settings.entity_footnotes_enabled = true
+            plugin._entity_low_mem_retries = 0
+
+            plugin:scanBookForEntities(false)
+            assert.are.equal(1, plugin._entity_low_mem_retries)
+            assert.is_false(plugin._entity_scan_attempted)
+
+            plugin:scanBookForEntities(false)
+            assert.are.equal(2, plugin._entity_low_mem_retries)
+
+            plugin:scanBookForEntities(false)
+            assert.are.equal(3, plugin._entity_low_mem_retries)
+
+            plugin:scanBookForEntities(false)
+            assert.are.equal(4, plugin._entity_low_mem_retries)
+            assert.is_true(plugin._entity_scan_attempted)
+
+            xray_utils.isLowMemory = orig_low_mem
+        end)
+
+        it("schedules sliced page-bucket rebuild instead of blocking _resolveEntityHighlightBoxes", function()
+            local sync_rebuild_called = false
+            local orig_sync = plugin._rebuildEntityPageBuckets
+            plugin._rebuildEntityPageBuckets = function()
+                sync_rebuild_called = true
+            end
+
+            plugin.entity_xp_matches = {
+                { start_xp = "xp_1", end_xp = "xp_2", matched_text = "Sherlock Holmes", entity_name = "Sherlock Holmes", category = "character", page = 1 },
+            }
+            plugin.entity_matches_by_page = { [1] = plugin.entity_xp_matches }
+            plugin._entity_bucket_page_count = 10
+            plugin._entity_bucket_render_hash = "old_hash"
+            plugin.ui.document.getPageCount = function() return 12 end
+            plugin.ui.document.getDocumentRenderingHash = function() return "new_hash" end
+            plugin.ui.document.getPageFromXPointer = function() return 2 end
+            plugin._entity_box_cache_sig = nil
+
+            plugin:_resolveEntityHighlightBoxes()
+            assert.is_false(sync_rebuild_called)
+            assert.is_true(plugin._entity_bucket_rebuilding)
+
+            advance_time(0.1)
+            assert.is_nil(plugin._entity_bucket_rebuilding)
+            assert.are.equal(12, plugin._entity_bucket_page_count)
+            assert.are.equal("new_hash", plugin._entity_bucket_render_hash)
+            assert.is_not_nil(plugin.entity_matches_by_page[2])
+
+            plugin._rebuildEntityPageBuckets = orig_sync
         end)
 
         it("suppresses shorter overlapping cross-node boxes with distinct XPointers while keeping shared-XPointer fixtures", function()

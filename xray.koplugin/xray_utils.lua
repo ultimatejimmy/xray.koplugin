@@ -792,15 +792,7 @@ function M:getDocumentDomFingerprint(doc)
     local ok_attr, attr = pcall(lfs.attributes, doc.file)
     local size = (ok_attr and type(attr) == "table" and attr.size) or 0
     local mtime = (ok_attr and type(attr) == "table" and attr.modification) or 0
-    local bionic = "b0"
-    for _, suffix in ipairs({ ".intellireading.state", ".intellireading.orig", ".orig" }) do
-        local ok_s, s_attr = pcall(lfs.attributes, doc.file .. suffix)
-        if ok_s and s_attr ~= nil then
-            bionic = "b1"
-            break
-        end
-    end
-    return string.format("%s:%s:%s", tostring(size), tostring(mtime), bionic)
+    return string.format("%s:%s", tostring(size), tostring(mtime))
 end
 
 return M

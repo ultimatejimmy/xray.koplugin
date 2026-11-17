@@ -19,6 +19,81 @@ end
 
 local findUnitConverterMenuPath
 
+local function _isTouchDevice()
+    local ok_dev, Device = pcall(require, "device")
+    if not ok_dev or not Device then return true end
+    if type(Device.isTouchDevice) == "function" then
+        local ok, res = pcall(Device.isTouchDevice, Device)
+        if ok then return res == true end
+    elseif Device.isTouchDevice ~= nil then
+        return Device.isTouchDevice == true
+    end
+    return true
+end
+
+local function _attachGridFocusHandlers(overlay, focus, get_row_defs, save_fn, refresh_fn)
+    local function activate_if_needed()
+        if not focus.row or not focus.col then
+            focus.row = 1
+            focus.col = 1
+            refresh_fn()
+            return true
+        end
+        return false
+    end
+
+    overlay.onFocusUp = function()
+        if activate_if_needed() then return true end
+        local row_defs = get_row_defs()
+        focus.row = (focus.row > 1) and (focus.row - 1) or #row_defs
+        local opts = row_defs[focus.row].options
+        if focus.col > #opts then focus.col = #opts end
+        refresh_fn()
+        return true
+    end
+
+    overlay.onFocusDown = function()
+        if activate_if_needed() then return true end
+        local row_defs = get_row_defs()
+        focus.row = (focus.row < #row_defs) and (focus.row + 1) or 1
+        local opts = row_defs[focus.row].options
+        if focus.col > #opts then focus.col = #opts end
+        refresh_fn()
+        return true
+    end
+
+    overlay.onFocusLeft = function()
+        if activate_if_needed() then return true end
+        local opts = get_row_defs()[focus.row].options
+        focus.col = (focus.col > 1) and (focus.col - 1) or #opts
+        refresh_fn()
+        return true
+    end
+
+    overlay.onFocusRight = function()
+        if activate_if_needed() then return true end
+        local opts = get_row_defs()[focus.row].options
+        focus.col = (focus.col < #opts) and (focus.col + 1) or 1
+        refresh_fn()
+        return true
+    end
+
+    overlay.onSelect = function()
+        if not focus.row or not focus.col then return false end
+        local row_defs = get_row_defs()
+        if focus.row < #row_defs then
+            local rdef = row_defs[focus.row]
+            local opt = rdef.options[focus.col]
+            if opt then
+                save_fn(rdef.key, opt.value)
+            end
+        else
+            overlay:onClose()
+        end
+        return true
+    end
+end
+
 function M:showUnitStyleCard()
     local Screen = require("device").screen
     local Font = require("ui/font")
@@ -60,10 +135,14 @@ function M:showUnitStyleCard()
     local label_font_size = math.max(11, math.min(fs - 4, 18))
     local title_font_size = math.max(10, math.min(fs - 5, 15))
 
+    local is_touch = _isTouchDevice()
     local overlay
-    local focused_row = 1
-    local focused_col = 1
+    local focus = {
+        row = (not is_touch) and 1 or nil,
+        col = (not is_touch) and 1 or nil,
+    }
     local refresh
+    local saveSettingRef
 
     local row_definitions = {}
 
@@ -86,6 +165,7 @@ function M:showUnitStyleCard()
             end
             refresh()
         end
+        saveSettingRef = saveSetting
 
         row_definitions = {
             {
@@ -150,12 +230,14 @@ function M:showUnitStyleCard()
         }
 
         local num_rows = #row_definitions
-        if focused_row > num_rows then focused_row = num_rows end
-        if focused_row < 1 then focused_row = 1 end
+        if focus.row and focus.col then
+            if focus.row > num_rows then focus.row = num_rows end
+            if focus.row < 1 then focus.row = 1 end
 
-        local cur_row_opts = row_definitions[focused_row].options
-        if focused_col > #cur_row_opts then focused_col = #cur_row_opts end
-        if focused_col < 1 then focused_col = 1 end
+            local cur_row_opts = row_definitions[focus.row].options
+            if focus.col > #cur_row_opts then focus.col = #cur_row_opts end
+            if focus.col < 1 then focus.col = 1 end
+        end
 
         local function option_row(row_idx)
             local rdef = row_definitions[row_idx]
@@ -170,7 +252,7 @@ function M:showUnitStyleCard()
                 end
                 local value = opt.value
                 local is_selected = (value == current)
-                local is_focused = (row_idx == focused_row and col_i == focused_col)
+                local is_focused = (focus.row ~= nil and focus.col ~= nil and row_idx == focus.row and col_i == focus.col)
                 local dot_char = is_selected and "●" or "○"
                 
                 local frame = FrameContainer:new{
@@ -196,8 +278,13 @@ function M:showUnitStyleCard()
                     }
                 }
                 item.onTap = function()
-                    focused_row = row_idx
-                    focused_col = col_i
+                    if is_touch then
+                        focus.row = nil
+                        focus.col = nil
+                    else
+                        focus.row = row_idx
+                        focus.col = col_i
+                    end
                     saveSetting(key, value)
                     return true
                 end
@@ -395,7 +482,7 @@ function M:showUnitStyleCard()
         local intensity_row = option_row(5)
         local timeout_row = option_row(6)
 
-        local is_close_focused = (focused_row == 7)
+        local is_close_focused = (focus.row == 7)
         local close_btn = Button:new{
             text = self.loc:t("close") or "Close",
             face = Font:getFace("cfont", ui_font_size),
@@ -519,64 +606,7 @@ function M:showUnitStyleCard()
                 if Device.input.group.Back then table.insert(overlay.key_events.Close, { Device.input.group.Back }) end
             end
 
-            overlay.onFocusUp = function()
-                if focused_row > 1 then
-                    focused_row = focused_row - 1
-                else
-                    focused_row = num_rows
-                end
-                local opts = row_definitions[focused_row].options
-                if focused_col > #opts then focused_col = #opts end
-                refresh()
-                return true
-            end
-
-            overlay.onFocusDown = function()
-                if focused_row < num_rows then
-                    focused_row = focused_row + 1
-                else
-                    focused_row = 1
-                end
-                local opts = row_definitions[focused_row].options
-                if focused_col > #opts then focused_col = #opts end
-                refresh()
-                return true
-            end
-
-            overlay.onFocusLeft = function()
-                local opts = row_definitions[focused_row].options
-                if focused_col > 1 then
-                    focused_col = focused_col - 1
-                else
-                    focused_col = #opts
-                end
-                refresh()
-                return true
-            end
-
-            overlay.onFocusRight = function()
-                local opts = row_definitions[focused_row].options
-                if focused_col < #opts then
-                    focused_col = focused_col + 1
-                else
-                    focused_col = 1
-                end
-                refresh()
-                return true
-            end
-
-            overlay.onSelect = function()
-                if focused_row <= 6 then
-                    local rdef = row_definitions[focused_row]
-                    local opt = rdef.options[focused_col]
-                    if opt then
-                        saveSetting(rdef.key, opt.value)
-                    end
-                else
-                    overlay:onClose()
-                end
-                return true
-            end
+            _attachGridFocusHandlers(overlay, focus, function() return row_definitions end, function(k, v) saveSettingRef(k, v) end, refresh)
 
             function overlay:onClose()
                 self._styling_offset = nil
@@ -864,11 +894,12 @@ function M:showUnitConverterNewFeatureCard()
     local ui_font_size = math.max(14, math.min(fs, 24))
     local title_font_size = math.max(10, math.min(fs - 5, 15))
 
+    local is_touch = _isTouchDevice()
     local overlay
     local settings = self.ai_helper and self.ai_helper.settings or {}
     local is_enabled = settings.unit_converter_enabled ~= false
     local selected_action = is_enabled and "keep_enabled" or "disable"
-    local focused_index = 1
+    local focused_index = (not is_touch) and 1 or nil
 
     local function span()
         return VerticalSpan:new{ width = xray_theme.gap }
@@ -1122,7 +1153,7 @@ function M:showUnitConverterNewFeatureCard()
                 }
             }
             item.onTap = function()
-                focused_index = idx
+                focused_index = is_touch and nil or idx
                 selected_action = choice.value
                 renderCard()
                 return true
@@ -1294,7 +1325,9 @@ function M:showUnitConverterNewFeatureCard()
             end
 
             overlay.onFocusUp = function()
-                if focused_index > 1 then
+                if not focused_index then
+                    focused_index = 1
+                elseif focused_index > 1 then
                     focused_index = focused_index - 1
                 else
                     focused_index = 5
@@ -1304,7 +1337,9 @@ function M:showUnitConverterNewFeatureCard()
             end
 
             overlay.onFocusDown = function()
-                if focused_index < 5 then
+                if not focused_index then
+                    focused_index = 1
+                elseif focused_index < 5 then
                     focused_index = focused_index + 1
                 else
                     focused_index = 1
@@ -1314,7 +1349,10 @@ function M:showUnitConverterNewFeatureCard()
             end
 
             overlay.onFocusLeft = function()
-                if focused_index == 5 then
+                if not focused_index then
+                    focused_index = 1
+                    renderCard()
+                elseif focused_index == 5 then
                     focused_index = 4
                     renderCard()
                 end
@@ -1322,7 +1360,10 @@ function M:showUnitConverterNewFeatureCard()
             end
 
             overlay.onFocusRight = function()
-                if focused_index == 4 then
+                if not focused_index then
+                    focused_index = 1
+                    renderCard()
+                elseif focused_index == 4 then
                     focused_index = 5
                     renderCard()
                 end
@@ -1330,6 +1371,7 @@ function M:showUnitConverterNewFeatureCard()
             end
 
             overlay.onSelect = function()
+                if not focused_index then return false end
                 if focused_index >= 1 and focused_index <= 3 then
                     selected_action = choices[focused_index].value
                     renderCard()
@@ -1465,10 +1507,14 @@ function M:showEntityStyleCard()
     local label_font_size = math.max(11, math.min(fs - 4, 18))
     local title_font_size = math.max(10, math.min(fs - 5, 15))
 
+    local is_touch = _isTouchDevice()
     local overlay
-    local focused_row = 1
-    local focused_col = 1
+    local focus = {
+        row = (not is_touch) and 1 or nil,
+        col = (not is_touch) and 1 or nil,
+    }
     local refresh
+    local saveSettingRef
 
     local row_definitions = {}
 
@@ -1487,6 +1533,7 @@ function M:showEntityStyleCard()
             end
             refresh()
         end
+        saveSettingRef = saveSetting
 
         row_definitions = {
             {
@@ -1551,12 +1598,14 @@ function M:showEntityStyleCard()
         }
 
         local num_rows = #row_definitions
-        if focused_row > num_rows then focused_row = num_rows end
-        if focused_row < 1 then focused_row = 1 end
+        if focus.row and focus.col then
+            if focus.row > num_rows then focus.row = num_rows end
+            if focus.row < 1 then focus.row = 1 end
 
-        local cur_row_opts = row_definitions[focused_row].options
-        if focused_col > #cur_row_opts then focused_col = #cur_row_opts end
-        if focused_col < 1 then focused_col = 1 end
+            local cur_row_opts = row_definitions[focus.row].options
+            if focus.col > #cur_row_opts then focus.col = #cur_row_opts end
+            if focus.col < 1 then focus.col = 1 end
+        end
 
         local function option_row(row_idx)
             local rdef = row_definitions[row_idx]
@@ -1571,7 +1620,7 @@ function M:showEntityStyleCard()
                 end
                 local value = opt.value
                 local is_selected = (value == current)
-                local is_focused = (row_idx == focused_row and col_i == focused_col)
+                local is_focused = (focus.row ~= nil and focus.col ~= nil and row_idx == focus.row and col_i == focus.col)
                 local dot_char = is_selected and "●" or "○"
 
                 local frame = FrameContainer:new{
@@ -1597,8 +1646,13 @@ function M:showEntityStyleCard()
                     }
                 }
                 item.onTap = function()
-                    focused_row = row_idx
-                    focused_col = col_i
+                    if is_touch then
+                        focus.row = nil
+                        focus.col = nil
+                    else
+                        focus.row = row_idx
+                        focus.col = col_i
+                    end
                     saveSetting(key, value)
                     return true
                 end
@@ -1798,7 +1852,7 @@ function M:showEntityStyleCard()
         local intensity_row = option_row(5)
         local timeout_row = option_row(6)
 
-        local is_close_focused = (focused_row == 7)
+        local is_close_focused = (focus.row == 7)
         local close_btn = Button:new{
             text = self.loc:t("close") or "Close",
             face = Font:getFace("cfont", ui_font_size),
@@ -1922,64 +1976,7 @@ function M:showEntityStyleCard()
                 if Device.input.group.Back then table.insert(overlay.key_events.Close, { Device.input.group.Back }) end
             end
 
-            overlay.onFocusUp = function()
-                if focused_row > 1 then
-                    focused_row = focused_row - 1
-                else
-                    focused_row = num_rows
-                end
-                local opts = row_definitions[focused_row].options
-                if focused_col > #opts then focused_col = #opts end
-                refresh()
-                return true
-            end
-
-            overlay.onFocusDown = function()
-                if focused_row < num_rows then
-                    focused_row = focused_row + 1
-                else
-                    focused_row = 1
-                end
-                local opts = row_definitions[focused_row].options
-                if focused_col > #opts then focused_col = #opts end
-                refresh()
-                return true
-            end
-
-            overlay.onFocusLeft = function()
-                local opts = row_definitions[focused_row].options
-                if focused_col > 1 then
-                    focused_col = focused_col - 1
-                else
-                    focused_col = #opts
-                end
-                refresh()
-                return true
-            end
-
-            overlay.onFocusRight = function()
-                local opts = row_definitions[focused_row].options
-                if focused_col < #opts then
-                    focused_col = focused_col + 1
-                else
-                    focused_col = 1
-                end
-                refresh()
-                return true
-            end
-
-            overlay.onSelect = function()
-                if focused_row <= 6 then
-                    local rdef = row_definitions[focused_row]
-                    local opt = rdef.options[focused_col]
-                    if opt then
-                        saveSetting(rdef.key, opt.value)
-                    end
-                else
-                    overlay:onClose()
-                end
-                return true
-            end
+            _attachGridFocusHandlers(overlay, focus, function() return row_definitions end, function(k, v) saveSettingRef(k, v) end, refresh)
 
             function overlay:onClose()
                 self._entity_styling_offset = nil
@@ -2067,7 +2064,7 @@ function M:showEntityFootnotesNewFeatureCard()
         table.insert(content_vg, VerticalSpan:new{ width = sc(6) })
 
         table.insert(content_vg, TextBoxWidget:new{
-            text = self.loc:t("entity_new_feature_desc") or "X-Ray can underline characters, historical figures, locations, and terms in your books. Tap any underlined name for an instant description popup without leaving your page.\n\nCustomizable in settings: underline style, popup type (tooltip bubble or bottom panel), mentions frequency, and entity categories.",
+            text = self.loc:t("entity_new_feature_desc") or "X-Ray can underline characters, historical figures, locations, and terms in your books. Tap any underlined name for an instant description popup without leaving your page.\n\nCustomizable in settings: underline style, popup type (tooltip bubble or bottom panel), mentions frequency, and entity categories.\n\nNote: Bionic Reading is not compatible with entity underlines; use a fast font instead.",
             face = Font:getFace("cfont", ui_font_size - 2),
             width = dialog_w - sc(24),
         })
