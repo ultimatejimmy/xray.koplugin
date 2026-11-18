@@ -3071,7 +3071,8 @@ function EntityListOverlay:buildUI()
     local is_timeline = (self.mode == "timeline")
     local is_mentions = (self.mode == "mentions")
     local is_evolution = (self.mode == "evolution")
-    local row_h = is_evolution and sc(72) or sc(64)
+    -- Story Arc cards may wrap pills onto their own line, so they need extra height
+    local row_h = is_evolution and sc(96) or sc(64)
     local divider_h = sc(1)
     local items_per_page = math.max(1, math.floor(avail_content_h / (row_h + divider_h)))
 

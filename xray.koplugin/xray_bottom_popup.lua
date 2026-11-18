@@ -507,84 +507,68 @@ function XRayBottomPopup:_buildContent()
     end
 
     self.active_button_defs = raw_button_defs
-    local is_multi_btn = (#raw_button_defs >= 3)
-    local cur_fs_btn = is_multi_btn and math.max(12, math.min(14, fs_btn - 2)) or fs_btn
-    local cur_pad_h = is_multi_btn and 8 or btn_padding_h
-    local span_w = is_multi_btn and math.max(8, gap) or math.max(12, gap * 2)
 
-    local active_btns = {}
-    for idx, bdef in ipairs(raw_button_defs) do
-        local is_focused = (idx == self.focused_btn_index)
-        local btn = make_btn(bdef.label, bdef.cb, is_focused, cur_fs_btn, cur_pad_h)
-        table.insert(active_btns, btn)
+    -- Read More sits directly under the text; every other action shares one row.
+    -- Font/padding shrink step by step until the whole row fits the popup width.
+    local function build_btns(fs_try, pad_try)
+        local out = {}
+        for idx, bdef in ipairs(raw_button_defs) do
+            out[idx] = make_btn(bdef.label, bdef.cb, idx == self.focused_btn_index, fs_try, pad_try)
+        end
+        return out
+    end
+    local function row_width(btns, span, skip_first)
+        local w, n = 0, 0
+        for i, b in ipairs(btns) do
+            if not (skip_first and i == 1) then
+                w = w + b:getSize().w
+                n = n + 1
+            end
+        end
+        return w + math.max(0, n - 1) * span
     end
 
-    -- Layout buttons row
+    local has_read_more = is_truncated and #raw_button_defs > 0
+    local action_count = #raw_button_defs - (has_read_more and 1 or 0)
+    local cur_fs_btn = (action_count >= 3) and math.max(12, math.min(14, fs_btn - 2)) or fs_btn
+    local cur_pad_h = (action_count >= 3) and 8 or btn_padding_h
+    local span_w = (action_count >= 3) and math.max(6, gap) or math.max(12, gap * 2)
+
+    local active_btns = build_btns(cur_fs_btn, cur_pad_h)
+    local tries = { {cur_fs_btn, cur_pad_h}, {12, 6}, {11, 5}, {10, 4} }
+    for _, t in ipairs(tries) do
+        cur_fs_btn, cur_pad_h = math.min(t[1], cur_fs_btn), math.min(t[2], cur_pad_h)
+        active_btns = build_btns(cur_fs_btn, cur_pad_h)
+        if row_width(active_btns, span_w, has_read_more) <= inner_w then break end
+    end
+
+    -- Layout buttons
     local btn_row
     if #active_btns > 0 then
-        local row_h = 0
-        local total_btns_w = 0
-        for _, btn in ipairs(active_btns) do
-            local sz = btn:getSize()
-            row_h = math.max(row_h, sz.h)
-            total_btns_w = total_btns_w + sz.w
+        local rows_vg = { align = "left" }
+        local function add_row(list)
+            local comps = { align = "center" }
+            for i, b in ipairs(list) do
+                if i > 1 then table.insert(comps, HorizontalSpan:new{ width = span_w }) end
+                table.insert(comps, b)
+            end
+            if #rows_vg > 0 then table.insert(rows_vg, VerticalSpan:new{ width = math.max(14, gap * 3) }) end
+            table.insert(rows_vg, LeftContainer:new{
+                dimen = Geom:new{ w = inner_w, h = list[1]:getSize().h },
+                HorizontalGroup:new(comps),
+            })
         end
-        total_btns_w = total_btns_w + (#active_btns - 1) * span_w
-
-        if #active_btns == 1 then
-            btn_row = LeftContainer:new{
-                dimen = Geom:new{ w = inner_w, h = row_h },
-                active_btns[1],
-            }
-        elseif #active_btns == 2 then
-            btn_row = HorizontalGroup:new{
-                align = "center",
-                active_btns[1],
-                HorizontalSpan:new{ width = math.max(16, gap * 3) },
-                active_btns[2],
-            }
-        elseif total_btns_w > inner_w and #active_btns > 2 then
-            -- Multi-row wrap with uniform column widths (2 columns per row)
-            local col_w = math.floor((inner_w - span_w) / 2)
-            for _, btn in ipairs(active_btns) do
-                btn.width = col_w
-            end
-
-            local rows = {}
-            local current_row = nil
-            for i, btn in ipairs(active_btns) do
-                if (i % 2) == 1 then
-                    current_row = { align = "center" }
-                    table.insert(rows, current_row)
-                    table.insert(current_row, btn)
-                else
-                    table.insert(current_row, HorizontalSpan:new{ width = span_w })
-                    table.insert(current_row, btn)
-                end
-            end
-
-            local vg_rows = { align = "center" }
-            for r_idx, r in ipairs(rows) do
-                if r_idx > 1 then
-                    table.insert(vg_rows, VerticalSpan:new{ width = math.max(6, gap) })
-                end
-                table.insert(vg_rows, HorizontalGroup:new(r))
-            end
-            btn_row = VerticalGroup:new(vg_rows)
-        else
-            local btn_components = { align = "center" }
-            for i, btn in ipairs(active_btns) do
-                if i > 1 then
-                    table.insert(btn_components, HorizontalSpan:new{ width = span_w })
-                end
-                table.insert(btn_components, btn)
-            end
-            btn_row = HorizontalGroup:new(btn_components)
+        local action_btns = {}
+        for i, b in ipairs(active_btns) do
+            if not (has_read_more and i == 1) then table.insert(action_btns, b) end
         end
+        if has_read_more then add_row({ active_btns[1] }) end
+        if #action_btns > 0 then add_row(action_btns) end
+        btn_row = VerticalGroup:new(rows_vg)
     end
 
     if btn_row then
-        table.insert(vg_components, VerticalSpan:new{ width = math.max(18, gap * 4) })
+        table.insert(vg_components, VerticalSpan:new{ width = has_read_more and math.max(14, gap * 3) or math.max(18, gap * 4) })
         table.insert(vg_components, btn_row)
     end
 
