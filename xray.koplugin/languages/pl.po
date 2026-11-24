@@ -607,7 +607,7 @@ msgstr "Ewolucja podmiotów śledzi zmiany postaci, lokalizacji i terminów w ko
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "Ewolucja"
+msgstr "Wątek fabularny: %s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -2067,7 +2067,7 @@ msgstr "Sprawdzanie aktualizacji..."
 
 # en-hash: 3e6aed71a195328451956394c1ba0e70
 msgid "updater_download_prompt"
-msgstr "Pobrać i zainstalować teraz?"
+msgstr "\n\nPobrać i zainstalować teraz?"
 
 # en-hash: 4d7dcb1c7639337d915a10ffc18f0c5d
 msgid "updater_downloading"
