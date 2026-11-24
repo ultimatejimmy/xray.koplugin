@@ -15,4 +15,6 @@ return {
     custom2_endpoint = "",
     custom2_model = "",
     custom2_format = "",
+    custom2_headers = "",
+    custom1_headers = "",
 }

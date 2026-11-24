@@ -269,10 +269,6 @@ msgstr "Cancellare la chiave API configurata per %s?"
 msgid "continue_in_background"
 msgstr "Chiudi"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "it"
-
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "Attuale:"
@@ -315,7 +311,7 @@ msgstr "Configurazione API personalizzata %d salvata."
 
 # en-hash: 0bec527ee74be1c3e327221a74853bca
 msgid "desc_len_about_chars"
-msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Recupera altro\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" non sono influenzate."
+msgstr "DESCRIZIONI DEI PERSONAGGI\n\n• Breve (~80 caratteri): nome, ruolo e una breve nota.\n• Predefinito (~200 caratteri): analisi standard.\n• Dettagliato (~350 caratteri): studio approfondito del personaggio con tratti e motivazioni.\n• Molto dettagliato (~500 caratteri): analisi approfondita.\n\nTRADE-OFF\nDescrizioni più lunghe → meno caratteri restituiti durante i recuperi iniziali/completi. Le successive esecuzioni di \"Recupera altro\" non sono influenzate."
 
 # en-hash: d286e548e835ec6e3280b7af6bd717bc
 msgid "desc_len_about_hist"
@@ -355,15 +351,15 @@ msgstr "Non chiedermelo più"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "Bionic Reading divide le parole attraverso tag di formattazione inline, il che non è compatibile con le sottolineature delle entità.\n\nUsa invece un carattere veloce per prestazioni ottimali."
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "Nota: Non compatibile con Bionic Reading"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "Uso delle sottolineature in cache, aggiornamento in corso…"
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -607,7 +603,7 @@ msgstr "L'evoluzione delle entità traccia come personaggi, luoghi e termini si 
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "Evoluzione"
+msgstr "Arco narrativo: %s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -629,13 +625,13 @@ msgstr "Nessun dato radiografico trovato per '%s'. Ti piacerebbe cercarlo?"
 msgid "fetch_successful"
 msgstr "Recupero riuscito"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "Recupero X-Ray..."
+msgstr "Recupero da %s..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
-msgstr "Recupero dell'autore..."
+msgstr "Recupero informazioni sull'autore da %s..."
 
 # en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
@@ -859,7 +855,7 @@ msgstr "Abilitato"
 
 # en-hash: f2cb4c8134446083c3d2859f02c963f6
 msgid "linked_entries_setting_desc"
-msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Voci collegate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" dalle finestre di dialogo dei dettagli."
+msgstr "Le voci collegate collegano automaticamente personaggi, luoghi e figure storiche quando sono menzionati nelle rispettive descrizioni.\n\nDisabilitando questa opzione si nasconderà il pulsante \"Voci collegate\" dalle finestre di dialogo dei dettagli."
 
 # en-hash: 75c2e35dd42abd75cdb8a9d4b0da8c20
 msgid "linked_none"
@@ -1007,7 +1003,7 @@ msgstr "Scansione in corso... %1 di %2 capitoli"
 
 # en-hash: b9cb4acd779a0494cd5de4f263626662
 msgid "mentions_setting_desc"
-msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Trova menzioni\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"."
+msgstr "La scansione delle menzioni ti consente di trovare ogni occorrenza di un personaggio o di un luogo nel libro. Ciò avviene automaticamente in background per garantire che il lettore rimanga reattivo.\n\nDisabilitando questa opzione si nasconderà il pulsante \"Trova menzioni\"."
 
 # en-hash: 2c126ee6ce85ef471a3a0e096c78b724
 msgid "mentions_setting_title"
@@ -1449,11 +1445,7 @@ msgstr "Arco narrativo"
 msgid "paste_clipboard_confirm"
 msgstr "Utilizzare la chiave API trovata negli appunti per %s?"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "L'intelligenza artificiale ha trovato %d possibili duplicati dall'ultimo recupero. Revisione adesso?"
 
@@ -1551,7 +1543,7 @@ msgstr "Motivo"
 
 # en-hash: 1ec7919a887b228482b4fd9a80fcd324
 msgid "reasoning_about"
-msgstr "Controlla la profondità del \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"pensiero\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
+msgstr "Controlla la profondità del \"pensiero\" per i modelli di ragionamento:\n\n• Non impostato: nessuna istruzione specifica inviata; il modello utilizza le sue impostazioni predefinite interne.\n• Basso: estrazione rapida ed economica per libri semplici.\n• Medio: profondità bilanciata per la maggior parte delle narrazioni.\n• Alto: analisi dettagliata per reti di personaggi complesse.\n\nSi applica a: GPT-5.x (o1/o3/gpt-5), Claude (sonetto/opus/haiku) e Gemini 2.5+.\n\nNota: DeepSeek V4 funziona intrinsecamente: questa impostazione non ha alcun effetto su di esso."
 
 # en-hash: 655d20c1ca69519ca647684edbb2db35
 msgid "reasoning_high"
@@ -1757,7 +1749,7 @@ msgstr "Rilevamento Automatico (Consigliato)"
 msgid "story_toc_depth_desc"
 msgstr "Seleziona il livello dell'Indice che rappresenta le singole storie:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
 msgstr "Nessun termine trovato corrispondente a '%s'"
 
@@ -2112,10 +2104,6 @@ msgstr "Cosa c'è di nuovo:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Aggiornamento di X-Ray..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

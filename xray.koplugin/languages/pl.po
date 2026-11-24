@@ -269,10 +269,6 @@ msgstr "Wyczyścić skonfigurowany klucz API dla %s?"
 msgid "continue_in_background"
 msgstr "Zamknij"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "pl"
-
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "Bieżący: "
@@ -629,11 +625,11 @@ msgstr "Nie znaleziono danych X-Ray dla '%s'. Czy chcesz je wyszukać?"
 msgid "fetch_successful"
 msgstr "Pobieranie zakończone sukcesem"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "Pobieranie X-Ray..."
+msgstr "Pobieranie z %s..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
 msgstr "Pobieranie informacji o autorze z %s..."
 
@@ -1449,11 +1445,7 @@ msgstr "Wątek fabularny"
 msgid "paste_clipboard_confirm"
 msgstr "Użyć klucza API znalezionego w schowku dla %s?"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "AI znalazła %d potencjalnych duplikatów z ostatniego pobierania. Zweryfikować teraz?"
 
@@ -1757,7 +1749,7 @@ msgstr "Autodetekcja (zalecane)"
 msgid "story_toc_depth_desc"
 msgstr "Wybierz, który poziom spisu treści reprezentuje poszczególne opowiadania:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
 msgstr "Nie znaleziono pojęcia pasującego do '%s'"
 
@@ -2112,10 +2104,6 @@ msgstr "Co nowego:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Aktualizowanie danych X-Ray..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

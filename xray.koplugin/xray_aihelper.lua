@@ -122,6 +122,36 @@ function AIHelper:isAnthropic(provider, endpoint)
     return false
 end
 
+--- Parse newline-separated "Header-Name: value" entries from provider_config.extra_headers
+--- and apply them to the headers table (replacing any case-variant duplicate keys).
+function AIHelper:applyExtraHeaders(headers, provider_config)
+    if type(headers) ~= "table" or type(provider_config) ~= "table" then
+        return headers
+    end
+    local raw = provider_config.extra_headers
+    if type(raw) ~= "string" or raw == "" then
+        return headers
+    end
+
+    for line in raw:gmatch("[^\r\n]+") do
+        local name, value = line:match("^([^:]+):(.*)$")
+        if name and value then
+            name = name:match("^%s*(.-)%s*$")
+            value = value:match("^%s*(.-)%s*$")
+            if name ~= "" and value ~= "" and not name:find("[%s%c]") then
+                local lower_name = name:lower()
+                for existing_k in pairs(headers) do
+                    if type(existing_k) == "string" and existing_k:lower() == lower_name and existing_k ~= name then
+                        headers[existing_k] = nil
+                    end
+                end
+                headers[name] = value
+            end
+        end
+    end
+    return headers
+end
+
 
 -- Strip invalid UTF-8 sequences and disallowed control bytes from a string.
 -- Byte-based string.sub() throughout the plugin can slice multi-byte UTF-8
@@ -587,6 +617,7 @@ function AIHelper:buildComprehensiveRequest(title, author, context, prompt_overr
                 
                 body = json.encode(req_body)
             end
+            self:applyExtraHeaders(headers, config)
             table.insert(requests, {
                 url = url,
                 headers = headers,
@@ -1468,17 +1499,19 @@ return {
     custom1_endpoint = "",
     custom1_model    = "",
     custom1_format   = "",
+    custom1_headers  = "",
     custom2_api_key  = "",
     custom2_endpoint = "",
     custom2_model    = "",
     custom2_format   = "",
+    custom2_headers  = "",
 }
 ]]
     end
 
     for k, v in pairs(merged_config or {}) do
         local val = tostring(v or "")
-        local safe_val = val:gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\n", "\\n")
+        local safe_val = val:gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\r", "\\r"):gsub("\n", "\\n")
         local pat = k .. '%s*=%s*"[^"]*"'
         if text:find(pat) then
             text = text:gsub(pat, k .. ' = "' .. safe_val:gsub("%%", "%%%%") .. '"')
@@ -1568,8 +1601,8 @@ function AIHelper:loadConfig()
 
     local tracked_keys = {
         "gemini_api_key", "chatgpt_api_key", "deepseek_api_key", "claude_api_key",
-        "custom1_api_key", "custom1_endpoint", "custom1_model", "custom1_format",
-        "custom2_api_key", "custom2_endpoint", "custom2_model", "custom2_format",
+        "custom1_api_key", "custom1_endpoint", "custom1_model", "custom1_format", "custom1_headers",
+        "custom2_api_key", "custom2_endpoint", "custom2_model", "custom2_format", "custom2_headers",
         "gemini_primary_model", "gemini_secondary_model", "chatgpt_model", "default_provider"
     }
 
@@ -1618,6 +1651,7 @@ function AIHelper:loadConfig()
             if config[slot .. "_endpoint"] then self.providers[slot].endpoint = config[slot .. "_endpoint"] end
             if config[slot .. "_model"]    then self.providers[slot].model    = config[slot .. "_model"]    end
             if config[slot .. "_format"]   then self.providers[slot].format   = config[slot .. "_format"]   end
+            self.providers[slot].extra_headers = config[slot .. "_headers"]
         end
     end
 end
@@ -2465,6 +2499,7 @@ function AIHelper:callClaude(prompt, config, current_model)
             headers["X-Title"] = "KOReader X-Ray"
         end
     end
+    self:applyExtraHeaders(headers, config)
     
     local url = config.endpoint or "https://api.anthropic.com/v1/messages"
     local ok, code, response_text = self:makeRequest(url, headers, request_body)
@@ -2645,6 +2680,7 @@ function AIHelper:callChatGPT(prompt, config, current_model)
         headers["HTTP-Referer"]       = "https://github.com/koreader/koreader-xray-plugin"
         headers["X-Title"] = "KOReader X-Ray"
     end
+    self:applyExtraHeaders(headers, config)
     
     local ok, code, response_text = self:makeRequest(config.endpoint or "https://api.openai.com/v1/chat/completions", headers, request_body)
     
@@ -3258,6 +3294,7 @@ function AIHelper:validateProviderKey(provider_id)
         })
     end
 
+    self:applyExtraHeaders(headers, prov)
     local ok, code, response_text, status = self:makeRequest(url, headers, request_body, 10, 15)
     local end_time = socket and socket.gettime and socket.gettime()
     local latency_ms = socket_time and math.floor((end_time - socket_time) * 1000) or 0
@@ -3334,10 +3371,12 @@ function AIHelper:clearAllAPIKeys()
         custom1_endpoint = "",
         custom1_model = "",
         custom1_format = "",
+        custom1_headers = "",
         custom2_api_key = "",
         custom2_endpoint = "",
         custom2_model = "",
         custom2_format = "",
+        custom2_headers = "",
     }
     self:writeConfigToFile(empty_config)
 
@@ -3367,6 +3406,7 @@ function AIHelper:clearProviderKey(provider_id)
         stored[provider_id .. "_endpoint"] = ""
         stored[provider_id .. "_model"] = ""
         stored[provider_id .. "_format"] = ""
+        stored[provider_id .. "_headers"] = ""
     end
     self:saveStoredConfig(stored)
 
@@ -3379,6 +3419,7 @@ function AIHelper:clearProviderKey(provider_id)
             config[provider_id .. "_endpoint"] = ""
             config[provider_id .. "_model"] = ""
             config[provider_id .. "_format"] = ""
+            config[provider_id .. "_headers"] = ""
         end
         self:writeConfigToFile(config)
     end

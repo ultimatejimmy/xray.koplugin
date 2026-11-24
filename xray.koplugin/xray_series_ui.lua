@@ -10,6 +10,7 @@ local ImageWidget     = require("ui/widget/imagewidget")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")
 local SeriesManager = require(plugin_path .. "xray_seriesmanager")
+local conductor = require(plugin_path .. "xray_conductor")
 
 local _asset_path_cache = {}
 local function getAssetPath(filename)
@@ -345,94 +346,128 @@ function M:checkSeriesContext()
 
     local DataStorage = require("datastorage")
     local result_file = DataStorage:getSettingsDir() .. "/xray/bg_series_detect_" .. tostring(os.time()) .. ".json"
-    
-    local request_pid = self.ai_helper:makeRequestAsync(req_params, result_file)
-    if not request_pid then
-        self:log("XRayPlugin: Series: Async check not supported/failed (e.g. on Windows). Skipping automatic AI fallback.")
-        return
-    end
+    local doc = self.ui and self.ui.document
+    local active_pid = nil
 
-    local poll_count = 0
-    local max_polls = 150 -- 5 minutes at 2s intervals
-    local function pollDetect()
-        if self.destroyed or not self.ui or not self.ui.document then
-            pcall(function() os.remove(result_file) end)
-            return
-        end
-        poll_count = poll_count + 1
-        local result, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file, request_pid)
-        if result == nil then
-            if poll_count < max_polls then
-                UIManager:scheduleIn(2, pollDetect)
-            else
-                self:log("XRayPlugin: Series: Async series check timed out")
+    conductor.runSlot(self, {
+        task = "series_context_check",
+        priority = "idle_bg",
+        dedupe_key = "xray:series_context_check",
+        subprocess = true,
+        document = doc,
+        run = function(done)
+            if self.destroyed or not self.ui or self.ui.document ~= doc then
+                done()
+                return
             end
-        elseif result == false then
-            self:log("XRayPlugin: Series: Async series check failed: " .. tostring(p_err_msg))
-        else
-            -- AI returned a valid result!
-            self:log("XRayPlugin: Series: Async series check result received")
-            if result.is_series then
-                local name = result.series_name or (series_info and series_info.name) or (props and (props.series or props.Series))
-                local title_idx = self.series_manager and self.series_manager.extractIndexFromTitle and self.series_manager:extractIndexFromTitle(title, name)
-                local index = tonumber(result.book_index) or title_idx or 1
-                if name and name ~= "" then
-                    local make_slug_fn = self.series_manager and self.series_manager.makeSlug
-                    local slug = make_slug_fn and self.series_manager:makeSlug(name) or name:lower():gsub("[%s%p]+", "_"):gsub("^_+", ""):gsub("_+$", "")
-                    local ai_series_info = {
-                        name = name,
-                        index = index,
-                        slug = slug
-                    }
-                    self:log("XRayPlugin: Series: Async check detected series=" .. tostring(name) .. ", index=" .. tostring(index))
-                    if index > 1 then
-                        local cache_data = slug and self.series_manager and self.series_manager.loadSeriesCache and self.series_manager:loadSeriesCache(slug) or { series_slug = slug, books = {} }
-                        cache_data.books = cache_data.books or {}
+            local request_pid = self.ai_helper:makeRequestAsync(req_params, result_file)
+            if not request_pid then
+                self:log("XRayPlugin: Series: Async check not supported/failed (e.g. on Windows). Skipping automatic AI fallback.")
+                done()
+                return
+            end
+            active_pid = request_pid
 
-                        local doc_file = self.ui and self.ui.document and self.ui.document.file
-                        local prior_indices = self:getExpectedPriorIndices(ai_series_info, cache_data.books, doc_file)
-                        for _, p_idx in ipairs(prior_indices) do
-                            local cached_b = cache_data.books[p_idx]
-                            local has_entities = bookHasEntities(cached_b, self.series_manager)
-                            if not cached_b or not has_entities or cached_b.source ~= "local_xray" then
-                                local check_path = (cache_data.book_paths and cache_data.book_paths[p_idx]) or doc_file
-                                local local_book = self.series_manager and self.series_manager.findLocalBookXRay and self.series_manager:findLocalBookXRay(ai_series_info, p_idx, check_path, nil, self.cache_manager)
-                                if bookHasEntities(local_book, self.series_manager) then
-                                    cache_data.books[p_idx] = local_book
+            local poll_count = 0
+            local max_polls = 150 -- 5 minutes at 2s intervals
+            local function pollDetect()
+                if self.destroyed or not self.ui or not self.ui.document then
+                    pcall(function() os.remove(result_file) end)
+                    done()
+                    return
+                end
+                poll_count = poll_count + 1
+                local result, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file, request_pid)
+                if result == nil then
+                    if poll_count < max_polls then
+                        UIManager:scheduleIn(2, pollDetect)
+                    else
+                        self:log("XRayPlugin: Series: Async series check timed out")
+                        pcall(function() os.remove(result_file) end)
+                        if request_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                            self.ai_helper:cancelAsyncChild(request_pid)
+                        end
+                        done()
+                    end
+                elseif result == false then
+                    self:log("XRayPlugin: Series: Async series check failed: " .. tostring(p_err_msg))
+                    done()
+                else
+                    done()
+                    -- AI returned a valid result!
+                    self:log("XRayPlugin: Series: Async series check result received")
+                    if result.is_series then
+                        local name = result.series_name or (series_info and series_info.name) or (props and (props.series or props.Series))
+                        local title_idx = self.series_manager and self.series_manager.extractIndexFromTitle and self.series_manager:extractIndexFromTitle(title, name)
+                        local index = tonumber(result.book_index) or title_idx or 1
+                        if name and name ~= "" then
+                            local make_slug_fn = self.series_manager and self.series_manager.makeSlug
+                            local slug = make_slug_fn and self.series_manager:makeSlug(name) or name:lower():gsub("[%s%p]+", "_"):gsub("^_+", ""):gsub("_+$", "")
+                            local ai_series_info = {
+                                name = name,
+                                index = index,
+                                slug = slug
+                            }
+                            self:log("XRayPlugin: Series: Async check detected series=" .. tostring(name) .. ", index=" .. tostring(index))
+                            if index > 1 then
+                                local cache_data = slug and self.series_manager and self.series_manager.loadSeriesCache and self.series_manager:loadSeriesCache(slug) or { series_slug = slug, books = {} }
+                                cache_data.books = cache_data.books or {}
+
+                                local doc_file = self.ui and self.ui.document and self.ui.document.file
+                                local prior_indices = self:getExpectedPriorIndices(ai_series_info, cache_data.books, doc_file)
+                                for _, p_idx in ipairs(prior_indices) do
+                                    local cached_b = cache_data.books[p_idx]
+                                    local has_entities = bookHasEntities(cached_b, self.series_manager)
+                                    if not cached_b or not has_entities or cached_b.source ~= "local_xray" then
+                                        local check_path = (cache_data.book_paths and cache_data.book_paths[p_idx]) or doc_file
+                                        local local_book = self.series_manager and self.series_manager.findLocalBookXRay and self.series_manager:findLocalBookXRay(ai_series_info, p_idx, check_path, nil, self.cache_manager)
+                                        if bookHasEntities(local_book, self.series_manager) then
+                                            cache_data.books[p_idx] = local_book
+                                        end
+                                    end
                                 end
-                            end
-                        end
 
-                        local all_priors_cached = true
-                        for _, p_idx in ipairs(prior_indices) do
-                            local cached_b = cache_data.books[p_idx]
-                            if not bookHasEntities(cached_b, self.series_manager) then
-                                all_priors_cached = false
-                                break
-                            end
-                        end
+                                local all_priors_cached = true
+                                for _, p_idx in ipairs(prior_indices) do
+                                    local cached_b = cache_data.books[p_idx]
+                                    if not bookHasEntities(cached_b, self.series_manager) then
+                                        all_priors_cached = false
+                                        break
+                                    end
+                                end
 
-                        if all_priors_cached then
-                            self:log("XRayPlugin: Series: All prior books resolved locally. Merging series context automatically.")
-                            self:mergeSeriesContext(cache_data, ai_series_info)
+                                if all_priors_cached then
+                                    self:log("XRayPlugin: Series: All prior books resolved locally. Merging series context automatically.")
+                                    self:mergeSeriesContext(cache_data, ai_series_info)
+                                else
+                                    self:showSeriesContextPrompt(ai_series_info)
+                                end
+                            else
+                                self:log("XRayPlugin: Series: Book is first in series (index=" .. tostring(index) .. "), skipping prompt. Caching check outcome.")
+                                saveSeriesChecked()
+                            end
                         else
-                            self:showSeriesContextPrompt(ai_series_info)
+                            self:log("XRayPlugin: Series: Async check detected series, but name is invalid. Caching check outcome.")
+                            saveSeriesChecked()
                         end
                     else
-                        self:log("XRayPlugin: Series: Book is first in series (index=" .. tostring(index) .. "), skipping prompt. Caching check outcome.")
+                        self:log("XRayPlugin: Series: Async check determined book is not part of a series. Caching check outcome.")
                         saveSeriesChecked()
                     end
-                else
-                    self:log("XRayPlugin: Series: Async check detected series, but name is invalid. Caching check outcome.")
-                    saveSeriesChecked()
                 end
-            else
-                self:log("XRayPlugin: Series: Async check determined book is not part of a series. Caching check outcome.")
-                saveSeriesChecked()
             end
-        end
-    end
-    UIManager:scheduleIn(2, pollDetect)
+            UIManager:scheduleIn(2, pollDetect)
+        end,
+        cancel = function()
+            pcall(function() os.remove(result_file) end)
+            if active_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                self.ai_helper:cancelAsyncChild(active_pid)
+            end
+        end,
+        on_rejected = function(reason)
+            self:log("XRayPlugin: Series: Async check deferred by Conductor (" .. tostring(reason) .. ")")
+        end,
+    })
 end
 
 -- Horizon state resolution and evolution extracted to xray_horizon.lua

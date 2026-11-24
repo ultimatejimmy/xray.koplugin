@@ -35,7 +35,7 @@ msgstr "Успешно спојено %d парова."
 
 # en-hash: a33bcf890b6eb6b64b4e272f79e05eda
 msgid "ai_scan"
-msgstr "AI Scan"
+msgstr "AI skeniranje"
 
 # en-hash: aeb5711552b5cd7ae34cc3c3393052f8
 msgid "ai_scanning_duplicates"
@@ -55,7 +55,7 @@ msgstr "Ova priča"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
-msgstr "Ask Later"
+msgstr "Pitaj kasnije"
 
 # en-hash: bff74eab9088ad053737e6f0d424ea7e
 msgid "author_born"
@@ -235,7 +235,7 @@ msgstr "Затвори"
 
 # en-hash: 400a15f44cdb7cf1b903d40d661c98c4
 msgid "cloud_setup_title"
-msgstr "Connect via Phone/PC"
+msgstr "Povežite se preko telefona/računara"
 
 # en-hash: 3441bb13db3b069cccbba18579ae99f2
 msgid "config_default_gemini"
@@ -251,7 +251,7 @@ msgstr "ПОДЕШЕН"
 
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
-msgstr "Confirm"
+msgstr "Potvrdi"
 
 # en-hash: b59432f3e47e0715eaed12d828c25efb
 msgid "confirm_anthology_omnibus"
@@ -268,10 +268,6 @@ msgstr "Обрисати конфигурисани API кључ за %s?"
 # en-hash: d3d2e617335f08df83599665eef8a418
 msgid "continue_in_background"
 msgstr "Zatvori"
-
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "sr"
 
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
@@ -355,15 +351,15 @@ msgstr "Не питај поново"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "Bioničko čitanje deli reči preko oznaka za formatiranje, što nije kompatibilno sa podvlačenjem entiteta.\n\nKoristite brzi font za najbolje performanse."
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "Napomena: Nije kompatibilno sa bioničkim čitanjem"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "Koriste se keširane podvučene linije, osvežavanje…"
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -607,7 +603,7 @@ msgstr "Evolucija entiteta prati kako se likovi, lokacije i termini razvijaju kr
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "Еволуција"
+msgstr "Luk priče: %s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -629,11 +625,11 @@ msgstr "Нема X-Ray података за '%s'. Желите ли да их �
 msgid "fetch_successful"
 msgstr "Преузимање успешно"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "Преузимање X-Ray-а..."
+msgstr "Preuzimanje sa %s..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
 msgstr "Преузимање информација о аутору са %s..."
 
@@ -871,7 +867,7 @@ msgstr "Повезано са: %s"
 
 # en-hash: 08ea860427184895725e398c5ef821b1
 msgid "local_setup_title"
-msgstr "Connect via Local Wi-Fi"
+msgstr "Povežite se preko lokalnog Wi-Fi"
 
 # en-hash: db644ab64bb392cf0d28dfd9cc2c0372
 msgid "log_empty"
@@ -963,7 +959,7 @@ msgstr "Tom br."
 
 # en-hash: 6ca35323241366b4da17cd03396f1f69
 msgid "manual_pick"
-msgstr "Manual Pick"
+msgstr "Ručni odabir"
 
 # en-hash: 9899bf3319fb8c6b34520d599f30281e
 msgid "mention_dismiss_btn"
@@ -1203,7 +1199,7 @@ msgstr "Контекст серијала"
 
 # en-hash: c1cd902a55171a323ff6504b0dfdb405
 msgid "menu_set_keys_device"
-msgstr "Set API Key from Phone/PC"
+msgstr "Postavi API ključ sa telefona/računara"
 
 # en-hash: f4f70727dc34561dfde1a3c529b6205c
 msgid "menu_settings"
@@ -1211,11 +1207,11 @@ msgstr "Подешавања"
 
 # en-hash: 476ca4e2e359e5560dc4ab4ead44725c
 msgid "menu_setup_cloud"
-msgstr "Cloud Relay (Recommended — works anywhere)"
+msgstr "Cloud Relay (Preporučeno — radi bilo gde)"
 
 # en-hash: cce94c5e2e1e515981d108a91b9a2bdc
 msgid "menu_setup_local"
-msgstr "Local Wi-Fi (Offline LAN)"
+msgstr "Lokalni Wi-Fi (Oflajn LAN)"
 
 # en-hash: a79d5f424342db40e3be1b3c3f8a2e73
 msgid "menu_story_toc_depth"
@@ -1351,7 +1347,7 @@ msgstr "Вишеструка подударања за '%s'. На шта сте 
 
 # en-hash: cafa45757baae6a9b3e4daafcc454e43
 msgid "new_feature"
-msgstr "New Feature"
+msgstr "Nova funkcija"
 
 # en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
 msgid "next"
@@ -1439,7 +1435,7 @@ msgstr "У реду"
 
 # en-hash: 386b384e3eec6bf9bf55d32b5018de15
 msgid "pair_rejected"
-msgstr "Pair marked as not a duplicate."
+msgstr "Par je označen kao duplikat."
 
 # en-hash: 98ba558bb9ff6031db51cfb88b0b7ca2
 msgid "past_evolution"
@@ -1449,11 +1445,7 @@ msgstr "Narativni luk"
 msgid "paste_clipboard_confirm"
 msgstr "Користити API кључ из оставе за %s?"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "АИ је пронашао %d потенцијалних дупликата из претходног преузимања. Прегледати сада?"
 
@@ -1591,7 +1583,7 @@ msgstr "Поново генериши све"
 
 # en-hash: d98ac12774fca5c3cbaffe276840c55f
 msgid "reject_pair"
-msgstr "Reject"
+msgstr "Odbaci"
 
 # en-hash: 88e790884cd8072ac5a804be29a0a287
 msgid "relookup_button"
@@ -1757,7 +1749,7 @@ msgstr "Auto-detekcija (preporučeno)"
 msgid "story_toc_depth_desc"
 msgstr "Izaberite nivo sadržaja koji predstavlja pojedinačne priče:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
 msgstr "Није пронађен термин који одговара '%s'"
 
@@ -1775,15 +1767,15 @@ msgstr "Ова страница"
 
 # en-hash: f61824b403008733ff955da48052ee04
 msgid "unit_action_configure"
-msgstr "Configure Settings..."
+msgstr "Konfiguriši podešavanja..."
 
 # en-hash: 6ee50812725a7a053ed2c5742c6ebfef
 msgid "unit_action_disable"
-msgstr "Disable Feature"
+msgstr "Onemogući funkciju"
 
 # en-hash: 074331092c85358cfa576b7c8424a94e
 msgid "unit_action_keep"
-msgstr "Keep Enabled (Default)"
+msgstr "Ostavi omogućeno (Podrazumevano)"
 
 # en-hash: fd380cdfeb02e89fd87e81a03440d1a4
 msgid "unit_auto_scan_about"
@@ -1939,11 +1931,11 @@ msgstr "Скенирање јединица ће почети након што 
 
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_scan_written_disabled"
-msgstr "Disabled"
+msgstr "Onemogućeno"
 
 # en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "unit_scan_written_enabled"
-msgstr "Enabled"
+msgstr "Omogućeno"
 
 # en-hash: f8115ed7a0bb14ce3154f12ad441b614
 msgid "unit_scan_written_numbers"
@@ -1951,15 +1943,15 @@ msgstr "Скенирај писане бројеве (нпр. 'пет миља')
 
 # en-hash: 984acb9f42ff774b4b3f5e00266cbd73
 msgid "unit_scan_written_numbers_about"
-msgstr "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."
+msgstr "Skeniranje brojeva napisanih rečima (poput „pet milja“) zahteva drugi prolaz kroz ceo tekst. Preskakanje ovog prolaza na slabijim uređajima (Kindle, Kobo, PocketBook) ubrzava skeniranje 4 do 5 puta i sprečava zamrzavanje pri pokretanju. Na bržim platformama poput Androida ili računara nema primetnog usporavanja."
 
 # en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
 msgid "unit_scan_written_numbers_desc"
-msgstr "Scan for spelled-out numbers (e.g. 'five miles'):"
+msgstr "Skeniraj brojeve napisane rečima (npr. „pet milja“):"
 
 # en-hash: 41e615cb7654281a8e431c371a92311e
 msgid "unit_scan_written_numbers_title"
-msgstr "Scan Written Numbers"
+msgstr "Skeniraj brojeve napisane rečima"
 
 # en-hash: 59655846df0abfca05d478f9c0a18eb4
 msgid "unit_scanning_book"
@@ -2112,10 +2104,6 @@ msgstr "Шта је ново:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Ажурирање X-Ray података..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

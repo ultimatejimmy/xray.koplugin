@@ -7,6 +7,7 @@ local logger = require("logger")
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")
 local SeriesManager = require(plugin_path .. "xray_seriesmanager")
+local conductor = require(plugin_path .. "xray_conductor")
 
 local function bookHasEntities(b, sm)
     if not b or type(b) ~= "table" then return false end
@@ -948,6 +949,10 @@ function M:continueWithFetch(reading_percent, is_update, last_fetch_page, is_sil
                     end
                 end
             end)
+
+            if not is_silent then
+                conductor.reclaimMemory("soft", "xray")
+            end
 
             result_file = settings_xray_dir .. "/bg_fetch_" .. tostring(os.time()) .. "_" .. tostring(fetch_generation) .. ".json"
             local started = self.ai_helper:makeRequestAsync(req_params, result_file)
@@ -2024,53 +2029,81 @@ function M:runPostFetchDuplicateCheck(title, author, reading_percent, is_silent,
     local scope_story_id = current_story and current_story.story_id or nil
 
     -- Run checks for characters and locations in sequence using async subprocesses
+    local doc = self.ui and self.ui.document
     local function checkListAsync(list, list_name, entity_label, on_done)
         if not list or #list < 2 then on_done(nil); return end
-        
-        local unique_id = tostring(os.time()) .. "_" .. tostring(math.random(1000, 9999))
-        local result_file = settings_xray_dir .. "/dupe_res_" .. list_name .. "_" .. unique_id .. ".json"
-        
-        self:log("XRayPlugin: Starting async duplicate check for " .. list_name)
-        local pid = self.ai_helper:findDuplicatesAsync(title, author, list, entity_label, reading_percent, result_file, dup_book_text, scope_story_id)
-        if not pid then
-            self:log("XRayPlugin: Failed to start async duplicate check for " .. list_name)
-            on_done(nil)
-            return
-        end
-        
-        local poll_count = 0
-        local max_polls = 150 -- 5 minutes at 2s intervals
-        local function poll()
-            if self.destroyed or not self.ui or not self.ui.document then
-                pcall(function() os.remove(result_file) end)
-                if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
-                    self.ai_helper:cancelAsyncChild(pid)
-                end
+
+        local function runCheck(slot_done)
+            if self.destroyed or not self.ui or self.ui.document ~= doc then
+                slot_done()
                 return
             end
-            poll_count = poll_count + 1
-            local data, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file, pid)
-            if data == nil then
-                if poll_count < max_polls then
-                    UIManager:scheduleIn(2, poll)
-                else
-                    self:log("XRayPlugin: Async duplicate check for " .. list_name .. " timed out")
+            local unique_id = tostring(os.time()) .. "_" .. tostring(math.random(1000, 9999))
+            local result_file = settings_xray_dir .. "/dupe_res_" .. list_name .. "_" .. unique_id .. ".json"
+
+            self:log("XRayPlugin: Starting async duplicate check for " .. list_name)
+            local pid = self.ai_helper:findDuplicatesAsync(title, author, list, entity_label, reading_percent, result_file, dup_book_text, scope_story_id)
+            if not pid then
+                self:log("XRayPlugin: Failed to start async duplicate check for " .. list_name)
+                slot_done()
+                on_done(nil)
+                return
+            end
+
+            local poll_count = 0
+            local max_polls = 150 -- 5 minutes at 2s intervals
+            local function poll()
+                if self.destroyed or not self.ui or not self.ui.document then
                     pcall(function() os.remove(result_file) end)
                     if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
                         self.ai_helper:cancelAsyncChild(pid)
                     end
-                    on_done(nil)
+                    slot_done()
+                    return
                 end
-            elseif data == false then
-                self:log("XRayPlugin: Async duplicate check for " .. list_name .. " failed: " .. tostring(p_err_msg))
-                on_done(nil)
-            else
-                self:log("XRayPlugin: Async duplicate check for " .. list_name .. " succeeded")
-                local pairs_found = data.duplicate_pairs or data.DuplicatePairs
-                on_done(pairs_found)
+                poll_count = poll_count + 1
+                local data, p_err_code, p_err_msg = self.ai_helper:checkAsyncResult(result_file, pid)
+                if data == nil then
+                    if poll_count < max_polls then
+                        UIManager:scheduleIn(2, poll)
+                    else
+                        self:log("XRayPlugin: Async duplicate check for " .. list_name .. " timed out")
+                        pcall(function() os.remove(result_file) end)
+                        if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                            self.ai_helper:cancelAsyncChild(pid)
+                        end
+                        slot_done()
+                        on_done(nil)
+                    end
+                elseif data == false then
+                    self:log("XRayPlugin: Async duplicate check for " .. list_name .. " failed: " .. tostring(p_err_msg))
+                    slot_done()
+                    on_done(nil)
+                else
+                    self:log("XRayPlugin: Async duplicate check for " .. list_name .. " succeeded")
+                    local pairs_found = data.duplicate_pairs or data.DuplicatePairs
+                    slot_done()
+                    on_done(pairs_found)
+                end
             end
+            UIManager:scheduleIn(2, poll)
         end
-        UIManager:scheduleIn(2, poll)
+
+        if is_silent then
+            conductor.runSlot(self, {
+                task = "post_fetch_dup_check_" .. tostring(list_name),
+                priority = "idle_bg",
+                dedupe_key = "xray:post_fetch_dup_check_" .. tostring(list_name),
+                subprocess = true,
+                document = doc,
+                run = runCheck,
+                on_rejected = function()
+                    on_done(nil)
+                end,
+            })
+        else
+            runCheck(function() end)
+        end
     end
 
     checkListAsync(target_characters, "characters",
@@ -2734,23 +2767,37 @@ function M:checkWeeklyUpdate(retry_count)
             local document = self.ui and self.ui.document
             local updater = require(plugin_path .. "xray_updater")
 
-            updater.checkSilentForUpdates(self.loc, self.ai_helper.settings.beta_channel_enabled, {
-                should_show = function()
-                    return not self.destroyed and self.ui and self.ui.document == document
+            conductor.runSlot(self, {
+                task = "weekly_update_check",
+                priority = "idle_bg",
+                min_free_kb = 25 * 1024,
+                dedupe_key = "xray:weekly_update_check",
+                subprocess = true,
+                document = document,
+                run = function(done)
+                    updater.checkSilentForUpdates(self.loc, self.ai_helper.settings.beta_channel_enabled, {
+                        should_show = function()
+                            return not self.destroyed and self.ui and self.ui.document == document
+                        end,
+                        on_done = function(status, release)
+                            done()
+                            if self.destroyed then return end
+                            local done_now = os.time()
+                            if status == "shown" or status == "up_to_date" then
+                                self:log("XRayPlugin: Weekly update check finished with status '" .. tostring(status) .. "', stamping 7-day interval")
+                                self.ai_helper:saveSettings({ last_update_check = done_now })
+                            elseif status == "error" then
+                                self:log("XRayPlugin: Weekly update check failed with error, backing off for 24 hours")
+                                -- Stamp 24 hours retry backoff (now - 6 days)
+                                self.ai_helper:saveSettings({ last_update_check = done_now - week_seconds + (24 * 60 * 60) })
+                            elseif status == "suppressed_update" then
+                                self:log("XRayPlugin: Weekly update found but dialog suppressed (book closed/inactive), leaving timestamp unstamped")
+                            end
+                        end,
+                    })
                 end,
-                on_done = function(status, release)
-                    if self.destroyed then return end
-                    local done_now = os.time()
-                    if status == "shown" or status == "up_to_date" then
-                        self:log("XRayPlugin: Weekly update check finished with status '" .. tostring(status) .. "', stamping 7-day interval")
-                        self.ai_helper:saveSettings({ last_update_check = done_now })
-                    elseif status == "error" then
-                        self:log("XRayPlugin: Weekly update check failed with error, backing off for 24 hours")
-                        -- Stamp 24 hours retry backoff (now - 6 days)
-                        self.ai_helper:saveSettings({ last_update_check = done_now - week_seconds + (24 * 60 * 60) })
-                    elseif status == "suppressed_update" then
-                        self:log("XRayPlugin: Weekly update found but dialog suppressed (book closed/inactive), leaving timestamp unstamped")
-                    end
+                on_rejected = function(reason)
+                    self:log("XRayPlugin: Weekly update check deferred by Conductor (" .. tostring(reason) .. ")")
                 end,
             })
         else
@@ -4371,7 +4418,16 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
     local batches_processed = 0
     local is_anthology = self.isAnthologyMode and self:isAnthologyMode()
 
+    local function releaseSequentialSlot()
+        local done_cb = self._sequential_slot_done
+        self._sequential_slot_done = nil
+        if type(done_cb) == "function" then
+            pcall(done_cb)
+        end
+    end
+
     local function finishScan(success, err_msg)
+        releaseSequentialSlot()
         self.is_sequential_scan_active = false
         self.active_sequential_queue = nil
         local cb = self.active_sequential_on_done
@@ -4604,144 +4660,171 @@ function M:queueSequentialChapterScan(target_chapter_indices, is_manual, on_prog
         local result_file = settings_xray_dir .. "/bg_delta_" .. tostring(os.time()) .. "_" .. tostring(first_idx) .. ".json"
 
         collectgarbage("step", 100)
-        local pid, err_code, err_msg = self.ai_helper:makeRequestAsync(req_params, result_file)
-        if not pid then
-            if err_code == "error_busy" and (busy_retries or 0) < 15 then
-                self:log(string.format("XRayPlugin: AI engine busy (%s), retrying batch starting at chapter %s in 2s (attempt %d/15)...",
-                    tostring(err_msg or err_code), tostring(first_idx), (busy_retries or 0) + 1))
-                pcall(function() os.remove(result_file) end)
-                for bi = #batch_items, 1, -1 do
-                    table.insert(q, 1, batch_items[bi])
+        local doc = self.ui and self.ui.document
+        conductor.runSlot(self, {
+            task = self.active_sequential_is_manual and "sequential_scan_manual" or "horizon_prefetch_batch",
+            priority = self.active_sequential_is_manual and "foreground" or "idle_bg",
+            dedupe_key = (not self.active_sequential_is_manual) and "xray:horizon_prefetch_batch" or nil,
+            lease_s = 120,
+            subprocess = true,
+            document = doc,
+            run = function(slot_done)
+                if self.destroyed or not self.ui or self.ui.document ~= doc or self.active_sequential_cancelled then
+                    slot_done()
+                    finishScan(false, "Scan cancelled or document closed")
+                    return
                 end
-                UIManager:scheduleIn(2, function()
-                    processNext((busy_retries or 0) + 1)
-                end)
-                return
-            end
-            self:log("XRayPlugin: Failed to start async AI request for batch starting at chapter " .. tostring(first_idx) .. ": " .. tostring(err_msg or err_code))
-            pcall(function() os.remove(result_file) end)
-            finishScan(false, err_msg or "Failed to start AI request")
-            return
-        end
+                self._sequential_slot_done = slot_done
 
-        self:log(string.format("XRayPlugin: Prompt generated (%d chars, manifest: %d entities). Dispatched async AI request (PID %s)...",
-            prompt_chars, manifest_count, tostring(pid)))
-        self._active_sequential_pid = pid
-
-        local start_t = os.time()
-        local last_logged_elapsed = 0
-        local timeout = 300
-        local function pollResult()
-            if self.destroyed or self.active_sequential_cancelled then
-                pcall(function() os.remove(result_file) end)
-                if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
-                    self.ai_helper:cancelAsyncChild(pid)
-                end
-                self._active_sequential_pid = nil
-                finishScan(false, "Pre-generation cancelled")
-                return
-            end
-            local data, p_err = self.ai_helper:checkAsyncResult(result_file, pid)
-            if data == nil then
-                local elapsed = os.time() - start_t
-                if elapsed > 0 and (elapsed % 15 == 0) and elapsed ~= last_logged_elapsed then
-                    last_logged_elapsed = elapsed
-                    self:log(string.format("XRayPlugin: Waiting for AI response... (%ds elapsed)", elapsed))
-                end
-                if elapsed < timeout then
-                    UIManager:scheduleIn(2, pollResult)
-                else
+                local pid, err_code, err_msg = self.ai_helper:makeRequestAsync(req_params, result_file)
+                if not pid then
+                    releaseSequentialSlot()
+                    if err_code == "error_busy" and (busy_retries or 0) < 15 then
+                        self:log(string.format("XRayPlugin: AI engine busy (%s), retrying batch starting at chapter %s in 2s (attempt %d/15)...",
+                            tostring(err_msg or err_code), tostring(first_idx), (busy_retries or 0) + 1))
+                        pcall(function() os.remove(result_file) end)
+                        for bi = #batch_items, 1, -1 do
+                            table.insert(q, 1, batch_items[bi])
+                        end
+                        UIManager:scheduleIn(2, function()
+                            processNext((busy_retries or 0) + 1)
+                        end)
+                        return
+                    end
+                    self:log("XRayPlugin: Failed to start async AI request for batch starting at chapter " .. tostring(first_idx) .. ": " .. tostring(err_msg or err_code))
                     pcall(function() os.remove(result_file) end)
-                    if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
-                        self.ai_helper:cancelAsyncChild(pid)
-                    end
-                    self._active_sequential_pid = nil
-                    self:log("XRayPlugin: Sequential chapter scan timed out for batch starting at: " .. tostring(batch_items[1].title))
-                    finishScan(false, "AI request timed out")
+                    finishScan(false, err_msg or "Failed to start AI request")
+                    return
                 end
-            else
-                pcall(function() os.remove(result_file) end)
-                self._active_sequential_pid = nil
-                local duration = math.max(0, os.time() - start_t)
-                if type(data) == "table" then
-                    batches_processed = batches_processed + 1
-                    self:log(string.format("XRayPlugin: AI response received in %ds. Merging delta data...", duration))
-                    self.active_sequential_status = "Merging delta results..."
-                    if data.chapters and type(data.chapters) == "table" then
-                        -- Multi-chapter response
-                        for _, ch_delta in ipairs(data.chapters) do
-                            local target_item = nil
-                            local target_idx = ch_delta.chapter_index
-                            if target_idx then
-                                for _, bi in ipairs(batch_items) do
-                                    if (bi.toc_index or bi.chapter_index) == target_idx then
-                                        target_item = bi
-                                        break
-                                    end
-                                end
+
+                self:log(string.format("XRayPlugin: Prompt generated (%d chars, manifest: %d entities). Dispatched async AI request (PID %s)...",
+                    prompt_chars, manifest_count, tostring(pid)))
+                self._active_sequential_pid = pid
+
+                local start_t = os.time()
+                local last_logged_elapsed = 0
+                local timeout = 300
+                local function pollResult()
+                    if self.destroyed or self.active_sequential_cancelled then
+                        pcall(function() os.remove(result_file) end)
+                        if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                            self.ai_helper:cancelAsyncChild(pid)
+                        end
+                        self._active_sequential_pid = nil
+                        finishScan(false, "Pre-generation cancelled")
+                        return
+                    end
+                    local data, p_err = self.ai_helper:checkAsyncResult(result_file, pid)
+                    if data == nil then
+                        local elapsed = os.time() - start_t
+                        if elapsed > 0 and (elapsed % 15 == 0) and elapsed ~= last_logged_elapsed then
+                            last_logged_elapsed = elapsed
+                            self:log(string.format("XRayPlugin: Waiting for AI response... (%ds elapsed)", elapsed))
+                        end
+                        if elapsed < timeout then
+                            UIManager:scheduleIn(2, pollResult)
+                        else
+                            pcall(function() os.remove(result_file) end)
+                            if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                                self.ai_helper:cancelAsyncChild(pid)
                             end
-                            if not target_item and ch_delta.chapter_title then
-                                for _, bi in ipairs(batch_items) do
-                                    if bi.title == ch_delta.chapter_title then
-                                        target_item = bi
-                                        break
-                                    end
-                                end
-                            end
-                            target_item = target_item or batch_items[1]
-                            local resolved_idx = target_item.toc_index or target_idx or 1
-                            self:mergeSequentialChapterDelta(ch_delta, target_item, resolved_idx, true)
+                            self._active_sequential_pid = nil
+                            self:log("XRayPlugin: Sequential chapter scan timed out for batch starting at: " .. tostring(batch_items[1].title))
+                            finishScan(false, "AI request timed out")
                         end
                     else
-                        -- Single-chapter fallback response
-                        self:mergeSequentialChapterDelta(data, batch_items[1], batch_items[1].toc_index or 1, true)
-                    end
+                        pcall(function() os.remove(result_file) end)
+                        self._active_sequential_pid = nil
+                        local duration = math.max(0, os.time() - start_t)
+                        if type(data) == "table" then
+                            batches_processed = batches_processed + 1
+                            self:log(string.format("XRayPlugin: AI response received in %ds. Merging delta data...", duration))
+                            self.active_sequential_status = "Merging delta results..."
+                            if data.chapters and type(data.chapters) == "table" then
+                                -- Multi-chapter response
+                                for _, ch_delta in ipairs(data.chapters) do
+                                    local target_item = nil
+                                    local target_idx = ch_delta.chapter_index
+                                    if target_idx then
+                                        for _, bi in ipairs(batch_items) do
+                                            if (bi.toc_index or bi.chapter_index) == target_idx then
+                                                target_item = bi
+                                                break
+                                            end
+                                        end
+                                    end
+                                    if not target_item and ch_delta.chapter_title then
+                                        for _, bi in ipairs(batch_items) do
+                                            if bi.title == ch_delta.chapter_title then
+                                                target_item = bi
+                                                break
+                                            end
+                                        end
+                                    end
+                                    target_item = target_item or batch_items[1]
+                                    local resolved_idx = target_item.toc_index or target_idx or 1
+                                    self:mergeSequentialChapterDelta(ch_delta, target_item, resolved_idx, true)
+                                end
+                            else
+                                -- Single-chapter fallback response
+                                self:mergeSequentialChapterDelta(data, batch_items[1], batch_items[1].toc_index or 1, true)
+                            end
 
-                    self:checkpointHorizonScan()
-                    collectgarbage("step", 200)
+                            self:checkpointHorizonScan()
+                            collectgarbage("step", 200)
 
-                    for _, bi in ipairs(batch_items) do
-                        self.chapters_fetched[bi.unique_id] = true
-                        self.active_sequential_completed = self.active_sequential_completed + 1
-                        markChapterItemComplete(bi)
-                    end
-                    self.active_sequential_status = "Batch completed. Pacing..."
-                    notifyProgress()
+                            for _, bi in ipairs(batch_items) do
+                                self.chapters_fetched[bi.unique_id] = true
+                                self.active_sequential_completed = self.active_sequential_completed + 1
+                                markChapterItemComplete(bi)
+                            end
+                            self.active_sequential_status = "Batch completed. Pacing..."
+                            notifyProgress()
 
-                    self:log(string.format("XRayPlugin: Batch completed (%d/%d chapters, %d/%d segments). Pacing cooldown: waiting 3s before next batch...",
-                        self.active_sequential_completed_chapters or self.active_sequential_completed,
-                        self.active_sequential_total_chapters or self.active_sequential_total,
-                        self.active_sequential_completed,
-                        self.active_sequential_total))
+                            self:log(string.format("XRayPlugin: Batch completed (%d/%d chapters, %d/%d segments). Pacing cooldown: waiting 3s before next batch...",
+                                self.active_sequential_completed_chapters or self.active_sequential_completed,
+                                self.active_sequential_total_chapters or self.active_sequential_total,
+                                self.active_sequential_completed,
+                                self.active_sequential_total))
 
-                    -- 3s pacing cooldown between batches to prevent rate limits (HTTP 429)
-                    UIManager:scheduleIn(3, processNext)
-                else
-                    local retry_count = batch_items._retries or 0
-                    if retry_count < 2 then
-                        batch_items._retries = retry_count + 1
-                        self:log(string.format("XRayPlugin: Batch failed (%s). Re-queuing to retry in 5s (attempt %d/2)...", tostring(p_err), retry_count + 1))
-                        self.active_sequential_status = string.format("Temporary error (%s). Retrying in 5s...", tostring(p_err))
-                        for i = #batch_items, 1, -1 do
-                            table.insert(q, 1, batch_items[i])
+                            releaseSequentialSlot()
+                            -- 3s pacing cooldown between batches to prevent rate limits (HTTP 429)
+                            UIManager:scheduleIn(3, processNext)
+                        else
+                            releaseSequentialSlot()
+                            local retry_count = batch_items._retries or 0
+                            if retry_count < 2 then
+                                batch_items._retries = retry_count + 1
+                                self:log(string.format("XRayPlugin: Batch failed (%s). Re-queuing to retry in 5s (attempt %d/2)...", tostring(p_err), retry_count + 1))
+                                self.active_sequential_status = string.format("Temporary error (%s). Retrying in 5s...", tostring(p_err))
+                                for i = #batch_items, 1, -1 do
+                                    table.insert(q, 1, batch_items[i])
+                                end
+                                UIManager:scheduleIn(5, processNext)
+                            else
+                                self:log(string.format("XRayPlugin: Batch failed after %d retries (%s). Advancing queue.", retry_count, tostring(p_err)))
+                                self.active_sequential_status = "Batch skipped after repeated errors. Advancing..."
+                                for _, bi in ipairs(batch_items) do
+                                    self.chapters_fetched[bi.unique_id] = true
+                                    self.active_sequential_completed = self.active_sequential_completed + 1
+                                    markChapterItemComplete(bi)
+                                end
+                                notifyProgress()
+                                UIManager:scheduleIn(3, processNext)
+                            end
                         end
-                        UIManager:scheduleIn(5, processNext)
-                    else
-                        self:log(string.format("XRayPlugin: Batch failed after %d retries (%s). Advancing queue.", retry_count, tostring(p_err)))
-                        self.active_sequential_status = "Batch skipped after repeated errors. Advancing..."
-                        for _, bi in ipairs(batch_items) do
-                            self.chapters_fetched[bi.unique_id] = true
-                            self.active_sequential_completed = self.active_sequential_completed + 1
-                            markChapterItemComplete(bi)
-                        end
-                        notifyProgress()
-                        UIManager:scheduleIn(3, processNext)
                     end
                 end
-            end
-        end
 
-        UIManager:scheduleIn(2, pollResult)
+                UIManager:scheduleIn(2, pollResult)
+            end,
+            cancel = function()
+                self:cancelSequentialChapterScan()
+            end,
+            on_rejected = function(reason)
+                finishScan(false, "Conductor deferred: " .. tostring(reason))
+            end,
+        })
     end
 
     processNext()
@@ -4749,6 +4832,11 @@ end
 
 function M:cancelSequentialChapterScan()
     self.active_sequential_cancelled = true
+    local done_cb = self._sequential_slot_done
+    self._sequential_slot_done = nil
+    if type(done_cb) == "function" then
+        pcall(done_cb)
+    end
     if self._active_sequential_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
         self.ai_helper:cancelAsyncChild(self._active_sequential_pid)
     end

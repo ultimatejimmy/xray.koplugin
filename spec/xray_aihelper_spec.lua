@@ -1216,4 +1216,207 @@ custom1_model = google/gemini-2.5-flash
             assert.is_truthy(captured_prompt:find("DISTINCT people", 1, true))
         end)
     end)
+
+    describe("custom extra HTTP headers (customN_headers)", function()
+        local saved_custom1, saved_custom2, saved_primary, saved_secondary
+
+        before_each(function()
+            saved_primary = AIHelper.settings.primary_ai
+            saved_secondary = AIHelper.settings.secondary_ai
+            saved_custom1 = {
+                api_key = AIHelper.providers.custom1.api_key,
+                endpoint = AIHelper.providers.custom1.endpoint,
+                model = AIHelper.providers.custom1.model,
+                format = AIHelper.providers.custom1.format,
+                extra_headers = AIHelper.providers.custom1.extra_headers,
+            }
+            saved_custom2 = {
+                api_key = AIHelper.providers.custom2.api_key,
+                endpoint = AIHelper.providers.custom2.endpoint,
+                model = AIHelper.providers.custom2.model,
+                format = AIHelper.providers.custom2.format,
+                extra_headers = AIHelper.providers.custom2.extra_headers,
+            }
+        end)
+
+        after_each(function()
+            AIHelper.settings.primary_ai = saved_primary
+            AIHelper.settings.secondary_ai = saved_secondary
+            for k, v in pairs(saved_custom1) do AIHelper.providers.custom1[k] = v end
+            for k, v in pairs(saved_custom2) do AIHelper.providers.custom2[k] = v end
+        end)
+
+        it("parses newline-separated headers, trims whitespace, preserves colons in values, and skips malformed lines", function()
+            local headers = { ["Content-Type"] = "application/json" }
+            local prov = {
+                extra_headers = table.concat({
+                    "",
+                    "   ",
+                    "CF-Access-Client-Id:  client-id-123  ",
+                    "CF-Access-Client-Secret: secret-456",
+                    "X-Callback-Url: https://example.com:8443/cb",
+                    "MalformedLineWithoutColon",
+                    ": missing-name",
+                    "X-Empty-Value:   ",
+                    "Bad Header Name: value",
+                }, "\r\n"),
+            }
+
+            AIHelper:applyExtraHeaders(headers, prov)
+
+            assert.are.equal("application/json", headers["Content-Type"])
+            assert.are.equal("client-id-123", headers["CF-Access-Client-Id"])
+            assert.are.equal("secret-456", headers["CF-Access-Client-Secret"])
+            assert.are.equal("https://example.com:8443/cb", headers["X-Callback-Url"])
+            assert.is_nil(headers["MalformedLineWithoutColon"])
+            assert.is_nil(headers[""])
+            assert.is_nil(headers["X-Empty-Value"])
+            assert.is_nil(headers["Bad Header Name"])
+        end)
+
+        it("replaces existing headers case-insensitively and is a no-op on nil or empty inputs", function()
+            local headers = { ["Authorization"] = "Bearer orig" }
+            AIHelper:applyExtraHeaders(headers, { extra_headers = "authorization: Custom override" })
+            assert.is_nil(headers["Authorization"])
+            assert.are.equal("Custom override", headers["authorization"])
+
+            assert.are.equal(headers, AIHelper:applyExtraHeaders(headers, nil))
+            assert.are.equal(headers, AIHelper:applyExtraHeaders(headers, { extra_headers = "" }))
+            assert.is_nil(AIHelper:applyExtraHeaders(nil, { extra_headers = "X-Test: 1" }))
+        end)
+
+        it("applies extra_headers in buildComprehensiveRequest for both OpenAI and Anthropic custom slots", function()
+            AIHelper.settings.primary_ai = { provider = "custom1", model = "my-model" }
+            AIHelper.settings.secondary_ai = { provider = "custom2", model = "claude-proxy" }
+            AIHelper.providers.custom1.api_key = "key-1"
+            AIHelper.providers.custom1.endpoint = "https://gw.example.com/v1/chat/completions"
+            AIHelper.providers.custom1.format = "openai"
+            AIHelper.providers.custom1.extra_headers = "CF-Access-Client-Id: id1\nCF-Access-Client-Secret: sec1"
+
+            AIHelper.providers.custom2.api_key = "key-2"
+            AIHelper.providers.custom2.endpoint = "https://gw.example.com/v1/messages"
+            AIHelper.providers.custom2.format = "anthropic"
+            AIHelper.providers.custom2.extra_headers = "CF-Access-Client-Id: id2\nX-Route: anthropic"
+
+            local requests = AIHelper:buildComprehensiveRequest("Title", "Author", {})
+            assert.are.equal(2, #requests)
+
+            assert.are.equal("id1", requests[1].headers["CF-Access-Client-Id"])
+            assert.are.equal("sec1", requests[1].headers["CF-Access-Client-Secret"])
+            assert.are.equal("Bearer key-1", requests[1].headers["Authorization"])
+
+            assert.are.equal("id2", requests[2].headers["CF-Access-Client-Id"])
+            assert.are.equal("anthropic", requests[2].headers["X-Route"])
+            assert.are.equal("Bearer key-2", requests[2].headers["Authorization"])
+        end)
+
+        it("applies extra_headers in callChatGPT, callClaude, and validateProviderKey", function()
+            local orig_makeRequest = AIHelper.makeRequest
+            local captured_headers = {}
+            AIHelper.makeRequest = function(self, url, headers, body, connect_timeout, timeout)
+                table.insert(captured_headers, headers)
+                if url:find("messages", 1, true) then
+                    return true, 200, '{"content":[{"type":"text","text":"{}"}]}'
+                end
+                return true, 200, '{"choices":[{"message":{"content":"{}"}}]}'
+            end
+
+            local ok, err = pcall(function()
+                AIHelper.providers.custom1.api_key = "k1"
+                AIHelper.providers.custom1.endpoint = "https://gw.example.com/v1/chat/completions"
+                AIHelper.providers.custom1.model = "m1"
+                AIHelper.providers.custom1.extra_headers = "CF-Access-Client-Id: id-sync\nCF-Access-Client-Secret: sec-sync"
+
+                AIHelper:callChatGPT("prompt", AIHelper.providers.custom1, "m1")
+                AIHelper:callClaude("prompt", AIHelper.providers.custom1, "m1")
+                local val_res = AIHelper:validateProviderKey("custom1")
+                assert.is_true(val_res.ok)
+            end)
+
+            AIHelper.makeRequest = orig_makeRequest
+            if not ok then error(err) end
+
+            assert.are.equal(3, #captured_headers)
+            for i = 1, 3 do
+                assert.are.equal("id-sync", captured_headers[i]["CF-Access-Client-Id"])
+                assert.are.equal("sec-sync", captured_headers[i]["CF-Access-Client-Secret"])
+            end
+        end)
+
+        it("persists, restores, round-trips CRLF/LF, and clears customN_headers via config lifecycle", function()
+            local tmp_dir = os.getenv("TMPDIR") or os.getenv("TEMP") or "/tmp"
+            local orig_path = AIHelper.path
+            local orig_getStoredConfigPath = AIHelper.getStoredConfigPath
+            local orig_loadStoredConfig = AIHelper.loadStoredConfig
+            local orig_saveStoredConfig = AIHelper.saveStoredConfig
+            local orig_init = AIHelper.init
+
+            local stored_backup = {}
+            AIHelper.path = tmp_dir
+            AIHelper.getStoredConfigPath = function() return tmp_dir .. "/xray_test_backup.json" end
+            AIHelper.loadStoredConfig = function()
+                local copy = {}
+                for k, v in pairs(stored_backup) do copy[k] = v end
+                return copy
+            end
+            AIHelper.saveStoredConfig = function(self, cfg)
+                stored_backup = {}
+                for k, v in pairs(cfg or {}) do stored_backup[k] = v end
+            end
+
+            local tmp_cfg_path = tmp_dir .. "/xray_config.lua"
+            os.remove(tmp_cfg_path)
+
+            local ok, err = pcall(function()
+                -- 1. writeConfigToFile escapes \r and \n cleanly so dofile round-trips identically
+                local wrote = AIHelper:writeConfigToFile({
+                    custom1_api_key = "k1",
+                    custom1_headers = "CF-Access-Client-Id: id1\r\nCF-Access-Client-Secret: sec1",
+                    custom2_headers = "X-Custom: val2",
+                })
+                assert.is_true(wrote)
+
+                -- 2. loadConfig loads extra_headers and backs them up to stored_backup
+                AIHelper:loadConfig()
+                assert.are.equal("CF-Access-Client-Id: id1\r\nCF-Access-Client-Secret: sec1", AIHelper.providers.custom1.extra_headers)
+                assert.are.equal("X-Custom: val2", AIHelper.providers.custom2.extra_headers)
+                assert.are.equal("CF-Access-Client-Id: id1\r\nCF-Access-Client-Secret: sec1", stored_backup.custom1_headers)
+                assert.are.equal("X-Custom: val2", stored_backup.custom2_headers)
+
+                -- 3. Simulate plugin update overwriting xray_config.lua with empty values; loadConfig restores from backup
+                AIHelper:writeConfigToFile({
+                    custom1_api_key = "",
+                    custom1_headers = "",
+                    custom2_headers = "",
+                })
+                AIHelper.providers.custom1.extra_headers = nil
+                AIHelper:loadConfig()
+                assert.are.equal("CF-Access-Client-Id: id1\r\nCF-Access-Client-Secret: sec1", AIHelper.providers.custom1.extra_headers)
+
+                local ok_do, cfg = pcall(dofile, tmp_cfg_path)
+                assert.is_true(ok_do)
+                assert.are.equal("CF-Access-Client-Id: id1\r\nCF-Access-Client-Secret: sec1", cfg.custom1_headers)
+
+                -- 4. clearProviderKey("custom1") clears custom1_headers but preserves custom2_headers
+                AIHelper.init = function(self, p) self:loadConfig() end
+                AIHelper:clearProviderKey("custom1")
+                assert.are.equal("", stored_backup.custom1_headers or "")
+                assert.are.equal("", AIHelper.providers.custom1.extra_headers or "")
+                assert.are.equal("X-Custom: val2", stored_backup.custom2_headers)
+
+                -- 5. clearAllAPIKeys() clears custom2_headers as well
+                AIHelper:clearAllAPIKeys()
+                assert.are.equal("", stored_backup.custom2_headers or "")
+                assert.are.equal("", AIHelper.providers.custom2.extra_headers or "")
+            end)
+
+            os.remove(tmp_cfg_path)
+            AIHelper.init = orig_init
+            AIHelper.path = orig_path
+            AIHelper.getStoredConfigPath = orig_getStoredConfigPath
+            AIHelper.loadStoredConfig = orig_loadStoredConfig
+            AIHelper.saveStoredConfig = orig_saveStoredConfig
+            if not ok then error(err) end
+        end)
+    end)
 end)

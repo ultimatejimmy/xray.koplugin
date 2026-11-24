@@ -55,7 +55,7 @@ msgstr "Ez a történet"
 
 # en-hash: ad608bec35300c1dbb0180723f2f6b9f
 msgid "ask_later"
-msgstr "Ask Later"
+msgstr "Kérdezze később"
 
 # en-hash: bff74eab9088ad053737e6f0d424ea7e
 msgid "author_born"
@@ -251,7 +251,7 @@ msgstr "BEÁLLÍTVA"
 
 # en-hash: 70d9be9b139893aa6c69b5e77e614311
 msgid "confirm"
-msgstr "Confirm"
+msgstr "Megerősítés"
 
 # en-hash: b59432f3e47e0715eaed12d828c25efb
 msgid "confirm_anthology_omnibus"
@@ -268,10 +268,6 @@ msgstr "Törli a beállított API-kulcsot a következőhöz: %s?"
 # en-hash: d3d2e617335f08df83599665eef8a418
 msgid "continue_in_background"
 msgstr "Bezárás"
-
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "hu"
 
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
@@ -355,15 +351,15 @@ msgstr "Ne kérdezze újra"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "A Bionic Reading szétválasztja a szavakat a sorközi formázócímkék mentén, ami nem kompatibilis az entitások aláhúzásával.\n\nA legjobb teljesítmény érdekében használjon inkább gyors betűtípust."
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "Megjegyzés: Nem kompatibilis a Bionic Reading funkcióval"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "Gyorsítótárazott aláhúzások használata, frissítés…"
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -607,7 +603,7 @@ msgstr "Az Entitás-evolúció nyomon követi a karakterek, helyszínek és kife
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "Evolúció"
+msgstr "Cselekményszál: %s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -629,11 +625,11 @@ msgstr "Nem található X-Ray adat a következőhöz: '%s'. Szeretné megkeresni
 msgid "fetch_successful"
 msgstr "Sikeres lekérdezés"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "X-Ray lekérése..."
+msgstr "Lekérdezés innen: %s..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
 msgstr "Szerzői információk lekérdezése innen: %s..."
 
@@ -1351,7 +1347,7 @@ msgstr "Több egyezés a következőre: '%s'. Melyikre gondolt?"
 
 # en-hash: cafa45757baae6a9b3e4daafcc454e43
 msgid "new_feature"
-msgstr "New Feature"
+msgstr "Új funkció"
 
 # en-hash: 10ac3d04253ef7e1ddc73e6091c0cd55
 msgid "next"
@@ -1449,11 +1445,7 @@ msgstr "Történetív"
 msgid "paste_clipboard_confirm"
 msgstr "Használja a vágólapon található API kulcsot a(z) %s szolgáltatáshoz?"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "A MI %d lehetséges másolatot talált a legutóbbi lekérdezésből. Ellenőrzi most?"
 
@@ -1757,7 +1749,7 @@ msgstr "Automatikus észlelés (ajánlott)"
 msgid "story_toc_depth_desc"
 msgstr "Válassza ki, melyik tartalomjegyzék-szint jelöli az egyes történeteket:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
 msgstr "Nem található kifejezés a következőre: '%s'"
 
@@ -1775,15 +1767,15 @@ msgstr "Ez az oldal"
 
 # en-hash: f61824b403008733ff955da48052ee04
 msgid "unit_action_configure"
-msgstr "Configure Settings..."
+msgstr "Beállítások módosítása..."
 
 # en-hash: 6ee50812725a7a053ed2c5742c6ebfef
 msgid "unit_action_disable"
-msgstr "Disable Feature"
+msgstr "Funkció kikapcsolása"
 
 # en-hash: 074331092c85358cfa576b7c8424a94e
 msgid "unit_action_keep"
-msgstr "Keep Enabled (Default)"
+msgstr "Engedélyezve marad (Alapértelmezett)"
 
 # en-hash: fd380cdfeb02e89fd87e81a03440d1a4
 msgid "unit_auto_scan_about"
@@ -1939,11 +1931,11 @@ msgstr "A mértékegységek vizsgálata az X-Ray lekérés befejezése után ind
 
 # en-hash: b9f5c797ebbf55adccdd8539a65a0241
 msgid "unit_scan_written_disabled"
-msgstr "Disabled"
+msgstr "Letiltva"
 
 # en-hash: 00d23a76e43b46dae9ec7aa9dcbebb32
 msgid "unit_scan_written_enabled"
-msgstr "Enabled"
+msgstr "Engedélyezve"
 
 # en-hash: f8115ed7a0bb14ce3154f12ad441b614
 msgid "unit_scan_written_numbers"
@@ -1951,15 +1943,15 @@ msgstr "Írott számok keresése (pl. 'öt mérföld')"
 
 # en-hash: 984acb9f42ff774b4b3f5e00266cbd73
 msgid "unit_scan_written_numbers_about"
-msgstr "Scanning written-out numbers (like 'five miles') requires a second full-text pass. Skipping this pass on lower-powered devices (Kindle, Kobo, PocketBook) provides a 4x to 5x scan speedup and prevents startup freezes. On faster platforms like Android or desktops, there is no noticeable slowdown."
+msgstr "A betűvel kiírt számok (mint az 'öt mérföld') kereséséhez egy második teljes szöveges átvizsgálás szükséges. Ezen lépés kihagyása a gyengébb hardverű eszközökön (Kindle, Kobo, PocketBook) 4-5-szörös gyorsulást biztosít, és megelőzi az indítási fagyásokat. Gyorsabb platformokon, mint az Android vagy az asztali gépek, nincs észrevehető lassulás."
 
 # en-hash: 84a3adc7b758d5a4d9b4c438e9e0bfe8
 msgid "unit_scan_written_numbers_desc"
-msgstr "Scan for spelled-out numbers (e.g. 'five miles'):"
+msgstr "Keresés betűvel írt számokra (pl. 'öt mérföld'):"
 
 # en-hash: 41e615cb7654281a8e431c371a92311e
 msgid "unit_scan_written_numbers_title"
-msgstr "Scan Written Numbers"
+msgstr "Kiírt számok beolvasása"
 
 # en-hash: 59655846df0abfca05d478f9c0a18eb4
 msgid "unit_scanning_book"
@@ -2112,10 +2104,6 @@ msgstr "Újdonságok:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "X-Ray adatok frissítése..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

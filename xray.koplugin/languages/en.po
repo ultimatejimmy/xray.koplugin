@@ -203,9 +203,6 @@ msgstr "Clear the configured API key for %s?"
 msgid "continue_in_background"
 msgstr "Close"
 
-msgid "current_language"
-msgstr "en"
-
 msgid "current_mode"
 msgstr "Current: "
 
@@ -474,10 +471,10 @@ msgid "fetch_successful"
 msgstr "Fetch successful"
 
 msgid "fetching_ai"
-msgstr "Fetching X-Ray..."
+msgstr "Fetching from %s..."
 
 msgid "fetching_author"
-msgstr "Fetching Author..."
+msgstr "Fetching author info from %s..."
 
 msgid "fetching_series_context"
 msgstr "Fetching series context: Book %d of %d…"
@@ -1088,11 +1085,8 @@ msgstr "Story Arc"
 msgid "paste_clipboard_confirm"
 msgstr "Use the API key found in clipboard for %s?"
 
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
 msgid "pending_duplicates_prompt"
-msgstr "AI found %d possible duplicate location(s) from the last fetch. Review now?"
+msgstr "AI found %d possible duplicate(s) from the last fetch. Review now?"
 
 msgid "picker_cover_view"
 msgstr "Covers"
@@ -1320,7 +1314,7 @@ msgid "story_toc_depth_desc"
 msgstr "Select which Table of Contents level represents individual stories:"
 
 msgid "term_not_found"
-msgstr "Term not found."
+msgstr "No term found matching '%s'"
 
 msgid "testing_api_keys"
 msgstr "Testing API key connections..."
@@ -1585,9 +1579,6 @@ msgstr "What's new:"
 
 msgid "updating_ai"
 msgstr "Updating X-Ray..."
-
-msgid "val"
-msgstr "???"
 
 msgid "validate_keys_title"
 msgstr "API Key Status & Validation"

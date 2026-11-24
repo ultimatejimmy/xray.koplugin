@@ -28,42 +28,109 @@ ALLOWLIST = {
     'path',                    # "plugins/xray.koplugin"
     'current_language',        # "en" (or specific code)
     'menu_xray',               # "X-Ray" (brand name)
+    'ok',                      # "OK"
+    'val',                     # "???"
+    'unit_book_type_manga',    # "Manga"
 }
+
+# Per-language allowlist for verified cognates that are legitimately identical to English
+LANG_ALLOWLIST = {
+    'cs': {'label_role'},
+    'de': {'illustration', 'label_definition', 'label_name', 'popup_font_size_normal'},
+    'es': {'error', 'no', 'popup_font_size_normal', 'unit_underline_invisible'},
+    'fr': {
+        'book_mode_auto', 'book_mode_fiction', 'book_type_fiction',
+        'illustration', 'menu_maintenance', 'popup_font_size_normal',
+        'unit_underline_double', 'unit_underline_invisible',
+    },
+    'id': {'popup_font_size_normal'},
+    'it': {'no'},
+    'nl': {'entity_type_term', 'start', 'updater_btn_later'},
+    'pt_br': {'manage_series_volume_label', 'popup_font_size_normal'},
+    'tr': {'popup_font_size_normal'},
+}
+
+def is_allowed_identical(lang_code, key):
+    return key in ALLOWLIST or key in LANG_ALLOWLIST.get(lang_code, set())
+
+_PO_DECODE_MAP = {
+    '\\\\': '\\',
+    '\\"': '"',
+    '\\n': '\n',
+    '\\t': '\t',
+    '\\r': '\r',
+}
+_PO_DECODE_RE = re.compile(r'\\\\|\\"|\\n|\\t|\\r')
 
 def get_md5(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+def get_en_hash(en_val):
+    if not en_val:
+        return None
+    return get_md5(encode_po_string(en_val))
+
 def decode_po_string(s):
-    if not s: return ""
-    return s.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+    if not s:
+        return ""
+    return _PO_DECODE_RE.sub(lambda m: _PO_DECODE_MAP[m.group(0)], s)
 
 def encode_po_string(s):
-    if not s: return ""
-    return s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+    if not s:
+        return ""
+    return (
+        s.replace('\\', '\\\\')
+         .replace('"', '\\"')
+         .replace('\r', '\\r')
+         .replace('\n', '\\n')
+         .replace('\t', '\\t')
+    )
 
 def format_specifiers(s):
     if not s: return []
     return re.findall(r'%[0-9]*\$?[a-zA-Z]', s)
 
+def _extract_localization_fallbacks(content):
+    fallback_map = {}
+    block_match = re.search(r'local\s+fallbacks\s*=\s*\{(.*?)\n\s*\}', content, re.DOTALL)
+    search_text = block_match.group(1) if block_match else content
+    for m in re.finditer(r'^\s*(\w+)\s*=\s*"((?:[^"\\]|\\.)*)"', search_text, re.MULTILINE):
+        fallback_map[m.group(1)] = decode_po_string(m.group(2))
+    return fallback_map
+
 def extract_keys_from_lua(source_dir=None):
     src = source_dir or SOURCE_DIR
-    used_keys = {}  # key -> default_string
+    used_keys = {}  # key -> inline fallback string (only if not in localization_xray.lua)
     fallback_map = {}
-    for root, _, files in os.walk(src):
-        if 'languages' in root or 'tools' in root or 'spec' in root:
-            continue
-        for file in files:
-            if file.endswith('.lua'):
-                with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                    matches = re.finditer(r'loc:t\([\"\']([^\"\']*)[\"\'](?:,\s*.*?)?\)(?:\s*or\s*([\"\'])(.*?)\2)?', content, re.DOTALL)
-                    for m in matches:
-                        used_keys[m.group(1)] = m.group(3) or used_keys.get(m.group(1), "")
-                    if 'localization_xray.lua' in file:
-                        fb_matches = re.finditer(r'(\w+)\s*=\s*\"(.*?)\"', content)
-                        for m in fb_matches:
-                            used_keys[m.group(1)] = m.group(2)
-                            fallback_map[m.group(1)] = m.group(2)
+    skip_dirs = {'languages', 'tools', 'spec', 'prompts'}
+    for root, dirs, files in os.walk(src):
+        dirs[:] = [d for d in sorted(dirs) if d not in skip_dirs]
+        for file in sorted(files):
+            if not file.endswith('.lua'):
+                continue
+            with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            if file == 'localization_xray.lua':
+                fb = _extract_localization_fallbacks(content)
+                fallback_map.update(fb)
+                for k, v in fb.items():
+                    used_keys[k] = v
+                continue
+            # Match loc:t("key", ...) or "..." including multiline calls
+            for m in re.finditer(r'loc:t\(\s*([\"\'])([^\"\']+)\1', content):
+                k = m.group(2)
+                if k not in used_keys:
+                    used_keys[k] = ""
+            for m in re.finditer(r'loc:t\(\s*([\"\'])([^\"\']+)\1(?:,\s*(?:[^()]|\([^()]*\))*)?\)\s*or\s*([\"\'])((?:[^\\]|\\.)*?)\3', content, re.DOTALL):
+                k = m.group(2)
+                if k not in fallback_map and not used_keys.get(k):
+                    used_keys[k] = decode_po_string(m.group(4))
+            # Match xray_updater.lua local t("key", ...) wrapper
+            if file == 'xray_updater.lua':
+                for m in re.finditer(r'\bt\(\s*([\"\'])([^\"\']+)\1', content):
+                    k = m.group(2)
+                    if k not in used_keys:
+                        used_keys[k] = ""
     used_keys.pop("", None)
     return set(used_keys.keys()), fallback_map, used_keys
 
@@ -77,6 +144,8 @@ def parse_po(file_path):
             line = line.strip()
             if not line:
                 if current_entry['msgid'] or current_entry['msgstr']:
+                    current_entry['msgid'] = decode_po_string(current_entry['msgid'])
+                    current_entry['msgstr'] = decode_po_string(current_entry['msgstr'])
                     entries.append(current_entry)
                     current_entry = {'msgid': '', 'msgstr': '', 'comments': [], 'en_hash': None}
                 current_field = None
@@ -105,11 +174,24 @@ def parse_po(file_path):
                     elif current_field == 'msgstr':
                         current_entry['msgstr'] += m.group(1)
         if current_entry['msgid'] or current_entry['msgstr']:
+            current_entry['msgid'] = decode_po_string(current_entry['msgid'])
+            current_entry['msgstr'] = decode_po_string(current_entry['msgstr'])
             entries.append(current_entry)
     return entries
 
+def _detect_newline(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            sample = f.read(4096)
+        if b'\r\n' in sample:
+            return '\r\n'
+        if b'\n' in sample:
+            return '\n'
+    return '\r\n'
+
 def save_po(file_path, lang_name, lang_code, keys, translations, fallback_map, en_final):
-    with open(file_path, 'w', encoding='utf-8') as f:
+    nl = _detect_newline(file_path)
+    with open(file_path, 'w', encoding='utf-8', newline=nl) as f:
         f.write(f'msgid ""\nmsgstr ""\n"Language-Team: {lang_name}\\n"\n"Language: {lang_code}\\n"\n"Content-Type: text/plain; charset=UTF-8\\n"\n"Content-Transfer-Encoding: 8bit\\n"\n\n')
         for key in sorted(keys):
             if not key: continue
@@ -117,14 +199,24 @@ def save_po(file_path, lang_name, lang_code, keys, translations, fallback_map, e
                 val = translations.get(key) or fallback_map.get(key) or key
             else:
                 val = translations.get(key, "")
-            escaped_val = val.replace('\n', '\\n').replace('"', '\\"')
+            escaped_key = encode_po_string(key)
+            escaped_val = encode_po_string(val)
             
-            # For non-English languages, write the hash of the English value we translated from
+            # Only record en-hash when the entry is actually translated (or allowlisted) and matches placeholders
             if lang_code != 'en':
                 en_val = en_final.get(key, "")
-                if en_val:
-                    f.write(f'# en-hash: {get_md5(en_val)}\n')
-            f.write(f'msgid "{key}"\nmsgstr "{escaped_val}"\n\n')
+                has_matching_placeholders = (
+                    not en_val or extract_placeholders(val) == extract_placeholders(en_val)
+                )
+                is_translated = (
+                    val != ""
+                    and val != key
+                    and (val != en_val or is_allowed_identical(lang_code, key))
+                    and has_matching_placeholders
+                )
+                if en_val and is_translated:
+                    f.write(f'# en-hash: {get_en_hash(en_val)}\n')
+            f.write(f'msgid "{escaped_key}"\nmsgstr "{escaped_val}"\n\n')
 
 def get_gemini_key():
     return os.environ.get("GEMINI_API_KEY")
@@ -134,51 +226,63 @@ def call_gemini(prompt):
     key = get_gemini_key()
     if not key: return None
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
+    primary = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    fallback_models = []
+    for m in (primary, "gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3-flash-preview", "gemini-3.5-flash"):
+        if m not in fallback_models:
+            fallback_models.append(m)
+
     headers = {"Content-Type": "application/json"}
     data = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"responseMimeType": "application/json"}
     }
-    
-    req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
-    
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            with urllib.request.urlopen(req, timeout=30) as response:
-                res_data = json.loads(response.read().decode('utf-8'))
-                text = res_data['candidates'][0]['content']['parts'][0]['text']
-                text_stripped = text.strip()
-                first_brace = text_stripped.find('{')
-                last_brace = text_stripped.rfind('}')
-                if first_brace != -1 and last_brace != -1:
-                    json_str = text_stripped[first_brace:last_brace+1]
-                    return json.loads(json_str)
-                return json.loads(text_stripped)
-        except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 502, 503, 504) and attempt < max_retries - 1:
-                # For 429, respect Retry-After header if present, otherwise use backoff
-                if e.code == 429:
-                    retry_after = e.headers.get('Retry-After')
-                    sleep_time = int(retry_after) if retry_after else 10 * (attempt + 1)
+    encoded_data = json.dumps(data).encode('utf-8')
+
+    for model in fallback_models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+        req = urllib.request.Request(url, data=encoded_data, headers=headers, method='POST')
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(req, timeout=60) as response:
+                    res_data = json.loads(response.read().decode('utf-8'))
+                    text = res_data['candidates'][0]['content']['parts'][0]['text']
+                    text_stripped = text.strip()
+                    first_brace = text_stripped.find('{')
+                    last_brace = text_stripped.rfind('}')
+                    if first_brace != -1 and last_brace != -1:
+                        json_str = text_stripped[first_brace:last_brace+1]
+                        return json.loads(json_str)
+                    return json.loads(text_stripped)
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    print(f"  - Model {model} returned 404, trying fallback...")
+                    break
+                if e.code in (429, 500, 502, 503, 504):
+                    if attempt < max_retries - 1:
+                        if e.code == 429:
+                            retry_after = e.headers.get('Retry-After')
+                            sleep_time = int(retry_after) if retry_after else 5 * (attempt + 1)
+                        else:
+                            sleep_time = 5 * (attempt + 1)
+                        print(f"  - {model} HTTP {e.code}, waiting {sleep_time}s before retry {attempt + 1}/{max_retries - 1}...")
+                        time.sleep(sleep_time)
+                    else:
+                        print(f"  - {model} exhausted retries on HTTP {e.code}, trying fallback...")
+                        break
                 else:
-                    sleep_time = 10 * (attempt + 1)
-                print(f"  - HTTP {e.code}, waiting {sleep_time}s before retry {attempt + 1}/{max_retries - 1}...")
-                time.sleep(sleep_time)
-            else:
-                print(f"API Error calling Gemini: {e}")
-                return None
-        except urllib.error.URLError as e:
-            # Covers socket timeouts and connection errors
-            print(f"API Connection Error (timeout or network): {e}")
-            if attempt < max_retries - 1:
-                time.sleep(5)
-            else:
-                return None
-        except Exception as e:
-            print(f"API Error: {e}")
-            return None
+                    print(f"API Error calling Gemini ({model}): {e}")
+                    return None
+            except urllib.error.URLError as e:
+                print(f"API Connection Error ({model}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(5)
+                else:
+                    break
+            except Exception as e:
+                print(f"API Error ({model}): {e}")
+                break
     return None
 
 def translate_all_gemini(all_untranslated, lang_names, max_pairs=50):
@@ -314,6 +418,42 @@ def manual_translate_languages(all_untranslated, lang_names, all_existing_tr):
         if aborted:
             break
 
+def extract_placeholders(text):
+    if not text:
+        return [], []
+    pos_formats = re.findall(r'%\d+\$[-+ #0]?\d*\.?\d*[cdeEfgGiouuxXsqp%]', text)
+    clean_text = re.sub(r'%\d+\$[-+ #0]?\d*\.?\d*[cdeEfgGiouuxXsqp%]', '', text)
+    lua_formats = re.findall(r'%[-+ #0]?\d*\.?\d*[cdeEfgGiouuxXsqp%]', clean_text)
+    braced_tags = re.findall(r'\{[A-Z_0-9]+\}', text)
+    normalized_pos = [re.sub(r'%(\d+)\$', '%', f) for f in pos_formats]
+    all_formats = [f for f in (lua_formats + normalized_pos) if f != '%%']
+    return sorted(all_formats), sorted(braced_tags)
+
+def find_untranslated_keys(lang_code, en_final, existing_tr, existing_hashes):
+    untranslated = {}
+    for key, en_val in en_final.items():
+        if key in ('', 'language_name'):
+            continue
+        current_val = existing_tr.get(key, "")
+        stored_hash = existing_hashes.get(key)
+        current_hash = get_en_hash(en_val) if en_val else None
+        allowed_same = is_allowed_identical(lang_code, key)
+
+        is_missing = (current_val == "")
+        is_key_fallback = (current_val == key and not allowed_same)
+        is_corrupted_q = ("???" in current_val and not allowed_same)
+        is_english_fallback = (en_val != "" and current_val == en_val and not allowed_same)
+        is_stale = bool(stored_hash and current_hash and stored_hash != current_hash)
+        is_placeholder_mismatch = False
+        if current_val and en_val:
+            en_pl, en_br = extract_placeholders(en_val)
+            tr_pl, tr_br = extract_placeholders(current_val)
+            is_placeholder_mismatch = (en_pl != tr_pl or en_br != tr_br)
+
+        if is_missing or is_key_fallback or is_corrupted_q or is_english_fallback or is_stale or is_placeholder_mismatch:
+            untranslated[key] = en_val
+    return untranslated
+
 def sync():
     import argparse
     parser = argparse.ArgumentParser(description="Synchronize and translate KOReader X-Ray plugin localizations.")
@@ -323,21 +463,8 @@ def sync():
     print("--- Starting Translation Sync ---")
     
     # 1. Scan Source for Used Keys
-    used_keys = {} # key -> default_string
-    for root, _, files in os.walk(SOURCE_DIR):
-        for file in files:
-            if file.endswith('.lua'):
-                with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                    matches = re.finditer(r'loc:t\([\"\']([^\"\']*)[\"\'](?:,\s*.*?)?\)(?:\s*or\s*([\"\'])(.*?)\2)?', content, re.DOTALL)
-                    for m in matches:
-                        used_keys[m.group(1)] = m.group(3) or used_keys.get(m.group(1), "")
-                    if 'localization_xray.lua' in file:
-                        fb_matches = re.finditer(r'(\w+)\s*=\s*\"(.*?)\"', content)
-                        for m in fb_matches:
-                            used_keys[m.group(1)] = m.group(2)
-
-    print(f"Found {len(used_keys)} keys in source code.")
+    used_key_set, fallback_map, inline_fallbacks = extract_keys_from_lua()
+    print(f"Found {len(used_key_set)} keys in source code.")
 
     # 2. Update English Master
     en_path = os.path.join(LANGUAGES_DIR, f'{MASTER_LANG}.po')
@@ -345,15 +472,21 @@ def sync():
     en_existing = {e['msgid']: e['msgstr'] for e in en_entries if e['msgid']}
     
     en_final = {}
-    for key in used_keys:
-        code_fallback = used_keys.get(key, "")
-        en_final[key] = (code_fallback if code_fallback else en_existing.get(key)) or key
+    for key in used_key_set:
+        if key in fallback_map and fallback_map[key]:
+            en_final[key] = fallback_map[key]
+        elif en_existing.get(key):
+            en_final[key] = en_existing[key]
+        elif inline_fallbacks.get(key):
+            en_final[key] = inline_fallbacks[key]
+        else:
+            en_final[key] = key
     
-    save_po(en_path, 'English', 'en', en_final.keys(), en_final, used_keys, en_final)
+    save_po(en_path, 'English', 'en', en_final.keys(), en_final, fallback_map, en_final)
     print(f"Updated {MASTER_LANG}.po")
 
     # 3. Read and Prepare other languages
-    lang_files = [f for f in os.listdir(LANGUAGES_DIR) if f.endswith('.po') and not f.startswith(MASTER_LANG)]
+    lang_files = sorted(f for f in os.listdir(LANGUAGES_DIR) if f.endswith('.po') and f != f'{MASTER_LANG}.po')
     
     lang_names = {}
     all_existing_tr = {}
@@ -361,7 +494,7 @@ def sync():
     all_untranslated = {}
     
     for file in lang_files:
-        lang_code = file.split('.')[0]
+        lang_code = file[:-3]
         path = os.path.join(LANGUAGES_DIR, file)
         entries = parse_po(path)
         
@@ -369,8 +502,9 @@ def sync():
         lang_name = lang_code.capitalize()
         for e in entries:
             if e['msgid'] == '':
-                m = re.search(r'Language-Team: (.*?)\\n', e['msgstr'])
-                if m: lang_name = m.group(1)
+                m = re.search(r'Language-Team:\s*(.+)', e['msgstr'])
+                if m:
+                    lang_name = m.group(1).strip()
         
         lang_names[lang_code] = lang_name
         
@@ -380,22 +514,8 @@ def sync():
         all_existing_tr[lang_code] = existing_tr
         all_existing_hashes[lang_code] = existing_hashes
         
-        # Find missing or untranslated/stale keys
-        untranslated = {}
-        for key in en_final:
-            if key != 'language_name' and key != "":
-                current_val = existing_tr.get(key, "")
-                en_val = en_final.get(key, "")
-                stored_hash = existing_hashes.get(key)
-                current_hash = get_md5(en_val) if en_val else None
-                
-                is_missing = (current_val == "")
-                is_fallback = (current_val == key and key not in ALLOWLIST)
-                is_stale = (stored_hash and current_hash and stored_hash != current_hash)
-                
-                if is_missing or is_fallback or is_stale:
-                    untranslated[key] = en_val
-                    
+        # Find missing, untranslated, English-fallback, stale, or placeholder-mismatched keys
+        untranslated = find_untranslated_keys(lang_code, en_final, existing_tr, existing_hashes)
         if untranslated:
             all_untranslated[lang_code] = untranslated
 

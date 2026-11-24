@@ -1,9 +1,7 @@
 return {
-    -- System instruction
-    system_instruction = "你是一位资深的文学研究专家。你的回复必须仅采用有效的 JSON 格式。确保数据高度准确，且严格符合提供的上下文。",
-
-    -- Author-only prompt (For quick bio lookup)
-    author_only = [[识别并提供书籍 "%s" 作者的简介。
+    -- Author Only
+    author_only = [[
+识别并提供书籍 "%s" 作者的简介。
 元数据表明作者是 "%s"。
 
 关键提示：请务必结合“书籍文本上下文”（如果本提示末尾有提供）来核实作者，以确保 100%% 的准确性，避免身份识别错误。
@@ -16,8 +14,39 @@ return {
   "author_death": "逝世日期，根据本地日期格式进行格式化"
 }]],
 
-    -- Single Comprehensive Fetch (Combined Characters, Locations, Timeline)
-    comprehensive_xray = [[书名：%s
+    -- Find Duplicates
+    find_duplicates = [[
+书名: %s
+作者: %s
+阅读进度: %d%%
+
+您正在审查从本书中提取的以下 %s 列表。
+您的任务是找出任何看起来是在不同名称下列出的相同实体的条目。
+
+列表:
+%s
+
+规则:
+- 当两个条目显然指向同一实体时，即存在重复（例如，“大图书馆”和“大图书馆”，或“约翰”和“约翰·多伊”）。
+- 不要标记仅相关或相似但不同的条目。
+- 除非您高度确信它们是同一实体，否则不要进行标记。
+- 如果不存在重复，返回空数组。
+- 剧透规则: 不要使用超过 %d%% 阅读进度的知识。
+
+要求的 JSON 格式:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "要保留的的条目名称（较完整或较正式的名称）",
+      "secondary": "要删除的条目名称",
+      "reason": "简短原因（最多 100 字）"
+    }
+  ]
+}]],
+
+    -- Comprehensive Xray
+    comprehensive_xray = [[
+书名：%s
 作者：%s
 阅读进度：%d%%
 
@@ -41,7 +70,7 @@ return {
 步骤 2：排除所有非叙事性的前言和后记（例如：封面、扉页、版权页、目录、献词、致谢等）。
 步骤 3：针对每个叙事性章节，从第一章开始，在 `timeline` 数组中创建一个对应的事件对象。
 步骤 4：`chapter` 字段必须与样本中的章节标题完全匹配。（按顺序严格映射）。
-步骤 5：在 `event` 字段中总结该特定章节{TIMELINE_DETAIL_GUIDANCE} （最多 {MAX_TIMELINE_EVENT} 个字符）。不要合并章节。
+步骤 5：在 `event` 字段中总结该特定章节。{TIMELINE_DETAIL_GUIDANCE} 撰写 {MIN_TIMELINE_EVENT} 到 {MAX_TIMELINE_EVENT} 个字符的内容。除非该章节几乎没有内容，否则不要写更短的总结。不要合并章节。
 步骤 6：严禁剧透：严格停止在 %d%% 进度处。不要包含超过此进度的事件。
 
 角色与历史人物算法：
@@ -121,10 +150,11 @@ return {
       "event": "{TIMELINE_EXAMPLE}"
     }
   ]
-} ]],
+}]],
 
-    -- Fetch More Characters (AI Limit Bypass)
-    more_characters = [[书名：%s
+    -- More Characters
+    more_characters = [[
+书名：%s
 作者：%s
 阅读进度：%d%%
 
@@ -156,8 +186,9 @@ return {
   ]
 }]],
 
-    -- 获取更多术语（术语表支持）
-    more_terms = [[书名：%s
+    -- More Terms
+    more_terms = [[
+书名：%s
 作者：%s
 阅读进度：%d%%
 
@@ -188,8 +219,9 @@ return {
   ]
 }]],
 
-    -- Targeted Single Word Lookup
-    single_word_lookup = [[用户选中了单词 "%s"。
+    -- Single Word Lookup
+    single_word_lookup = [[
+用户选中了单词 "%s"。
 任务：判断该单词是否为书中的人物、地点、历史人物或技术术语/缩写。
  
 关键提示（人物与地点）：仅使用提供的“书籍文本上下文”。严禁使用外部知识。不要产生虚构。
@@ -221,87 +253,6 @@ If `is_valid` is false:
   "error_message": "简要说明为什么这不是人物或地点。"
 }]],
 
-    -- Multi-Book Series Context Prompts
-    series_detect = [[书名: %s
-作者: %s
-
-任务: 确定本书是否为某个命名系列的一部分。
-仅返回有效的 JSON:
-{
-  "is_series": true,
-  "series_name": "时光之轮",
-  "book_index": 3,
-  "total_books_known": 14
-}
-如果这不是系列图书，返回:
-{ "is_series": false }]],
-
-    prior_book_list = [[系列: %s
-当前图书索引: %d
-当前图书标题: %s
-
-任务: 列出在该系列中位于当前图书之前的第 1 至第 %d 本书的标题（如果作者与 "%s" 不同，还需列出作者）。
-仅返回有效的 JSON:
-{
-  "prior_books": [
-    { "index": 1, "title": "世界之眼", "author": "罗伯特·乔丹" }
-  ]
-}]],
-
-    series_book_summary = [[书名: %s
-作者: %s
-这是系列故事 "%s" 中的第 %d 本书。
-
-任务: 为即将开始阅读本系列下一本书的读者提供本书的完整回顾。
-包括: 关键角色（姓名、角色、书末的最终状态）、主要地点、关键剧情事件以及引入的重要世界观设定词汇。
-绝对不要剧透本书之后的任何续作内容。
-
-要求的 JSON 格式:
-{
-  "characters": [
-    { "name": "完整姓名", "aliases": [], "role": "...", "description": "本书结束时的状态 (最多 300 字)" }
-  ],
-  "locations": [
-    { "name": "...", "description": "..." }
-  ],
-  "terms": [
-    { "name": "...", "aliases": ["别名 1", "别名 2"], "expanded": "...", "category": "...", "definition": "..." }
-  ],
-  "timeline": [
-    { "chapter": "图书总结", "event": "一段单一、高度详细、全面且包含多个段落的完整图书剧情、主要事件和结局回顾 (最多 2000 字) You MUST format this recap using multiple distinct paragraphs separated by double newlines (\\n\\n) for readability instead of a single wall of text." }
-  ]
-}]],
-
-        -- Find Duplicates
-    find_duplicates = [[
-书名: %s
-作者: %s
-阅读进度: %d%%
-
-您正在审查从本书中提取的以下 %s 列表。
-您的任务是找出任何看起来是在不同名称下列出的相同实体的条目。
-
-列表:
-%s
-
-规则:
-- 当两个条目显然指向同一实体时，即存在重复（例如，“大图书馆”和“大图书馆”，或“约翰”和“约翰·多伊”）。
-- 不要标记仅相关或相似但不同的条目。
-- 除非您高度确信它们是同一实体，否则不要进行标记。
-- 如果不存在重复，返回空数组。
-- 剧透规则: 不要使用超过 %d%% 阅读进度的知识。
-
-要求的 JSON 格式:
-{
-  "duplicate_pairs": [
-    {
-      "primary": "要保留的的条目名称（较完整或较正式的名称）",
-      "secondary": "要删除的条目名称",
-      "reason": "简短原因（最多 100 字）"
-    }
-  ]
-}]],
-
     -- Merge Descriptions
     merge_descriptions = [[
 任务: 将以下两个关于同一实体（人物或地点）的描述合并为一个单一、连贯且简洁的总结。
@@ -315,15 +266,382 @@ If `is_valid` is false:
   "merged_description": "合并和润色后的描述（最多 {MAX_CHAR_DESC} 字）"
 }]],
 
--- Fallback strings
-    fallback = {
-        unknown_book = "未知书籍",
-        unknown_author = "未知作者",
-        unnamed_character = "未命名角色",
-        not_specified = "未指定",
-        no_description = "无描述",
-        unnamed_person = "未命名人物",
-        no_biography = "暂无简介"
+    -- Book Type Detect
+    book_type_detect = [[
+书名：%s
+作者：%s
+系列：%s
+文件描述/主题元数据：%s
+
+任务：根据本书的元数据和体裁特征，将其归类为以下书籍类型中的精确一种：
+prose_fiction, prose_nonfiction, manga, graphic_novel, children, poetry, cookbook, textbook, travel, unknown
+
+仅返回有效的 JSON：
+{
+  "book_type_label": "prose_fiction",
+  "confidence": "high"
+}]],
+
+    -- Series Detect
+    series_detect = [[
+书名: %s
+作者: %s
+
+任务: 确定本书是否为某个命名系列的一部分。
+仅返回有效的 JSON:
+{
+  "is_series": true,
+  "series_name": "时光之轮",
+  "book_index": 3,
+  "total_books_known": 14
+}
+如果这不是系列图书，返回:
+{ "is_series": false }]],
+
+    -- Prior Book List
+    prior_book_list = [[
+系列: %s
+当前图书索引: %d
+当前图书标题: %s
+
+任务: 列出在该系列中位于当前图书之前的第 1 至第 %d 本书的标题（如果作者与 "%s" 不同，还需列出作者）。
+仅返回有效的 JSON:
+{
+  "prior_books": [
+    { "index": 1, "title": "世界之眼", "author": "罗伯特·乔丹" }
+  ]
+}]],
+
+    -- Series Book Summary
+    series_book_summary = [[
+目标书籍：%s
+作者：%s
+目标书籍序号：%d
+所属系列：%s
+
+任务：
+仅为已读完目标书籍并即将开始阅读该系列下一本书的读者，提供目标书籍的完整回顾。
+
+绝对剧透边界：
+知识截止点严格限定为目标书籍的最后一页（书籍序号 %d）。
+你可以包含在目标书籍或本系列更早书籍中已确立的事实。
+绝对禁止使用任何后续书籍中的知识来包含、暗示、提示、伏笔或筛选细节。
+
+禁止的后续书籍信息：
+- 后续事件、未来命运、死亡、幸存、去向、恋情、结盟、冲突或背叛。
+- 后续书籍中的身份、真实出身、秘密身世、别名、第二人格、转世、蜕变、头衔或能力进阶（例如，切勿提及某个本质是否会在未来的书籍中与另一个合并或重生）。
+- 后续书籍中引入的揭示、证实、重新诠释、反转或世界观设定术语。
+- 回溯性伏笔或诸如“后来”、“最终”、“将成为”、“在后续书籍中”或类似表述。
+- 提及后续书籍中的角色、概念、组织或时间线。
+
+角色截止标准：
+严格按照目标书籍最后一页已知的信息描述每个角色。
+切勿使用在后续书籍中才揭示的别名、角色定位、关系、真实身份或状态。
+
+不确定性规则：
+如果你无法自信地确定某个事实或别名是否在目标书籍结束前确立，请将其省略。
+遗漏细节远胜于剧透后续书籍。
+
+最终审核：
+在返回 JSON 之前，检查每一个字段（尤其是角色描述和别名），清除任何依赖于目标书籍之后书籍知识的内容。
+
+要求的 JSON 格式：
+{
+  "characters": [
+    { "name": "完整姓名", "aliases": [], "role": "...", "description": "本书结束时的状态（最多 {MAX_CHAR_DESC} 个字符）" }
+  ],
+  "locations": [
+    { "name": "...", "description": "..." }
+  ],
+  "terms": [
+    { "name": "...", "aliases": ["别名 1", "别名 2"], "expanded": "...", "category": "...", "definition": "..." }
+  ],
+  "timeline": [
+    { "chapter": "图书总结", "event": "一段单一、高度详细、全面地回顾全书剧情、主要事件和结局的摘要（最多 2000 个字符）。为了便于阅读，你必须使用双换行符（\\n\\n）将这段回顾分成多个清晰独立的段落，而不要写成一整块文字。" }
+  ]
+}]],
+
+    -- Local Timeline Summary
+    local_timeline_summary = [[
+目标书籍：%s
+作者：%s
+目标书籍序号：%d
+所属系列：%s
+
+任务：
+仅使用下面提供的目标书籍中经过核实的逐章事件，撰写一段连贯、全面的摘要，概括全书的剧情、关键进展和结局。
+
+严格依据约束：
+- 你的摘要必须完全基于所提供的章节事件。
+- 不要引入这些章节事件中未描述的事实、角色、事件或结果。
+- 切勿提及或暗示该系列后续书籍中的事件、死亡或进展。
+
+章节事件：
+%s
+
+要求的 JSON 格式：
+{
+  "timeline": [
+    { "chapter": "图书总结", "event": "一段单一、高度详细、全面地回顾全书剧情和结局的摘要（最多 2000 个字符）。为了便于阅读，你必须使用双换行符（\\n\\n）将这段回顾分成多个清晰独立的段落，而不要写成一整块文字。" }
+  ]
+}]],
+
+    -- Chapter Delta
+    chapter_delta = [[
+书名：%s
+作者：%s
+正在分析章节：%s
+
+任务：仅分析这单个章节。识别本章中引入的新实体，以及现有实体的增量更新（状态转变）。
+仅输出一个有效的 JSON 对象。
+
+现有已知实体清单（除非其角色定位、状态或描述发生重大演变，否则不要重新提取）：
+%s
+
+规则：
+1. 严格剧透限制：仅分析所提供的章节文本。不要使用任何来自后续章节或外部来源的知识。
+2. 角色描述深度与实质内容（关键）：
+   - 扎实且具体：用具体的故事事实描述角色是谁——其背景、鲜明性格、职业、与其他角色的关键关系，以及其在叙事中的具体作用和个人利害关系。
+   - 重要叙事上下文：将角色直接与本书的核心谜团、剧情冲突或调查联系起来（例如，他们正在调查什么罪行或案件、谁雇佣了他们、关键盟友或对手、具体的个人困境或紧张局势）。
+   - 切勿过于笼统：不要写空泛的套话简介（例如，避免“一位调查复杂案件的侦探”之类的空洞措辞）。点明文本中确立的具体处境、关联和利害关系。
+   - 禁止琐碎日常流水账：不要按时间顺序记录日常琐事或例行事务（例如，不要回顾去杂货店、日常通话或场景间无关紧要的走动）。
+   - 角色描述必须是丰富、生动的档案，总结他们是谁以及截至本书当前位置为止的重要性。
+3. 角色更新的高门槛：
+   - 不要仅仅因为已有角色在本章中出场、说话或执行例行动作，就在 `character_state_updates` 中创建更新。
+   - 只有当其叙事弧光、身份、关系、职业、阵营或处境发生实质性、持久性的转变时才生成更新（例如，被杀、受伤、被捕、遭背叛、订婚、升职、被揭露为凶手、重大秘密或动机败露）。
+   - 如果确实需要更新，更新后的 `description` 必须是一份丰富、累积性的角色概览，既融入新进展又保留其核心身份与既定故事背景——而不是孤立场景的摘要。
+4. 章内页码标记（[PAGE N]）与零剧透门控：
+   - 章节文本包含表示页面进度的 [PAGE N] 标记。
+   - 对于 `new_characters`、`new_locations` 和 `new_terms`：提供 "first_page"（首次提及处的 [PAGE N] 标记中的整数 N）、"intro_role"（适用于角色）和 "intro_description"（1-2 句话，严格限于在 [PAGE first_page] 首次登场时已知的信息——对后续页面出现的反转、秘密或结局保持零剧透）。同时提供 "page"（更完整的累积性 "description" 适用的 [PAGE N] 标记，通常为本章最后一页）。
+   - 对于 `character_state_updates`、`location_state_updates` 和 `term_state_updates`：提供 "page"（揭示或转变完成处的 [PAGE N] 标记中的整数 N；切勿在此页之前泄露事实）。
+5. 证据：提供本章中的简短参考或引文摘录，说明为何发生此更新。
+6. 时间线：仅提供本章主要剧情行动的恰好一条事件总结。
+
+要求的 JSON 格式：
+{
+  "new_characters": [
+    {
+      "name": "全名",
+      "aliases": ["别名 1", "别名 2"],
+      "first_page": 80,
+      "intro_role": "初始角色定位（例如：村镇文书、陌生人、委托人）",
+      "intro_description": "严格基于首次登场时的 1-2 句初步印象，对后续页面零剧透。",
+      "page": 99,
+      "role": "叙事角色 / 重要性（例如：主角、私家侦探、搭档、反派、受害者、委托人、嫌疑人、次要角色、小角色）",
+      "status": "alive",
+      "description": "丰富、具体的角色描述（背景、关系、叙事利害关系）。避免空泛简介和琐碎日常流水账。",
+      "evidence": "简短摘录"
     }
+  ],
+  "character_state_updates": [
+    {
+      "name": "与已知清单匹配的名称",
+      "page": 95,
+      "role": "更新后的叙事角色 / 重要性（例如：主角、搭档、反派、次要角色等）",
+      "status": "alive",
+      "change": "用一句简短的话说明自上一状态以来发生了什么变化（例如：'在沙克尔韦尔案后晋升为合伙人'）",
+      "description": "更新后的丰富、累积性角色描述，反映其新状态和故事利害关系",
+      "evidence": "简短摘录"
+    }
+  ],
+  "new_locations": [
+    {
+      "name": "地点名称",
+      "first_page": 80,
+      "intro_description": "首次提及时的初步印象。",
+      "page": 99,
+      "description": "地点描述",
+      "evidence": "简短摘录"
+    }
+  ],
+  "location_state_updates": [
+    {
+      "name": "与已知清单匹配的名称",
+      "page": 95,
+      "change": "用一句简短的话说明发生了什么变化（例如：'在奥克黑文战役中被毁'）",
+      "description": "更新后的演变描述",
+      "evidence": "简短摘录"
+    }
+  ],
+  "new_terms": [
+    {
+      "name": "术语名称",
+      "first_page": 80,
+      "intro_description": "首次提及时的初步定义。",
+      "page": 99,
+      "description": "定义或背景设定解释",
+      "evidence": "简短摘录"
+    }
+  ],
+  "term_state_updates": [
+    {
+      "name": "与已知清单匹配的名称",
+      "page": 95,
+      "change": "用一句简短的话说明在理解或用法上发生了什么变化",
+      "description": "更新后的定义",
+      "evidence": "简短摘录"
+    }
+  ],
+  "timeline_event": {
+    "chapter": "%s",
+    "event": "本章事件总结"
+  }
 }
 
+章节文本：
+%s]],
+
+    -- Batch Chapter Delta
+    batch_chapter_delta = [[
+书名：%s
+作者：%s
+本批次章节：%s
+
+任务：按顺序分析所提供的连续批次章节。
+针对批次中的每一章，识别：
+1. 该章中引入的新实体（角色、地点、术语）。
+2. 现有已知实体（来自清单或在本批次更早章节中引入的实体）的增量更新（状态转变），当且仅当其角色定位、状态、阵营或叙事处境经历了实质性、持久性的转变时。
+3. 时间线事件：该章发生的主要剧情事件的简明总结。
+
+仅输出符合所需结构的有效 JSON 对象。
+
+现有已知实体清单（来自先前批次——除非其角色定位、状态或描述发生重大演变，否则不要重新提取）：
+%s
+
+规则：
+1. 严格剧透限制与顺序推进：
+   - 按顺序分析各章节。
+   - 对于本批次中的任何章节，切勿融入本批次后续章节或本书其余部分的知识。
+2. 角色描述深度与实质内容（关键）：
+   - 扎实且具体：用具体的故事事实描述角色是谁——其背景、鲜明性格、职业、与其他角色的关键关系，以及其在叙事中的具体作用和个人利害关系。
+   - 重要叙事上下文：将角色直接与本书的核心谜团、剧情冲突或调查联系起来（例如，他们正在调查什么罪行或案件、谁雇佣了他们、关键盟友或对手、具体的个人困境或紧张局势）。
+   - 切勿过于笼统：不要写空泛的套话简介（例如，避免“一位调查复杂案件的侦探”之类的空洞措辞）。点明文本中确立的具体处境、关联和利害关系。
+   - 禁止琐碎日常流水账：不要按时间顺序记录日常琐事或例行事务（例如，不要回顾去杂货店、日常通话或场景间无关紧要的走动）。
+   - 角色描述必须是丰富、生动的档案，总结他们是谁以及截至本书当前位置为止的重要性。
+3. 角色更新的高门槛：
+   - 不要仅仅因为已有角色在章节中出场、说话或执行例行动作，就在 `character_state_updates` 中创建更新。
+   - 只有当其叙事弧光、身份、关系、职业、阵营或处境发生实质性、持久性的转变时才生成更新（例如，被杀、受伤、被捕、遭背叛、订婚、升职、被揭露为凶手、重大秘密或动机败露）。
+   - 如果确实需要更新，更新后的 `description` 必须是一份丰富、累积性的角色概览，既融入新进展又保留其核心身份与既定故事背景——而不是孤立场景的摘要。
+4. 章内页码标记（[PAGE N]）与零剧透门控：
+   - 章节文本包含表示页面进度的 [PAGE N] 标记。
+   - 对于 `new_characters`、`new_locations` 和 `new_terms`：提供 "first_page"（首次提及处的 [PAGE N] 标记中的整数 N）、"intro_role"（适用于角色）和 "intro_description"（1-2 句话，严格限于在 [PAGE first_page] 首次登场时已知的信息——对后续页面出现的反转、秘密或结局保持零剧透）。同时提供 "page"（更完整的累积性 "description" 适用的 [PAGE N] 标记，通常为本章最后一页）。
+   - 对于 `character_state_updates`、`location_state_updates` 和 `term_state_updates`：提供 "page"（揭示或转变完成处的 [PAGE N] 标记中的整数 N；切勿在此页之前泄露事实）。
+5. 证据：提供该特定章节中的简短参考或引文摘录，说明为何发生此更新。
+6. JSON 安全性：输出严格有效的 JSON。正确转义字符串内部的双引号。
+
+要求的 JSON 格式：
+{
+  "chapters": [
+    {
+      "chapter_index": 1,
+      "chapter_title": "章节标题",
+      "timeline_event": "本章主要剧情进展的总结。",
+      "new_characters": [
+        {
+          "name": "全名",
+          "aliases": ["别名 1"],
+          "first_page": 80,
+          "intro_role": "初始角色定位（例如：村镇文书、陌生人、委托人）",
+          "intro_description": "严格基于首次登场时的 1-2 句初步印象，对后续页面零剧透。",
+          "page": 99,
+          "role": "叙事角色 / 重要性（例如：主角、私家侦探、搭档、反派、受害者、委托人、嫌疑人、次要角色、小角色）",
+          "status": "alive",
+          "description": "丰富、具体的角色描述（背景、关系、叙事利害关系）。避免空泛简介和琐碎日常流水账。",
+          "evidence": "简短摘录"
+        }
+      ],
+      "character_state_updates": [
+        {
+          "name": "与已知清单或本批次更早章节中引入的角色匹配的名称",
+          "page": 95,
+          "role": "更新后的叙事角色 / 重要性（例如：主角、搭档、反派、次要角色等）",
+          "status": "alive",
+          "change": "用一句简短的话说明自上一状态以来发生了什么变化（例如：'在沙克尔韦尔案后晋升为合伙人'）",
+          "description": "更新后的丰富、累积性角色描述，反映其新状态和故事利害关系",
+          "evidence": "简短摘录"
+        }
+      ],
+      "new_locations": [
+        {
+          "name": "地点名称",
+          "first_page": 80,
+          "intro_description": "首次提及时的初步印象。",
+          "page": 99,
+          "description": "地点描述",
+          "evidence": "简短摘录"
+        }
+      ],
+      "location_state_updates": [
+        {
+          "name": "与已知清单或本批次更早章节中引入的地点匹配的名称",
+          "page": 95,
+          "change": "用一句简短的话说明发生了什么变化（例如：'在奥克黑文战役中被毁'）",
+          "description": "更新后的描述",
+          "evidence": "简短摘录"
+        }
+      ],
+      "new_terms": [
+        {
+          "name": "术语名称",
+          "first_page": 80,
+          "intro_description": "首次提及时的初步定义。",
+          "page": 99,
+          "description": "定义或背景设定解释",
+          "evidence": "简短摘录"
+        }
+      ],
+      "term_state_updates": [
+        {
+          "name": "与已知清单或本批次更早章节中引入的术语匹配的名称",
+          "page": 95,
+          "change": "用一句简短的话说明在理解或用法上发生了什么变化",
+          "description": "更新后的定义",
+          "evidence": "简短摘录"
+        }
+      ]
+    }
+  ]
+}
+
+本批次章节文本：
+%s]],
+
+    -- Anthology Detect
+    anthology_detect = [[
+分析以下书籍详情和目录：
+
+标题：%s
+作者：%s
+主题：%s
+简介：%s
+
+目录：
+%s
+
+判断该作品属于以下哪种类型：
+1. "anthology"（独立短篇小说、散文或中篇小说合集，每篇都有各自独立的叙事或人物阵容，例如《福尔摩斯探案集》《都柏林人》《呼吸》《没有女人的男人们》）。
+2. "novel"（分为章节、部分或幕的单一连贯长篇小说，例如《傲慢与偏见》《哈利·波特》《沙丘》《魔女嘉莉》）。
+3. "novel_omnibus"（将多部完整长篇小说合订在一卷中出版的多卷合集，例如《指环王：三部曲全集》《银河系漫游指南全集》《波西·杰克逊：第 1-3 册》）。
+4. "non_fiction"（分为章节的单一非虚构专著、历史或学术书籍）。
+
+仅返回一个包含以下字段的 JSON 对象：
+{
+  "type": "anthology" | "novel" | "novel_omnibus" | "non_fiction",
+  "confidence": 0.0 到 1.0,
+  "reasoning": "简短说明（一句话）"
+}]],
+
+    -- System instruction
+    system_instruction = "你是一位资深的文学研究专家。你的回复必须仅采用有效的 JSON 格式。确保数据高度准确，且严格符合提供的上下文。",
+
+    -- Fallback strings
+    fallback = {
+        no_biography = "暂无简介",
+        no_description = "无描述",
+        not_specified = "未指定",
+        unknown_author = "未知作者",
+        unknown_book = "未知书籍",
+        unnamed_character = "未命名角色",
+        unnamed_person = "未命名人物"
+    }
+}

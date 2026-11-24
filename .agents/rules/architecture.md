@@ -32,6 +32,7 @@ Before adding or modifying functions, route changes to the owning module:
 | `xray_data.lua` | Pure data transformations: deduplication (`deduplicateByName`), merging (`mergeEntryItems`, `mergeEntityTemporalData`), sorting, timeline page assignment, and `saveCurrentBookCache`. | UI widgets or network requests. |
 | `xray_entityscanner.lua` | Async/in-process book scanning for entity underlines, 3-page box resolution, and `EntityTooltip`. | Mention search list dialogs (`xray_mentions.lua`). |
 | `xray_unitscanner.lua` | Async/in-process book scanning for measurement underlines, SVG wavy/circle tile caches, and `UnitTooltip`. | Pure unit conversion math and regex tables (`xray_units.lua`). |
+| `xray_conductor.lua` | Zero-hard-dependency facade for Storefront's Memory Conductor (`storefront_conductor`): `register`, `runSlot`, `reclaimMemory`, `getMemoryStatus`. | Feature-specific business logic or UI widgets. |
 | `xray_utils.lua` | Shared cross-cutting helpers (`getCurrentPage`, `sanitizeMetadata`, `getImageDimensions`, `utf8Lower`, `trimPunctuation`, `isLowMemory`, `isSilentNetworkAvailable`). | Feature-specific state. |
 
 ---

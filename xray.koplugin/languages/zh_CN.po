@@ -269,10 +269,6 @@ msgstr "确定要清除 %s 的已配置 API 密钥吗？"
 msgid "continue_in_background"
 msgstr "关闭"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "zh_CN"
-
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "当前模式："
@@ -355,15 +351,15 @@ msgstr "不再询问此书"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "仿生阅读会将单词拆分到行内格式化标签中，这与实体下划线不兼容。\n\n为了获得最佳性能，请改用快速字体。"
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "注意：与仿生阅读（Bionic Reading）不兼容"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "正在使用缓存的下划线并刷新…"
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -607,7 +603,7 @@ msgstr "实体演进功能追踪角色、地点和术语在各章节及里程碑
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "演变"
+msgstr "故事线：%s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -629,11 +625,11 @@ msgstr "未发现 '%s' 的 X-Ray 数据。是否要查询？"
 msgid "fetch_successful"
 msgstr "获取成功"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "正在获取 X-Ray..."
+msgstr "正在从 %s 获取..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
 msgstr "正在从 %s 获取作者信息..."
 
@@ -1449,11 +1445,7 @@ msgstr "故事线"
 msgid "paste_clipboard_confirm"
 msgstr "是否将剪贴板中的 API 密钥用于 %s？"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "AI 发现了上次获取的 %d 个潜在重复项。现在查看吗？"
 
@@ -1757,7 +1749,7 @@ msgstr "自动检测（推荐）"
 msgid "story_toc_depth_desc"
 msgstr "选择代表独立故事的目录层级："
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
 msgstr "未找到匹配“%s”的术语"
 
@@ -2112,10 +2104,6 @@ msgstr "更新内容："
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "正在更新 X-Ray 数据..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

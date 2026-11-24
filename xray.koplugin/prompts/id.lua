@@ -1,9 +1,7 @@
 return {
-    -- System instruction
-    system_instruction = "Anda adalah seorang peneliti sastra ahli. Tanggapan Anda harus HANYA dalam format JSON yang valid. Pastikan data sangat akurat dan berkaitan erat dengan konteks yang disediakan.",
-
-    -- Author-only prompt (For quick bio lookup)
-    author_only = [[Identifikasi dan berikan biografi untuk penulis buku "%s". 
+    -- Author Only
+    author_only = [[
+Identifikasi dan berikan biografi untuk penulis buku "%s". 
 Metadata menunjukkan penulisnya adalah "%s". 
 
 PENTING: Verifikasi penulis menggunakan KONTEKS TEKS BUKU (jika disediakan di akhir perintah ini) untuk memastikan keakuratan 100%% dan menghindari identifikasi yang salah.
@@ -16,8 +14,9 @@ FORMAT JSON YANG DIPERLUKAN:
   "author_death": "Tanggal Kematian, diformat berdasarkan format tanggal lokal"
 }]],
 
-    -- Find Duplicates (for AI-Assisted Merge)
-    find_duplicates = [[Buku: %s
+    -- Find Duplicates
+    find_duplicates = [[
+Buku: %s
 Penulis: %s
 Kemajuan Membaca: %d%%
 
@@ -45,8 +44,9 @@ FORMAT JSON YANG DIPERLUKAN:
   ]
 }]],
 
-    -- Single Comprehensive Fetch (Combined Characters, Locations, Timeline)
-    comprehensive_xray = [[Buku: %s
+    -- Comprehensive Xray
+    comprehensive_xray = [[
+Buku: %s
 Penulis: %s
 Kemajuan Membaca: %d%%
 
@@ -70,7 +70,7 @@ Langkah 1. Lihat HANYA blok "CHAPTER SAMPLES". Identifikasi bab-bab naratif.
 Langkah 2. KECUALIKAN semua materi depan dan belakang non-naratif (misalnya, Sampul, Halaman Judul, Hak Cipta, Daftar Isi, Dedikasi, Ucapan Terima Kasih, Juga Oleh).
 Langkah 3. Untuk setiap bab naratif, dimulai dari yang pertama, buat TEPAT SATU objek acara di array `timeline`.
 Langkah 4. Bidang `chapter` HARUS sama persis dengan header bab dalam sampel. (Petakan secara ketat dalam urutan berurutan).
-Langkah 5. Ringkas bab spesifik tersebut di bidang `event` {TIMELINE_DETAIL_GUIDANCE} (MAKS {MAX_TIMELINE_EVENT} karakter). JANGAN kelompokkan bab.
+Langkah 5. Ringkas bab spesifik tersebut di bidang `event`. {TIMELINE_DETAIL_GUIDANCE} Tulis antara {MIN_TIMELINE_EVENT} dan {MAX_TIMELINE_EVENT} karakter. JANGAN tulis ringkasan yang lebih pendek kecuali bab tersebut hampir tidak memiliki konten. JANGAN kelompokkan bab.
 Langkah 6. BEBAS SPOILER: Berhenti tepat di tanda %d%%. Jangan sertakan peristiwa setelah kemajuan ini.
 
 ALGORITMA UNTUK KARAKTER & TOKOH SEJARAH:
@@ -153,8 +153,9 @@ FORMAT JSON YANG DIPERLUKAN:
   ]
 }]],
 
-    -- Fetch More Characters (AI Limit Bypass)
-    more_characters = [[Buku: %s
+    -- More Characters
+    more_characters = [[
+Buku: %s
 Penulis: %s
 Kemajuan Membaca: %d%%
 
@@ -186,8 +187,9 @@ FORMAT JSON YANG DIPERLUKAN:
   ]
 }]],
 
-    -- Fetch More Terms (Glossary Support)
-    more_terms = [[Buku: %s
+    -- More Terms
+    more_terms = [[
+Buku: %s
 Penulis: %s
 Kemajuan Membaca: %d%%
 
@@ -218,7 +220,9 @@ FORMAT JSON YANG DIPERLUKAN:
   ]
 }]],
 
-    single_word_lookup = [[Pengguna menyoroti kata "%s".
+    -- Single Word Lookup
+    single_word_lookup = [[
+Pengguna menyoroti kata "%s".
 TUGAS: Tentukan apakah kata ini mewakili Karakter, Lokasi, Tokoh Sejarah, atau Istilah Teknis/Akronim dalam buku.
 
 PENTING UNTUK KARAKTER DAN LOKASI: Gunakan "KONTEKS TEKS BUKU" yang disediakan untuk mengidentifikasi entitas. Jika kata tersebut disediakan dalam petunjuk "TARGET PENCARIAN" atau "REFERENSI LANGSUNG", itu ADA di dalam buku pada posisi saat ini. Jangan menolaknya hanya karena tidak ditemukan persis di teks narasi yang disub-sampel. Nama pendek (sesingkat 2 huruf, mis. "Oz", "Al", "Jo") adalah valid dan harus dianalisis.
@@ -250,8 +254,9 @@ Jika `is_valid` adalah false:
   "error_message": "Penjelasan singkat mengapa ini bukan karakter atau lokasi."
 }]],
 
-    -- Smart Merge Descriptions
-    merge_descriptions = [[TUGAS: Gabungkan dua deskripsi berikut dari entitas yang sama (karakter atau lokasi) menjadi satu ringkasan yang kohesif dan ringkas.
+    -- Merge Descriptions
+    merge_descriptions = [[
+TUGAS: Gabungkan dua deskripsi berikut dari entitas yang sama (karakter atau lokasi) menjadi satu ringkasan yang kohesif dan ringkas.
 Hapus informasi yang mubazir dan pastikan deskripsi akhir mengalir secara alami.
 
 Deskripsi Utama: %s
@@ -262,8 +267,25 @@ FORMAT JSON YANG DIPERLUKAN:
   "merged_description": "Deskripsi gabungan dan terpoles (Maks {MAX_CHAR_DESC} karakter)"
 }]],
 
-    -- Multi-Book Series Context Prompts
-    series_detect = [[Judul Buku: %s
+    -- Book Type Detect
+    book_type_detect = [[
+Judul Buku: %s
+Penulis: %s
+Seri: %s
+Deskripsi File/Metadata Subjek: %s
+
+TUGAS: Klasifikasikan buku ini ke dalam tepat SATU dari jenis buku berikut berdasarkan metadata dan sinyal genrenya:
+prose_fiction, prose_nonfiction, manga, graphic_novel, children, poetry, cookbook, textbook, travel, unknown
+
+Kembalikan HANYA JSON yang valid:
+{
+  "book_type_label": "prose_fiction",
+  "confidence": "high"
+}]],
+
+    -- Series Detect
+    series_detect = [[
+Judul Buku: %s
 Penulis: %s
 
 TUGAS: Tentukan apakah buku ini merupakan bagian dari seri bernama.
@@ -277,7 +299,9 @@ Kembalikan HANYA JSON yang valid:
 If ini BUKAN buku seri, kembalikan:
 { "is_series": false }]],
 
-    prior_book_list = [[Seri: %s
+    -- Prior Book List
+    prior_book_list = [[
+Seri: %s
 Indeks Buku Saat Ini: %d
 Judul Buku Saat Ini: %s
 
@@ -290,20 +314,44 @@ Kembalikan HANYA JSON yang valid:
   ]
 }]],
 
-    series_book_summary = [[Buku: %s
-Penulis: %s
-Ini adalah buku %d dalam seri "%s".
+    -- Series Book Summary
+    series_book_summary = [[
+BUKU TARGET: %s
+PENULIS: %s
+INDEKS BUKU TARGET: %d
+SERI: %s
 
-TUGAS: Berikan ringkasan LENGKAP dari seluruh buku ini untuk pembaca
-yang AKAN MEMULAI buku BERIKUTNYA dalam seri tersebut.
-Sertakan: karakter kunci (nama, peran, status akhir di akhir buku), lokasi utama,
-peristiwa plot penting, dan istilah pembangunan dunia penting yang diperkenalkan.
-TANPA SPOILER untuk buku-buku SETELAH yang satu ini.
+TUGAS:
+Berikan rekap LENGKAP khusus untuk BUKU TARGET saja, bagi pembaca yang telah selesai membaca
+BUKU TARGET dan akan memulai buku berikutnya dalam seri ini.
+
+BATAS SPOILER MUTLAK:
+Batas pengetahuan secara ketat adalah HALAMAN TERAKHIR dari BUKU TARGET (Indeks Buku %d).
+Anda boleh menyertakan fakta yang telah ditetapkan dalam BUKU TARGET atau buku-buku sebelumnya dalam seri ini.
+Anda DILARANG menyertakan, menyiratkan, memberi petunjuk, membayangi (foreshadow), atau memilih detail menggunakan pengetahuan dari buku-buku selanjutnya.
+
+INFORMASI BUKU SELANJUTNYA YANG DILARANG:
+- Peristiwa di masa depan, nasib akhir, kematian, kelangsungan hidup, tujuan akhir, romansa, aliansi, konflik, atau pengkhianatan di buku selanjutnya.
+- Identitas di buku selanjutnya, asal-usul sejati, silsilah rahasia, alias, alter ego, reinkarnasi, transformasi, gelar, atau peningkatan kekuatan (misalnya, JANGAN sebutkan jika suatu esensi bergabung dengan yang lain atau terlahir kembali di buku mendatang).
+- Pengungkapan, konfirmasi, interpretasi ulang, plot twist, atau terminologi pembangunan dunia yang diperkenalkan di buku-buku selanjutnya.
+- Petunjuk retrospektif (foreshadowing) atau frasa seperti "nanti", "pada akhirnya", "akan menjadi", "di buku-buku berikutnya", atau yang setara.
+- Menyebutkan karakter, konsep, organisasi, atau kronologi dari buku-buku selanjutnya.
+
+BATAS KARAKTER:
+Deskripsikan setiap karakter secara ketat sebagaimana diketahui pada halaman terakhir BUKU TARGET.
+JANGAN gunakan alias, peran, hubungan, identitas sejati, atau status yang baru terungkap di buku-buku selanjutnya.
+
+ATURAN KETIDAKPASTIAN:
+Jika Anda tidak dapat menentukan dengan yakin apakah suatu fakta atau alias sudah ditetapkan sebelum akhir BUKU TARGET, HILANGKAN SAJA.
+Kekurangan detail jauh lebih baik daripada membocorkan spoiler buku mendatang.
+
+AUDIT AKHIR:
+Sebelum mengembalikan JSON, periksa setiap bidang (terutama deskripsi dan alias karakter) dan hapus apa pun yang bergantung pada pengetahuan dari buku-buku setelah BUKU TARGET.
 
 FORMAT JSON YANG DIPERLUKAN:
 {
   "characters": [
-    { "name": "Nama Lengkap", "aliases": [], "role": "...", "description": "Status di akhir buku ini (maks 300 karakter)" }
+    { "name": "Nama Lengkap", "aliases": [], "role": "...", "description": "Status di akhir buku ini (maks {MAX_CHAR_DESC} karakter)" }
   ],
   "locations": [
     { "name": "...", "description": "..." }
@@ -312,19 +360,291 @@ FORMAT JSON YANG DIPERLUKAN:
     { "name": "...", "aliases": ["Alias 1", "Alias 2"], "expanded": "...", "category": "...", "definition": "..." }
   ],
   "timeline": [
-    { "chapter": "Ringkasan Buku", "event": "Satu rekapitulasi yang sangat rinci, komprehensif, dan menyeluruh dari seluruh plot buku, peristiwa utama, dan penyelesaian (maks 2000 karakter). Anda HARUS memformat rekap ini menggunakan beberapa paragraf berbeda yang dipisahkan oleh baris baru ganda (\n\n) untuk keterbacaan, bukan satu dinding teks." }
+    { "chapter": "Ringkasan Buku", "event": "Satu rekapitulasi yang sangat rinci dan komprehensif mengenai seluruh alur cerita buku, peristiwa utama, dan penyelesaiannya (maks 2000 karakter). Anda HARUS memformat rekap ini menggunakan beberapa paragraf terpisah yang dipisahkan oleh baris baru ganda (\\n\\n) agar mudah dibaca, bukan satu blok teks yang padat." }
   ]
 }]],
 
-    -- Fallback strings
-    fallback = {
-        unknown_book = "Buku Tidak Diketahui",
-        unknown_author = "Penulis Tidak Diketahui",
-        unnamed_character = "Karakter Tanpa Nama",
-        not_specified = "Tidak Ditentukan",
-        no_description = "Tidak Ada Deskripsi",
-        unnamed_person = "Orang Tanpa Nama",
-        no_biography = "Tidak Ada Biografi yang Tersedia"
+    -- Local Timeline Summary
+    local_timeline_summary = [[
+BUKU TARGET: %s
+PENULIS: %s
+INDEKS BUKU TARGET: %d
+SERI: %s
+
+TUGAS:
+Dengan HANYA menggunakan peristiwa bab demi bab yang terverifikasi di bawah ini dari BUKU TARGET, tulis rekap yang kohesif dan komprehensif tentang keseluruhan alur cerita buku, perkembangan penting, dan penyelesaiannya.
+
+BATASAN SUMBER KETAT:
+- Dasarkan ringkasan Anda SECARA EKSKLUSIF pada peristiwa bab yang disediakan.
+- JANGAN memperkenalkan fakta, karakter, peristiwa, atau hasil yang tidak dijelaskan dalam peristiwa bab ini.
+- JANGAN PERNAH menyebutkan atau membayangi peristiwa, kematian, atau perkembangan dari buku-buku selanjutnya dalam seri ini.
+
+PERISTIWA BAB:
+%s
+
+FORMAT JSON YANG DIPERLUKAN:
+{
+  "timeline": [
+    { "chapter": "Ringkasan Buku", "event": "Satu rekapitulasi yang sangat rinci dan komprehensif mengenai seluruh alur cerita buku dan penyelesaiannya (maks 2000 karakter). Anda HARUS memformat rekap ini menggunakan beberapa paragraf terpisah yang dipisahkan oleh baris baru ganda (\\n\\n) agar mudah dibaca, bukan satu blok teks yang padat." }
+  ]
+}]],
+
+    -- Chapter Delta
+    chapter_delta = [[
+Buku: %s
+Penulis: %s
+Menganalisis Bab: %s
+
+TUGAS: Analisis HANYA satu bab ini saja. Identifikasi entitas BARU yang diperkenalkan dalam bab ini, serta PEMBARUAN DELTA (transisi status) untuk entitas yang sudah ada.
+Hasilkan HANYA objek JSON yang valid.
+
+MANIFES ENTITAS YANG SUDAH DIKETAHUI (JANGAN ekstrak ulang kecuali peran, status, atau deskripsinya berkembang secara signifikan):
+%s
+
+ATURAN:
+1. PEMBATASAN SPOILER KETAT: Analisis HANYA teks bab yang disediakan. JANGAN gunakan pengetahuan apa pun dari bab-bab mendatang atau sumber eksternal.
+2. KEDALAMAN & SUBSTANSI DESKRIPSI KARAKTER (PENTING):
+   - Berdasar & Spesifik: Jelaskan siapa karakter tersebut dengan fakta cerita yang konkret—latar belakangnya, kepribadian yang menonjol, profesinya, hubungan utama dengan karakter lain, serta peran spesifik dan taruhan pribadinya dalam narasi.
+   - Konteks Naratif yang Signifikan: Hubungkan karakter secara langsung dengan misteri utama, konflik plot, atau investigasi dalam buku ini (mis., kejahatan atau kasus apa yang sedang diselidiki, siapa yang mempekerjakannya, sekutu atau musuh utama, dilema atau ketegangan pribadi yang spesifik).
+   - JANGAN Terlalu Umum: JANGAN tulis kalimat klise yang generik (mis., hindari ungkapan kosong seperti "seorang detektif yang menyelidiki kasus rumit"). Sebutkan keadaan, koneksi, dan taruhan spesifik yang ditetapkan dalam teks.
+   - TANPA Rekap Tugas Sepele: JANGAN tulis catatan kronologis dari aktivitas harian yang biasa atau pekerjaan rutin (mis., JANGAN rekap perjalanan ke toko kelontong, panggilan telepon rutin, atau pergerakan adegan demi adegan yang tidak penting).
+   - Deskripsi karakter harus menjadi profil yang kaya dan hidup yang merangkum siapa mereka dan signifikansi mereka hingga titik ini dalam buku.
+3. AMBANG BATAS TINGGI UNTUK PEMBARUAN KARAKTER:
+   - JANGAN buat pembaruan di `character_state_updates` hanya karena karakter yang sudah ada muncul, berbicara, atau melakukan tindakan rutin di bab ini.
+   - HANYA hasilkan pembaruan jika ada transformasi substantif yang bertahan lama dalam alur naratif, identitas, hubungan, pekerjaan, kesetiaan, atau kondisi mereka (mis., terbunuh, terluka, ditangkap, dikhianati, bertunangan, dipromosikan, terungkap sebagai pelaku, rahasia besar atau motif terungkap).
+   - Jika pembaruan MEMANG dibenarkan, `description` yang diperbarui harus berupa tinjauan karakter kumulatif yang kaya yang menggabungkan perkembangan baru sambil mempertahankan identitas inti dan konteks cerita mereka yang sudah mapan—BUKAN ringkasan dari satu adegan terisolasi.
+4. PENANDA HALAMAN INTRA-BAB ([PAGE N]) & PEMBATASAN BEBAS SPOILER:
+   - Teks bab berisi penanda [PAGE N] yang menunjukkan perkembangan halaman.
+   - Untuk `new_characters`, `new_locations`, dan `new_terms`: berikan "first_page" (bilangan bulat N dari penanda [PAGE N] tempat pertama kali disebutkan), "intro_role" (untuk karakter), dan "intro_description" (1-2 kalimat yang dibatasi secara ketat pada apa yang diketahui saat pertama kali diperkenalkan di [PAGE first_page]—dengan NOL pengetahuan tentang plot twist, rahasia, atau hasil yang terjadi di halaman berikutnya). Berikan juga "page" (penanda [PAGE N] tempat "description" kumulatif yang lebih lengkap berlaku, biasanya halaman terakhir bab).
+   - Untuk `character_state_updates`, `location_state_updates`, dan `term_state_updates`: berikan "page" (bilangan bulat N dari penanda [PAGE N] tempat pengungkapan/transisi selesai; JANGAN ungkapkan fakta sebelum halaman ini).
+5. BUKTI: Berikan referensi singkat atau kutipan cuplikan dari bab ini yang menjelaskan mengapa pembaruan terjadi.
+6. LINI MASA: Berikan tepat satu ringkasan peristiwa tentang aksi plot utama dalam bab ini.
+
+FORMAT JSON YANG DIPERLUKAN:
+{
+  "new_characters": [
+    {
+      "name": "Nama Lengkap",
+      "aliases": ["Alias 1", "Alias 2"],
+      "first_page": 80,
+      "intro_role": "Peran awal (mis. Petugas Desa, Orang Asing, Klien)",
+      "intro_description": "Kesan awal 1-2 kalimat secara ketat saat perkenalan pertama, tanpa spoiler dari halaman selanjutnya.",
+      "page": 99,
+      "role": "Peran naratif / tingkat kepentingan (mis. Protagonis, Detektif Swasta, Rekan, Antagonis, Korban, Klien, Tersangka, Karakter Sekunder, Karakter Minor)",
+      "status": "alive",
+      "description": "Deskripsi karakter yang kaya dan spesifik (latar belakang, hubungan, taruhan naratif). Hindari kalimat umum dan catatan aktivitas sepele.",
+      "evidence": "Kutipan singkat"
     }
+  ],
+  "character_state_updates": [
+    {
+      "name": "Nama yang cocok dengan manifes yang diketahui",
+      "page": 95,
+      "role": "Peran naratif / tingkat kepentingan yang diperbarui (mis. Protagonis, Rekan, Antagonis, Karakter Sekunder, dll.)",
+      "status": "alive",
+      "change": "Satu kalimat pendek yang menyebutkan apa yang berubah sejak status sebelumnya (mis. 'Dipromosikan menjadi rekan setelah kasus Shacklewell')",
+      "description": "Deskripsi karakter kumulatif yang kaya dan diperbarui yang mencerminkan status baru dan taruhan cerita mereka",
+      "evidence": "Kutipan singkat"
+    }
+  ],
+  "new_locations": [
+    {
+      "name": "Nama Lokasi",
+      "first_page": 80,
+      "intro_description": "Kesan awal saat pertama kali disebutkan.",
+      "page": 99,
+      "description": "Deskripsi lokasi",
+      "evidence": "Kutipan singkat"
+    }
+  ],
+  "location_state_updates": [
+    {
+      "name": "Nama yang cocok dengan manifes yang diketahui",
+      "page": 95,
+      "change": "Satu kalimat pendek yang menyebutkan apa yang berubah (mis. 'Hancur selama pertempuran Oakhaven')",
+      "description": "Deskripsi yang telah berkembang dan diperbarui",
+      "evidence": "Kutipan singkat"
+    }
+  ],
+  "new_terms": [
+    {
+      "name": "Nama Istilah",
+      "first_page": 80,
+      "intro_description": "Definisi awal saat pertama kali disebutkan.",
+      "page": 99,
+      "description": "Definisi atau penjelasan lore",
+      "evidence": "Kutipan singkat"
+    }
+  ],
+  "term_state_updates": [
+    {
+      "name": "Nama yang cocok dengan manifes yang diketahui",
+      "page": 95,
+      "change": "Satu kalimat pendek yang menyebutkan apa yang berubah dalam pemahaman atau penggunaan",
+      "description": "Definisi yang diperbarui",
+      "evidence": "Kutipan singkat"
+    }
+  ],
+  "timeline_event": {
+    "chapter": "%s",
+    "event": "Ringkasan peristiwa dalam bab ini"
+  }
 }
 
+TEKS BAB:
+%s]],
+
+    -- Batch Chapter Delta
+    batch_chapter_delta = [[
+Buku: %s
+Penulis: %s
+Bab dalam Batch ini: %s
+
+TUGAS: Analisis batch bab berurutan yang disediakan secara terurut.
+Untuk SETIAP bab dalam batch, identifikasi:
+1. Entitas BARU yang diperkenalkan dalam bab tersebut (karakter, lokasi, istilah).
+2. PEMBARUAN DELTA (transisi status) untuk entitas yang sudah diketahui (dari manifes ATAU diperkenalkan pada bab sebelumnya dalam batch ini) JIKA DAN HANYA JIKA peran, status, kesetiaan, atau kondisi naratif mereka mengalami transformasi substantif yang bertahan lama.
+3. PERISTIWA LINI MASA: Ringkasan singkat dari peristiwa plot utama yang terjadi dalam bab tersebut.
+
+Hasilkan HANYA objek JSON yang valid yang sesuai dengan skema yang diperlukan.
+
+MANIFES ENTITAS YANG SUDAH DIKETAHUI (dari batch sebelumnya - JANGAN ekstrak ulang kecuali peran, status, atau deskripsinya berkembang secara signifikan):
+%s
+
+ATURAN:
+1. PEMBATASAN SPOILER KETAT & PROGRESI BERURUTAN:
+   - Analisis bab-bab secara berurutan.
+   - Untuk bab mana pun dalam batch ini, JANGAN masukkan pengetahuan dari bab-bab berikutnya dalam batch atau dari sisa buku.
+2. KEDALAMAN & SUBSTANSI DESKRIPSI KARAKTER (PENTING):
+   - Berdasar & Spesifik: Jelaskan siapa karakter tersebut dengan fakta cerita yang konkret—latar belakangnya, kepribadian yang menonjol, profesinya, hubungan utama dengan karakter lain, serta peran spesifik dan taruhan pribadinya dalam narasi.
+   - Konteks Naratif yang Signifikan: Hubungkan karakter secara langsung dengan misteri utama, konflik plot, atau investigasi dalam buku ini (mis., kejahatan atau kasus apa yang sedang diselidiki, siapa yang mempekerjakannya, sekutu atau musuh utama, dilema atau ketegangan pribadi yang spesifik).
+   - JANGAN Terlalu Umum: JANGAN tulis kalimat klise yang generik (mis., hindari ungkapan kosong seperti "seorang detektif yang menyelidiki kasus rumit"). Sebutkan keadaan, koneksi, dan taruhan spesifik yang ditetapkan dalam teks.
+   - TANPA Rekap Tugas Sepele: JANGAN tulis catatan kronologis dari aktivitas harian yang biasa atau pekerjaan rutin (mis., JANGAN rekap perjalanan ke toko kelontong, panggilan telepon rutin, atau pergerakan adegan demi adegan yang tidak penting).
+   - Deskripsi karakter harus menjadi profil yang kaya dan hidup yang merangkum siapa mereka dan signifikansi mereka hingga titik ini dalam buku.
+3. AMBANG BATAS TINGGI UNTUK PEMBARUAN KARAKTER:
+   - JANGAN buat pembaruan di `character_state_updates` hanya karena karakter yang sudah ada muncul, berbicara, atau melakukan tindakan rutin dalam sebuah bab.
+   - HANYA hasilkan pembaruan jika ada transformasi substantif yang bertahan lama dalam alur naratif, identitas, hubungan, pekerjaan, kesetiaan, atau kondisi mereka (mis., terbunuh, terluka, ditangkap, dikhianati, bertunangan, dipromosikan, terungkap sebagai pelaku, rahasia besar atau motif terungkap).
+   - Jika pembaruan MEMANG dibenarkan, `description` yang diperbarui harus berupa tinjauan karakter kumulatif yang kaya yang menggabungkan perkembangan baru sambil mempertahankan identitas inti dan konteks cerita mereka yang sudah mapan—BUKAN ringkasan dari satu adegan terisolasi.
+4. PENANDA HALAMAN INTRA-BAB ([PAGE N]) & PEMBATASAN BEBAS SPOILER:
+   - Teks bab berisi penanda [PAGE N] yang menunjukkan perkembangan halaman.
+   - Untuk `new_characters`, `new_locations`, dan `new_terms`: berikan "first_page" (bilangan bulat N dari penanda [PAGE N] tempat pertama kali disebutkan), "intro_role" (untuk karakter), dan "intro_description" (1-2 kalimat yang dibatasi secara ketat pada apa yang diketahui saat pertama kali diperkenalkan di [PAGE first_page]—dengan NOL pengetahuan tentang plot twist, rahasia, atau hasil yang terjadi di halaman berikutnya). Berikan juga "page" (penanda [PAGE N] tempat "description" kumulatif yang lebih lengkap berlaku, biasanya halaman terakhir bab).
+   - Untuk `character_state_updates`, `location_state_updates`, dan `term_state_updates`: berikan "page" (bilangan bulat N dari penanda [PAGE N] tempat pengungkapan/transisi selesai; JANGAN ungkapkan fakta sebelum halaman ini).
+5. BUKTI: Berikan referensi singkat atau kutipan cuplikan dari bab spesifik tersebut yang menjelaskan mengapa pembaruan terjadi.
+6. KEAMANAN JSON: Hasilkan JSON yang valid secara ketat. Loloskan tanda kutip ganda di dalam string dengan benar.
+
+FORMAT JSON YANG DIPERLUKAN:
+{
+  "chapters": [
+    {
+      "chapter_index": 1,
+      "chapter_title": "Judul Bab",
+      "timeline_event": "Ringkasan perkembangan plot utama dalam bab ini.",
+      "new_characters": [
+        {
+          "name": "Nama Lengkap",
+          "aliases": ["Alias 1"],
+          "first_page": 80,
+          "intro_role": "Peran awal (mis. Petugas Desa, Orang Asing, Klien)",
+          "intro_description": "Kesan awal 1-2 kalimat secara ketat saat perkenalan pertama, tanpa spoiler dari halaman selanjutnya.",
+          "page": 99,
+          "role": "Peran naratif / tingkat kepentingan (mis. Protagonis, Detektif Swasta, Rekan, Antagonis, Korban, Klien, Tersangka, Karakter Sekunder, Karakter Minor)",
+          "status": "alive",
+          "description": "Deskripsi karakter yang kaya dan spesifik (latar belakang, hubungan, taruhan naratif). Hindari kalimat umum dan catatan aktivitas sepele.",
+          "evidence": "Cuplikan singkat"
+        }
+      ],
+      "character_state_updates": [
+        {
+          "name": "Nama yang cocok dengan manifes yang diketahui atau karakter yang diperkenalkan di bab sebelumnya dalam batch ini",
+          "page": 95,
+          "role": "Peran naratif / tingkat kepentingan yang diperbarui (mis. Protagonis, Rekan, Antagonis, Karakter Sekunder, dll.)",
+          "status": "alive",
+          "change": "Satu kalimat pendek yang menyebutkan apa yang berubah sejak status sebelumnya (mis. 'Dipromosikan menjadi rekan setelah kasus Shacklewell')",
+          "description": "Deskripsi karakter kumulatif yang kaya dan diperbarui yang mencerminkan status baru dan taruhan cerita mereka",
+          "evidence": "Cuplikan singkat"
+        }
+      ],
+      "new_locations": [
+        {
+          "name": "Nama Lokasi",
+          "first_page": 80,
+          "intro_description": "Kesan awal saat pertama kali disebutkan.",
+          "page": 99,
+          "description": "Deskripsi lokasi",
+          "evidence": "Cuplikan singkat"
+        }
+      ],
+      "location_state_updates": [
+        {
+          "name": "Nama yang cocok dengan manifes yang diketahui atau lokasi yang diperkenalkan di bab sebelumnya dalam batch ini",
+          "page": 95,
+          "change": "Satu kalimat pendek yang menyebutkan apa yang berubah (mis. 'Hancur selama pertempuran Oakhaven')",
+          "description": "Deskripsi yang diperbarui",
+          "evidence": "Cuplikan singkat"
+        }
+      ],
+      "new_terms": [
+        {
+          "name": "Nama Istilah",
+          "first_page": 80,
+          "intro_description": "Definisi awal saat pertama kali disebutkan.",
+          "page": 99,
+          "description": "Definisi atau penjelasan lore",
+          "evidence": "Cuplikan singkat"
+        }
+      ],
+      "term_state_updates": [
+        {
+          "name": "Nama yang cocok dengan manifes yang diketahui atau istilah yang diperkenalkan di bab sebelumnya dalam batch ini",
+          "page": 95,
+          "change": "Satu kalimat pendek yang menyebutkan apa yang berubah dalam pemahaman atau penggunaan",
+          "description": "Definisi yang diperbarui",
+          "evidence": "Cuplikan singkat"
+        }
+      ]
+    }
+  ]
+}
+
+TEKS BAB DALAM BATCH INI:
+%s]],
+
+    -- Anthology Detect
+    anthology_detect = [[
+Analisis detail buku dan Daftar Isi berikut ini:
+
+Judul: %s
+Penulis: %s
+Subjek: %s
+Deskripsi: %s
+
+Daftar Isi:
+%s
+
+Tentukan apakah karya ini adalah:
+1. "anthology" (kumpulan cerita pendek, esai, atau novela yang berdiri sendiri, masing-masing dengan narasi atau jajaran tokohnya sendiri, mis. "The Adventures of Sherlock Holmes", "Dubliners", "Exhalation", "Men Without Women").
+2. "novel" (satu novel utuh yang dibagi menjadi bab, bagian, atau babak, mis. "Pride and Prejudice", "Harry Potter", "Dune", "Carrie").
+3. "novel_omnibus" (kumpulan multi-volume dari novel-novel utuh yang diterbitkan bersama dalam satu volume, mis. "The Lord of the Rings: All Three Volumes", "The Complete Hitchhiker's Guide to the Galaxy", "Percy Jackson: Books 1-3").
+4. "non_fiction" (satu karya non-fiksi, sejarah, atau buku akademis yang dibagi menjadi bab-bab).
+
+Kembalikan HANYA objek JSON dengan format:
+{
+  "type": "anthology" | "novel" | "novel_omnibus" | "non_fiction",
+  "confidence": 0.0 to 1.0,
+  "reasoning": "penjelasan singkat (satu kalimat)"
+}]],
+
+    -- System instruction
+    system_instruction = "Anda adalah seorang peneliti sastra ahli. Tanggapan Anda harus HANYA dalam format JSON yang valid. Pastikan data sangat akurat dan berkaitan erat dengan konteks yang disediakan.",
+
+    -- Fallback strings
+    fallback = {
+        no_biography = "Tidak Ada Biografi yang Tersedia",
+        no_description = "Tidak Ada Deskripsi",
+        not_specified = "Tidak Ditentukan",
+        unknown_author = "Penulis Tidak Diketahui",
+        unknown_book = "Buku Tidak Diketahui",
+        unnamed_character = "Karakter Tanpa Nama",
+        unnamed_person = "Orang Tanpa Nama"
+    }
+}
