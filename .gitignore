@@ -4,3 +4,5 @@ scratch/
 .wrangler/
 *.log
 *.log.old
+__pycache__/
+*.pyc
