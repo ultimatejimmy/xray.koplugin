@@ -17,6 +17,7 @@ local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local xray_units = require(plugin_path .. "xray_units")
 local XRayLogger = require(plugin_path .. "xray_logger")
 local xray_utils = require(plugin_path .. "xray_utils")
+local conductor = require(plugin_path .. "xray_conductor")
 
 local function log(msg)
     XRayLogger:log("UnitScanner: " .. tostring(msg))
@@ -1511,6 +1512,14 @@ local function _closeUnitScanDialogSafely(self, report_done)
     end)
 end
 
+local function _releaseUnitScanSlot(self)
+    local done_cb = self._unit_scan_slot_done
+    self._unit_scan_slot_done = nil
+    if type(done_cb) == "function" then
+        pcall(done_cb)
+    end
+end
+
 function M:_cancelUnitScanChild(reason)
     if self._unit_scan_poll_fn then
         UIManager:unschedule(self._unit_scan_poll_fn)
@@ -1520,7 +1529,9 @@ function M:_cancelUnitScanChild(reason)
     local pid, fd = self._unit_scan_pid, self._unit_scan_read_fd
     self._unit_scan_pid, self._unit_scan_read_fd = nil, nil
     self._unit_scan_in_progress = false
+    self._unit_scan_manual = nil
     pcall(function() require("device"):enableCPUCores(1) end)
+    _releaseUnitScanSlot(self)
     if not pid then return end
     log("Cancelling unit scan child " .. tostring(pid) .. ": " .. tostring(reason))
     local ffiutil = _getFFIUtil()
@@ -1540,8 +1551,12 @@ end
 function M:_onUnitScanFinished(resolved_dir, ok, manual)
     _closeUnitScanDialogSafely(self, true)
     self._unit_scan_in_progress = false
+    self._unit_scan_manual = nil
 
-    if self.destroyed or not self.ui or not self.ui.document then return end
+    if self.destroyed or not self.ui or not self.ui.document then
+        _releaseUnitScanSlot(self)
+        return
+    end
     local loaded = ok and self:loadUnitCache(resolved_dir)
     if not loaded then
         log("Unit scan finished without a usable cache (ok=" .. tostring(ok) .. ")")
@@ -1552,8 +1567,11 @@ function M:_onUnitScanFinished(resolved_dir, ok, manual)
             self:_runUnitScanInProcess(resolved_dir, settings, manual)
             return
         end
+        _releaseUnitScanSlot(self)
         return
     end
+
+    _releaseUnitScanSlot(self)
 
     if manual then
         local Notification = require("ui/widget/notification")
@@ -1827,87 +1845,117 @@ function M:scanBookForUnits(force)
         end
     end
 
-    if self.ui and self.ui.doc_settings and type(self.ui.doc_settings.flush) == "function" then
-        pcall(self.ui.doc_settings.flush, self.ui.doc_settings)
-    end
-
-    self._unit_scan_in_progress = true
     local manual = force and true or false
+    local ok_dev_c, Device_c = pcall(require, "device")
+    local is_k_c = ok_dev_c and Device_c and Device_c.isKindle and Device_c:isKindle()
+    local slot_min_free_kb = (not manual) and (is_k_c and (65 * 1024) or (35 * 1024)) or nil
+    local doc = self.ui and self.ui.document
 
-    if manual then
-        -- Temporarily redirect smallffont to ffont during dialog init to make subtitle slightly larger
-        local old_getFace = Font.getFace
-        Font.getFace = function(self_font, name)
-            if name == "smallffont" then
-                return old_getFace(self_font, "ffont")
+    conductor.runSlot(self, {
+        task = manual and "unit_scan_manual" or "unit_scan_auto",
+        priority = manual and "foreground" or "idle_bg",
+        min_free_kb = slot_min_free_kb,
+        dedupe_key = (not manual) and "xray:unit_scan_auto" or nil,
+        lease_s = 120,
+        subprocess = true,
+        document = doc,
+        run = function(done)
+            if self.destroyed or not self.ui or self.ui.document ~= doc then
+                done()
+                return
             end
-            return old_getFace(self_font, name)
-        end
-
-        local progress_msg = ProgressBarDialog:new{
-            title = self.loc:t("unit_scanning_title") or "X-Ray: Unit Converter",
-            subtitle = self.loc:t("unit_scanning_book") or "Scanning book for units...",
-            progress_max = 100,
-            dismissable = true,
-            refresh_time_seconds = 0.05,
-        }
-        Font.getFace = old_getFace
-
-        local AlphaContainer = require("ui/widget/container/alphacontainer")
-        local sw, sh = Screen:getWidth(), Screen:getHeight()
-        local dim_child = {
-            getSize = function() return Geom:new{ w = sw, h = sh } end,
-            paintTo = function(this, bb, x, y) bb:paintRoundedRect(x, y, sw, sh, Blitbuffer.COLOR_BLACK, 0) end
-        }
-        local dim_bg = AlphaContainer:new{ alpha = 0.4, dim_child }
-
-        local orig_paintTo = progress_msg.paintTo
-        progress_msg.paintTo = function(this, bb, x, y)
-            dim_bg:paintTo(bb, 0, 0)
-            orig_paintTo(this, bb, x, y)
-        end
-
-        local orig_onCloseWidget = progress_msg.onCloseWidget
-        progress_msg.onCloseWidget = function(this)
-            dim_bg:onCloseWidget()
-            if orig_onCloseWidget then orig_onCloseWidget(this) end
-        end
-
-        local plugin_self = self
-        progress_msg.dismiss_callback = function()
-            progress_msg.dismiss_callback = nil
-            if plugin_self._unit_scan_dialog == progress_msg then
-                plugin_self._unit_scan_dialog = nil
-                plugin_self.active_unit_scan_dialog = nil
+            if self.ui and self.ui.doc_settings and type(self.ui.doc_settings.flush) == "function" then
+                pcall(self.ui.doc_settings.flush, self.ui.doc_settings)
             end
-            log("Manual unit scan progress dialog dismissed by user")
-            plugin_self:_cancelUnitScanChild("user dismissed")
-            local Notification = require("ui/widget/notification")
-            UIManager:show(Notification:new{
-                text = plugin_self.loc:t("unit_scan_cancelled") or "Unit scan cancelled",
-                timeout = 2,
-                toast = true
-            })
-        end
 
-        self._unit_scan_dialog = progress_msg
-        self.active_unit_scan_dialog = progress_msg
-        progress_msg:show()
-        UIManager:forceRePaint()
-    end
+            self._unit_scan_slot_done = done
+            self._unit_scan_in_progress = true
+            self._unit_scan_manual = manual
 
-    if self:_startUnitScanSubprocess(resolved_dir, settings, manual) then
-        return
-    end
+            if manual then
+                -- Temporarily redirect smallffont to ffont during dialog init to make subtitle slightly larger
+                local old_getFace = Font.getFace
+                Font.getFace = function(self_font, name)
+                    if name == "smallffont" then
+                        return old_getFace(self_font, "ffont")
+                    end
+                    return old_getFace(self_font, name)
+                end
 
-    if _getFFIUtil() and not manual then
-        -- Fork failed at runtime on auto scan: skip silently without blocking UI
-        self._unit_scan_in_progress = false
-        log("scanBookForUnits: fork failed, auto scan skipped silently")
-        return
-    end
+                local progress_msg = ProgressBarDialog:new{
+                    title = self.loc:t("unit_scanning_title") or "X-Ray: Unit Converter",
+                    subtitle = self.loc:t("unit_scanning_book") or "Scanning book for units...",
+                    progress_max = 100,
+                    dismissable = true,
+                    refresh_time_seconds = 0.05,
+                }
+                Font.getFace = old_getFace
 
-    self:_runUnitScanInProcess(resolved_dir, settings, manual)
+                local AlphaContainer = require("ui/widget/container/alphacontainer")
+                local sw, sh = Screen:getWidth(), Screen:getHeight()
+                local dim_child = {
+                    getSize = function() return Geom:new{ w = sw, h = sh } end,
+                    paintTo = function(this, bb, x, y) bb:paintRoundedRect(x, y, sw, sh, Blitbuffer.COLOR_BLACK, 0) end
+                }
+                local dim_bg = AlphaContainer:new{ alpha = 0.4, dim_child }
+
+                local orig_paintTo = progress_msg.paintTo
+                progress_msg.paintTo = function(this, bb, x, y)
+                    dim_bg:paintTo(bb, 0, 0)
+                    orig_paintTo(this, bb, x, y)
+                end
+
+                local orig_onCloseWidget = progress_msg.onCloseWidget
+                progress_msg.onCloseWidget = function(this)
+                    dim_bg:onCloseWidget()
+                    if orig_onCloseWidget then orig_onCloseWidget(this) end
+                end
+
+                local plugin_self = self
+                progress_msg.dismiss_callback = function()
+                    progress_msg.dismiss_callback = nil
+                    if plugin_self._unit_scan_dialog == progress_msg then
+                        plugin_self._unit_scan_dialog = nil
+                        plugin_self.active_unit_scan_dialog = nil
+                    end
+                    log("Manual unit scan progress dialog dismissed by user")
+                    plugin_self:_cancelUnitScanChild("user dismissed")
+                    local Notification = require("ui/widget/notification")
+                    UIManager:show(Notification:new{
+                        text = plugin_self.loc:t("unit_scan_cancelled") or "Unit scan cancelled",
+                        timeout = 2,
+                        toast = true
+                    })
+                end
+
+                self._unit_scan_dialog = progress_msg
+                self.active_unit_scan_dialog = progress_msg
+                progress_msg:show()
+                UIManager:forceRePaint()
+            end
+
+            if self:_startUnitScanSubprocess(resolved_dir, settings, manual) then
+                return
+            end
+
+            if _getFFIUtil() and not manual then
+                -- Fork failed at runtime on auto scan: skip silently without blocking UI
+                self._unit_scan_in_progress = false
+                self._unit_scan_manual = nil
+                _releaseUnitScanSlot(self)
+                log("scanBookForUnits: fork failed, auto scan skipped silently")
+                return
+            end
+
+            self:_runUnitScanInProcess(resolved_dir, settings, manual)
+        end,
+        cancel = function()
+            self:_cancelUnitScanChild("conductor cancelled")
+        end,
+        on_rejected = function(reason)
+            log("scanBookForUnits: deferred by Conductor (" .. tostring(reason) .. ")")
+        end,
+    })
 end
 
 -- Find matched unit box at touch coordinate

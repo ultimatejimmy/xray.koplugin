@@ -6,6 +6,7 @@
 local UIManager = require("ui/uimanager")
 
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
+local conductor = require(plugin_path .. "xray_conductor")
 
 local M = {}
 
@@ -170,6 +171,98 @@ function M:triggerBookTypeDetection()
         end
     end
 
+    local function launchBookTypeAI(on_valid_cb, on_invalid_cb, on_start_fail_cb)
+        self._book_type_detecting = true
+        local doc = self.ui and self.ui.document
+        local result_file = newBookTypeResultFile()
+        local active_pid = nil
+
+        conductor.runSlot(self, {
+            task = "book_type_detection",
+            priority = "idle_bg",
+            dedupe_key = "xray:book_type_detection",
+            subprocess = true,
+            document = doc,
+            run = function(done)
+                if self.destroyed or not self.ui or self.ui.document ~= doc then
+                    self._book_type_detecting = nil
+                    done()
+                    return
+                end
+                local props = (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps()) or {}
+                local title = props.title or "Unknown"
+                local author = props.authors or "Unknown"
+                local series = props.series or props.Series or "None"
+                local description = props.subject or props.Subject or "None"
+
+                local pid, _, err_m = nil, nil, nil
+                if self.ai_helper and self.ai_helper.detectBookTypeAsync then
+                    pid, _, err_m = self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
+                end
+                if not pid then
+                    self._book_type_detecting = nil
+                    done()
+                    if on_start_fail_cb then on_start_fail_cb(err_m) end
+                    return
+                end
+                active_pid = pid
+
+                local poll_count = 0
+                local max_polls = 120
+                local function pollResult()
+                    if self.destroyed or not self.ui or not self.ui.document then
+                        self._book_type_detecting = nil
+                        pcall(function() os.remove(result_file) end)
+                        done()
+                        return
+                    end
+                    poll_count = poll_count + 1
+                    local res = self.ai_helper:checkAsyncResult(result_file, pid)
+                    if res == nil then
+                        if poll_count < max_polls then
+                            UIManager:scheduleIn(1, pollResult)
+                        else
+                            self._book_type_detecting = nil
+                            pcall(function() os.remove(result_file) end)
+                            if pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                                self.ai_helper:cancelAsyncChild(pid)
+                            end
+                            done()
+                        end
+                    else
+                        self._book_type_detecting = nil
+                        done()
+                        if type(res) == "table" and res.book_type_label then
+                            if not isArchiveFormat(doc_file) then
+                                cached.book_type_label = res.book_type_label
+                                cached.book_type_detected_by_ai = true
+                                cached.book_type_confident = true
+                                if self.cache_manager and doc_file then
+                                    self.cache_manager:asyncSaveCache(doc_file, cached)
+                                end
+                                if on_valid_cb then on_valid_cb(res) end
+                                checkAndTriggerScan()
+                            end
+                        elseif on_invalid_cb then
+                            on_invalid_cb(res)
+                        end
+                    end
+                end
+                UIManager:scheduleIn(1, pollResult)
+            end,
+            cancel = function()
+                self._book_type_detecting = nil
+                pcall(function() os.remove(result_file) end)
+                if active_pid and self.ai_helper and self.ai_helper.cancelAsyncChild then
+                    self.ai_helper:cancelAsyncChild(active_pid)
+                end
+            end,
+            on_rejected = function()
+                self._book_type_detecting = nil
+            end,
+        })
+    end
+
     if cached.book_type_label and cached.book_type_label ~= "" then
         -- Backward-compatibility & self-healing for archive formats:
         -- Never let archive formats be classified as prose fiction or non-comic types
@@ -223,43 +316,7 @@ function M:triggerBookTypeDetection()
                 end)
                 return
             end
-            self._book_type_detecting = true
-            local result_file = newBookTypeResultFile()
-            local props = (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps()) or {}
-            local title = props.title or "Unknown"
-            local author = props.authors or "Unknown"
-            local series = props.series or props.Series or "None"
-            local description = props.subject or props.Subject or "None"
-            local pid = self.ai_helper and self.ai_helper.detectBookTypeAsync and
-            self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
-            if pid then
-                local function pollResult()
-                    if self.destroyed or not self.ui or not self.ui.document then
-                        self._book_type_detecting = nil
-                        return
-                    end
-                    local res = self.ai_helper:checkAsyncResult(result_file, pid)
-                    if res == nil then
-                        UIManager:scheduleIn(1, pollResult)
-                    else
-                        self._book_type_detecting = nil
-                        if type(res) == "table" and res.book_type_label then
-                            if not isArchiveFormat(doc_file) then
-                                cached.book_type_label = res.book_type_label
-                                cached.book_type_detected_by_ai = true
-                                cached.book_type_confident = true
-                                if self.cache_manager and doc_file then
-                                    self.cache_manager:asyncSaveCache(doc_file, cached)
-                                end
-                                checkAndTriggerScan()
-                            end
-                        end
-                    end
-                end
-                UIManager:scheduleIn(1, pollResult)
-            else
-                self._book_type_detecting = nil
-            end
+            launchBookTypeAI()
         end
         return true
     end
@@ -288,45 +345,10 @@ function M:triggerBookTypeDetection()
         if not self.ai_helper:hasApiKey() or self._book_type_detecting then
             return true
         end
-        self._book_type_detecting = true
         self:log("XRayPlugin: Starting Layer 3 AI book type refinement in background...")
-        local result_file = newBookTypeResultFile()
-        local props = (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps()) or {}
-        local title = props.title or "Unknown"
-        local author = props.authors or "Unknown"
-        local series = props.series or props.Series or "None"
-        local description = props.subject or props.Subject or "None"
-        local pid = self.ai_helper and self.ai_helper.detectBookTypeAsync and
-            self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
-        if pid then
-            local function pollResult()
-                if self.destroyed or not self.ui or not self.ui.document then
-                    self._book_type_detecting = nil
-                    return
-                end
-                local res = self.ai_helper:checkAsyncResult(result_file, pid)
-                if res == nil then
-                    UIManager:scheduleIn(1, pollResult)
-                else
-                    self._book_type_detecting = nil
-                    if type(res) == "table" and res.book_type_label then
-                        if not isArchiveFormat(doc_file) then
-                            self:log("XRayPlugin: Book type AI refinement complete! Result: " .. tostring(res.book_type_label))
-                            cached.book_type_label = res.book_type_label
-                            cached.book_type_detected_by_ai = true
-                            cached.book_type_confident = true
-                            if self.cache_manager and doc_file then
-                                self.cache_manager:asyncSaveCache(doc_file, cached)
-                            end
-                            checkAndTriggerScan()
-                        end
-                    end
-                end
-            end
-            UIManager:scheduleIn(1, pollResult)
-        else
-            self._book_type_detecting = nil
-        end
+        launchBookTypeAI(function(res)
+            self:log("XRayPlugin: Book type AI refinement complete! Result: " .. tostring(res.book_type_label))
+        end)
         return true
     end
 
@@ -336,52 +358,20 @@ function M:triggerBookTypeDetection()
         return true
     end
 
-    self._book_type_detecting = true
     self:log("XRayPlugin: Starting Layer 3 AI book type detection in background...")
-    local result_file = newBookTypeResultFile()
-    
-    local props = (self.ui and self.ui.document and self.ui.document.getProps and self.ui.document:getProps()) or {}
-    local title = props.title or "Unknown"
-    local author = props.authors or "Unknown"
-    local series = props.series or props.Series or "None"
-    local description = props.subject or props.Subject or "None"
-
-    local pid, err_c, err_m = self.ai_helper:detectBookTypeAsync(title, author, series, description, result_file)
-    if not pid then
-        self._book_type_detecting = nil
-        self:log("XRayPlugin: Book type AI detection trigger failed: " .. tostring(err_m))
-        checkAndTriggerScan()
-        return true
-    end
-
-    local function pollResult()
-        if self.destroyed or not self.ui or not self.ui.document then
-            self._book_type_detecting = nil
-            return
+    launchBookTypeAI(
+        function(res)
+            self:log("XRayPlugin: Book type AI detection complete! Result: " .. tostring(res.book_type_label))
+        end,
+        function(res)
+            self:log("XRayPlugin: Book type AI detection returned invalid or empty result: " .. tostring(res))
+            checkAndTriggerScan()
+        end,
+        function(err_m)
+            self:log("XRayPlugin: Book type AI detection trigger failed: " .. tostring(err_m))
+            checkAndTriggerScan()
         end
-        local res = self.ai_helper:checkAsyncResult(result_file, pid)
-        if res == nil then
-            UIManager:scheduleIn(1, pollResult)
-        else
-            self._book_type_detecting = nil
-            if type(res) == "table" and res.book_type_label then
-                if not isArchiveFormat(doc_file) then
-                    self:log("XRayPlugin: Book type AI detection complete! Result: " .. tostring(res.book_type_label))
-                    cached.book_type_label = res.book_type_label
-                    cached.book_type_detected_by_ai = true
-                    cached.book_type_confident = true
-                    if self.cache_manager and doc_file then
-                        self.cache_manager:asyncSaveCache(doc_file, cached)
-                    end
-                    checkAndTriggerScan()
-                end
-            else
-                self:log("XRayPlugin: Book type AI detection returned invalid or empty result: " .. tostring(res))
-                checkAndTriggerScan()
-            end
-        end
-    end
-    UIManager:scheduleIn(1, pollResult)
+    )
     return true
 end
 

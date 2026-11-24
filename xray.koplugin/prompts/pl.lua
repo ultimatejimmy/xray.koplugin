@@ -1,9 +1,7 @@
 return {
-    -- System instruction
-    system_instruction = "Jesteś ekspertem w dziedzinie badań literackich. Twoja odpowiedź musi być wyłącznie w poprawnym formacie JSON. Upewnij się, że dane są wysoce dokładne i dotyczą ściśle podanego kontekstu.",
-
-    -- Author-only prompt (For quick bio lookup)
-    author_only = [[Zidentyfikuj i przedstaw biografię autora książki "%s". 
+    -- Author Only
+    author_only = [[
+Zidentyfikuj i przedstaw biografię autora książki "%s". 
 Metadane sugerują, że autorem jest "%s". 
 1
 BARDZO WAŻNE: Zweryfikuj autora za pomocą KONTEKSTU TEKSTU KSIĄŻKI (jeśli został podany na końcu tego monitu), aby zapewnić 100%% dokładności i uniknąć błędnej identyfikacji.
@@ -16,8 +14,39 @@ WYMAGANY FORMAT JSON:
   "author_death": "Data śmierci, sformatowana zgodnie z lokalnym formatem daty"
 }]],
 
-    -- Single Comprehensive Fetch (Combined Characters, Locations, Timeline)
-    comprehensive_xray = [[Książka: %s
+    -- Find Duplicates
+    find_duplicates = [[
+Książka: %s
+Autor: %s
+Postęp czytania: %d%%
+
+Przeglądasz następującą listę %s wyodrębnionych z tej książki.
+Twoim zadaniem jest zidentyfikowanie wpisów, które wydają się być tą samą encją zapisaną pod różnymi nazwami.
+
+LISTA:
+%s
+
+ZASADY:
+- Duplikat istnieje, gdy dwa wpisy wyraźnie odnoszą się do tej samej encji (np. "Wielka Biblioteka" i "Wielka Biblioteka" lub "Jan" i "Jan Kowalski").
+- NIE oznaczaj wpisów, które są jedynie powiązane lub podobne, ale odrębne.
+- NIE oznaczaj wpisów, chyba że masz absolutną pewność, że to ta sama encja.
+- Jeśli nie ma duplikatów, zwróć pustą tablicę.
+- ZASADA SPOILERA: Nie używaj wiedzy spoza %d%% postępu czytania.
+
+WYMAGANY FORMAT JSON:
+{
+  "duplicate_pairs": [
+    {
+      "primary": "Nazwa wpisu do ZACHOWANIA (bardziej kompletna lub oficjalna nazwa)",
+      "secondary": "Nazwa wpisu do USUNIĘCIA",
+      "reason": "Krótki powód (maks. 100 znaków)"
+    }
+  ]
+}]],
+
+    -- Comprehensive Xray
+    comprehensive_xray = [[
+Książka: %s
 Autor: %s
 Postęp czytania: %d%%
 
@@ -41,7 +70,7 @@ Krok 1. Spójrz WYŁĄCZNIE na blok "CHAPTER SAMPLES". Zidentyfikuj rozdziały n
 Krok 2. WYKLUCZ wszystkie nienarracyjne elementy początkowe i końcowe (np. okładkę, stronę tytułową, prawa autorskie, spis treści, dedykację, podziękowania, inne dzieła autora).
 Krok 3. Dla każdego rozdziału narracyjnego, zaczynając od samego pierwszego, utwórz DOKŁADNIE JEDEN obiekt zdarzenia w tablicy `timeline`.
 Krok 4. Pole `chapter` MUSI dokładnie odpowiadać nagłówkowi rozdziału w próbce. (Przyporządkuj je ściśle w kolejności sekwencyjnej).
-Krok 5. Podsumuj ten konkretny rozdział w polu `event` {TIMELINE_DETAIL_GUIDANCE} (MAKSYMALNIE {MAX_TIMELINE_EVENT} znaków). NIE grupuj rozdziałów.
+Krok 5. Podsumuj ten konkretny rozdział w polu `event`. {TIMELINE_DETAIL_GUIDANCE} Napisz od {MIN_TIMELINE_EVENT} do {MAX_TIMELINE_EVENT} znaków. NIE pisz krótszego podsumowania, chyba że rozdział prawie nie zawiera treści. NIE grupuj rozdziałów.
 Krok 6. BEZ SPOILERÓW: Zatrzymaj się dokładnie na punkcie %d%%. Nie uwzględniaj wydarzeń wykraczających poza ten postęp.
 
 ALGORYTM DLA POSTACI I POSTACI HISTORYCZNYCH:
@@ -124,8 +153,9 @@ WYMAGANY FORMAT JSON:
   ]
 }]],
 
-    -- Fetch More Characters (AI Limit Bypass)
-    more_characters = [[Książka: %s
+    -- More Characters
+    more_characters = [[
+Książka: %s
 Autor: %s
 Postęp czytania: %d%%
 
@@ -157,8 +187,9 @@ WYMAGANY FORMAT JSON:
   ]
 }]],
 
-    -- Fetch More Terms (Glossary Support)
-    more_terms = [[Książka: %s
+    -- More Terms
+    more_terms = [[
+Książka: %s
 Autor: %s
 Postęp czytania: %d%%
 
@@ -189,7 +220,9 @@ WYMAGANY FORMAT JSON:
   ]
 }]],
 
-    single_word_lookup = [[Użytkownik zaznaczył słowo "%s".
+    -- Single Word Lookup
+    single_word_lookup = [[
+Użytkownik zaznaczył słowo "%s".
 ZADANIE: Określ, czy to słowo reprezentuje postać (Character), lokację (Location), postać historyczną (Historical Figure) czy też termin techniczny/akronim (Technical Term/Acronym) w książce.
 
 BARDZO WAŻNE DLA POSTACI I LOKACJI: Użyj dostarczonego "BOOK TEXT CONTEXT", aby zidentyfikować obiekt. Jeśli słowo zostało podane we wskazówce "SEARCH TARGET" lub "DIRECT REFERENCE", OZNACZA TO, że znajduje się ono w książce na obecnej pozycji. Nie odrzucaj go tylko dlatego, że nie zostało znalezione dokładnie w pobranym fragmencie tekstu narracyjnego. Krótkie imiona/nazwy (nawet dwuliterowe, np. "Oz", "Al", "Jo") są poprawne i powinny zostać przeanalizowane.
@@ -221,8 +254,9 @@ Jeśli `is_valid` jest false:
   "error_message": "Krótkie wyjaśnienie, dlaczego to słowo nie reprezentuje postaci ani lokacji."
 }]],
 
-    -- Smart Merge Descriptions
-    merge_descriptions = [[ZADANIE: Połącz poniższe dwa opisy tego samego obiektu (postaci lub lokacji) w jedno spójne i zwięzłe podsumowanie.
+    -- Merge Descriptions
+    merge_descriptions = [[
+ZADANIE: Połącz poniższe dwa opisy tego samego obiektu (postaci lub lokacji) w jedno spójne i zwięzłe podsumowanie.
 Usuń powtarzające się informacje i upewnij się, że końcowy opis brzmi naturalnie.
 
 Opis główny: %s
@@ -233,8 +267,25 @@ WYMAGANY FORMAT JSON:
   "merged_description": "Połączony i dopracowany opis (Maksymalnie {MAX_CHAR_DESC} znaków)"
 }]],
 
-    -- Multi-Book Series Context Prompts
-    series_detect = [[Tytuł książki: %s
+    -- Book Type Detect
+    book_type_detect = [[
+Tytuł książki: %s
+Autor: %s
+Seria: %s
+Opis pliku / Metadane tematu: %s
+
+ZADANIE: Sklasyfikuj tę książkę do dokładnie JEDNEGO z poniższych typów książek na podstawie jej metadanych i sygnałów gatunkowych:
+prose_fiction, prose_nonfiction, manga, graphic_novel, children, poetry, cookbook, textbook, travel, unknown
+
+Zwróć WYŁĄCZNIE poprawny kod JSON:
+{
+  "book_type_label": "prose_fiction",
+  "confidence": "high"
+}]],
+
+    -- Series Detect
+    series_detect = [[
+Tytuł książki: %s
 Autor: %s
 
 ZADANIE: Określ, czy ta książka jest częścią nazwanej serii.
@@ -248,7 +299,9 @@ Zwróć WYŁĄCZNIE poprawny kod JSON:
 Jeśli to NIE jest książka z serii, zwróć:
 { "is_series": false }]],
 
-    prior_book_list = [[Seria: %s
+    -- Prior Book List
+    prior_book_list = [[
+Seria: %s
 Bieżący indeks książki: %d
 Tytuł bieżącej książki: %s
 
@@ -261,20 +314,44 @@ Zwróć WYŁĄCZNIE poprawny kod JSON:
   ]
 }]],
 
-    series_book_summary = [[Książka: %s
-Autor: %s
-To jest książka %d w serii "%s".
+    -- Series Book Summary
+    series_book_summary = [[
+KSIĄŻKA DOCELOWA: %s
+AUTOR: %s
+INDEKS KSIĄŻKI DOCELOWEJ: %d
+SERIA: %s
 
-ZADANIE: Przedstaw PEŁNE podsumowanie całej tej książki dla czytelnika,
-który ZARAZ ROZPOCZNIE KOLEJNĄ książkę w serii.
-Uwzględnij: kluczowe postaci (imię/nazwa, rola, status na końcu książki), główne lokacje,
-kluczowe wydarzenia fabularne oraz ważne wprowadzone pojęcia wykreowanego świata.
-BEZ SPOILERÓW dotyczących książek NASTĘPUJĄCYCH po tej.
+ZADANIE:
+Przedstaw PEŁNE podsumowanie wyłącznie KSIĄŻKI DOCELOWEJ dla czytelnika, który ukończył
+KSIĄŻKĘ DOCELOWĄ i ma zamiar rozpocząć kolejną książkę z serii.
+
+ABSOLUTNA GRANICA SPOILERÓW:
+Granica wiedzy to ściśle OSTATNIA STRONA KSIĄŻKI DOCELOWEJ (indeks książki %d).
+Możesz uwzględniać fakty ustalone w KSIĄŻCE DOCELOWEJ lub we wcześniejszych książkach z tej serii.
+NIE WOLNO Ci uwzględniać, sugerować, insynuować, zapowiadać ani dobierać szczegółów w oparciu o wiedzę z jakiejkolwiek późniejszej książki.
+
+ZAKAZANE INFORMACJE Z PÓŹNIEJSZYCH KSIĄŻEK:
+- Późniejsze wydarzenia, przyszłe losy, śmierci, przetrwania, miejsca docelowe, romanse, sojusze, konflikty lub zdrady.
+- Tożsamości z późniejszych książek, prawdziwe pochodzenie, sekretne pokrewieństwo, aliasy, alter ego, reinkarnacje, transformacje, tytuły lub awanse mocy (np. NIE wspominaj, jeśli jakaś esencja łączy się z inną lub odradza się w przyszłej książce).
+- Ujawnienia, potwierdzenia, reinterpretacje, zwroty akcji lub terminologia wykreowanego świata wprowadzone w późniejszych książkach.
+- Retrospektywne zapowiedzi (foreshadowing) lub zwroty takie jak „później”, „ostatecznie”, „stanie się”, „w kolejnych książkach” lub ich odpowiedniki.
+- Wspominanie postaci, pojęć, organizacji lub chronologii z późniejszych książek.
+
+GRANICA DLA POSTACI:
+Opisz każdą postać ściśle tak, jak jest znana na ostatniej stronie KSIĄŻKI DOCELOWEJ.
+NIE używaj aliasów, ról, relacji, prawdziwych tożsamości ani statusów ujawnionych w późniejszych książkach.
+
+ZASADA NIEPEWNOŚCI:
+Jeśli nie potrafisz z pełnym przekonaniem stwierdzić, czy dany fakt lub alias został ustalony przed końcem KSIĄŻKI DOCELOWEJ, POMIŃ GO.
+Brak szczegółu jest o wiele lepszy niż spoiler z przyszłej książki.
+
+AUDYT KOŃCOWY:
+Przed zwróceniem JSON sprawdź każde pole (szczególnie opisy postaci i aliasy) i usuń wszystko, co zależy od wiedzy z książek następujących po KSIĄŻCE DOCELOWEJ.
 
 WYMAGANY FORMAT JSON:
 {
   "characters": [
-    { "name": "Pełne imię i nazwisko", "aliases": [], "role": "...", "description": "Status na końcu tej książki (maksymalnie 300 znaków)" }
+    { "name": "Pełne imię i nazwisko", "aliases": [], "role": "...", "description": "Status na końcu tej książki (maksymalnie {MAX_CHAR_DESC} znaków)" }
   ],
   "locations": [
     { "name": "...", "description": "..." }
@@ -287,45 +364,287 @@ WYMAGANY FORMAT JSON:
   ]
 }]],
 
-        -- Find Duplicates
-    find_duplicates = [[
-Książka: %s
-Autor: %s
-Postęp czytania: %d%%
+    -- Local Timeline Summary
+    local_timeline_summary = [[
+KSIĄŻKA DOCELOWA: %s
+AUTOR: %s
+INDEKS KSIĄŻKI DOCELOWEJ: %d
+SERIA: %s
 
-Przeglądasz następującą listę %s wyodrębnionych z tej książki.
-Twoim zadaniem jest zidentyfikowanie wpisów, które wydają się być tą samą encją zapisaną pod różnymi nazwami.
+ZADANIE:
+Używając WYŁĄCZNIE zweryfikowanych wydarzeń z poszczególnych rozdziałów podanych poniżej dla KSIĄŻKI DOCELOWEJ, napisz spójne, kompleksowe streszczenie fabuły całej książki, kluczowych wydarzeń i rozwiązania.
 
-LISTA:
+ŚCISŁE OGRANICZENIE DO PODANEGO TEKSTU:
+- Oprzyj swoje podsumowanie WYŁĄCZNIE na podanych wydarzeniach z rozdziałów.
+- NIE wprowadzaj faktów, postaci, wydarzeń ani wyników nieopisanych w tych wydarzeniach z rozdziałów.
+- NIGDY nie wspominaj ani nie zapowiadaj wydarzeń, śmierci ani wątków z późniejszych książek w serii.
+
+WYDARZENIA Z ROZDZIAŁÓW:
 %s
-
-ZASADY:
-- Duplikat istnieje, gdy dwa wpisy wyraźnie odnoszą się do tej samej encji (np. "Wielka Biblioteka" i "Wielka Biblioteka" lub "Jan" i "Jan Kowalski").
-- NIE oznaczaj wpisów, które są jedynie powiązane lub podobne, ale odrębne.
-- NIE oznaczaj wpisów, chyba że masz absolutną pewność, że to ta sama encja.
-- Jeśli nie ma duplikatów, zwróć pustą tablicę.
-- ZASADA SPOILERA: Nie używaj wiedzy spoza %d%% postępu czytania.
 
 WYMAGANY FORMAT JSON:
 {
-  "duplicate_pairs": [
-    {
-      "primary": "Nazwa wpisu do ZACHOWANIA (bardziej kompletna lub oficjalna nazwa)",
-      "secondary": "Nazwa wpisu do USUNIĘCIA",
-      "reason": "Krótki powód (maks. 100 znaków)"
-    }
+  "timeline": [
+    { "chapter": "Podsumowanie książki", "event": "Jedno, wysoce szczegółowe, kompleksowe streszczenie fabuły całej książki i rozwiązania (maksymalnie 2000 znaków). MUSISZ sformatować to streszczenie przy użyciu wielu wyraźnych akapitów oddzielonych podwójnymi znakami nowej linii (\\n\\n) dla czytelności, zamiast jednego bloku tekstu." }
   ]
 }]],
 
--- Fallback strings
-    fallback = {
-        unknown_book = "Nieznana książka",
-        unknown_author = "Nieznany autor",
-        unnamed_character = "Postać bez nazwy",
-        not_specified = "Nie określono",
-        no_description = "Brak opisu",
-        unnamed_person = "Osoba bez nazwy",
-        no_biography = "Brak dostępnej biografii"
+    -- Chapter Delta
+    chapter_delta = [[
+Książka: %s
+Autor: %s
+Analizowany rozdział: %s
+
+ZADANIE: Przeanalizuj WYŁĄCZNIE ten jeden rozdział. Zidentyfikuj NOWE encje wprowadzone w tym rozdziale oraz AKTUALIZACJE DELTA (zmiany stanu) dla istniejących encji.
+Wygeneruj WYŁĄCZNIE poprawny obiekt JSON.
+
+MANIFEST ISTNIEJĄCYCH ZNANYCH ENCJI (NIE wyodrębniaj ponownie, chyba że ich rola, status lub opis uległy znaczącej ewolucji):
+%s
+
+ZASADY:
+1. ŚCISŁE OGRANICZENIE SPOILERÓW: Analizuj WYŁĄCZNIE dostarczony tekst rozdziału. NIE używaj żadnej wiedzy z przyszłych rozdziałów ani źródeł zewnętrznych.
+2. GŁĘBIA I TREŚĆ OPISÓW POSTACI (KRYTYCZNE):
+   - Oparte na faktach i konkretne: Opisz, kim jest postać, podając konkretne fakty z fabuły — jej przeszłość, wyraźną osobowość, zawód, kluczowe relacje z innymi postaciami oraz jej szczególną rolę i osobiste stawki w narracji.
+   - Istotny kontekst narracyjny: Powiąż postać bezpośrednio z główną tajemnicą, konfliktem fabularnym lub śledztwem w tej książce (np. jakie przestępstwa lub sprawy bada, kto ją zatrudnił, kim są jej kluczowi sojusznicy lub przeciwnicy, jakie ma konkretne osobiste dylematy lub napięcia).
+   - NIE zbyt ogólne: NIE pisz ogólnikowych frazesów (np. unikaj pustych sformułowań takich jak „detektyw badający złożone sprawy”). Nazwij konkretne okoliczności, powiązania i stawki ustalone w tekście.
+   - BEZ streszczeń błahych sprawunków: NIE twórz chronologicznych rejestrów zwykłych codziennych czynności ani rutynowych obowiązków (np. NIE streszczaj wyjść do sklepu spożywczego, rutynowych rozmów telefonicznych ani nieistotnych przemieszczeń ze sceny na scenę).
+   - Opisy postaci muszą być bogatymi, wyrazistymi profilami podsumowującymi to, kim są i jakie mają znaczenie aż do tego punktu książki.
+3. WYSOKI PRÓG DLA AKTUALIZACJI POSTACI:
+   - NIE twórz aktualizacji w `character_state_updates` tylko dlatego, że istniejąca postać pojawiła się, odezwała lub wykonała rutynowe czynności w tym rozdziale.
+   - Generuj aktualizację WYŁĄCZNIE wtedy, gdy nastąpiła istotna, trwała przemiana w jej wątku fabularnym, tożsamości, relacjach, zatrudnieniu, lojalności lub stanie (np. śmierć, odniesienie ran, aresztowanie, zdrada, zaręczyny, awans, ujawnienie jako sprawcy, odkrycie wielkiego sekretu lub motywu).
+   - Jeśli aktualizacja JEST uzasadniona, zaktualizowane pole `description` musi być bogatym, kumulatywnym przeglądem postaci, który uwzględnia nowe wydarzenia przy zachowaniu jej podstawowej tożsamości i ustalonego kontekstu fabularnego — a NIE streszczeniem odosobnionej sceny.
+4. ZNACZNIKI STRON WEWNĄTRZ ROZDZIAŁU ([PAGE N]) I BRAMKOWANIE ZERO-SPOILER:
+   - Teksty rozdziałów zawierają znaczniki [PAGE N] wskazujące postęp stron.
+   - Dla `new_characters`, `new_locations` i `new_terms`: podaj "first_page" (liczba całkowita N ze znacznika [PAGE N], na której wzmianka pojawia się po raz pierwszy), "intro_role" (dla postaci) oraz "intro_description" (1-2 zdania ściśle ograniczone do tego, co wiadomo przy pierwszym wprowadzeniu na [PAGE first_page] — z ZEROWĄ wiedzą o późniejszych zwrotach akcji, sekretach lub wynikach występujących na dalszych stronach). Podaj także "page" (znacznik [PAGE N], od którego obowiązuje pełniejszy, kumulatywny opis "description", zazwyczaj ostatnia strona rozdziału).
+   - Dla `character_state_updates`, `location_state_updates` i `term_state_updates`: podaj "page" (liczba całkowita N ze znacznika [PAGE N], na której ujawnienie/przemiana się dopełnia; NIE ujawniaj faktów przed tą stroną).
+5. DOWÓD (EVIDENCE): Podaj krótkie odniesienie lub wycinek cytatu z tego rozdziału wyjaśniający, dlaczego nastąpiła aktualizacja.
+6. OŚ CZASU: Podaj dokładnie jedno podsumowanie głównych wydarzeń fabularnych w tym rozdziale.
+
+WYMAGANY FORMAT JSON:
+{
+  "new_characters": [
+    {
+      "name": "Pełne imię i nazwisko",
+      "aliases": ["Alias 1", "Alias 2"],
+      "first_page": 80,
+      "intro_role": "Początkowa rola (np. Urzędnik wiejski, Nieznajomy, Klient)",
+      "intro_description": "Początkowe wrażenie w 1-2 zdaniach ściśle z chwili pierwszego wprowadzenia, zero spoilerów z późniejszych stron.",
+      "page": 99,
+      "role": "Rola narracyjna / znaczenie (np. Protagonista, Prywatny detektyw, Partner, Antagonista, Ofiara, Klient, Podejrzany, Postać drugoplanowa, Postać epizodyczna)",
+      "status": "alive",
+      "description": "Bogaty, konkretny opis postaci (przeszłość, relacje, stawki narracyjne). Unikaj ogólników i rejestrów błahych sprawunków.",
+      "evidence": "Krótki fragment"
     }
+  ],
+  "character_state_updates": [
+    {
+      "name": "Nazwa pasująca do znanego manifestu",
+      "page": 95,
+      "role": "Zaktualizowana rola narracyjna / znaczenie (np. Protagonista, Partner, Antagonista, Postać drugoplanowa itd.)",
+      "status": "alive",
+      "change": "Jedno krótkie zdanie nazywające, co się zmieniło od poprzedniego stanu (np. 'Awansowany na partnera po sprawie Shacklewell')",
+      "description": "Zaktualizowany, bogaty, kumulatywny opis postaci odzwierciedlający jej nowy status i stawki w historii",
+      "evidence": "Krótki fragment"
+    }
+  ],
+  "new_locations": [
+    {
+      "name": "Nazwa lokacji",
+      "first_page": 80,
+      "intro_description": "Początkowe wrażenie przy pierwszej wzmiance.",
+      "page": 99,
+      "description": "Opis lokacji",
+      "evidence": "Krótki fragment"
+    }
+  ],
+  "location_state_updates": [
+    {
+      "name": "Nazwa pasująca do znanego manifestu",
+      "page": 95,
+      "change": "Jedno krótkie zdanie nazywające, co się zmieniło (np. 'Zniszczone podczas bitwy o Oakhaven')",
+      "description": "Zaktualizowany, rozwinięty opis",
+      "evidence": "Krótki fragment"
+    }
+  ],
+  "new_terms": [
+    {
+      "name": "Nazwa pojęcia",
+      "first_page": 80,
+      "intro_description": "Początkowa definicja przy pierwszej wzmiance.",
+      "page": 99,
+      "description": "Definicja lub wyjaśnienie lore",
+      "evidence": "Krótki fragment"
+    }
+  ],
+  "term_state_updates": [
+    {
+      "name": "Nazwa pasująca do znanego manifestu",
+      "page": 95,
+      "change": "Jedno krótkie zdanie nazywające, co zmieniło się w rozumieniu lub użyciu",
+      "description": "Zaktualizowana definicja",
+      "evidence": "Krótki fragment"
+    }
+  ],
+  "timeline_event": {
+    "chapter": "%s",
+    "event": "Podsumowanie wydarzeń w tym rozdziale"
+  }
 }
 
+TEKST ROZDZIAŁU:
+%s]],
+
+    -- Batch Chapter Delta
+    batch_chapter_delta = [[
+Książka: %s
+Autor: %s
+Rozdziały w tej partii: %s
+
+ZADANIE: Przeanalizuj dostarczoną sekwencyjną partię rozdziałów po kolei.
+Dla KAŻDEGO rozdziału w partii zidentyfikuj:
+1. NOWE encje wprowadzone w tym rozdziale (postaci, lokacje, pojęcia).
+2. AKTUALIZACJE DELTA (zmiany stanu) dla istniejących znanych encji (z manifestu LUB wprowadzonych we wcześniejszym rozdziale tej partii) WTEDY I TYLKO WTEDY, gdy ich rola, status, lojalność lub sytuacja narracyjna przeszły istotną, trwałą przemianę.
+3. WYDARZENIE NA OSI CZASU: Zwięzłe podsumowanie głównych wydarzeń fabularnych zachodzących w tym rozdziale.
+
+Wygeneruj WYŁĄCZNIE poprawny obiekt JSON zgodny z wymaganym schematem.
+
+MANIFEST ISTNIEJĄCYCH ZNANYCH ENCJI (z poprzednich partii - NIE wyodrębniaj ponownie, chyba że ich rola, status lub opis uległy znaczącej ewolucji):
+%s
+
+ZASADY:
+1. ŚCISŁE OGRANICZENIE SPOILERÓW I SEKWENCYJNY POSTĘP:
+   - Analizuj rozdziały w kolejności sekwencyjnej.
+   - W odniesieniu do dowolnego rozdziału w tej partii NIE uwzględniaj wiedzy z późniejszych rozdziałów w tej partii ani z reszty książki.
+2. GŁĘBIA I TREŚĆ OPISÓW POSTACI (KRYTYCZNE):
+   - Oparte na faktach i konkretne: Opisz, kim jest postać, podając konkretne fakty z fabuły — jej przeszłość, wyraźną osobowość, zawód, kluczowe relacje z innymi postaciami oraz jej szczególną rolę i osobiste stawki w narracji.
+   - Istotny kontekst narracyjny: Powiąż postać bezpośrednio z główną tajemnicą, konfliktem fabularnym lub śledztwem w tej książce (np. jakie przestępstwa lub sprawy bada, kto ją zatrudnił, kim są jej kluczowi sojusznicy lub przeciwnicy, jakie ma konkretne osobiste dylematy lub napięcia).
+   - NIE zbyt ogólne: NIE pisz ogólnikowych frazesów (np. unikaj pustych sformułowań takich jak „detektyw badający złożone sprawy”). Nazwij konkretne okoliczności, powiązania i stawki ustalone w tekście.
+   - BEZ streszczeń błahych sprawunków: NIE twórz chronologicznych rejestrów zwykłych codziennych czynności ani rutynowych obowiązków (np. NIE streszczaj wyjść do sklepu spożywczego, rutynowych rozmów telefonicznych ani nieistotnych przemieszczeń ze sceny na scenę).
+   - Opisy postaci muszą być bogatymi, wyrazistymi profilami podsumowującymi to, kim są i jakie mają znaczenie aż do tego punktu książki.
+3. WYSOKI PRÓG DLA AKTUALIZACJI POSTACI:
+   - NIE twórz aktualizacji w `character_state_updates` tylko dlatego, że istniejąca postać pojawiła się, odezwała lub wykonała rutynowe czynności w rozdziale.
+   - Generuj aktualizację WYŁĄCZNIE wtedy, gdy nastąpiła istotna, trwała przemiana w jej wątku fabularnym, tożsamości, relacjach, zatrudnieniu, lojalności lub stanie (np. śmierć, odniesienie ran, aresztowanie, zdrada, zaręczyny, awans, ujawnienie jako sprawcy, odkrycie wielkiego sekretu lub motywu).
+   - Jeśli aktualizacja JEST uzasadniona, zaktualizowane pole `description` musi być bogatym, kumulatywnym przeglądem postaci, który uwzględnia nowe wydarzenia przy zachowaniu jej podstawowej tożsamości i ustalonego kontekstu fabularnego — a NIE streszczeniem odosobnionej sceny.
+4. ZNACZNIKI STRON WEWNĄTRZ ROZDZIAŁU ([PAGE N]) I BRAMKOWANIE ZERO-SPOILER:
+   - Teksty rozdziałów zawierają znaczniki [PAGE N] wskazujące postęp stron.
+   - Dla `new_characters`, `new_locations` i `new_terms`: podaj "first_page" (liczba całkowita N ze znacznika [PAGE N], na której wzmianka pojawia się po raz pierwszy), "intro_role" (dla postaci) oraz "intro_description" (1-2 zdania ściśle ograniczone do tego, co wiadomo przy pierwszym wprowadzeniu na [PAGE first_page] — z ZEROWĄ wiedzą o późniejszych zwrotach akcji, sekretach lub wynikach występujących na dalszych stronach). Podaj także "page" (znacznik [PAGE N], od którego obowiązuje pełniejszy, kumulatywny opis "description", zazwyczaj ostatnia strona rozdziału).
+   - Dla `character_state_updates`, `location_state_updates` i `term_state_updates`: podaj "page" (liczba całkowita N ze znacznika [PAGE N], na której ujawnienie/przemiana się dopełnia; NIE ujawniaj faktów przed tą stroną).
+5. DOWÓD (EVIDENCE): Podaj krótkie odniesienie lub wycinek cytatu z tego konkretnego rozdziału wyjaśniający, dlaczego nastąpiła aktualizacja.
+6. BEZPIECZEŃSTWO JSON: Wygeneruj ściśle poprawny kod JSON. Prawidłowo stosuj znaki ucieczki dla podwójnych cudzysłowów wewnątrz ciągów znaków.
+
+WYMAGANY FORMAT JSON:
+{
+  "chapters": [
+    {
+      "chapter_index": 1,
+      "chapter_title": "Tytuł rozdziału",
+      "timeline_event": "Podsumowanie głównych wydarzeń fabularnych w tym rozdziale.",
+      "new_characters": [
+        {
+          "name": "Pełne imię i nazwisko",
+          "aliases": ["Alias 1"],
+          "first_page": 80,
+          "intro_role": "Początkowa rola (np. Urzędnik wiejski, Nieznajomy, Klient)",
+          "intro_description": "Początkowe wrażenie w 1-2 zdaniach ściśle z chwili pierwszego wprowadzenia, zero spoilerów z późniejszych stron.",
+          "page": 99,
+          "role": "Rola narracyjna / znaczenie (np. Protagonista, Prywatny detektyw, Partner, Antagonista, Ofiara, Klient, Podejrzany, Postać drugoplanowa, Postać epizodyczna)",
+          "status": "alive",
+          "description": "Bogaty, konkretny opis postaci (przeszłość, relacje, stawki narracyjne). Unikaj ogólników i rejestrów błahych sprawunków.",
+          "evidence": "Krótki fragment"
+        }
+      ],
+      "character_state_updates": [
+        {
+          "name": "Nazwa pasująca do znanego manifestu lub postaci wprowadzonej we wcześniejszym rozdziale tej partii",
+          "page": 95,
+          "role": "Zaktualizowana rola narracyjna / znaczenie (np. Protagonista, Partner, Antagonista, Postać drugoplanowa itd.)",
+          "status": "alive",
+          "change": "Jedno krótkie zdanie nazywające, co się zmieniło od poprzedniego stanu (np. 'Awansowany na partnera po sprawie Shacklewell')",
+          "description": "Zaktualizowany, bogaty, kumulatywny opis postaci odzwierciedlający jej nowy status i stawki w historii",
+          "evidence": "Krótki fragment"
+        }
+      ],
+      "new_locations": [
+        {
+          "name": "Nazwa lokacji",
+          "first_page": 80,
+          "intro_description": "Początkowe wrażenie przy pierwszej wzmiance.",
+          "page": 99,
+          "description": "Opis lokacji",
+          "evidence": "Krótki fragment"
+        }
+      ],
+      "location_state_updates": [
+        {
+          "name": "Nazwa pasująca do znanego manifestu lub lokacji wprowadzonej we wcześniejszym rozdziale tej partii",
+          "page": 95,
+          "change": "Jedno krótkie zdanie nazywające, co się zmieniło (np. 'Zniszczone podczas bitwy o Oakhaven')",
+          "description": "Zaktualizowany opis",
+          "evidence": "Krótki fragment"
+        }
+      ],
+      "new_terms": [
+        {
+          "name": "Nazwa pojęcia",
+          "first_page": 80,
+          "intro_description": "Początkowa definicja przy pierwszej wzmiance.",
+          "page": 99,
+          "description": "Definicja lub wyjaśnienie lore",
+          "evidence": "Krótki fragment"
+        }
+      ],
+      "term_state_updates": [
+        {
+          "name": "Nazwa pasująca do znanego manifestu lub pojęcia wprowadzonego we wcześniejszym rozdziale tej partii",
+          "page": 95,
+          "change": "Jedno krótkie zdanie nazywające, co zmieniło się w rozumieniu lub użyciu",
+          "description": "Zaktualizowana definicja",
+          "evidence": "Krótki fragment"
+        }
+      ]
+    }
+  ]
+}
+
+TEKSTY ROZDZIAŁÓW W TEJ PARTII:
+%s]],
+
+    -- Anthology Detect
+    anthology_detect = [[
+Przeanalizuj poniższe szczegóły książki i Spis treści:
+
+Tytuł: %s
+Autor: %s
+Tematyka: %s
+Opis: %s
+
+Spis treści:
+%s
+
+Określ, czy to dzieło jest:
+1. "anthology" (zbiór niezależnych opowiadań, esejów lub nowel, z których każdy ma własną zamkniętą fabułę lub obsadę, np. "The Adventures of Sherlock Holmes", "Dubliners", "Exhalation", "Men Without Women").
+2. "novel" (pojedyncza spójna powieść podzielona na rozdziały, części lub akty, np. "Pride and Prejudice", "Harry Potter", "Dune", "Carrie").
+3. "novel_omnibus" (wielotomowy zbiór pełnowymiarowych powieści opublikowanych razem w jednym tomie, np. "The Lord of the Rings: All Three Volumes", "The Complete Hitchhiker's Guide to the Galaxy", "Percy Jackson: Books 1-3").
+4. "non_fiction" (pojedyncza rozprawa literatury faktu, książka historyczna lub akademicka podzielona na rozdziały).
+
+Zwróć WYŁĄCZNIE obiekt JSON zawierający:
+{
+  "type": "anthology" | "novel" | "novel_omnibus" | "non_fiction",
+  "confidence": 0.0 to 1.0,
+  "reasoning": "krótkie wyjaśnienie (jedno zdanie)"
+}]],
+
+    -- System instruction
+    system_instruction = "Jesteś ekspertem w dziedzinie badań literackich. Twoja odpowiedź musi być wyłącznie w poprawnym formacie JSON. Upewnij się, że dane są wysoce dokładne i dotyczą ściśle podanego kontekstu.",
+
+    -- Fallback strings
+    fallback = {
+        no_biography = "Brak dostępnej biografii",
+        no_description = "Brak opisu",
+        not_specified = "Nie określono",
+        unknown_author = "Nieznany autor",
+        unknown_book = "Nieznana książka",
+        unnamed_character = "Postać bez nazwy",
+        unnamed_person = "Osoba bez nazwy"
+    }
+}

@@ -269,10 +269,6 @@ msgstr "Vymazať nastavený API kľúč pre %s?"
 msgid "continue_in_background"
 msgstr "Zavrieť"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "sk"
-
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "Aktuálne: "
@@ -355,15 +351,15 @@ msgstr "Už sa nepýtať"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "Bionic Reading delí slová naprieč značkami formátovania, čo nie je kompatibilné s podčiarknutím entít.\n\nPre najlepší výkon použite radšej rýchle písmo."
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "Poznámka: Nie je kompatibilné s Bionic Reading"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "Používajú sa vyrovnané podčiarknutia, obnovuje sa..."
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -607,7 +603,7 @@ msgstr "Evolúcia entít sleduje, ako sa postavy, miesta a pojmy vyvíjajú napr
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "Vývoj"
+msgstr "Dejová línia: %s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -629,13 +625,13 @@ msgstr "Pre '%s' sa nenašli žiadne dáta X-Ray. Chcete to vyhľadať?"
 msgid "fetch_successful"
 msgstr "Načítanie úspešné"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "Načítavam X-Ray..."
+msgstr "Získava sa z %s..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
-msgstr "Načítavam autora..."
+msgstr "Sťahujú sa informácie o autorovi z %s..."
 
 # en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
@@ -1449,11 +1445,7 @@ msgstr "Dejová línia"
 msgid "paste_clipboard_confirm"
 msgstr "Použiť API kľúč zo schránky pre %s?"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "AI pri poslednom načítaní našla možné duplicitné miesta: %d. Skontrolovať teraz?"
 
@@ -1757,9 +1749,9 @@ msgstr "Auto-detekcia (odporúčané)"
 msgid "story_toc_depth_desc"
 msgstr "Vyberte úroveň obsahu, ktorá predstavuje jednotlivé príbehy:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
-msgstr "Pojem sa nenašiel."
+msgstr "Nenašiel sa žiadny výraz zodpovedajúci '%s'"
 
 # en-hash: 1ecbe04157c9f7433d24d17cf5e70564
 msgid "testing_api_keys"
@@ -2112,10 +2104,6 @@ msgstr "Čo je nové:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Aktualizujem X-Ray..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

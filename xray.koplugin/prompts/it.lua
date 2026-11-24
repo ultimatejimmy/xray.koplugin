@@ -1,7 +1,4 @@
 return {
-    -- System instruction
-    system_instruction = "Sei un esperto ricercatore letterario. La tua risposta deve essere SOLO in formato JSON valido. Garantire che i dati siano estremamente accurati e pertinenti al contesto fornito.",
-
     -- Author Only
     author_only = [[
 Identificare e fornire la biografia dell'autore del libro "%s". 
@@ -15,8 +12,7 @@ FORMATO JSON RICHIESTO:
   "author_bio": "Biografia completa incentrata sulla loro carriera letteraria e sulle opere principali.",
   "author_birth": "Data di nascita, formattata in base al formato data locale",
   "author_death": "Data di morte, formattata in base al formato data locale"
-}
-]],
+}]],
 
     -- Find Duplicates
     find_duplicates = [[
@@ -271,6 +267,22 @@ FORMATO JSON RICHIESTO:
   "merged_description": "Descrizione combinata e ottimizzata (max {MAX_CHAR_DESC} caratteri)"
 }]],
 
+    -- Book Type Detect
+    book_type_detect = [[
+Titolo del libro: %s
+Autore: %s
+Serie: %s
+Descrizione del file/Metadati soggetto: %s
+
+COMPITO: Classifica questo libro in esattamente UNO di questi tipi di libro in base ai suoi metadati e ai segnali di genere:
+prose_fiction, prose_nonfiction, manga, graphic_novel, children, poetry, cookbook, textbook, travel, unknown
+
+Restituisci SOLO JSON valido:
+{
+  "book_type_label": "prose_fiction",
+  "confidence": "high"
+}]],
+
     -- Series Detect
     series_detect = [[
 Titolo del libro: %s
@@ -304,20 +316,42 @@ Restituisci SOLO JSON valido:
 
     -- Series Book Summary
     series_book_summary = [[
-Libro: %s
-Autore: %s
-Questo è il libro %d della serie "%s".
+LIBRO TARGET: %s
+AUTORE: %s
+INDICE LIBRO TARGET: %d
+SERIE: %s
 
-COMPITO: Fornire un riepilogo COMPLETO dell'intero libro per un lettore
-che sta per iniziare il prossimo libro della serie.
-Includere: personaggi chiave (nome, ruolo, stato finale alla fine del libro), luoghi principali,
-eventi critici della trama e introdotti termini importanti per la costruzione del mondo.
-NESSUN SPOILER per i libri OLTRE questo.
+COMPITO:
+Fornisci un riepilogo COMPLETO solo del LIBRO TARGET, per un lettore che ha finito
+il LIBRO TARGET e sta per iniziare il libro successivo della serie.
+
+CONFINE ASSOLUTO DEGLI SPOILER:
+Il limite della conoscenza è rigorosamente l'ULTIMA PAGINA del LIBRO TARGET (Indice libro %d).
+Puoi includere fatti stabiliti nel LIBRO TARGET o nei libri precedenti di questa serie.
+NON DEVI includere, implicare, accennare, anticipare (foreshadowing) o selezionare dettagli utilizzando conoscenze provenienti da qualsiasi libro successivo.
+
+INFORMAZIONI PROIBITE DEI LIBRI SUCCESSIVI:
+- Eventi successivi, destini futuri, morti, sopravvivenze, destinazioni, storie d'amore, alleanze, conflitti o tradimenti.
+- Identità rivelate in libri successivi, vere origini, parentele segrete, alias, alter ego, reincarnazioni, trasformazioni, titoli o avanzamenti di potere (ad es., NON menzionare se un'essenza si unisce a un'altra o rinasce in un libro futuro).
+- Rivelazioni, conferme, reinterpretazioni, colpi di scena o terminologia di world-building introdotti nei libri successivi.
+- Anticipazioni retrospettive o frasi come "in seguito", "alla fine", "diventerà", "nei libri successivi" o equivalenti.
+- Menzionare personaggi, concetti, organizzazioni o cronologia provenienti da libri successivi.
+
+LIMITE PER I PERSONAGGI:
+Descrivi ogni personaggio rigorosamente così come è noto all'ultima pagina del LIBRO TARGET.
+NON utilizzare alias, ruoli, relazioni, vere identità o stati rivelati nei libri successivi.
+
+REGOLA SULL'INCERTEZZA:
+Se non puoi determinare con sicurezza se un fatto o un alias sia stato stabilito entro la fine del LIBRO TARGET, OMETTILO.
+Un dettaglio mancante è di gran lunga preferibile a uno spoiler di un libro futuro.
+
+VERIFICA FINALE:
+Prima di restituire il JSON, ispeziona ogni campo (specialmente le descrizioni e gli alias dei personaggi) ed elimina qualsiasi elemento che dipenda dalla conoscenza di libri successivi al LIBRO TARGET.
 
 FORMATO JSON RICHIESTO:
 {
   "characters": [
-    { "name": "Nome completo", "aliases": [], "role": "...", "description": "Stato alla fine di questo libro (max 300 caratteri)" }
+    { "name": "Nome completo", "aliases": [], "role": "...", "description": "Stato alla fine di questo libro (max {MAX_CHAR_DESC} caratteri)" }
   ],
   "locations": [
     { "name": "...", "description": "..." }
@@ -326,9 +360,282 @@ FORMATO JSON RICHIESTO:
     { "name": "...", "aliases": ["Alias 1", "Alias 2"], "expanded": "...", "category": "...", "definition": "..." }
   ],
   "timeline": [
-    { "chapter": "Riepilogo del libro", "event": "Un riepilogo unico, altamente dettagliato e completo della trama dell'intero libro, degli eventi principali e della risoluzione (massimo 2000 caratteri). DEVI formattare questo riepilogo utilizzando più paragrafi distinti separati da doppi ritorni a capo (\\n\\n) per la leggibilità invece di un unico muro di testo." }
+    { "chapter": "Riepilogo del libro", "event": "Un riepilogo unico, altamente dettagliato e completo della trama dell'intero libro, degli eventi principali e della risoluzione (massimo 2000 caratteri). DEVI formattare questo riepilogo utilizzando più paragrafi distinti separati da doppi ritorni a capo (\\n\\n) per la leggibilità invece di un unico blocco di testo." }
   ]
 }]],
+
+    -- Local Timeline Summary
+    local_timeline_summary = [[
+LIBRO TARGET: %s
+AUTORE: %s
+INDICE LIBRO TARGET: %d
+SERIE: %s
+
+COMPITO:
+Utilizzando SOLO gli eventi verificati capitolo per capitolo forniti di seguito dal LIBRO TARGET, scrivi un riepilogo coeso e completo dell'intera trama del libro, degli sviluppi chiave e della risoluzione.
+
+VINCOLO RIGOROSO DI FONTE:
+- Basa il tuo riassunto ESCLUSIVAMENTE sugli eventi dei capitoli forniti.
+- NON introdurre fatti, personaggi, eventi o esiti non descritti in questi eventi dei capitoli.
+- NON menzionare né anticipare MAI eventi, morti o sviluppi dei libri successivi della serie.
+
+EVENTI DEI CAPITOLI:
+%s
+
+FORMATO JSON RICHIESTO:
+{
+  "timeline": [
+    { "chapter": "Riepilogo del libro", "event": "Un riepilogo unico, altamente dettagliato e completo della trama dell'intero libro e della risoluzione (massimo 2000 caratteri). DEVI formattare questo riepilogo utilizzando più paragrafi distinti separati da doppi ritorni a capo (\\n\\n) per la leggibilità invece di un unico blocco di testo." }
+  ]
+}]],
+
+    -- Chapter Delta
+    chapter_delta = [[
+Libro: %s
+Autore: %s
+Analisi del capitolo: %s
+
+COMPITO: Analizza SOLO questo singolo capitolo. Identifica le NUOVE entità introdotte in questo capitolo e gli AGGIORNAMENTI DELTA (transizioni di stato) per le entità esistenti.
+Genera SOLO un oggetto JSON valido.
+
+ELENCO DELLE ENTITÀ GIÀ NOTE (NON estrarre nuovamente a meno che il loro ruolo, stato o descrizione non si sia evoluto in modo significativo):
+%s
+
+REGOLE:
+1. CONFINAMENTO RIGOROSO DEGLI SPOILER: Analizza SOLO il testo del capitolo fornito. NON utilizzare alcuna conoscenza proveniente da capitoli futuri o fonti esterne.
+2. PROFONDITÀ E SOSTANZA DELLA DESCRIZIONE DEI PERSONAGGI (CRITICO):
+   - Fondato e specifico: Descrivi chi è il personaggio con fatti concreti della storia: il suo passato, la personalità distinta, la professione, le relazioni chiave con altri personaggi e il suo ruolo specifico e le sue poste in gioco personali nella narrazione.
+   - Contesto narrativo significativo: Collega il personaggio direttamente al mistero centrale, al conflitto della trama o all'indagine di questo libro (ad es. quali crimini o casi sta indagando, chi lo ha assunto, alleati o avversari principali, dilemmi o tensioni personali specifiche).
+   - NON troppo generico: NON scrivere frasi fatte generiche (ad es. evita formule vuote come "un detective che indaga su casi complessi"). Indica le circostanze specifiche, i legami e le poste in gioco stabilite nel testo.
+   - NIENTE riepiloghi di faccende banali: NON scrivere resoconti cronologici di attività quotidiane ordinarie o commissioni di routine (ad es. NON riassumere gite al negozio di alimentari, telefonate di routine o spostamenti irrilevanti scena per scena).
+   - Le descrizioni dei personaggi devono essere profili ricchi e vividi che riassumono chi sono e la loro importanza fino a questo punto del libro.
+3. SOGLIA ALTA PER GLI AGGIORNAMENTI DEI PERSONAGGI:
+   - NON creare un aggiornamento in `character_state_updates` semplicemente perché un personaggio esistente è apparso, ha parlato o ha compiuto azioni di routine in questo capitolo.
+   - Genera un aggiornamento SOLO se c'è una trasformazione sostanziale e duratura nel loro arco narrativo, identità, relazioni, impiego, fedeltà o condizione (ad es. ucciso, ferito, arrestato, tradito, fidanzato, promosso, rivelato essere il colpevole, scoperto un grande segreto o movente).
+   - Se un aggiornamento È giustificato, la `description` aggiornata deve essere una panoramica cumulativa e ricca del personaggio che incorpora i nuovi sviluppi mantenendo la sua identità fondamentale e il contesto narrativo consolidato—NON il riassunto di una singola scena isolata.
+4. MARCATORI DI PAGINA INTRA-CAPITOLO ([PAGE N]) E BLOCCO ZERO-SPOILER:
+   - I testi dei capitoli contengono marcatori [PAGE N] che indicano l'avanzamento delle pagine.
+   - Per `new_characters`, `new_locations` e `new_terms`: fornisci "first_page" (intero N dal marcatore [PAGE N] in cui viene menzionato per la prima volta), "intro_role" (per i personaggi) e "intro_description" (1-2 frasi rigorosamente limitate a ciò che è noto alla prima introduzione a [PAGE first_page]—con ZERO conoscenza di colpi di scena, segreti o esiti successivi che si verificano nelle pagine seguenti). Fornisci anche "page" (il marcatore [PAGE N] in cui si applica la "description" cumulativa più completa, tipicamente l'ultima pagina del capitolo).
+   - Per `character_state_updates`, `location_state_updates` e `term_state_updates`: fornisci "page" (intero N dal marcatore [PAGE N] in cui la rivelazione/transizione si completa; NON rivelare fatti prima di questa pagina).
+5. PROVE: Fornisci un breve riferimento o estratto di citazione da questo capitolo che spieghi perché si è verificato l'aggiornamento.
+6. TIMELINE: Fornisci esattamente un riepilogo degli eventi delle principali azioni della trama in questo capitolo.
+
+FORMATO JSON RICHIESTO:
+{
+  "new_characters": [
+    {
+      "name": "Nome completo",
+      "aliases": ["Alias 1", "Alias 2"],
+      "first_page": 80,
+      "intro_role": "Ruolo iniziale (es. Impiegato del villaggio, Sconosciuto, Cliente)",
+      "intro_description": "Impressione iniziale di 1-2 frasi rigorosamente alla prima introduzione, zero spoiler dalle pagine successive.",
+      "page": 99,
+      "role": "Ruolo narrativo / importanza (es. Protagonista, Investigatore privato, Partner, Antagonista, Vittima, Cliente, Sospettato, Personaggio secondario, Personaggio minore)",
+      "status": "alive",
+      "description": "Descrizione ricca e specifica del personaggio (passato, relazioni, poste in gioco narrative). Evita frasi generiche e resoconti di faccende banali.",
+      "evidence": "Breve estratto"
+    }
+  ],
+  "character_state_updates": [
+    {
+      "name": "Nome corrispondente all'elenco noto",
+      "page": 95,
+      "role": "Ruolo narrativo / importanza aggiornata (es. Protagonista, Partner, Antagonista, Personaggio secondario, ecc.)",
+      "status": "alive",
+      "change": "Una breve frase che indica cosa è cambiato rispetto allo stato precedente (es. 'Promosso a partner dopo il caso Shacklewell')",
+      "description": "Descrizione cumulativa ricca e aggiornata del personaggio che riflette il suo nuovo stato e le poste in gioco della storia",
+      "evidence": "Breve estratto"
+    }
+  ],
+  "new_locations": [
+    {
+      "name": "Nome del luogo",
+      "first_page": 80,
+      "intro_description": "Impressione iniziale alla prima menzione.",
+      "page": 99,
+      "description": "Descrizione del luogo",
+      "evidence": "Breve estratto"
+    }
+  ],
+  "location_state_updates": [
+    {
+      "name": "Nome corrispondente all'elenco noto",
+      "page": 95,
+      "change": "Una breve frase che indica cosa è cambiato (es. 'Distrutto durante la battaglia di Oakhaven')",
+      "description": "Descrizione aggiornata ed evoluta",
+      "evidence": "Breve estratto"
+    }
+  ],
+  "new_terms": [
+    {
+      "name": "Nome del termine",
+      "first_page": 80,
+      "intro_description": "Definizione iniziale alla prima menzione.",
+      "page": 99,
+      "description": "Definizione o spiegazione del lore",
+      "evidence": "Breve estratto"
+    }
+  ],
+  "term_state_updates": [
+    {
+      "name": "Nome corrispondente all'elenco noto",
+      "page": 95,
+      "change": "Una breve frase che indica cosa è cambiato nella comprensione o nell'uso",
+      "description": "Definizione aggiornata",
+      "evidence": "Breve estratto"
+    }
+  ],
+  "timeline_event": {
+    "chapter": "%s",
+    "event": "Riepilogo degli eventi in questo capitolo"
+  }
+}
+
+TESTO DEL CAPITOLO:
+%s]],
+
+    -- Batch Chapter Delta
+    batch_chapter_delta = [[
+Libro: %s
+Autore: %s
+Capitoli in questo batch: %s
+
+COMPITO: Analizza in ordine la sequenza di capitoli fornita in questo batch.
+Per OGNI capitolo del batch, identifica:
+1. NUOVE entità introdotte in quel capitolo (personaggi, luoghi, termini).
+2. AGGIORNAMENTI DELTA (transizioni di stato) per le entità già note (dall'elenco O introdotte in un capitolo precedente di questo batch) SE E SOLO SE il loro ruolo, stato, fedeltà o condizione narrativa ha subito una trasformazione sostanziale e duratura.
+3. EVENTO DELLA TIMELINE: Un riepilogo conciso degli eventi principali della trama che si verificano in quel capitolo.
+
+Genera SOLO un oggetto JSON valido che corrisponda allo schema richiesto.
+
+ELENCO DELLE ENTITÀ GIÀ NOTE (dai batch precedenti - NON estrarre nuovamente a meno che il loro ruolo, stato o descrizione non si sia evoluto in modo significativo):
+%s
+
+REGOLE:
+1. CONFINAMENTO RIGOROSO DEGLI SPOILER E PROGRESSIONE SEQUENZIALE:
+   - Analizza i capitoli in ordine sequenziale.
+   - Per qualsiasi capitolo di questo batch, NON incorporare conoscenze provenienti da capitoli successivi del batch o dal resto del libro.
+2. PROFONDITÀ E SOSTANZA DELLA DESCRIZIONE DEI PERSONAGGI (CRITICO):
+   - Fondato e specifico: Descrivi chi è il personaggio con fatti concreti della storia: il suo passato, la personalità distinta, la professione, le relazioni chiave con altri personaggi e il suo ruolo specifico e le sue poste in gioco personali nella narrazione.
+   - Contesto narrativo significativo: Collega il personaggio direttamente al mistero centrale, al conflitto della trama o all'indagine di questo libro (ad es. quali crimini o casi sta indagando, chi lo ha assunto, alleati o avversari principali, dilemmi o tensioni personali specifiche).
+   - NON troppo generico: NON scrivere frasi fatte generiche (ad es. evita formule vuote come "un detective che indaga su casi complessi"). Indica le circostanze specifiche, i legami e le poste in gioco stabilite nel testo.
+   - NIENTE riepiloghi di faccende banali: NON scrivere resoconti cronologici di attività quotidiane ordinarie o commissioni di routine (ad es. NON riassumere gite al negozio di alimentari, telefonate di routine o spostamenti irrilevanti scena per scena).
+   - Le descrizioni dei personaggi devono essere profili ricchi e vividi che riassumono chi sono e la loro importanza fino a questo punto del libro.
+3. SOGLIA ALTA PER GLI AGGIORNAMENTI DEI PERSONAGGI:
+   - NON creare un aggiornamento in `character_state_updates` semplicemente perché un personaggio esistente è apparso, ha parlato o ha compiuto azioni di routine in un capitolo.
+   - Genera un aggiornamento SOLO se c'è una trasformazione sostanziale e duratura nel loro arco narrativo, identità, relazioni, impiego, fedeltà o condizione (ad es. ucciso, ferito, arrestato, tradito, fidanzato, promosso, rivelato essere il colpevole, scoperto un grande segreto o movente).
+   - Se un aggiornamento È giustificato, la `description` aggiornata deve essere una panoramica cumulativa e ricca del personaggio che incorpora i nuovi sviluppi mantenendo la sua identità fondamentale e il contesto narrativo consolidato—NON il riassunto di una singola scena isolata.
+4. MARCATORI DI PAGINA INTRA-CAPITOLO ([PAGE N]) E BLOCCO ZERO-SPOILER:
+   - I testi dei capitoli contengono marcatori [PAGE N] che indicano l'avanzamento delle pagine.
+   - Per `new_characters`, `new_locations` e `new_terms`: fornisci "first_page" (intero N dal marcatore [PAGE N] in cui viene menzionato per la prima volta), "intro_role" (per i personaggi) e "intro_description" (1-2 frasi rigorosamente limitate a ciò che è noto alla prima introduzione a [PAGE first_page]—con ZERO conoscenza di colpi di scena, segreti o esiti successivi che si verificano nelle pagine seguenti). Fornisci anche "page" (il marcatore [PAGE N] in cui si applica la "description" cumulativa più completa, tipicamente l'ultima pagina del capitolo).
+   - Per `character_state_updates`, `location_state_updates` e `term_state_updates`: fornisci "page" (intero N dal marcatore [PAGE N] in cui la rivelazione/transizione si completa; NON rivelare fatti prima di questa pagina).
+5. PROVE: Fornisci un breve riferimento o estratto di citazione da quello specifico capitolo che spieghi perché si è verificato l'aggiornamento.
+6. SICUREZZA JSON: Genera JSON rigorosamente valido. Esegui correttamente l'escape delle virgolette doppie all'interno delle stringhe.
+
+FORMATO JSON RICHIESTO:
+{
+  "chapters": [
+    {
+      "chapter_index": 1,
+      "chapter_title": "Titolo del capitolo",
+      "timeline_event": "Riepilogo degli sviluppi principali della trama in questo capitolo.",
+      "new_characters": [
+        {
+          "name": "Nome completo",
+          "aliases": ["Alias 1"],
+          "first_page": 80,
+          "intro_role": "Ruolo iniziale (es. Impiegato del villaggio, Sconosciuto, Cliente)",
+          "intro_description": "Impressione iniziale di 1-2 frasi rigorosamente alla prima introduzione, zero spoiler dalle pagine successive.",
+          "page": 99,
+          "role": "Ruolo narrativo / importanza (es. Protagonista, Investigatore privato, Partner, Antagonista, Vittima, Cliente, Sospettato, Personaggio secondario, Personaggio minore)",
+          "status": "alive",
+          "description": "Descrizione ricca e specifica del personaggio (passato, relazioni, poste in gioco narrative). Evita frasi generiche e resoconti di faccende banali.",
+          "evidence": "Breve estratto"
+        }
+      ],
+      "character_state_updates": [
+        {
+          "name": "Nome corrispondente all'elenco noto o personaggio introdotto in un capitolo precedente di questo batch",
+          "page": 95,
+          "role": "Ruolo narrativo / importanza aggiornata (es. Protagonista, Partner, Antagonista, Personaggio secondario, ecc.)",
+          "status": "alive",
+          "change": "Una breve frase che indica cosa è cambiato rispetto allo stato precedente (es. 'Promosso a partner dopo il caso Shacklewell')",
+          "description": "Descrizione cumulativa ricca e aggiornata del personaggio che riflette il suo nuovo stato e le poste in gioco della storia",
+          "evidence": "Breve estratto"
+        }
+      ],
+      "new_locations": [
+        {
+          "name": "Nome del luogo",
+          "first_page": 80,
+          "intro_description": "Impressione iniziale alla prima menzione.",
+          "page": 99,
+          "description": "Descrizione del luogo",
+          "evidence": "Breve estratto"
+        }
+      ],
+      "location_state_updates": [
+        {
+          "name": "Nome corrispondente all'elenco noto o luogo introdotto in un capitolo precedente di questo batch",
+          "page": 95,
+          "change": "Una breve frase che indica cosa è cambiato (es. 'Distrutto durante la battaglia di Oakhaven')",
+          "description": "Descrizione aggiornata",
+          "evidence": "Breve estratto"
+        }
+      ],
+      "new_terms": [
+        {
+          "name": "Nome del termine",
+          "first_page": 80,
+          "intro_description": "Definizione iniziale alla prima menzione.",
+          "page": 99,
+          "description": "Definizione o spiegazione del lore",
+          "evidence": "Breve estratto"
+        }
+      ],
+      "term_state_updates": [
+        {
+          "name": "Nome corrispondente all'elenco noto o termine introdotto in un capitolo precedente di questo batch",
+          "page": 95,
+          "change": "Una breve frase che indica cosa è cambiato nella comprensione o nell'uso",
+          "description": "Definizione aggiornata",
+          "evidence": "Breve estratto"
+        }
+      ]
+    }
+  ]
+}
+
+TESTI DEI CAPITOLI IN QUESTO BATCH:
+%s]],
+
+    -- Anthology Detect
+    anthology_detect = [[
+Analizza i seguenti dettagli del libro e l'Indice:
+
+Titolo: %s
+Autore: %s
+Argomenti: %s
+Descrizione: %s
+
+Indice:
+%s
+
+Determina se quest'opera è:
+1. "anthology" (una raccolta di racconti, saggi o romanzi brevi indipendenti, ciascuno con una propria narrazione o cast autonomo, es. "The Adventures of Sherlock Holmes", "Dubliners", "Exhalation", "Men Without Women").
+2. "novel" (un singolo romanzo unificato diviso in capitoli, parti o atti, es. "Pride and Prejudice", "Harry Potter", "Dune", "Carrie").
+3. "novel_omnibus" (una raccolta multi-volume di romanzi completi pubblicati insieme in un unico volume, es. "The Lord of the Rings: All Three Volumes", "The Complete Hitchhiker's Guide to the Galaxy", "Percy Jackson: Books 1-3").
+4. "non_fiction" (un singolo trattato di saggistica, storia o libro accademico diviso in capitoli).
+
+Restituisci SOLO un oggetto JSON con:
+{
+  "type": "anthology" | "novel" | "novel_omnibus" | "non_fiction",
+  "confidence": 0.0 to 1.0,
+  "reasoning": "breve spiegazione (una frase)"
+}]],
+
+    -- System instruction
+    system_instruction = "Sei un esperto ricercatore letterario. La tua risposta deve essere SOLO in formato JSON valido. Garantire che i dati siano estremamente accurati e pertinenti al contesto fornito.",
 
     -- Fallback strings
     fallback = {

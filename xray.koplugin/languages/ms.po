@@ -269,10 +269,6 @@ msgstr "Padam kunci API yang dikonfigurasi untuk %s?"
 msgid "continue_in_background"
 msgstr "Tutup"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "ms"
-
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "Semasa: "
@@ -355,15 +351,15 @@ msgstr "Jangan tanya lagi"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "Bionic Reading memecahkan perkataan merentasi tag pemformatan sebaris, yang tidak serasi dengan garis bawah entiti.\n\nGunakan fon pantas sebaliknya untuk prestasi terbaik."
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "Nota: Tidak serasi dengan Bionic Reading"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "Menggunakan garis bawah dalam cache, menyegarkan…"
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -629,13 +625,13 @@ msgstr "Tiada data X-Ray ditemui untuk '%s'. Adakah anda mahu mencarinya?"
 msgid "fetch_successful"
 msgstr "Pengambilan berjaya"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "Mengambil X-Ray..."
+msgstr "Mengambil dari %s..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
-msgstr "Mengambil Pengarang..."
+msgstr "Mengambil maklumat pengarang dari %s..."
 
 # en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
@@ -1449,11 +1445,7 @@ msgstr "Arka Cerita"
 msgid "paste_clipboard_confirm"
 msgstr "Gunakan kunci API yang ditemui di papan keratan untuk %s?"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "AI menemui %d kemungkinan lokasi pendua daripada pengambilan terakhir. Semak sekarang?"
 
@@ -1757,9 +1749,9 @@ msgstr "Kesan Automatik (Disyorkan)"
 msgid "story_toc_depth_desc"
 msgstr "Pilih aras Isi Kandungan yang mewakili cerita berasingan:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
-msgstr "Istilah tidak ditemui."
+msgstr "Tiada terma sepadan dengan '%s'"
 
 # en-hash: 1ecbe04157c9f7433d24d17cf5e70564
 msgid "testing_api_keys"
@@ -2112,10 +2104,6 @@ msgstr "Perkara baharu:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "Mengemas kini X-Ray..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "nilai"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

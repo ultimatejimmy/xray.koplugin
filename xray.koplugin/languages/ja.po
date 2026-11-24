@@ -269,10 +269,6 @@ msgstr "%s の設定済みAPIキーを削除しますか？"
 msgid "continue_in_background"
 msgstr "閉じる"
 
-# en-hash: 9cfefed8fb9497baa5cd519d7d2bb5d7
-msgid "current_language"
-msgstr "ja"
-
 # en-hash: 97b9ad7336ac722cf16044cf603bfe10
 msgid "current_mode"
 msgstr "現在: "
@@ -355,15 +351,15 @@ msgstr "次回から表示しない"
 
 # en-hash: ac85b245abd78e8e8c6b73405ab9e6e2
 msgid "entity_bionic_note_full"
-msgstr "Bionic Reading splits words across inline formatting tags, which is not compatible with entity underlines.\n\nUse a fast font instead for best performance."
+msgstr "Bionic Readingはインラインのフォーマットタグをまたいで単語を分割するため、エンティティの下線と互換性がありません。\n\n最適なパフォーマンスを得るには、代わりに高速なフォントを使用してください。"
 
 # en-hash: 93c29cefa5c33d79b352bbf0caa1b6cc
 msgid "entity_bionic_note_menu"
-msgstr "Note: Not compatible with Bionic Reading"
+msgstr "注：バイオニック・リーディングとは互換性がありません"
 
 # en-hash: 5be72f3e715f611fe47bd980268ba9e9
 msgid "entity_cache_refreshing_menu"
-msgstr "Using cached underlines, refreshing…"
+msgstr "キャッシュされた下線を使用中、更新中…"
 
 # en-hash: 994d06622c761cbceb384fd10a0b53f3
 msgid "entity_cat_characters"
@@ -607,7 +603,7 @@ msgstr "エンティティの進化は、章やマイルストーンを通じて
 
 # en-hash: 8a193135a3bc4b4998dfc09f31602b3f
 msgid "evolution_title"
-msgstr "進化"
+msgstr "ストーリーアーク: %s"
 
 # en-hash: bd109e1437d54acaada2eb31eebd39d2
 msgid "extracting_more_characters"
@@ -629,13 +625,13 @@ msgstr "'%s' のX-Rayデータが見つかりませんでした。検索しま�
 msgid "fetch_successful"
 msgstr "取得に成功しました"
 
-# en-hash: 628671947a82f87c18a98ee9b6ff8b00
+# en-hash: 572e520194e629b3b906bb5b3e5bce2d
 msgid "fetching_ai"
-msgstr "X-Rayを取得中..."
+msgstr "%s から取得中..."
 
-# en-hash: cfecb2031470d0e28420642fc37ab55f
+# en-hash: 2b05ded75b73f463504a742fe3492e55
 msgid "fetching_author"
-msgstr "著者情報を取得中..."
+msgstr "%s から作者情報を取得中..."
 
 # en-hash: 403bf4429b560eb3652c17997d655811
 msgid "fetching_series_context"
@@ -1449,11 +1445,7 @@ msgstr "ストーリーアーク"
 msgid "paste_clipboard_confirm"
 msgstr "クリップボードのAPIキーを %s に使用しますか？"
 
-# en-hash: 607481fc96e754b33650eb171aac9447
-msgid "path"
-msgstr "plugins/xray.koplugin"
-
-# en-hash: 046763a0d64321194477604b7751c8e4
+# en-hash: 4a5e6fc7e545f448d7e82b67d987f61f
 msgid "pending_duplicates_prompt"
 msgstr "前回の取得で%d件の重複の可能性がある場所が見つかりました。確認しますか？"
 
@@ -1757,9 +1749,9 @@ msgstr "自動検出 (推奨)"
 msgid "story_toc_depth_desc"
 msgstr "各ストーリーに対応する目次レベルを選択してください:"
 
-# en-hash: d725036d492c380f06f4eb32f5704bc9
+# en-hash: d7c6deb856024d209d52d833b9f4c95d
 msgid "term_not_found"
-msgstr "用語が見つかりません。"
+msgstr "「%s」に一致する用語が見つかりません"
 
 # en-hash: 1ecbe04157c9f7433d24d17cf5e70564
 msgid "testing_api_keys"
@@ -2112,10 +2104,6 @@ msgstr "新機能:"
 # en-hash: 46667b51ced49ca8828f897cf83e89b8
 msgid "updating_ai"
 msgstr "X-Rayを更新中..."
-
-# en-hash: 0d1b08c34858921bc7c662b228acb7ba
-msgid "val"
-msgstr "???"
 
 # en-hash: 1739e3ae6d734407aef8af879665b8ee
 msgid "validate_keys_title"

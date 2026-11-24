@@ -14,8 +14,8 @@ def merge_config(new_cfg_path, backup_cfg_path):
 
     keys = [
         "gemini_api_key", "chatgpt_api_key", "deepseek_api_key", "claude_api_key",
-        "custom1_api_key", "custom1_endpoint", "custom1_model",
-        "custom2_api_key", "custom2_endpoint", "custom2_model"
+        "custom1_api_key", "custom1_endpoint", "custom1_model", "custom1_format", "custom1_headers",
+        "custom2_api_key", "custom2_endpoint", "custom2_model", "custom2_format", "custom2_headers"
     ]
 
     for key in keys:

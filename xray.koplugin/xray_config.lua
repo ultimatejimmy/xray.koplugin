@@ -28,10 +28,12 @@ return {
     custom1_endpoint = "",   -- e.g., "https://openrouter.ai/api/v1/chat/completions"
     custom1_model    = "",   -- e.g., "google/gemini-4-hydrogen"
     custom1_format   = "",   -- optional: "openai" or "anthropic" (default: auto-detected from endpoint)
+    custom1_headers  = "",   -- optional: extra HTTP headers, one per line, e.g., "CF-Access-Client-Id: xxx\nCF-Access-Client-Secret: yyy"
 
     -- Custom API slot 2 (e.g., a local Ollama server)
     custom2_api_key  = "",
     custom2_endpoint = "",   -- e.g., "http://localhost:11434/v1/chat/completions"
     custom2_model    = "",   -- e.g., "llama3"
     custom2_format   = "",   -- optional: "openai" or "anthropic" (default: auto-detected from endpoint)
+    custom2_headers  = "",   -- optional: extra HTTP headers, one per line ("Header-Name: value")
 }

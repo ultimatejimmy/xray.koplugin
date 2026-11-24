@@ -10,6 +10,7 @@ local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local ok_xl, XRayLogger = pcall(require, plugin_path .. "xray_logger")
 local ok_xc, XRayConfig = pcall(require, plugin_path .. "xray_config")
 local utils = require(plugin_path .. "xray_utils")
+local conductor = require(plugin_path .. "xray_conductor")
 
 
 local XRayPlugin = (ok_wc and WidgetContainer and WidgetContainer.extend) and WidgetContainer:extend{
@@ -184,6 +185,8 @@ function XRayPlugin:init()
     -- Standalone Image Manager
     local ImageManager = require(plugin_path .. "xray_imagemanager")
     self.image_manager = ImageManager:new(self)
+
+    conductor.register(self)
     
     self:log("XRayPlugin: Initialized with language: " .. self.loc:getLanguage())
     self:onDispatcherRegisterActions()
@@ -254,7 +257,7 @@ function XRayPlugin:init()
             self:mountHighlightHandler()
         end
     end
-    
+
         logger.info("XRayPlugin: Initialized successfully")
     end)
     if not ok then
@@ -354,6 +357,9 @@ end
 function XRayPlugin:onSuspend()
     if self.flushSeriesSync then
         pcall(function() self:flushSeriesSync() end)
+    end
+    if self.cancelBackgroundWork then
+        pcall(function() self:cancelBackgroundWork("Device suspended") end)
     end
     if self.cancelActiveAIRequest then
         self:cancelActiveAIRequest("Fetch cancelled because the device suspended")
@@ -540,28 +546,85 @@ function XRayPlugin:_getFlatToc()
     return self._cached_toc
 end
 
-function XRayPlugin:onLowMemory()
-    self:log("XRayPlugin: onLowMemory received. Releasing caches.")
+function XRayPlugin:isXRayForegroundOpen()
+    return self._xray_foreground_busy == true
+        or self.xray_menu ~= nil
+        or self.char_menu ~= nil
+        or self.loc_menu ~= nil
+        or self.terms_menu ~= nil
+        or self.timeline_menu ~= nil
+        or self.hf_menu ~= nil
+        or self.mentions_menu ~= nil
+        or self.active_details_dialog ~= nil
+        or self.active_related_menu ~= nil
+        or self.active_entity_scan_dialog ~= nil
+        or self.active_unit_scan_dialog ~= nil
+end
+
+function XRayPlugin:cancelBackgroundWork(reason)
+    self:clearPendingBackgroundFetch()
+    if self.bg_fetch_active and self.cancelActiveAIRequest then
+        pcall(function() self:cancelActiveAIRequest(reason or "Background work cancelled") end)
+    end
+    if self.is_sequential_scan_active and not self.active_sequential_is_manual and self.cancelSequentialChapterScan then
+        pcall(function() self:cancelSequentialChapterScan() end)
+    end
+    if self._unit_scan_in_progress and not self._unit_scan_manual and self._cancelUnitScanChild then
+        pcall(function() self:_cancelUnitScanChild(reason or "background work cancelled") end)
+    end
+    if self._entity_scan_in_progress and not self._entity_scan_manual and self._cancelEntityScanChild then
+        pcall(function() self:_cancelEntityScanChild(reason or "background work cancelled") end)
+    end
+end
+
+function XRayPlugin:reclaimMemory(level)
+    if self.destroyed then return end
+    local is_fg = self:isXRayForegroundOpen()
+    if level ~= "critical" and is_fg then
+        return
+    end
     if self.clearTileCaches then
         pcall(function() self:clearTileCaches() end)
     end
-    if self.clearEntityUnderlines then
-        pcall(function() self:clearEntityUnderlines() end)
-    end
     self._box_cache_sig = nil
     self._entity_box_cache_sig = nil
-    if self.clearSpineCache then
-        pcall(function() self:clearSpineCache() end)
+    if self.image_manager and self.image_manager.clearSpineCache then
+        pcall(function() self.image_manager:clearSpineCache() end)
     end
     self._cached_toc = nil
-    local ChapterAnalyzer = require(plugin_path .. "xray_chapteranalyzer")
-    if ChapterAnalyzer and ChapterAnalyzer.clearCache then
+    local ok_ca, ChapterAnalyzer = pcall(require, plugin_path .. "xray_chapteranalyzer")
+    if ok_ca and ChapterAnalyzer and ChapterAnalyzer.clearCache then
         pcall(function() ChapterAnalyzer:clearCache() end)
     end
-    if self.is_sequential_scan_active then
-        self:log("XRayPlugin: Halting background sequential prefetch due to low memory event.")
-        self.active_sequential_cancelled = true
+    if level == "critical" then
+        if self.clearEntityUnderlines then
+            pcall(function() self:clearEntityUnderlines() end)
+        end
+        if self.is_sequential_scan_active and not self.active_sequential_is_manual then
+            self:log("XRayPlugin: Halting background sequential prefetch due to critical memory reclaim.")
+            self.active_sequential_cancelled = true
+            if self.cancelSequentialChapterScan then
+                pcall(function() self:cancelSequentialChapterScan() end)
+            end
+        end
+        if self._unit_scan_in_progress and not self._unit_scan_manual and self._cancelUnitScanChild then
+            pcall(function() self:_cancelUnitScanChild("critical memory reclaim") end)
+        end
+        if self._entity_scan_in_progress and not self._entity_scan_manual and self._cancelEntityScanChild then
+            pcall(function() self:_cancelEntityScanChild("critical memory reclaim") end)
+        end
     end
+end
+
+function XRayPlugin:onMemoryReclaim(level)
+    self:log("XRayPlugin: onMemoryReclaim received (level=" .. tostring(level) .. ").")
+    self:reclaimMemory(level)
+    return false
+end
+
+function XRayPlugin:onLowMemory()
+    self:log("XRayPlugin: onLowMemory received. Releasing caches.")
+    self:reclaimMemory("critical")
     collectgarbage("collect")
 end
 
@@ -934,39 +997,59 @@ function XRayPlugin:scheduleBackgroundCatchUp(delay)
 
         self:log("XRayPlugin: Catch-up batch started for target page: " .. tostring(target_page) .. " (chapter: " .. tostring(chapter_title) .. ", final=" .. tostring(is_final) .. ")")
 
-        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, function(success, err_code)
-            if self.destroyed or not self.ui or self.ui.document ~= document then return end
-            if success then
-                self.last_bg_fetch_time = os.time()
-                local curr_limit = self:getCatchUpTargetLimit()
-                local lfp = self.book_data and self.book_data.last_fetch_page or target_page
-                if self:isAnthologyMode() then
-                    local curr_page = self.ui:getCurrentPage()
-                    local curr_story = self:getCurrentStory(curr_page)
-                    if curr_story then
-                        local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
-                        lfp = st_state and st_state.last_fetch_page or lfp
-                        curr_limit = math.min(curr_limit, curr_story.end_page or curr_limit)
+        conductor.runSlot(self, {
+            task = "bg_catchup_fetch",
+            priority = "idle_bg",
+            min_free_kb = 30 * 1024,
+            dedupe_key = "xray:bg_catchup_fetch",
+            subprocess = true,
+            document = document,
+            run = function(done)
+                self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, function(success, err_code)
+                    done()
+                    if self.destroyed or not self.ui or self.ui.document ~= document then return end
+                    if success then
+                        self.last_bg_fetch_time = os.time()
+                        local curr_limit = self:getCatchUpTargetLimit()
+                        local lfp = self.book_data and self.book_data.last_fetch_page or target_page
+                        if self:isAnthologyMode() then
+                            local curr_page = self.ui:getCurrentPage()
+                            local curr_story = self:getCurrentStory(curr_page)
+                            if curr_story then
+                                local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
+                                lfp = st_state and st_state.last_fetch_page or lfp
+                                curr_limit = math.min(curr_limit, curr_story.end_page or curr_limit)
+                            end
+                        end
+                        if lfp < curr_limit then
+                            self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
+                            self.pending_background_fetch = true
+                            self:scheduleBackgroundCatchUp(catchup_cd)
+                        else
+                            self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
+                            self:clearPendingBackgroundFetch()
+                        end
+                    elseif err_code == "ALREADY_COVERED" then
+                        self:log("XRayPlugin: Catch-up batch already covered at page " .. tostring(target_page) .. ". Clearing pending catch-up.")
+                        self:clearPendingBackgroundFetch()
+                    else
+                        -- If failed, wait for next network event or reschedule if still online
+                        if utils:isSilentNetworkAvailable() then
+                            self:scheduleBackgroundCatchUp(catchup_cd)
+                        end
                     end
+                end)
+            end,
+            cancel = function()
+                if self.bg_fetch_active and self.cancelActiveAIRequest then
+                    self:cancelActiveAIRequest("Conductor cancelled background catch-up")
                 end
-                if lfp < curr_limit then
-                    self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
-                    self.pending_background_fetch = true
-                    self:scheduleBackgroundCatchUp(catchup_cd)
-                else
-                    self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
-                    self:clearPendingBackgroundFetch()
-                end
-            elseif err_code == "ALREADY_COVERED" then
-                self:log("XRayPlugin: Catch-up batch already covered at page " .. tostring(target_page) .. ". Clearing pending catch-up.")
-                self:clearPendingBackgroundFetch()
-            else
-                -- If failed, wait for next network event or reschedule if still online
-                if utils:isSilentNetworkAvailable() then
-                    self:scheduleBackgroundCatchUp(catchup_cd)
-                end
-            end
-        end)
+            end,
+            on_rejected = function(reason)
+                self:log("XRayPlugin: Catch-up batch deferred by Conductor (" .. tostring(reason) .. ")")
+                self.pending_background_fetch = true
+            end,
+        })
     end
     self._background_catch_up_callback = callback
     UIManager:scheduleIn(delay or 3, callback)
@@ -1415,36 +1498,56 @@ function XRayPlugin:triggerBackgroundMergeFetch(chapter_title)
         self.fetch_attempts[attempt_key] = (self.fetch_attempts[attempt_key] or 0) + 1
         self:clearPendingBackgroundFetch()
 
-        local on_complete_cb = function(success, err_code, err_msg)
-            if self.destroyed or not self.ui or self.ui.document ~= document then return end
-            if success then
-                self.last_bg_fetch_time = os.time()
-                local curr_limit = self:getCatchUpTargetLimit()
-                local lfp = self.book_data and self.book_data.last_fetch_page or target_page
-                if self:isAnthologyMode() then
-                    local curr_page = self.ui:getCurrentPage()
-                    local curr_story = self:getCurrentStory(curr_page)
-                    if curr_story then
-                        local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
-                        lfp = st_state and st_state.last_fetch_page or lfp
-                        curr_limit = math.min(curr_limit, curr_story.end_page or curr_limit)
+        conductor.runSlot(self, {
+            task = "bg_merge_fetch",
+            priority = "idle_bg",
+            min_free_kb = 30 * 1024,
+            dedupe_key = "xray:bg_merge_fetch",
+            subprocess = true,
+            document = document,
+            run = function(done)
+                local on_complete_cb = function(success, err_code, err_msg)
+                    done()
+                    if self.destroyed or not self.ui or self.ui.document ~= document then return end
+                    if success then
+                        self.last_bg_fetch_time = os.time()
+                        local curr_limit = self:getCatchUpTargetLimit()
+                        local lfp = self.book_data and self.book_data.last_fetch_page or target_page
+                        if self:isAnthologyMode() then
+                            local curr_page = self.ui:getCurrentPage()
+                            local curr_story = self:getCurrentStory(curr_page)
+                            if curr_story then
+                                local st_state = self.book_data and self.book_data.story_fetch_state and self.book_data.story_fetch_state[curr_story.story_id]
+                                lfp = st_state and st_state.last_fetch_page or lfp
+                                curr_limit = math.min(curr_limit, curr_story.end_page or curr_limit)
+                            end
+                        end
+                        if lfp < curr_limit then
+                            self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
+                            self.pending_background_fetch = true
+                            self:scheduleBackgroundCatchUp(self.CATCHUP_COOLDOWN or CATCHUP_COOLDOWN)
+                        else
+                            self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
+                            self:clearPendingBackgroundFetch()
+                        end
+                    elseif err_code == "ALREADY_COVERED" then
+                        self:log("XRayPlugin: Auto-merge batch already covered at page " .. tostring(target_page) .. ". Clearing pending catch-up.")
+                        self:clearPendingBackgroundFetch()
                     end
                 end
-                if lfp < curr_limit then
-                    self:log("XRayPlugin: Batch completed up to page " .. tostring(lfp) .. ". Next batch queued for target page " .. tostring(curr_limit))
-                    self.pending_background_fetch = true
-                    self:scheduleBackgroundCatchUp(self.CATCHUP_COOLDOWN or CATCHUP_COOLDOWN)
-                else
-                    self:log("XRayPlugin: Catch-up fully completed up to page " .. tostring(lfp))
-                    self:clearPendingBackgroundFetch()
-                end
-            elseif err_code == "ALREADY_COVERED" then
-                self:log("XRayPlugin: Auto-merge batch already covered at page " .. tostring(target_page) .. ". Clearing pending catch-up.")
-                self:clearPendingBackgroundFetch()
-            end
-        end
 
-        self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, on_complete_cb) -- is_silent=true
+                self:continueWithFetch(reading_percent, is_update, last_fetch_page, true, target_page, on_complete_cb) -- is_silent=true
+            end,
+            cancel = function()
+                if self.bg_fetch_active and self.cancelActiveAIRequest then
+                    self:cancelActiveAIRequest("Conductor cancelled background merge fetch")
+                end
+            end,
+            on_rejected = function(reason)
+                self:log("XRayPlugin: Auto-merge fetch deferred by Conductor (" .. tostring(reason) .. ")")
+                self.pending_background_fetch = true
+            end,
+        })
     else
         -- Silently skip if offline
         self.pending_background_fetch = true

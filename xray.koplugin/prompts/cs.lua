@@ -1,9 +1,7 @@
 return {
-    -- System instruction
-    system_instruction = "Jsi expert na literární výzkum. Tvoje odpověď musí být VÝHRADNĚ v platném formátu JSON. Zajisti, aby byly údaje velmi přesné a týkaly se výhradně poskytnutého kontextu.",
-
-    -- Author-only prompt (For quick bio lookup)
-    author_only = [[Identifikuj autora knihy "%s" a uveď jeho životopis.
+    -- Author Only
+    author_only = [[
+Identifikuj autora knihy "%s" a uveď jeho životopis.
 Metadata naznačují, že autorem je "%s".
 
 KRITICKÉ: Ověř autora pomocí "BOOK TEXT CONTEXT" (kontext textu knihy, pokud je uveden na konci této výzvy), abys zajistil 100%% přesnost a vyhnul se nesprávné identifikaci.
@@ -16,8 +14,9 @@ POŽADOVANÝ FORMÁT JSON:
   "author_death": "Datum úmrtí ve formátu podle místních zvyklostí"
 }]],
 
-    -- Find Duplicates (for AI-Assisted Merge)
-    find_duplicates = [[Kniha: %s
+    -- Find Duplicates
+    find_duplicates = [[
+Kniha: %s
 Autor: %s
 Postup čtení: %d%%
 
@@ -45,8 +44,9 @@ POŽADOVANÝ FORMÁT JSON:
   ]
 }]],
 
-    -- Single Comprehensive Fetch (Combined Characters, Locations, Timeline)
-    comprehensive_xray = [[Kniha: %s
+    -- Comprehensive Xray
+    comprehensive_xray = [[
+Kniha: %s
 Autor: %s
 Postup čtení: %d%%
 
@@ -152,10 +152,11 @@ POŽADOVANÝ FORMÁT JSON:
       "event": "{TIMELINE_EXAMPLE}"
     }
   ]
-} ]],
+}]],
 
-    -- Fetch More Characters (AI Limit Bypass)
-    more_characters = [[Kniha: %s
+    -- More Characters
+    more_characters = [[
+Kniha: %s
 Autor: %s
 Postup čtení: %d%%
 
@@ -187,8 +188,9 @@ POŽADOVANÝ FORMÁT JSON:
   ]
 }]],
 
-    -- Fetch More Terms (Glossary Support)
-    more_terms = [[Kniha: %s
+    -- More Terms
+    more_terms = [[
+Kniha: %s
 Autor: %s
 Postup čtení: %d%%
 
@@ -219,7 +221,9 @@ POŽADOVANÝ FORMÁT JSON:
   ]
 }]],
 
-    single_word_lookup = [[Uživatel označil slovo "%s".
+    -- Single Word Lookup
+    single_word_lookup = [[
+Uživatel označil slovo "%s".
 ÚKOL: Urči, zda toto slovo v knize představuje postavu, místo, historickou osobnost nebo odborný pojem/zkratku.
 
 KRITICKÉ PRO POSTAVY A MÍSTA: K identifikaci entity použij poskytnutý "BOOK TEXT CONTEXT". Pokud je slovo uvedeno v nápovědě "SEARCH TARGET" nebo "DIRECT REFERENCE", v knize na aktuální pozici SE NACHÁZÍ. Neodmítej ho jen proto, že se nenachází přesně ve vzorkovaném textu děje. Krátká jména (už od 2 písmen, např. "Oz", "Al", "Jo") jsou platná a je třeba je analyzovat. Slovo může být ve skloňovaném tvaru (např. "Petrovi" pro postavu "Petr") — v `name` vždy uveď základní tvar (1. pád).
@@ -252,8 +256,9 @@ Pokud je `is_valid` false:
   "error_message": "Krátké vysvětlení, proč nejde o postavu ani místo."
 }]],
 
-    -- Smart Merge Descriptions
-    merge_descriptions = [[ÚKOL: Spoj následující dva popisy téže entity (postavy nebo místa) do jednoho soudržného a stručného shrnutí.
+    -- Merge Descriptions
+    merge_descriptions = [[
+ÚKOL: Spoj následující dva popisy téže entity (postavy nebo místa) do jednoho soudržného a stručného shrnutí.
 Odstraň nadbytečné informace a zajisti, aby výsledný popis plynul přirozeně.
 
 Hlavní popis: %s
@@ -264,7 +269,9 @@ POŽADOVANÝ FORMÁT JSON:
   "merged_description": "Spojený a uhlazený popis (max. {MAX_CHAR_DESC} znaků)"
 }]],
 
-    book_type_detect = [[Název knihy: %s
+    -- Book Type Detect
+    book_type_detect = [[
+Název knihy: %s
 Autor: %s
 Série: %s
 Popis souboru/metadata tématu: %s
@@ -278,8 +285,9 @@ Vrať POUZE platný JSON:
   "confidence": "high"
 }]],
 
-    -- Multi-Book Series Context Prompts
-    series_detect = [[Název knihy: %s
+    -- Series Detect
+    series_detect = [[
+Název knihy: %s
 Autor: %s
 
 ÚKOL: Urči, zda je tato kniha součástí pojmenované série.
@@ -293,7 +301,9 @@ Vrať POUZE platný JSON:
 Pokud kniha NENÍ součástí série, vrať:
 { "is_series": false }]],
 
-    prior_book_list = [[Série: %s
+    -- Prior Book List
+    prior_book_list = [[
+Série: %s
 Pořadí aktuální knihy: %d
 Název aktuální knihy: %s
 
@@ -306,7 +316,9 @@ Vrať POUZE platný JSON:
   ]
 }]],
 
-    series_book_summary = [[CÍLOVÁ KNIHA: %s
+    -- Series Book Summary
+    series_book_summary = [[
+CÍLOVÁ KNIHA: %s
 AUTOR: %s
 POŘADÍ CÍLOVÉ KNIHY: %d
 SÉRIE: %s
@@ -354,9 +366,11 @@ POŽADOVANÝ FORMÁT JSON:
   "timeline": [
     { "chapter": "Shrnutí knihy", "event": "Jedno velmi podrobné, komplexní shrnutí děje celé knihy, hlavních událostí a rozuzlení (max. 2000 znaků). Toto shrnutí MUSÍŠ kvůli čitelnosti rozdělit do více samostatných odstavců oddělených dvojitým zalomením řádku (\\n\\n), ne do jednoho souvislého bloku textu." }
   ]
-}]] ,
+}]],
 
-    local_timeline_summary = [[CÍLOVÁ KNIHA: %s
+    -- Local Timeline Summary
+    local_timeline_summary = [[
+CÍLOVÁ KNIHA: %s
 AUTOR: %s
 POŘADÍ CÍLOVÉ KNIHY: %d
 SÉRIE: %s
@@ -379,14 +393,262 @@ POŽADOVANÝ FORMÁT JSON:
   ]
 }]],
 
+    -- Chapter Delta
+    chapter_delta = [[
+Kniha: %s
+Autor: %s
+Analýza kapitoly: %s
+
+ÚKOL: Analyzujte POUZE tuto jedinou kapitolu. Identifikujte NOVÉ entity představené v této kapitole a DELTA AKTUALIZACE (změny stavu) u stávajících entit.
+Výstupem musí být POUZE platný objekt JSON.
+
+SEZNAM STÁVAJÍCÍCH ZNÁMÝCH ENTIT (NEPROVÁDĚJTE opětnou extrakci, pokud se jejich role, stav nebo popis výrazně nevyvinuly):
+%s
+
+PRAVIDLA:
+1. STRIKTNÍ OMEZENÍ SPOILERŮ: Analyzujte POUZE text poskytnuté kapitoly. NEPOUŽÍVEJTE žádné znalosti z budoucích kapitol ani z vnějších zdrojů.
+2. HLOUBKA A SUBSTANCE POPISU POSTAV (KRITICKÉ):
+   - Uzemněné a konkrétní: Popište, kdo postava je, pomocí konkrétních příběhových faktů — jejich minulosti, osobité osobnosti, profese, klíčových vztahů k jiným postavám a jejich konkrétní role a osobních sázek v příběhu.
+   - Významný kontext vyprávění: Propojte postavu přímo s ústřední záhadou, zápletkovým konfliktem nebo vyšetřováním v této knize (např. jaké zločiny nebo případy vyšetřuje, kdo si ji najal, klíčoví spojenci nebo protivníci, konkrétní osobní dilemata nebo napětí).
+   - NEPŮSOBIT příliš obecně: NEPÍŠTE obecné klišé popisy (např. vyhněte se prázdným formulacím typu „detektiv vyšetřující složité případy“). Pojmenujte konkrétní okolnosti, vazby a sázky stanovené v textu.
+   - ŽÁDNÉ shrnování všedních pochůzek: NEPÍŠTE chronologické záznamy běžných denních činností nebo rutinních prací (např. NESHRNUJTE cesty do obchodu, rutinní telefonáty nebo vedlejší pohyby scéna po scéně).
+   - Popisy postav musí být bohaté, živé profily shrnující, kdo jsou a jaký mají dosavadní význam v knize.
+3. VYSOKÝ PRÁH PRO AKTUALIZACE POSTAV:
+   - NEVYTVÁŘEJTE aktualizaci v `character_state_updates` pouze proto, že se stávající postava v této kapitole objevila, promluvila nebo prováděla rutinní úkony.
+   - Aktualizaci generujte POUZE tehdy, pokud dojde k podstatné, trvalé proměně v jejich příběhové linii, identitě, vztazích, zaměstnání, loajalitě nebo stavu (např. zabit/a, zraněn/a, zatčen/a, zrazen/a, zasnouben/a, povýšen/a, odhalen/a jako pachatel, odhalení velkého tajemství nebo motivu).
+   - Pokud JE aktualizace opodstatněná, aktualizovaný `description` musí být bohatým, kumulativním přehledem postavy, který zahrnuje nový vývoj a zároveň zachovává její základní identitu a zavedený kontext příběhu — NIKOLI shrnutím izolované scény.
+4. ZNAČKY STRÁNEK UVNITŘ KAPITOLY ([PAGE N]) A STRIKTNÍ OMEZENÍ SPOILERŮ:
+   - Texty kapitol obsahují značky [PAGE N] označující postup stránek.
+   - Pro `new_characters`, `new_locations` a `new_terms`: uveďte "first_page" (celé číslo N ze značky [PAGE N], kde byla entita poprvé zmíněna), "intro_role" (pro postavy) a "intro_description" (1-2 věty přísně omezené na to, co je známo při prvním představení na [PAGE first_page] — s NULOVOU znalostí pozdějších zvratů, tajemství nebo výsledků na dalších stránkách). Uveďte také "page" (značku [PAGE N], kde platí úplnější kumulativní "description", obvykle poslední stránku kapitoly).
+   - Pro `character_state_updates`, `location_state_updates` a `term_state_updates`: uveďte "page" (celé číslo N ze značky [PAGE N], kde je odhalení/přechod dokončen; NEODHALUJTE fakta před touto stránkou).
+5. DŮKAZY: Uveďte krátký odkaz nebo citovaný výňatek z této kapitoly vysvětlující, proč k aktualizaci došlo.
+6. ČASOVÁ OSA: Uveďte přesně jedno shrnutí událostí hlavního děje v této kapitole.
+
+POŽADOVANÝ FORMÁT JSON:
+{
+  "new_characters": [
+    {
+      "name": "Celé jméno",
+      "aliases": ["Alias 1", "Alias 2"],
+      "first_page": 80,
+      "intro_role": "Počáteční role (např. Obecní písař, Cizinec, Klient)",
+      "intro_description": "Počáteční dojem v 1-2 větách přísně při prvním představení, nulové spoilery z pozdějších stránek.",
+      "page": 99,
+      "role": "Příběhová role / význam (např. Hlavní postava, Soukromý detektiv, Partner, Antagonista, Oběť, Klient, Podezřelý, Vedlejší postava, Epizodní postava)",
+      "status": "alive",
+      "description": "Bohatý, konkrétní popis postavy (zázemí, vztahy, příběhové sázky). Vyhněte se obecným popisům a záznamům všedních pochůzek.",
+      "evidence": "Krátký výňatek"
+    }
+  ],
+  "character_state_updates": [
+    {
+      "name": "Jméno odpovídající známému seznamu",
+      "page": 95,
+      "role": "Aktualizovaná příběhová role / význam (např. Hlavní postava, Partner, Antagonista, Vedlejší postava atd.)",
+      "status": "alive",
+      "change": "Jedna krátká věta pojmenovávající, co se změnilo od předchozího stavu (např. 'Povýšen na partnera po případu Shacklewell')",
+      "description": "Aktualizovaný bohatý, kumulativní popis postavy odrážející její nový stav a příběhové sázky",
+      "evidence": "Krátký výňatek"
+    }
+  ],
+  "new_locations": [
+    {
+      "name": "Název místa",
+      "first_page": 80,
+      "intro_description": "První dojem při první zmínce.",
+      "page": 99,
+      "description": "Popis místa",
+      "evidence": "Krátký výňatek"
+    }
+  ],
+  "location_state_updates": [
+    {
+      "name": "Jméno odpovídající známému seznamu",
+      "page": 95,
+      "change": "Jedna krátká věta pojmenovávající, co se změnilo (např. 'Zničeno během bitvy o Oakhaven')",
+      "description": "Aktualizovaný vyvinutý popis",
+      "evidence": "Krátký výňatek"
+    }
+  ],
+  "new_terms": [
+    {
+      "name": "Název pojmu",
+      "first_page": 80,
+      "intro_description": "Počáteční definice při první zmínce.",
+      "page": 99,
+      "description": "Definice nebo vysvětlení reálií",
+      "evidence": "Krátký výňatek"
+    }
+  ],
+  "term_state_updates": [
+    {
+      "name": "Jméno odpovídající známému seznamu",
+      "page": 95,
+      "change": "Jedna krátká věta pojmenovávající, co se změnilo v chápání nebo použití",
+      "description": "Aktualizovaná definice",
+      "evidence": "Krátký výňatek"
+    }
+  ],
+  "timeline_event": {
+    "chapter": "%s",
+    "event": "Shrnutí událostí v této kapitole"
+  }
+}
+
+TEXT KAPITOLY:
+%s]],
+
+    -- Batch Chapter Delta
+    batch_chapter_delta = [[
+Kniha: %s
+Autor: %s
+Kapitoly v této dávce: %s
+
+ÚKOL: Analyzujte poskytnutou sekvenční dávku kapitol popořadě.
+Pro KAŽDOU kapitolu v dávce určete:
+1. NOVÉ entity představené v dané kapitole (postavy, lokace, pojmy).
+2. ZMĚNY STAVU (přechody stavu) u stávajících známých entit (z přehledu NEBO představených v dřívější kapitole této dávky) POUZE A JEDINĚ TEHDY, pokud jejich role, stav, loajalita nebo narativní situace prošly podstatnou a trvalou proměnou.
+3. UDÁLOST NA ČASOVÉ OSE: Stručné shrnutí hlavních dějových událostí v dané kapitole.
+
+Na výstupu uveďte POUZE platný JSON objekt odpovídající požadovanému schématu.
+
+PŘEHLED STÁVAJÍCÍCH ZNÁMÝCH ENTIT (z předchozích dávek – NEEXTRAHUJTE znovu, pokud se jejich role, stav nebo popis výrazně nevyvinuly):
+%s
+
+PRAVIDLA:
+1. STRIKTNÍ OMEZENÍ SPOILERŮ A SEKVENČNÍ POSTUP:
+   - Analyzujte kapitoly v sekvenčním pořadí.
+   - U jakékoli kapitoly v této dávce NEZAHRNUJTE poznatky z pozdějších kapitol v dávce ani ze zbytku knihy.
+2. HLOUBKA A PODSTATA POPISU POSTAVY (KRITICKÉ):
+   - Ukotvenost a specifičnost: Popište, kdo postava je, pomocí konkrétních faktů z příběhu – její zázemí, osobitá osobnost, profese, klíčové vztahy k ostatním postavám a její konkrétní role a osobní sázky v vyprávění.
+   - Významný narativní kontext: Propojte postavu přímo s ústřední záhadou, zápletkovým konfliktem nebo vyšetřováním v této knize (např. jaké zločiny nebo případy vyšetřuje, kdo si ji najal, klíčoví spojenci nebo protivníci, konkrétní osobní dilemata nebo napětí).
+   - NEPÍŠTE příliš obecně: NEPSAT obecné klišé popisy (např. vyhněte se prázdným formulacím typu "detektiv vyšetřující složité případy"). Pojmenujte konkrétní okolnosti, spojení a sázky stanovené v textu.
+   - ŽÁDNÉ shrnování triviálních pochůzek: NEPSAT chronologické záznamy všedních denních činností nebo rutinních prací (např. NESHROMAŽĎUJTE výlety do obchodu, rutinní telefonáty nebo náhodné pohyby scénu po scéně).
+   - Popisy postav musí být bohaté, živé profily shrnující, kdo tyto postavy jsou a jaký mají význam až do tohoto místa v knize.
+3. VYSOKÝ PRÁH PRO AKTUALIZACE POSTAV:
+   - NEVYTVÁŘEJTE aktualizaci v `character_state_updates` jen proto, že se stávající postava v kapitole objevila, promluvila nebo prováděla rutinní úkony.
+   - Aktualizaci generujte POUZE v případě, že dojde k podstatné, trvalé proměně v její narativní linii, identitě, vztazích, zaměstnání, loajalitě nebo stavu (např. zabita, zraněna, zatčena, zrazena, zasnoubena, povýšena, odhalena jako pachatel, odhaleno zásadní tajemství nebo motiv).
+   - Pokud JE aktualizace opodstatněná, aktualizovaný popis `description` musí být bohatým, kumulativním přehledem postavy, který zahrnuje nový vývoj a zároveň zachovává její základní identitu a zavedený kontext příběhu – NIKOLI shrnutím izolované scény.
+4. ZNAČKY STRÁNEK UVNITŘ KAPITOLY ([PAGE N]) A ZÁKAZ SPOILERŮ:
+   - Texty kapitol obsahují značky [PAGE N] označující postup stránek.
+   - Pro `new_characters`, `new_locations` a `new_terms`: uveďte "first_page" (celé číslo N ze značky [PAGE N], kde byla entita poprvé zmíněna), "intro_role" (pro postavy) a "intro_description" (1–2 věty striktně omezené na to, co je známo při prvním představení na [PAGE first_page] – s NULOVOU znalostí pozdějších zvratů, tajemství nebo výsledků z následujících stránek). Dále uveďte "page" (značku [PAGE N], kde platí úplnější kumulativní "description", obvykle poslední stránku kapitoly).
+   - Pro `character_state_updates`, `location_state_updates` a `term_state_updates`: uveďte "page" (celé číslo N ze značky [PAGE N], kde je odhalení/přechod dokončen; NEODHALUJTE fakta před touto stránkou).
+5. DŮKAZY: Uveďte stručnou referenci nebo citaci z dané konkrétní kapitoly vysvětlující, proč k aktualizaci došlo.
+6. BEZPEČNOST JSON: Na výstupu uveďte striktně platný JSON. Uvnitř řetězců správně používejte únikové znaky pro uvozovky.
+
+POŽADOVANÝ FORMÁT JSON:
+{
+  "chapters": [
+    {
+      "chapter_index": 1,
+      "chapter_title": "Název kapitoly",
+      "timeline_event": "Shrnutí hlavního vývoje děje v této kapitole.",
+      "new_characters": [
+        {
+          "name": "Jméno a příjmení",
+          "aliases": ["Alias 1"],
+          "first_page": 80,
+          "intro_role": "Počáteční role (např. Obecní úředník, Cizinec, Klient)",
+          "intro_description": "Počáteční dojem v 1–2 větách striktně při prvním představení, žádné spoilery z pozdějších stránek.",
+          "page": 99,
+          "role": "Narativní role / význam (např. Hlavní postava, Soukromý detektiv, Partner, Antagonista, Oběť, Klient, Podezřelý, Vedlejší postava, Epizodní postava)",
+          "status": "alive",
+          "description": "Bohatý, konkrétní popis postavy (zázemí, vztahy, narativní sázky). Vyhněte se obecným popisům a záznamům triviálních pochůzek.",
+          "evidence": "Stručný výňatek"
+        }
+      ],
+      "character_state_updates": [
+        {
+          "name": "Jméno odpovídající známému přehledu nebo postavě představené v dřívější kapitole této dávky",
+          "page": 95,
+          "role": "Aktualizovaná narativní role / význam (např. Hlavní postava, Partner, Antagonista, Vedlejší postava atd.)",
+          "status": "alive",
+          "change": "Jedna krátká věta pojmenovávající, co se změnilo od předchozího stavu (např. 'Povýšen na partnera po případu Shacklewell')",
+          "description": "Aktualizovaný bohatý, kumulativní popis postavy odrážející její nový stav a sázky v příběhu",
+          "evidence": "Stručný výňatek"
+        }
+      ],
+      "new_locations": [
+        {
+          "name": "Název lokace",
+          "first_page": 80,
+          "intro_description": "Počáteční dojem při první zmínce.",
+          "page": 99,
+          "description": "Popis lokace",
+          "evidence": "Stručný výňatek"
+        }
+      ],
+      "location_state_updates": [
+        {
+          "name": "Jméno odpovídající známému přehledu nebo lokaci představené v dřívější kapitole této dávky",
+          "page": 95,
+          "change": "Jedna krátká věta pojmenovávající, co se změnilo (např. 'Zničeno během bitvy o Oakhaven')",
+          "description": "Aktualizovaný popis",
+          "evidence": "Stručný výňatek"
+        }
+      ],
+      "new_terms": [
+        {
+          "name": "Název pojmu",
+          "first_page": 80,
+          "intro_description": "Počáteční definice při první zmínce.",
+          "page": 99,
+          "description": "Definice nebo vysvětlení kontextu/světa",
+          "evidence": "Stručný výňatek"
+        }
+      ],
+      "term_state_updates": [
+        {
+          "name": "Jméno odpovídající známému přehledu nebo pojmu představenému v dřívější kapitole této dávky",
+          "page": 95,
+          "change": "Jedna krátká věta pojmenovávající, co se změnilo v chápání nebo použití",
+          "description": "Aktualizovaná definice",
+          "evidence": "Stručný výňatek"
+        }
+      ]
+    }
+  ]
+}
+
+TEXTY KAPITOL V TÉTO DÁVCE:
+%s]],
+
+    -- Anthology Detect
+    anthology_detect = [[
+Proanalyzujte následující podrobnosti o knize a obsah:
+
+Název: %s
+Autor: %s
+Témata: %s
+Popis: %s
+
+Obsah:
+%s
+
+Určete, zda je toto dílo:
+1. "anthology" (sbírka nezávislých povídek, esejů nebo novel, z nichž každá má svůj vlastní samostatný příběh nebo postavy, např. "Dobrodružství Sherlocka Holmese", "Dubliňané", "Výdech", "Muži bez žen").
+2. "novel" (jediný ucelený román rozdělený do kapitol, částí nebo dějství, např. "Pýcha a předsudek", "Harry Potter", "Duna", "Carrie").
+3. "novel_omnibus" (vícesvazková sbírka ucelených románů vydaných společně v jednom svazku, např. "Pán prstenů: Všechny tři svazky", "Stopařův průvodce Po Galaxii: Kompletní vydání", "Percy Jackson: Knihy 1–3").
+4. "non_fiction" (samostatné pojednání z oblasti literatury faktu, historie nebo akademická kniha rozdělená do kapitol).
+
+Vraťte POUZE JSON objekt ve tvaru:
+{
+  "type": "anthology" | "novel" | "novel_omnibus" | "non_fiction",
+  "confidence": 0.0 až 1.0,
+  "reasoning": "stručné vysvětlení (jedna věta)"
+}]],
+
+    -- System instruction
+    system_instruction = "Jsi expert na literární výzkum. Tvoje odpověď musí být VÝHRADNĚ v platném formátu JSON. Zajisti, aby byly údaje velmi přesné a týkaly se výhradně poskytnutého kontextu.",
+
     -- Fallback strings
     fallback = {
-        unknown_book = "Neznámá kniha",
-        unknown_author = "Neznámý autor",
-        unnamed_character = "Nepojmenovaná postava",
-        not_specified = "Neuvedeno",
+        no_biography = "Životopis není k dispozici",
         no_description = "Bez popisu",
-        unnamed_person = "Nepojmenovaná osoba",
-        no_biography = "Životopis není k dispozici"
+        not_specified = "Neuvedeno",
+        unknown_author = "Neznámý autor",
+        unknown_book = "Neznámá kniha",
+        unnamed_character = "Nepojmenovaná postava",
+        unnamed_person = "Nepojmenovaná osoba"
     }
 }

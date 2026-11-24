@@ -24,6 +24,7 @@ local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local XRayLogger = require(plugin_path .. "xray_logger")
 local xray_utils = require(plugin_path .. "xray_utils")
 local xray_theme = require(plugin_path .. "xray_theme")
+local conductor = require(plugin_path .. "xray_conductor")
 
 local function log(msg)
     XRayLogger:log("EntityScanner: " .. tostring(msg))
@@ -817,6 +818,14 @@ end
 
 -- ===== Subprocess & Async Management =====
 
+local function _releaseEntityScanSlot(self)
+    local done_cb = self._entity_scan_slot_done
+    self._entity_scan_slot_done = nil
+    if type(done_cb) == "function" then
+        pcall(done_cb)
+    end
+end
+
 function M:_cancelEntityScanChild(reason)
     if self._entity_scan_pid then
         local ffiutil = _getFFIUtil()
@@ -828,17 +837,20 @@ function M:_cancelEntityScanChild(reason)
     self._entity_scan_read_fd = nil
     self._entity_scan_started_at = nil
     self._entity_scan_in_progress = nil
+    self._entity_scan_manual = nil
     self._entity_scan_poll_fn = nil
     pcall(function() require("device"):enableCPUCores(1) end)
     if self.active_entity_scan_dialog then
         pcall(function() self.active_entity_scan_dialog:close() end)
         self.active_entity_scan_dialog = nil
     end
+    _releaseEntityScanSlot(self)
     log("Subprocess cancelled: " .. tostring(reason))
 end
 
 function M:_onEntityScanFinished(resolved_dir, ok, manual)
     self._entity_scan_in_progress = nil
+    self._entity_scan_manual = nil
     self._entity_scan_pid = nil
     self._entity_scan_read_fd = nil
     self._entity_scan_poll_fn = nil
@@ -884,6 +896,8 @@ function M:_onEntityScanFinished(resolved_dir, ok, manual)
             end)
         end
     end
+
+    _releaseEntityScanSlot(self)
 
     if self.ui and self.ui.view and self.ui.view.dialog then
         UIManager:setDirty(self.ui.view.dialog, "ui")
@@ -1107,37 +1121,65 @@ function M:scanBookForEntities(force)
     end
 
     local manual = force and true or false
-    self._entity_scan_in_progress = true
-    if self.ui and self.ui.doc_settings and self.ui.doc_settings.flush then
-        pcall(function() self.ui.doc_settings:flush() end)
-    end
-
-    if manual then
-        local progress_msg = ProgressBarDialog:new{
-            title = self.loc:t("entity_scanning_title") or "X-Ray: Entity Underlining",
-            text = self.loc:t("entity_scanning_book") or "Scanning book for underlines...",
-            dismissable = true,
-            onDismiss = function()
-                self:_cancelEntityScanChild("user dismissed")
+    local doc = self.ui and self.ui.document
+    conductor.runSlot(self, {
+        task = manual and "entity_scan_manual" or "entity_scan_auto",
+        priority = manual and "foreground" or "idle_bg",
+        dedupe_key = (not manual) and "xray:entity_scan_auto" or nil,
+        lease_s = 120,
+        subprocess = true,
+        document = doc,
+        run = function(done)
+            if self.destroyed or not self.ui or self.ui.document ~= doc or self._entity_scan_in_progress then
+                done()
+                return
             end
-        }
-        self.active_entity_scan_dialog = progress_msg
-        progress_msg:show()
-        UIManager:forceRePaint()
-    end
+            self._entity_scan_slot_done = done
+            self._entity_scan_in_progress = true
+            self._entity_scan_manual = manual
+            if self.ui and self.ui.doc_settings and self.ui.doc_settings.flush then
+                pcall(function() self.ui.doc_settings:flush() end)
+            end
 
-    if self:_startEntityScanSubprocess(sidecar, settings, manual) then
-        return
-    end
+            if manual then
+                local progress_msg = ProgressBarDialog:new{
+                    title = self.loc:t("entity_scanning_title") or "X-Ray: Entity Underlining",
+                    text = self.loc:t("entity_scanning_book") or "Scanning book for underlines...",
+                    dismissable = true,
+                    onDismiss = function()
+                        self:_cancelEntityScanChild("user dismissed")
+                    end
+                }
+                self.active_entity_scan_dialog = progress_msg
+                progress_msg:show()
+                UIManager:forceRePaint()
+            end
 
-    if _getFFIUtil() and not manual then
-        -- Fork failed at runtime on auto scan: skip silently without blocking UI
-        log("scanBookForEntities: subprocess fork failed, deferring auto scan")
-        self._entity_scan_in_progress = nil
-        return
-    end
+            if self:_startEntityScanSubprocess(sidecar, settings, manual) then
+                return
+            end
 
-    self:_runEntityScanInProcess(sidecar, settings, manual)
+            if _getFFIUtil() and not manual then
+                -- Fork failed at runtime on auto scan: skip silently without blocking UI
+                log("scanBookForEntities: subprocess fork failed, deferring auto scan")
+                self._entity_scan_in_progress = nil
+                self._entity_scan_manual = nil
+                _releaseEntityScanSlot(self)
+                return
+            end
+
+            self:_runEntityScanInProcess(sidecar, settings, manual)
+        end,
+        cancel = function()
+            self:_cancelEntityScanChild("conductor cancelled")
+        end,
+        on_rejected = function(reason)
+            log("scanBookForEntities: deferred by Conductor (" .. tostring(reason) .. ")")
+            if not manual and reason == "low_memory" then
+                self._entity_scan_attempted = false
+            end
+        end,
+    })
 end
 
 -- ===== Box Resolution & Dynamic Visibility =====

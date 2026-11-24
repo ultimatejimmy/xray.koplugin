@@ -14,7 +14,7 @@ describe("X-Ray Architecture Contract Spec", function()
     local xray_utils
     local xray_anthology, xray_booktype, xray_style_cards, xray_menu_builder
     local xray_duplicates, xray_onboarding, xray_horizon, xray_images_ui
-    local xray_bottom_popup, xray_log_viewer, xray_series_ui
+    local xray_bottom_popup, xray_log_viewer, xray_series_ui, xray_conductor
 
     setup(function()
         main_plugin = dofile("xray.koplugin/main.lua")
@@ -37,6 +37,7 @@ describe("X-Ray Architecture Contract Spec", function()
         xray_series_ui = require("xray_series_ui")
         xray_aihelper = require("xray_aihelper")
         xray_utils = require("xray_utils")
+        xray_conductor = require("xray_conductor")
     end)
 
     describe("Module Export Contracts", function()
@@ -241,11 +242,20 @@ describe("X-Ray Architecture Contract Spec", function()
                 assert.is_not_nil(xray_series_ui[m], "Missing method on xray_series_ui: " .. m)
                 assert.are.equal("function", type(xray_series_ui[m]), "Expected function for xray_series_ui." .. m)
             end
+
+            local expected_conductor_methods = {
+                "get", "isAvailable", "register", "runSlot", "reclaimMemory", "getMemoryStatus", "getStats"
+            }
+            for _, m in ipairs(expected_conductor_methods) do
+                assert.is_not_nil(xray_conductor[m], "Missing method on xray_conductor: " .. m)
+                assert.are.equal("function", type(xray_conductor[m]), "Expected function for xray_conductor." .. m)
+            end
         end)
 
         it("XRayPlugin class includes all mixin functions", function()
             local core_methods = {
                 "init", "destroy", "onCloseDocument", "onReaderClose", "onExit", "onSuspend",
+                "onMemoryReclaim", "reclaimMemory", "isXRayForegroundOpen", "cancelBackgroundWork",
                 "onReaderReady", "onPageUpdate", "onDispatcherRegisterActions",
                 "addToMainMenu", "getSubMenuItems", "getMenuCounts",
                 "isAnthologyMode", "getCurrentStory", "resolveEntityStory", "ensureAnthologyDecision",
