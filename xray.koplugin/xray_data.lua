@@ -336,6 +336,16 @@ function M:promoteName(entity, new_name)
     entity._norm_aliases = nil
 end
 
+local INTERNAL_ENTRY_SOURCES = {
+    ai = true,
+    series_prior = true,
+}
+
+function M:isExternalEntry(entry)
+    if type(entry) ~= "table" then return false end
+    return type(entry.source) == "string" and entry.source ~= "" and not INTERNAL_ENTRY_SOURCES[entry.source]
+end
+
 function M:deduplicateByName(list, key, caller)
     key = key or "name"
     if not list or #list == 0 then return list end
@@ -422,6 +432,10 @@ function M:deduplicateByName(list, key, caller)
                     end
                 end
             else
+                -- Preserve externally imported entries when an AI-generated duplicate arrives
+                if self:isExternalEntry(existing) and not self:isExternalEntry(item) then
+                    -- Keep existing external entry authoritative (skip name promotion and temporal overwrite)
+                else
                 -- Handle duplicate: dynamically promote name if incoming is more complete
                 if key == "name" and self:isMoreCompleteName(item.name, existing.name) then
                     local old_name = existing.name
@@ -481,6 +495,7 @@ function M:deduplicateByName(list, key, caller)
 
                 -- Merge temporal states, history, alias visibility, and earliest visible_from
                 self:mergeEntityTemporalData(existing, item)
+                end
             end
         end
     end

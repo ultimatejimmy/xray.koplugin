@@ -43,6 +43,7 @@ For full setup instructions and a deep dive into features, check out the **[GitH
 - **[Spoiler Protection](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/6.-Spoiler-Protection)**: How we keep the story safe.
 - **[Fetching Data](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/7.-Fetching)**: Background fetching, manual fetching, and targeted lookups.
 - **[Advanced Configuration & Maintenance](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/Advanced-Usage)**: Custom endpoints, config files, formats, logs, and maintenance tools.
+- **[External Data Format (`xray_cache.json`)](docs/EXTERNAL_DATA_FORMAT.md)**: JSON schema and overwrite-protection specification for third-party connectors and scripts.
 
 ## Support me
 

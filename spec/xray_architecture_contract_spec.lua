@@ -91,7 +91,7 @@ describe("X-Ray Architecture Contract Spec", function()
                 "assignTimelinePages", "filterOrphanTimelineEvents",
                 "sortTimelineByTOC", "sortDataByFrequency",
                 "mergeEntryItems", "mergeEntries", "linkEntriesAcrossStories",
-                "mergeEntityTemporalData", "saveCurrentBookCache"
+                "mergeEntityTemporalData", "saveCurrentBookCache", "isExternalEntry"
             }
             for _, m in ipairs(expected_data_methods) do
                 assert.is_not_nil(xray_data[m], "Missing method on xray_data: " .. m)
@@ -260,7 +260,8 @@ describe("X-Ray Architecture Contract Spec", function()
                 "addToMainMenu", "getSubMenuItems", "getMenuCounts",
                 "isAnthologyMode", "getCurrentStory", "resolveEntityStory", "ensureAnthologyDecision",
                 "detectBookTypeHeuristic", "getEffectiveBookType", "triggerBookTypeDetection",
-                "showUnitStyleCard", "showEntityStyleCard", "checkPrefetchHorizon"
+                "showUnitStyleCard", "showEntityStyleCard", "checkPrefetchHorizon",
+                "isCacheOverwriteProtected"
             }
             for _, m in ipairs(core_methods) do
                 assert.is_not_nil(main_plugin[m], "Missing method on XRayPlugin: " .. m)

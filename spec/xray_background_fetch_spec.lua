@@ -488,4 +488,52 @@ describe("X-Ray Background Catch-Up", function()
             assert.is_false(online_called)
         end)
     end)
+
+    describe("External Cache Overwrite Protection", function()
+        it("skips background catch-up and Horizon prefetch when prevent_overwrite is true", function()
+            plugin.book_data.prevent_overwrite = true
+            plugin.book_data.last_fetch_page = 0
+            current_page = 100
+
+            assert.is_true(plugin:isCacheOverwriteProtected())
+            assert.is_false(plugin:isCatchUpNeeded())
+
+            local queued = false
+            plugin.ai_helper.settings.prefetch_horizon_chapters = 2
+            plugin.queueSequentialChapterScan = function() queued = true end
+            plugin:checkPrefetchHorizon()
+            assert.is_false(queued)
+        end)
+
+        it("preserves external entries during mergeSequentialChapterDelta while allowing AI gap-fill", function()
+            plugin.characters = {
+                {
+                    name = "Paul Atreides",
+                    role = "Imported Heir",
+                    description = "Imported description from BookOrbit",
+                    source = "external",
+                    states = { { chapter_index = 1, description = "Imported ch1" } },
+                }
+            }
+            plugin.locations = {}
+            plugin.terms = {}
+            plugin.timeline = {}
+
+            plugin:mergeSequentialChapterDelta({
+                new_characters = {
+                    { name = "Paul Atreides", role = "AI Role", description = "AI overwrite attempt" },
+                    { name = "Gurney Halleck", role = "Warmaster", description = "New AI gap-fill character" },
+                },
+                character_state_updates = {
+                    { name = "Paul Atreides", role = "AI Updated Role", description = "AI update attempt" },
+                },
+            }, { title = "Chapter 2", page = 25, end_page = 40, toc_index = 2 }, 2, true)
+
+            assert.are.equal(2, #plugin.characters)
+            assert.are.equal("Imported Heir", plugin.characters[1].role)
+            assert.are.equal("Imported description from BookOrbit", plugin.characters[1].description)
+            assert.are.equal(1, #plugin.characters[1].states)
+            assert.are.equal("Gurney Halleck", plugin.characters[2].name)
+        end)
+    end)
 end)

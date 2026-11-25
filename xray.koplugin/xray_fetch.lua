@@ -1029,6 +1029,7 @@ end
 
 function M:updateEntityDescPreservingPrior(existing, new_desc, key)
     if not existing then return nil end
+    if self.isExternalEntry and self:isExternalEntry(existing) then return nil end
     if not new_desc or new_desc == "" then return nil end
     local field = key or "description"
     local exist_desc = existing[field] or existing.description or ""
@@ -3759,6 +3760,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
 
                 local existing = findEntity(self.characters, c.name, c.aliases)
                 if existing then
+                    if not (self.isExternalEntry and self:isExternalEntry(existing)) then
                     updated_chars = updated_chars + 1
                     promotePriorEntity(existing, first_page, first_pct)
                     seedBaselineStateIfMissing(existing, false)
@@ -3790,6 +3792,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     if c.role and c.role ~= "" then existing.role = c.role end
                     if c.status and c.status ~= "" then existing.status = c.status end
                     updateEntityDescPreservingPrior(existing, c.description)
+                    end
                 else
                     new_chars = new_chars + 1
                     local states, full_desc = buildDeltaEntityStates(c, first_page, first_pct, full_page, full_pct, "Character", "alive")
@@ -3827,6 +3830,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                 local upd_page, upd_pct = resolveChapterGate(u.page, true)
                 local existing = findEntity(self.characters, u.name, u.aliases)
                 if existing then
+                    if not (self.isExternalEntry and self:isExternalEntry(existing)) then
                     updated_chars = updated_chars + 1
                     promotePriorEntity(existing, upd_page, upd_pct)
                     seedBaselineStateIfMissing(existing, false)
@@ -3877,6 +3881,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     if u.role and u.role ~= "" then existing.role = u.role end
                     if u.status and u.status ~= "" then existing.status = u.status end
                     updateEntityDescPreservingPrior(existing, u.description)
+                    end
                 else
                     new_chars = new_chars + 1
                     table.insert(self.characters, {
@@ -3931,6 +3936,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
 
                 local existing = findEntity(self.locations, l.name)
                 if existing then
+                    if not (self.isExternalEntry and self:isExternalEntry(existing)) then
                     updated_locs = updated_locs + 1
                     promotePriorEntity(existing, first_page, first_pct)
                     seedBaselineStateIfMissing(existing, false)
@@ -3948,6 +3954,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     })
                     sortStates(existing.states)
                     updateEntityDescPreservingPrior(existing, l.description)
+                    end
                 else
                     new_locs = new_locs + 1
                     local states, full_desc = buildDeltaEntityStates(l, first_page, first_pct, full_page, full_pct)
@@ -3979,6 +3986,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                 local upd_page, upd_pct = resolveChapterGate(u.page, true)
                 local existing = findEntity(self.locations, u.name)
                 if existing then
+                    if not (self.isExternalEntry and self:isExternalEntry(existing)) then
                     updated_locs = updated_locs + 1
                     promotePriorEntity(existing, upd_page, upd_pct)
                     seedBaselineStateIfMissing(existing, false)
@@ -3997,6 +4005,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     })
                     sortStates(existing.states)
                     updateEntityDescPreservingPrior(existing, u.description)
+                    end
                 else
                     new_locs = new_locs + 1
                     table.insert(self.locations, {
@@ -4046,6 +4055,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
 
                 local existing = findEntity(self.terms, t.name)
                 if existing then
+                    if not (self.isExternalEntry and self:isExternalEntry(existing)) then
                     updated_terms = updated_terms + 1
                     promotePriorEntity(existing, first_page, first_pct)
                     seedBaselineStateIfMissing(existing, true)
@@ -4064,6 +4074,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     })
                     sortStates(existing.states)
                     updateEntityDescPreservingPrior(existing, desc, "definition")
+                    end
                 else
                     new_terms = new_terms + 1
                     local states, full_desc = buildDeltaEntityStates(t, first_page, first_pct, full_page, full_pct)
@@ -4096,6 +4107,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                 local upd_page, upd_pct = resolveChapterGate(u.page, true)
                 local existing = findEntity(self.terms, u.name)
                 if existing then
+                    if not (self.isExternalEntry and self:isExternalEntry(existing)) then
                     updated_terms = updated_terms + 1
                     promotePriorEntity(existing, upd_page, upd_pct)
                     seedBaselineStateIfMissing(existing, true)
@@ -4115,6 +4127,7 @@ function M:mergeSequentialChapterDelta(delta_data, chapter, chapter_idx, skip_ch
                     })
                     sortStates(existing.states)
                     updateEntityDescPreservingPrior(existing, desc, "definition")
+                    end
                 else
                     new_terms = new_terms + 1
                     local desc = u.description or u.definition or ""

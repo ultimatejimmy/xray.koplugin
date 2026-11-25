@@ -269,4 +269,145 @@ describe("xray_cachemanager", function()
             assert.is_nil(loaded.characters[1]._norm_aliases)
         end)
     end)
+
+    describe("External JSON Cache Support and Overwrite Protection", function()
+        local test_json = test_book .. ".sdr/xray_cache.json"
+
+        it("loads a valid xray_cache.json and defaults entry source to external", function()
+            local f = io.open(test_json, "w")
+            f:write([[{
+                "schema_version": "1.0",
+                "book_title": "Dune",
+                "external_source": { "name": "BookOrbit", "prevent_overwrite": true },
+                "characters": [
+                    { "name": "Paul Atreides", "role": "Protagonist" },
+                    { "name": "Lady Jessica", "source": "bookorbit" }
+                ],
+                "timeline": [
+                    { "chapter": "Chapter 1", "chapter_index": 1, "event": "The gom jabbar test." }
+                ]
+            }]])
+            f:close()
+
+            local loaded = cache_manager:loadCache(test_book)
+            assert.is_not_nil(loaded)
+            assert.are.equal("Dune", loaded.book_title)
+            assert.are.equal("6.1", loaded.cache_version)
+            assert.is_true(loaded._loaded_from_json)
+            assert.are.equal("external", loaded.characters[1].source)
+            assert.are.equal("bookorbit", loaded.characters[2].source)
+            assert.are.equal("external", loaded.timeline[1].source)
+            assert.is_table(loaded.locations)
+            assert.is_table(loaded.terms)
+            assert.is_true(cache_manager:isOverwriteProtected(loaded))
+            assert.is_false(cache_manager:isReadOnly(loaded))
+        end)
+
+        it("prefers newer xray_cache.json over older xray_cache.lua and vice versa", function()
+            cache_manager:saveCache(test_book, { characters = { { name = "LuaAlice" } } })
+
+            local f = io.open(test_json, "w")
+            f:write('{"schema_version":"1.0","characters":[{"name":"JsonAlice"}]}')
+            f:close()
+
+            local lfs_mock = package.loaded["lfs"]
+            local orig_attr = lfs_mock.attributes
+            local mtimes = { [test_cache] = 1000, [test_json] = 2000 }
+            lfs_mock.attributes = function(path, req)
+                local res = orig_attr(path, req)
+                if type(res) == "table" and mtimes[path] then
+                    res.modification = mtimes[path]
+                end
+                return res
+            end
+
+            local ok_test, err = pcall(function()
+                local loaded1 = cache_manager:loadCache(test_book)
+                assert.is_not_nil(loaded1)
+                assert.are.equal("JsonAlice", loaded1.characters[1].name)
+
+                -- Now make Lua cache newer
+                mtimes[test_cache] = 3000
+                local loaded2 = cache_manager:loadCache(test_book)
+                assert.is_not_nil(loaded2)
+                assert.are.equal("LuaAlice", loaded2.characters[1].name)
+            end)
+            lfs_mock.attributes = orig_attr
+            if not ok_test then error(err) end
+        end)
+
+        it("falls back to xray_cache.lua when xray_cache.json is malformed or has unsupported version", function()
+            cache_manager:saveCache(test_book, { characters = { { name = "SafeLua" } } })
+            os.execute("touch -t 202601010000 " .. test_cache)
+
+            local f = io.open(test_json, "w")
+            f:write("{ invalid json !!!")
+            f:close()
+            os.execute("touch -t 202601020000 " .. test_json)
+
+            local loaded = cache_manager:loadCache(test_book)
+            assert.is_not_nil(loaded)
+            assert.are.equal("SafeLua", loaded.characters[1].name)
+
+            -- Unsupported schema_version
+            local f2 = io.open(test_json, "w")
+            f2:write('{"schema_version":"99.0","characters":[{"name":"Future"}]}')
+            f2:close()
+            os.execute("touch -t 202601030000 " .. test_json)
+
+            local loaded2 = cache_manager:loadCache(test_book)
+            assert.is_not_nil(loaded2)
+            assert.are.equal("SafeLua", loaded2.characters[1].name)
+        end)
+
+        it("rejects oversized xray_cache.json files safely", function()
+            local orig_max = cache_manager.MAX_JSON_CACHE_BYTES
+            cache_manager.MAX_JSON_CACHE_BYTES = 32
+            local f = io.open(test_json, "w")
+            f:write('{"schema_version":"1.0","book_title":"WayTooLongForTinyLimit"}')
+            f:close()
+
+            local loaded = cache_manager:loadCache(test_book)
+            cache_manager.MAX_JSON_CACHE_BYTES = orig_max
+            assert.is_nil(loaded)
+        end)
+
+        it("refuses saveCache and asyncSaveCache when read_only is true and never modifies xray_cache.json", function()
+            local f = io.open(test_json, "w")
+            f:write('{"schema_version":"1.0","read_only":true,"characters":[{"name":"Locked"}]}')
+            f:close()
+
+            local loaded = cache_manager:loadCache(test_book)
+            assert.is_true(cache_manager:isReadOnly(loaded))
+            assert.is_true(cache_manager:isOverwriteProtected(loaded))
+
+            assert.is_false(cache_manager:saveCache(test_book, loaded))
+            local cb_res = nil
+            assert.is_false(cache_manager:asyncSaveCache(test_book, loaded, function(ok) cb_res = ok end))
+            assert.is_false(cb_res)
+
+            -- xray_cache.lua was not created
+            local f_lua = io.open(test_cache, "r")
+            assert.is_nil(f_lua)
+        end)
+
+        it("clears both xray_cache.lua and xray_cache.json on clearCache", function()
+            cache_manager:saveCache(test_book, { characters = { { name = "LuaChar" } } })
+            local f = io.open(test_json, "w")
+            f:write('{"schema_version":"1.0","characters":[{"name":"JsonChar"}]}')
+            f:close()
+
+            assert.is_true(cache_manager:clearCache(test_book))
+            assert.is_nil(io.open(test_cache, "r"))
+            assert.is_nil(io.open(test_json, "r"))
+        end)
+
+        it("respects external_source.prevent_overwrite = false while keeping read_only false", function()
+            local data = {
+                external_source = { name = "BookOrbit", prevent_overwrite = false }
+            }
+            assert.is_false(cache_manager:isOverwriteProtected(data))
+            assert.is_false(cache_manager:isReadOnly(data))
+        end)
+    end)
 end)

@@ -841,8 +841,23 @@ end
 
 -- Anthology mode functions extracted to xray_anthology.lua mixin
 
+function XRayPlugin:isCacheOverwriteProtected()
+    if type(self.book_data) ~= "table" then return false end
+    if self.cache_manager and self.cache_manager.isOverwriteProtected then
+        return self.cache_manager:isOverwriteProtected(self.book_data)
+    end
+    if self.book_data.read_only == true or self.book_data.prevent_overwrite == true then
+        return true
+    end
+    if type(self.book_data.external_source) == "table" then
+        return self.book_data.external_source.prevent_overwrite ~= false
+    end
+    return false
+end
+
 function XRayPlugin:isCatchUpNeeded()
     if not self.auto_fetch_enabled then return false end
+    if self:isCacheOverwriteProtected() then return false end
     if not self.ai_helper or not self.ai_helper:hasApiKey() then return false end
     local target_limit = self:getCatchUpTargetLimit()
     if target_limit <= 0 then return false end
@@ -1058,6 +1073,7 @@ end
 function XRayPlugin:checkPrefetchHorizon()
     if self.destroyed or not self.ui or not self.ui.document then return end
     if self.is_sequential_scan_active then return end
+    if self.isCacheOverwriteProtected and self:isCacheOverwriteProtected() then return end
     local horizon = self.ai_helper and self.ai_helper.settings and self.ai_helper.settings.prefetch_horizon_chapters or 0
     if horizon <= 0 then return end
     if not self.ai_helper or not self.ai_helper.hasApiKey or not self.ai_helper:hasApiKey() then return end

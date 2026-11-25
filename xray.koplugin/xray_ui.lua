@@ -986,7 +986,9 @@ function M:showCharacters()
 end
 
 function M:findRelatedEntities(text, exclude_name, source_entity)
-    if not text or text == "" then return {} end
+    local has_links = type(source_entity) == "table" and type(source_entity.links) == "table" and #source_entity.links > 0
+    if (not text or text == "") and not has_links then return {} end
+    text = text or ""
     local related = {}
     local seen = {}
     if exclude_name then seen[exclude_name:lower()] = true end
@@ -1090,10 +1092,70 @@ function M:findRelatedEntities(text, exclude_name, source_entity)
         end
     end
 
-    scanList(self.characters, "character")
-    scanList(self.locations, "location")
-    scanList(self.historical_figures, "historical")
-    scanList(self.terms, "term")
+    -- Strategy 0: Explicit entity links (e.g., from external connectors)
+    if has_links then
+        local explicit_targets = {}
+        for _, link in ipairs(source_entity.links) do
+            local target_name = nil
+            local gate_ok = true
+            if type(link) == "string" and link ~= "" then
+                target_name = link
+            elseif type(link) == "table" and type(link.name) == "string" and link.name ~= "" then
+                target_name = link.name
+                if link.visible_from and self.isPositionGateUnlocked then
+                    gate_ok = self:isPositionGateUnlocked(link.visible_from)
+                end
+            end
+            if target_name and gate_ok then
+                explicit_targets[target_name:lower()] = true
+            end
+        end
+
+        if next(explicit_targets) ~= nil then
+            local function scanExplicitList(list, type_name)
+                if not list then return end
+                for _, item in ipairs(list) do
+                    local pass_story = true
+                    if target_story_id then
+                        local it_st = item.story_id or (self.resolveEntityStory and self:resolveEntityStory(item))
+                        if it_st ~= target_story_id then pass_story = false end
+                    end
+                    local pass_vis = not self.isEntityVisibleAtCurrentPosition or self:isEntityVisibleAtCurrentPosition(item)
+                    local name = item.name
+                    if pass_story and pass_vis and name and not seen[name:lower()] then
+                        local matched = explicit_targets[name:lower()] == true
+                        if not matched then
+                            local unl_aliases = self.getUnlockedAliases and self:getUnlockedAliases(item) or item.aliases
+                            if unl_aliases then
+                                for _, alias in ipairs(unl_aliases) do
+                                    if type(alias) == "string" and explicit_targets[alias:lower()] then
+                                        matched = true
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                        if matched then
+                            seen[name:lower()] = true
+                            table.insert(related, { item = item, type = type_name })
+                        end
+                    end
+                end
+            end
+
+            scanExplicitList(self.characters, "character")
+            scanExplicitList(self.locations, "location")
+            scanExplicitList(self.historical_figures, "historical")
+            scanExplicitList(self.terms, "term")
+        end
+    end
+
+    if text ~= "" then
+        scanList(self.characters, "character")
+        scanList(self.locations, "location")
+        scanList(self.historical_figures, "historical")
+        scanList(self.terms, "term")
+    end
 
     return related
 end

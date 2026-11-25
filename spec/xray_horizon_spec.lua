@@ -52,6 +52,16 @@ describe("xray_horizon_spec", function()
             assert.is_true(plugin:isEntityVisibleAtCurrentPosition(intro_char, 3, 70))
         end)
 
+        it("should accept page as an alias for page_hint in position gates", function()
+            local ext_char = {
+                name = "External Hero",
+                visible_from = { chapter_index = 2, page = 40 }
+            }
+            assert.is_false(plugin:isEntityVisibleAtCurrentPosition(ext_char, 2, 39))
+            assert.is_true(plugin:isEntityVisibleAtCurrentPosition(ext_char, 2, 40))
+            assert.is_true(plugin:isEntityVisibleAtCurrentPosition(ext_char, 3, 50))
+        end)
+
         it("should provide full parity across Locations and Terms", function()
             local loc = {
                 name = "Hidden Base",

@@ -16,10 +16,28 @@ local SUPPORTED_CACHE_VERSIONS = {
     ["6.0"] = true,
     ["6.1"] = true,
 }
+local SUPPORTED_SCHEMA_VERSIONS = {
+    ["1.0"] = true,
+}
+local MAX_JSON_CACHE_BYTES = 5 * 1024 * 1024 -- 5MB safety guard for low-RAM e-ink devices
+
+local function getJsonModule()
+    local ok_j, mod = pcall(require, "json")
+    if ok_j and type(mod) == "table" and type(mod.decode) == "function" then
+        return mod
+    end
+    local ok_rj, rmod = pcall(require, "rapidjson")
+    if ok_rj and type(rmod) == "table" and type(rmod.decode) == "function" then
+        return rmod
+    end
+    return nil
+end
 
 local CacheManager = {
     CURRENT_CACHE_VERSION = CURRENT_CACHE_VERSION,
     SUPPORTED_CACHE_VERSIONS = SUPPORTED_CACHE_VERSIONS,
+    SUPPORTED_SCHEMA_VERSIONS = SUPPORTED_SCHEMA_VERSIONS,
+    MAX_JSON_CACHE_BYTES = MAX_JSON_CACHE_BYTES,
     _active_by_file = {},
     _pending_by_file = {},
 }
@@ -144,6 +162,40 @@ function CacheManager:getCachePath(book_path)
     return cache_file
 end
 
+-- Get external JSON cache file path for a book (read-only by X-Ray)
+function CacheManager:getJsonCachePath(book_path)
+    if not book_path then
+        return nil
+    end
+    local cache_dir = DocSettings:getSidecarDir(book_path)
+    if not cache_dir then
+        return nil
+    end
+    return cache_dir .. "/xray_cache.json"
+end
+
+-- Returns true if the cache data requests protection against background AI overwrites
+function CacheManager:isOverwriteProtected(data)
+    if type(data) ~= "table" then return false end
+    if data.read_only == true or data.prevent_overwrite == true then
+        return true
+    end
+    if type(data.external_source) == "table" then
+        return data.external_source.prevent_overwrite ~= false
+    end
+    return false
+end
+
+-- Returns true if the cache data is strictly read-only (blocks local saves)
+function CacheManager:isReadOnly(data)
+    if type(data) ~= "table" then return false end
+    if data.read_only == true then return true end
+    if type(data.external_source) == "table" and data.external_source.read_only == true then
+        return true
+    end
+    return false
+end
+
 -- Ensure directory exists
 function CacheManager:ensureDirectory(path)
     if not lfs then return true end -- Assume it exists if we can't check
@@ -177,6 +229,11 @@ end
 function CacheManager:saveCache(book_path, data)
     if not book_path or not data then
         logger.warn("CacheManager: Cannot save cache - invalid parameters")
+        return false
+    end
+    if self:isReadOnly(data) then
+        logger.info("CacheManager: Cache is marked read_only, skipping save")
+        AIHelper:log("CacheManager: Cache is marked read_only, skipping save")
         return false
     end
     
@@ -299,6 +356,12 @@ end
 function CacheManager:asyncSaveCache(book_path, data, on_done_cb)
     if not book_path or not data then
         logger.warn("CacheManager: Cannot save cache async - invalid parameters")
+        if on_done_cb then on_done_cb(false) end
+        return false
+    end
+    if self:isReadOnly(data) then
+        logger.info("CacheManager: Cache is marked read_only, skipping async save")
+        AIHelper:log("CacheManager: Cache is marked read_only, skipping async save")
         if on_done_cb then on_done_cb(false) end
         return false
     end
@@ -558,58 +621,171 @@ function CacheManager:_startAsyncSave(cache_file, book_path, data, callbacks)
 end
 
 
--- Load book data from cache
+-- Load book data from an external JSON cache file (read-only)
+function CacheManager:loadJsonCache(json_file)
+    if not json_file then return nil end
+
+    local max_bytes = self.MAX_JSON_CACHE_BYTES or MAX_JSON_CACHE_BYTES
+    if lfs then
+        local attr = lfs.attributes(json_file)
+        if not attr or attr.mode ~= "file" then
+            return nil
+        end
+        if attr.size and attr.size > max_bytes then
+            logger.warn("CacheManager: JSON cache exceeds size limit, ignoring:", json_file, attr.size)
+            AIHelper:log("CacheManager: JSON cache exceeds size limit (" .. tostring(attr.size) .. " bytes)")
+            return nil
+        end
+    end
+
+    local f = io.open(json_file, "r")
+    if not f then
+        return nil
+    end
+    local raw = f:read("*all")
+    f:close()
+
+    if not raw or raw == "" then
+        return nil
+    end
+    if #raw > max_bytes then
+        raw = nil
+        logger.warn("CacheManager: JSON cache exceeds size limit, ignoring:", json_file)
+        return nil
+    end
+
+    local json = getJsonModule()
+    if not json then
+        raw = nil
+        logger.warn("CacheManager: No JSON decoder available to load:", json_file)
+        return nil
+    end
+
+    local ok_dec, data = pcall(json.decode, raw)
+    raw = nil -- Release raw buffer immediately for low-RAM devices
+
+    if not ok_dec or type(data) ~= "table" then
+        logger.warn("CacheManager: Failed to decode JSON cache:", tostring(data or "unknown error"))
+        AIHelper:log("CacheManager: Failed to decode JSON cache: " .. tostring(data or "unknown error"))
+        return nil
+    end
+
+    local valid_schema = data.schema_version ~= nil and SUPPORTED_SCHEMA_VERSIONS[tostring(data.schema_version)]
+    local valid_cache = data.cache_version ~= nil and SUPPORTED_CACHE_VERSIONS[tostring(data.cache_version)]
+    if not valid_schema and not valid_cache then
+        logger.warn("CacheManager: JSON cache version mismatch, ignoring")
+        AIHelper:log("CacheManager: JSON cache version mismatch (schema_version=" .. tostring(data.schema_version) .. ", cache_version=" .. tostring(data.cache_version) .. ")")
+        return nil
+    end
+
+    data.cache_version = data.cache_version or CURRENT_CACHE_VERSION
+
+    -- Normalize expected entity lists and default imported entries to source="external"
+    local list_keys = { "characters", "locations", "terms", "historical_figures", "timeline" }
+    for _, key in ipairs(list_keys) do
+        if type(data[key]) ~= "table" then
+            data[key] = {}
+        else
+            for _, entry in ipairs(data[key]) do
+                if type(entry) == "table" and entry.source == nil then
+                    entry.source = "external"
+                end
+            end
+        end
+    end
+
+    data._loaded_from_json = true
+    logger.info("CacheManager: Loaded JSON cache from:", json_file)
+    AIHelper:log("CacheManager: Loaded JSON cache from " .. tostring(json_file))
+    return data
+end
+
+-- Load book data from cache (supports both native xray_cache.lua and external xray_cache.json)
 function CacheManager:loadCache(book_path)
     if not book_path then
         return nil
     end
-    
+
     local cache_file = self:getCachePath(book_path)
     if not cache_file then
         logger.warn("CacheManager: Cannot determine cache path")
         AIHelper:log("CacheManager: Cannot determine cache path")
         return nil
     end
-    
-    -- Check if cache file exists
+    local json_file = self:getJsonCachePath(book_path)
+
+    local lua_exists, json_exists = false, false
+    local lua_mtime, json_mtime = 0, 0
+
     if lfs then
-        local attr = lfs.attributes(cache_file)
-        if not attr then
-            logger.info("CacheManager: No cache file found")
-            AIHelper:log("CacheManager: No cache file found for " .. tostring(book_path))
-            return nil
+        local lua_attr = lfs.attributes(cache_file)
+        if lua_attr then
+            lua_exists = true
+            lua_mtime = tonumber(lua_attr.modification) or 0
+        end
+        if json_file then
+            local json_attr = lfs.attributes(json_file)
+            if json_attr then
+                json_exists = true
+                json_mtime = tonumber(json_attr.modification) or 0
+            end
         end
     else
-        -- If no lfs, try to open the file directly to see if it exists
-        local f = io.open(cache_file, "r")
-        if f then
-            f:close()
-        else
+        local f_lua = io.open(cache_file, "r")
+        if f_lua then
+            f_lua:close()
+            lua_exists = true
+        end
+        if json_file then
+            local f_json = io.open(json_file, "r")
+            if f_json then
+                f_json:close()
+                json_exists = true
+            end
+        end
+    end
+
+    if not lua_exists and not json_exists then
+        logger.info("CacheManager: No cache file found")
+        AIHelper:log("CacheManager: No cache file found for " .. tostring(book_path))
+        return nil
+    end
+
+    -- Prefer xray_cache.json when xray_cache.lua is absent or JSON has a newer modification time
+    if json_exists and (not lua_exists or json_mtime > lua_mtime) then
+        local json_data = self:loadJsonCache(json_file)
+        if json_data then
+            return json_data
+        end
+        if not lua_exists then
             return nil
         end
     end
-    
-    -- Load cache
+
+    -- Load native Lua cache
     local success, data = pcall(function()
         return dofile(cache_file)
     end)
-    
+
     if not success or not data or type(data) ~= "table" then
         logger.warn("CacheManager: Failed to load cache:", tostring(data or "unknown error"))
         AIHelper:log("CacheManager: Failed to load cache: " .. tostring(data or "unknown error"))
+        if json_exists then
+            return self:loadJsonCache(json_file)
+        end
         return nil
     end
-    
+
     -- Check cache version (support current 6.1 and legacy 6.0)
     if not SUPPORTED_CACHE_VERSIONS[data.cache_version] then
         logger.warn("CacheManager: Cache version mismatch, ignoring")
         AIHelper:log("CacheManager: Cache version mismatch (found " .. tostring(data.cache_version) .. ", expected 6.0 or 6.1)")
+        if json_exists then
+            return self:loadJsonCache(json_file)
+        end
         return nil
     end
-    
-    -- Cache age check removed - cache is now permanent
-    -- Cache will stay valid forever unless manually cleared
-    
+
     logger.info("CacheManager: Loaded cache from:", cache_file)
     AIHelper:log("CacheManager: Loaded cache from " .. tostring(cache_file))
     if data.cached_at then
@@ -617,7 +793,7 @@ function CacheManager:loadCache(book_path)
         logger.info("CacheManager: Cache age:", cache_age_days, "days (no expiration)")
         AIHelper:log("CacheManager: Cache age: " .. tostring(cache_age_days) .. " days")
     end
-    
+
     return data
 end
 
@@ -703,20 +879,28 @@ function CacheManager:serialize(obj, indent, seen)
     end
 end
 
--- Clear cache for a book
+-- Clear cache for a book (removes both native xray_cache.lua and external xray_cache.json)
 function CacheManager:clearCache(book_path)
+    local removed_any = false
     local cache_file = self:getCachePath(book_path)
     if cache_file then
         local success, err = os.remove(cache_file)
         if success then
             logger.info("CacheManager: Cleared cache:", cache_file)
-            return true
+            removed_any = true
         else
             logger.warn("CacheManager: Failed to clear cache:", err or "unknown")
-            return false
         end
     end
-    return false
+    local json_file = self:getJsonCachePath(book_path)
+    if json_file then
+        local ok_j = os.remove(json_file)
+        if ok_j then
+            logger.info("CacheManager: Cleared JSON cache:", json_file)
+            removed_any = true
+        end
+    end
+    return removed_any
 end
 
 return CacheManager

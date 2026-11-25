@@ -3686,6 +3686,61 @@ describe("xray_ui", function()
             assert.truthy(title:find("előző 3 könyv", 1, true))
         end)
     end)
+
+    describe("findRelatedEntities explicit links", function()
+        it("resolves string and spoiler-gated object links even when not mentioned in description", function()
+            plugin.ai_helper = { settings = { spoiler_setting = "spoiler_free" } }
+            plugin.getCurrentDocPage = function() return 20 end
+            plugin.getCurrentChapterIndex = function() return 2 end
+
+            local alice = {
+                name = "Alice",
+                description = "A quiet archivist.",
+                links = {
+                    "Bob",
+                    { name = "Secret Lair", visible_from = { chapter_index = 5 } },
+                    { name = "Library", visible_from = { chapter_index = 1 } },
+                },
+            }
+            plugin.characters = {
+                alice,
+                { name = "Bob", description = "Alice's brother." },
+            }
+            plugin.locations = {
+                { name = "Library", description = "Old stone library." },
+                { name = "Secret Lair", description = "Hidden base." },
+            }
+            plugin.historical_figures = {}
+            plugin.terms = {}
+
+            local related = plugin:findRelatedEntities("", "Alice", alice)
+            assert.are.equal(2, #related)
+            local names = {}
+            for _, r in ipairs(related) do names[r.item.name] = true end
+            assert.is_true(names["Bob"])
+            assert.is_true(names["Library"])
+            assert.is_nil(names["Secret Lair"])
+        end)
+
+        it("deduplicates explicit links with text-matched entities", function()
+            local alice = {
+                name = "Alice",
+                description = "Works closely with Bob.",
+                links = { "Bob" },
+            }
+            plugin.characters = {
+                alice,
+                { name = "Bob", description = "Partner." },
+            }
+            plugin.locations = {}
+            plugin.historical_figures = {}
+            plugin.terms = {}
+
+            local related = plugin:findRelatedEntities(alice.description, "Alice", alice)
+            assert.are.equal(1, #related)
+            assert.are.equal("Bob", related[1].item.name)
+        end)
+    end)
 end)
 
 

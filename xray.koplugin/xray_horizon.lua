@@ -122,6 +122,7 @@ function M:isPositionGateUnlocked(gate, cur_chap, cur_page, opts)
     end
 
     local live_start, live_end = self:getChapterPageBounds(cur_chap)
+    local p_hint = tonumber(gate.page_hint or gate.page)
 
     if gate.chapter_pct ~= nil then
         local g_pct = tonumber(gate.chapter_pct) or 0.0
@@ -131,8 +132,8 @@ function M:isPositionGateUnlocked(gate, cur_chap, cur_page, opts)
             return (r_pct + 0.0005) >= g_pct
         end
 
-        if gate.page_hint and cur_page then
-            return cur_page >= gate.page_hint
+        if p_hint and cur_page then
+            return cur_page >= p_hint
         elseif live_start and live_end and live_end > live_start and cur_page then
             local r_pct = math.max(0, math.min(1, (cur_page - live_start) / (live_end - live_start)))
             return (r_pct + 0.0005) >= g_pct
@@ -145,14 +146,13 @@ function M:isPositionGateUnlocked(gate, cur_chap, cur_page, opts)
     -- If this is a state update (opts.is_state_update is true) and page_hint equals chapter start on a multi-page chapter,
     -- gate at chapter end!
     if opts and opts.is_state_update and live_start and live_end and live_end > live_start and cur_page then
-        local p_hint = tonumber(gate.page_hint)
         if p_hint and p_hint == live_start then
             return cur_page >= live_end
         end
     end
 
-    if gate.page_hint and cur_page then
-        return cur_page >= gate.page_hint
+    if p_hint and cur_page then
+        return cur_page >= p_hint
     end
 
     return true

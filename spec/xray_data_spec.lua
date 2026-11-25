@@ -204,5 +204,38 @@ describe("xray_data", function()
             assert.is_true(list[3].sort_order >= 10000)
         end)
     end)
+
+    describe("isExternalEntry and deduplicateByName external preservation", function()
+        it("identifies external entries while excluding ai and series_prior", function()
+            assert.is_true(xray_data:isExternalEntry({ name = "Paul", source = "external" }))
+            assert.is_true(xray_data:isExternalEntry({ name = "Paul", source = "bookorbit" }))
+            assert.is_false(xray_data:isExternalEntry({ name = "Paul", source = "ai" }))
+            assert.is_false(xray_data:isExternalEntry({ name = "Paul", source = "series_prior" }))
+            assert.is_false(xray_data:isExternalEntry({ name = "Paul" }))
+        end)
+
+        it("preserves external entry fields when an AI-generated duplicate is deduplicated", function()
+            local ext = {
+                name = "Paul",
+                aliases = { "Paul Atreides" },
+                role = "Imported Role",
+                description = "Imported bio",
+                source = "external",
+                states = { { chapter_index = 1, description = "Imported state 1" } },
+            }
+            local ai_dup = {
+                name = "Paul Atreides",
+                role = "AI Role",
+                description = "AI bio",
+                states = { { chapter_index = 2, description = "AI state 2" } },
+            }
+            local result = xray_data:deduplicateByName({ ext, ai_dup }, "name")
+            assert.are.equal(1, #result)
+            assert.are.equal("Paul", result[1].name)
+            assert.are.equal("Imported Role", result[1].role)
+            assert.are.equal("Imported bio", result[1].description)
+            assert.are.equal(1, #result[1].states)
+        end)
+    end)
 end)
 
