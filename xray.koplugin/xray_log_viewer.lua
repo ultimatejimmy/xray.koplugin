@@ -15,6 +15,7 @@ local TextBoxWidget   = require("ui/widget/textboxwidget")
 local LineWidget      = require("ui/widget/linewidget")
 local Button          = require("ui/widget/button")
 local Font            = require("ui/font")
+local Blitbuffer      = require("ffi/blitbuffer")
 
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")

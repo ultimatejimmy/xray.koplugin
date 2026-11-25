@@ -6,6 +6,7 @@
 local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
 local ButtonDialog = require("ui/widget/buttondialog")
+local logger = require("logger")
 
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local utils = require(plugin_path .. "xray_utils")

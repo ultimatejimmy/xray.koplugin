@@ -4,6 +4,7 @@
 --]]
 
 local ok_ui, UIManager = pcall(require, "ui/uimanager")
+local _, Device = pcall(require, "device")
 
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 
@@ -314,6 +315,7 @@ function M:showUnitStyleCard()
                     grey = 30
                 end
                 local ok_ui, UIManager = pcall(require, "ui/uimanager")
+local _, Device = pcall(require, "device")
                 local thickness = Screen:scaleBySize(self.underline_thickness)
                 local box = { x = x, y = y, w = self.width, h = self.height }
                 plugin._draw_underline(bb, box, self.underline_style, grey, thickness, self.underline_thickness, plugin.path)
@@ -1683,6 +1685,7 @@ function M:showEntityStyleCard()
                     grey = 30
                 end
                 local ok_ui, UIManager = pcall(require, "ui/uimanager")
+local _, Device = pcall(require, "device")
                 local raw_th = tonumber(self.underline_thickness) or 2
                 local thickness = Screen:scaleBySize(raw_th)
                 local box = { x = x, y = y, w = self.width, h = self.height }

@@ -35,14 +35,14 @@ This plugin brings Kindle-style X-Ray features to KOReader. It uses AI to track 
 
 For full setup instructions and a deep dive into features, check out the **[GitHub Wiki](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki)**.
 
-- **[Get Started](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/1.-Get-Started)**: Installation and API key setup.
-- **[Core Content & Features](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/2.-Core-Features)**: Characters, Timeline, Glossary, and Series recap.
-- **[Lookups & Navigation](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/3.-Lookups-&-Navigation)**: In-text lookups, footnote popup UI, Gestures, and Mention scanning.
-- **[Data Management & Settings](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/4.-Data-Management)**: Merging duplicates, verbosity settings, and language localization.
-- **[AI Providers & Models](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/5.-AI-Providers-&-Models)**: Supported APIs, models, and reasoning effort.
-- **[Spoiler Protection](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/6.-Spoiler-Protection)**: How we keep the story safe.
-- **[Fetching Data](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/7.-Fetching)**: Background fetching, manual fetching, and targeted lookups.
-- **[Advanced Configuration & Maintenance](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/Advanced-Usage)**: Custom endpoints, config files, formats, logs, and maintenance tools.
+- **[Get Started](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/01.-Get-Started)**: Installation and API key setup.
+- **[Core Content & Features](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/02.-Core-Features)**: Characters, Timeline, Glossary, and Series recap.
+- **[Lookups & Navigation](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/03.-Lookups-&-Navigation)**: In-text lookups, footnote popup UI, Gestures, and Mention scanning.
+- **[Data Management & Settings](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/04.-Data-Management)**: Merging duplicates, verbosity settings, and language localization.
+- **[AI Providers & Models](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/05.-AI-Providers-&-Models)**: Supported APIs, models, and reasoning effort.
+- **[Spoiler Protection](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/06.-Spoiler-Protection)**: How we keep the story safe.
+- **[Fetching Data](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/07.-Fetching)**: Background fetching, manual fetching, and targeted lookups.
+- **[Advanced Configuration & Maintenance](https://github.com/ultimatejimmy/koreader-xray-plugin/wiki/09.-Advanced-Usage)**: Custom endpoints, config files, formats, logs, and maintenance tools.
 - **[External Data Format (`xray_cache.json`)](docs/EXTERNAL_DATA_FORMAT.md)**: JSON schema and overwrite-protection specification for third-party connectors and scripts.
 
 ## Support me

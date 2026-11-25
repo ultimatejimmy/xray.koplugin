@@ -2,8 +2,6 @@ std = "lua51"
 
 globals = {
     "G_reader_settings",
-    "Device",
-    "logger",
     "UIManager",
     "InfoMessage",
     "ButtonDialog",
@@ -11,7 +9,6 @@ globals = {
     "Event",
     "Screen",
     "CanvasContext",
-    "Blitbuffer",
     "DataStorage",
     "dump",
     "_t",

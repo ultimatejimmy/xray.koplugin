@@ -12,6 +12,7 @@ local TextBoxWidget = require("ui/widget/textboxwidget")
 local Font = require("ui/font")
 local Geom = require("ui/geometry")
 local RenderText = require("ui/rendertext")
+local logger = require("logger")
 
 local plugin_path = ((...) or ""):match("(.-)[^%.]+$") or ""
 local xray_units = require(plugin_path .. "xray_units")

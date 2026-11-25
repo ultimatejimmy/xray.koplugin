@@ -207,6 +207,7 @@ local specs = {
     "spec/xray_entityscanner_async_spec.lua",
     "spec/localization_xray_spec.lua",
     "spec/xray_conductor_spec.lua",
+    "spec/xray_log_viewer_spec.lua",
     "spec/xray_architecture_contract_spec.lua",
 }
 
