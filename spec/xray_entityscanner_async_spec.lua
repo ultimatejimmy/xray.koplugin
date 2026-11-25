@@ -845,9 +845,113 @@ describe("xray_entityscanner async background scanning & overlay", function()
             assert.are.equal(2, #plugin.entity_boxes)
         end)
 
-        it("bypasses FFI subprocess on Kobo in xray_entityscanner._getFFIUtil", function()
+        it("retains FFI subprocess support on Kobo in xray_entityscanner._getFFIUtil", function()
             Device.isKobo = function() return true end
-            assert.is_nil(plugin._getFFIUtil())
+            assert.is_not_nil(plugin._getFFIUtil())
+
+            local callback_cleared = false
+            plugin.ui.document.setCallback = function(_, fn)
+                if fn == nil then callback_cleared = true end
+            end
+
+            plugin:scanBookForEntities(false)
+            assert.is_true(child_ran)
+            assert.is_true(callback_cleared)
+        end)
+
+        it("unschedules poll timer, drains pipe, and halts in-process coroutine on _cancelEntityScanChild", function()
+            local UIManager = require("ui/uimanager")
+            local orig_unschedule = UIManager.unschedule
+            local unscheduled = {}
+            UIManager.unschedule = function(_, fn)
+                if fn then
+                    unscheduled[fn] = true
+                    for i = #scheduled_tasks, 1, -1 do
+                        if scheduled_tasks[i].fn == fn then
+                            table.remove(scheduled_tasks, i)
+                        end
+                    end
+                end
+            end
+
+            is_done_flag = false
+            plugin:scanBookForEntities(true)
+            local poll_fn = plugin._entity_scan_poll_fn
+            assert.is_not_nil(poll_fn)
+
+            plugin:_cancelEntityScanChild("test cancel")
+            assert.is_true(unscheduled[poll_fn] == true)
+            assert.is_nil(plugin._entity_scan_poll_fn)
+            assert.are.equal(8888, terminated_pid)
+
+            -- Simulate killed child exiting and advance past reap(1s) to verify readAllFromFD drains pipe
+            is_done_flag = true
+            advance_time(1.5)
+            assert.is_true(read_calls >= 1)
+
+            -- Also verify in-process coroutine step is unscheduled and halted on cancel
+            _G.XRAY_DISABLE_ENTITY_SUBPROCESS = true
+            plugin._entity_scan_in_progress = true
+            plugin:_runEntityScanInProcess("/tmp/test_entity_book.epub.sdr", plugin.ai_helper.settings, true)
+            local step_fn = plugin._entity_inproc_step_fn
+            assert.is_not_nil(step_fn)
+
+            plugin:_cancelEntityScanChild("cancel inproc")
+            assert.is_true(unscheduled[step_fn] == true)
+            assert.is_nil(plugin._entity_inproc_step_fn)
+            assert.is_nil(plugin._entity_scan_in_progress)
+
+            UIManager.unschedule = orig_unschedule
+        end)
+
+        it("configures manual ProgressBarDialog with subtitle, progress_max=100, and safe dismiss_callback", function()
+            local ProgressBarDialog = require("ui/widget/progressbardialog")
+            local orig_new = ProgressBarDialog.new
+            local captured_opts = nil
+            local close_calls = 0
+
+            ProgressBarDialog.new = function(cls, opts)
+                captured_opts = opts
+                local inst = orig_new(cls, opts)
+                inst.close = function(d)
+                    close_calls = close_calls + 1
+                    if d.dismiss_callback then
+                        d.dismiss_callback()
+                        d.dismiss_callback = nil
+                    end
+                end
+                return inst
+            end
+
+            plugin:scanBookForEntities(true)
+            advance_time(1)
+
+            assert.is_not_nil(captured_opts)
+            assert.is_not_nil(captured_opts.subtitle)
+            assert.are.equal(100, captured_opts.progress_max)
+            assert.are.equal(1, close_calls)
+            assert.is_nil(plugin.active_entity_scan_dialog)
+
+            ProgressBarDialog.new = orig_new
+        end)
+
+        it("returns {} in _resolveEntityHighlightBoxes when getPageFromXPointer is supported and 3-page window is empty", function()
+            plugin.entity_xp_matches = {
+                { start_xp = "xp_p1", end_xp = "xp_p1e", matched_text = "Sherlock Holmes", entity_name = "Sherlock Holmes", category = "character", page = 1 },
+            }
+            plugin.entity_matches_by_page = {}
+            plugin.last_pageno = 50
+            plugin._entity_box_cache_sig = nil
+
+            local box_calls = 0
+            plugin.ui.document.getScreenBoxesFromPositions = function()
+                box_calls = box_calls + 1
+                return { { x = 1, y = 1, w = 10, h = 10 } }
+            end
+
+            plugin:_resolveEntityHighlightBoxes()
+            assert.are.equal(0, box_calls)
+            assert.are.equal(0, #plugin.entity_boxes)
         end)
     end)
 end)

@@ -69,11 +69,11 @@ local UNIT_SCAN_TIMEOUT = 300       -- 5 minutes watchdog
 local UNIT_SCAN_FETCH_RETRY_DELAY = 3 -- defer if AI fetch active
 local UNIT_SCAN_FETCH_MAX_RETRIES = 40
 local UNIT_SCAN_SLICE = 0.03        -- 30ms max slice for cooperative yielding
+local UNIT_SCAN_STEP_DELAY = 0.05   -- 50ms event-loop breather between in-process slices
+local UNIT_AUTO_RETRY_DELAY = 30    -- seconds before single auto-scan subprocess retry
 
 local function _getFFIUtil()
     if _G.XRAY_DISABLE_UNIT_SUBPROCESS then return nil end
-    local ok_dev, Device = pcall(require, "device")
-    if ok_dev and Device and Device.isKobo and Device:isKobo() then return nil end
     local ok, ffiutil = pcall(require, "ffi/util")
     if not ok or type(ffiutil) ~= "table" then return nil end
     if type(ffiutil.runInSubProcess) ~= "function"
@@ -85,7 +85,6 @@ local function _getFFIUtil()
     end
     return ffiutil
 end
-M._getFFIUtil = _getFFIUtil
 M._getFFIUtil = _getFFIUtil
 
 -- Returns current page number safely
@@ -1525,6 +1524,10 @@ function M:_cancelUnitScanChild(reason)
         UIManager:unschedule(self._unit_scan_poll_fn)
         self._unit_scan_poll_fn = nil
     end
+    if self._unit_inproc_step_fn then
+        UIManager:unschedule(self._unit_inproc_step_fn)
+        self._unit_inproc_step_fn = nil
+    end
     _closeUnitScanDialogSafely(self, false)
     local pid, fd = self._unit_scan_pid, self._unit_scan_read_fd
     self._unit_scan_pid, self._unit_scan_read_fd = nil, nil
@@ -1552,20 +1555,30 @@ function M:_onUnitScanFinished(resolved_dir, ok, manual)
     _closeUnitScanDialogSafely(self, true)
     self._unit_scan_in_progress = false
     self._unit_scan_manual = nil
+    self._unit_inproc_step_fn = nil
 
     if self.destroyed or not self.ui or not self.ui.document then
         _releaseUnitScanSlot(self)
         return
     end
     local loaded = ok and self:loadUnitCache(resolved_dir)
-    if not loaded then
+    if loaded then
+        self._unit_auto_retry_used = false
+    else
         log("Unit scan finished without a usable cache (ok=" .. tostring(ok) .. ")")
-        if not self._unit_scan_fallback_used and not self.destroyed and self.ui and self.ui.document then
+        if manual and not self._unit_scan_fallback_used and not self.destroyed and self.ui and self.ui.document then
             self._unit_scan_fallback_used = true
             log("Unit scan: attempting in-process fallback scan")
             local settings = self.ai_helper and self.ai_helper.settings or {}
             self:_runUnitScanInProcess(resolved_dir, settings, manual)
             return
+        elseif not manual and _getFFIUtil() and not self._unit_auto_retry_used and not self.destroyed and self.ui and self.ui.document then
+            self._unit_auto_retry_used = true
+            log(string.format("Unit scan: scheduling single background subprocess retry in %ds", UNIT_AUTO_RETRY_DELAY))
+            UIManager:scheduleIn(UNIT_AUTO_RETRY_DELAY, function()
+                if self.destroyed or not self.ui or not self.ui.document or self._unit_scan_in_progress then return end
+                self:scanBookForUnits(false)
+            end)
         end
         _releaseUnitScanSlot(self)
         return
@@ -1600,6 +1613,11 @@ function M:_startUnitScanSubprocess(resolved_dir, settings, manual)
     local plugin = self
     local pid, read_fd = ffiutil.runInSubProcess(function(_child_pid, write_fd)
         XRayLogger._buf, XRayLogger._buf_count = {}, 0
+        pcall(function()
+            if plugin.ui and plugin.ui.document and plugin.ui.document.setCallback then
+                plugin.ui.document:setCallback()
+            end
+        end)
         local result = "err"
         local ok, err = pcall(function()
             local matches = plugin:_computeUnitMatches(settings, {
@@ -1715,7 +1733,8 @@ function M:_runUnitScanInProcess(resolved_dir, settings, manual)
     end)
 
     local function step()
-        if self.destroyed or not self.ui or not self.ui.document then
+        self._unit_inproc_step_fn = nil
+        if self.destroyed or not self._unit_scan_in_progress or not self.ui or not self.ui.document then
             finish(nil)
             return
         end
@@ -1728,10 +1747,12 @@ function M:_runUnitScanInProcess(resolved_dir, settings, manual)
         if coroutine.status(co) == "dead" then
             finish(res or {})
         else
-            UIManager:scheduleIn(0.02, step)
+            self._unit_inproc_step_fn = step
+            UIManager:scheduleIn(UNIT_SCAN_STEP_DELAY, step)
         end
     end
-    UIManager:scheduleIn(0.1, step)
+    self._unit_inproc_step_fn = step
+    UIManager:scheduleIn(UNIT_SCAN_STEP_DELAY, step)
 end
 
 -- Compatibility alias: apply cached unit underlines or load cache if present

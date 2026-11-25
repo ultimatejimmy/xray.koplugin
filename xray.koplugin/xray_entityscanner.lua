@@ -39,7 +39,7 @@ M.__entity_footnotes_patched = true
 local ENTITY_SCAN_POLL_INTERVAL = 0.1   -- 100ms poll for child process
 local ENTITY_SCAN_TIMEOUT = 300         -- 5 minutes watchdog
 local ENTITY_SCAN_SLICE = 0.03          -- 30ms coroutine slice for in-process fallback
-local ENTITY_SCAN_INPROC_REGEX_LEN = 600 -- Smaller regex chunks when running in-process to avoid UI stalls
+local ENTITY_SCAN_STEP_DELAY = 0.05     -- 50ms event-loop breather between in-process slices
 local ENTITY_LOW_MEM_MAX_RETRIES = 3    -- Max retries when deferred due to low memory
 local ENTITY_LOW_MEM_RETRY_DELAY = 60   -- Seconds between low-memory retries
 local ENTITY_AUTO_RETRY_DELAY = 30      -- Seconds before single auto-scan subprocess retry
@@ -57,10 +57,6 @@ local CATEGORY_LABELS = {
 
 local function _getFFIUtil()
     if _G.XRAY_DISABLE_ENTITY_SUBPROCESS then return nil end
-    local ok_dev, Device = pcall(require, "device")
-    if ok_dev and Device and type(Device.isKobo) == "function" and Device:isKobo() then
-        return nil
-    end
     local ok, ffiutil = pcall(require, "ffi/util")
     if not ok or type(ffiutil) ~= "table" then return nil end
     if type(ffiutil.runInSubProcess) ~= "function"
@@ -654,13 +650,13 @@ function M:loadEntityCache(resolved_dir, expected_sig)
     return true
 end
 
-function M:_rebuildEntityPageBuckets()
+function M:_rebuildEntityPageBuckets(skip_recompute)
     local doc = self.ui and self.ui.document
     if not doc or not self.entity_xp_matches then return end
     local t0 = os.clock()
     local by_page = {}
     for _, hit in ipairs(self.entity_xp_matches) do
-        if doc.getPageFromXPointer then
+        if (not skip_recompute or not hit.page) and doc.getPageFromXPointer then
             local ok, pg = pcall(doc.getPageFromXPointer, doc, hit.start_xp)
             if ok and pg then hit.page = pg end
         end
@@ -708,7 +704,7 @@ function M:_scheduleRebuildEntityPageBuckets(target_page_count, target_render_ha
         end
         idx = stop_idx + 1
         if idx <= total then
-            UIManager:scheduleIn(0, step)
+            UIManager:scheduleIn(0.02, step)
             return
         end
 
@@ -751,7 +747,7 @@ function M:_computeEntityMatches(settings, opts)
     local doc = self.ui.document
 
     for idx, pattern in ipairs(patterns) do
-        if opts.yield_fn then opts.yield_fn() end
+        if opts.yield_fn then opts.yield_fn(true) end
         if opts.on_progress then
             opts.on_progress(math.floor(((idx - 1) / total_patterns) * 100))
         end
@@ -798,7 +794,7 @@ function M:_computeEntityMatches(settings, opts)
     local t_pages = os.clock()
     local final_matches = {}
     for i, hit in ipairs(deduped_hits) do
-        if opts.yield_fn and (i % 50 == 0) then opts.yield_fn() end
+        if opts.yield_fn and (i % 50 == 0) then opts.yield_fn(false) end
         -- Pre-compute page number in child process so UI thread never needs to compute it
         local page = nil
         if doc.getPageFromXPointer then
@@ -826,25 +822,54 @@ local function _releaseEntityScanSlot(self)
     end
 end
 
-function M:_cancelEntityScanChild(reason)
-    if self._entity_scan_pid then
-        local ffiutil = _getFFIUtil()
-        if ffiutil and ffiutil.terminateSubProcess then
-            pcall(ffiutil.terminateSubProcess, self._entity_scan_pid)
+local function _closeEntityScanDialogSafely(self, report_done)
+    local dialog = self.active_entity_scan_dialog
+    self.active_entity_scan_dialog = nil
+    if not dialog then return end
+    dialog.dismiss_callback = nil
+    pcall(function()
+        if report_done and dialog.reportProgress then
+            dialog:reportProgress(100)
         end
-        self._entity_scan_pid = nil
+        dialog:close()
+    end)
+end
+
+function M:_cancelEntityScanChild(reason)
+    if self._entity_scan_poll_fn then
+        UIManager:unschedule(self._entity_scan_poll_fn)
+        self._entity_scan_poll_fn = nil
     end
+    if self._entity_inproc_step_fn then
+        UIManager:unschedule(self._entity_inproc_step_fn)
+        self._entity_inproc_step_fn = nil
+    end
+    _closeEntityScanDialogSafely(self, false)
+    local pid, fd = self._entity_scan_pid, self._entity_scan_read_fd
+    self._entity_scan_pid = nil
     self._entity_scan_read_fd = nil
     self._entity_scan_started_at = nil
     self._entity_scan_in_progress = nil
     self._entity_scan_manual = nil
-    self._entity_scan_poll_fn = nil
     pcall(function() require("device"):enableCPUCores(1) end)
-    if self.active_entity_scan_dialog then
-        pcall(function() self.active_entity_scan_dialog:close() end)
-        self.active_entity_scan_dialog = nil
-    end
     _releaseEntityScanSlot(self)
+    if pid then
+        local ffiutil = _getFFIUtil()
+        if ffiutil and ffiutil.terminateSubProcess then
+            pcall(ffiutil.terminateSubProcess, pid)
+            local function reap()
+                local ok, done = pcall(ffiutil.isSubProcessDone, pid)
+                if not ok or done then
+                    if fd and ffiutil.readAllFromFD then
+                        pcall(ffiutil.readAllFromFD, fd)
+                    end
+                else
+                    UIManager:scheduleIn(5, reap)
+                end
+            end
+            UIManager:scheduleIn(1, reap)
+        end
+    end
     log("Subprocess cancelled: " .. tostring(reason))
 end
 
@@ -854,11 +879,9 @@ function M:_onEntityScanFinished(resolved_dir, ok, manual)
     self._entity_scan_pid = nil
     self._entity_scan_read_fd = nil
     self._entity_scan_poll_fn = nil
+    self._entity_inproc_step_fn = nil
 
-    if self.active_entity_scan_dialog then
-        pcall(function() self.active_entity_scan_dialog:close() end)
-        self.active_entity_scan_dialog = nil
-    end
+    _closeEntityScanDialogSafely(self, ok)
 
     local loaded = false
     if ok then
@@ -913,6 +936,11 @@ function M:_startEntityScanSubprocess(resolved_dir, settings, manual)
     local plugin = self
     local pid, read_fd = ffiutil.runInSubProcess(function(_child_pid, write_fd)
         XRayLogger._buf, XRayLogger._buf_count = {}, 0
+        pcall(function()
+            if plugin.ui and plugin.ui.document and plugin.ui.document.setCallback then
+                plugin.ui.document:setCallback()
+            end
+        end)
         local result = "err"
         local ok, err = pcall(function()
             local matches = plugin:_computeEntityMatches(settings, {
@@ -952,6 +980,9 @@ function M:_startEntityScanSubprocess(resolved_dir, settings, manual)
         self._entity_scan_poll_fn = nil
         if self.destroyed or not self.ui or not self.ui.document then
             self:_cancelEntityScanChild("document closed")
+            return
+        end
+        if not self._entity_scan_pid or not self._entity_scan_started_at then
             return
         end
         if os.time() - self._entity_scan_started_at > ENTITY_SCAN_TIMEOUT then
@@ -998,23 +1029,23 @@ end
 
 function M:_runEntityScanInProcess(resolved_dir, settings, manual)
     local t_start = os.clock()
-    log(string.format("_runEntityScanInProcess: starting (manual=%s, max_regex_len=%d)", tostring(manual), ENTITY_SCAN_INPROC_REGEX_LEN))
+    log(string.format("_runEntityScanInProcess: starting (manual=%s, max_regex_len=%d)", tostring(manual), MAX_REGEX_LEN))
     local co
     local last_yield = os.clock()
-    local function yield_fn()
-        if os.clock() - last_yield > ENTITY_SCAN_SLICE then
+    local function yield_fn(force_yield)
+        if force_yield or (os.clock() - last_yield > ENTITY_SCAN_SLICE) then
             coroutine.yield()
             last_yield = os.clock()
         end
     end
 
     local function step()
-        if self.destroyed or not self.ui or not self.ui.document then
+        self._entity_inproc_step_fn = nil
+        if self.destroyed or not self._entity_scan_in_progress or not self.ui or not self.ui.document then
             self._entity_scan_in_progress = nil
-            if self.active_entity_scan_dialog then
-                pcall(function() self.active_entity_scan_dialog:close() end)
-                self.active_entity_scan_dialog = nil
-            end
+            self._entity_scan_manual = nil
+            _closeEntityScanDialogSafely(self, false)
+            _releaseEntityScanSlot(self)
             return
         end
         local ok, res = coroutine.resume(co)
@@ -1022,7 +1053,8 @@ function M:_runEntityScanInProcess(resolved_dir, settings, manual)
             log("In-process scan error: " .. tostring(res))
             self:_onEntityScanFinished(resolved_dir, false, manual)
         elseif coroutine.status(co) == "suspended" then
-            UIManager:scheduleIn(0, step)
+            self._entity_inproc_step_fn = step
+            UIManager:scheduleIn(ENTITY_SCAN_STEP_DELAY, step)
         else
             local matches = res or {}
             log(string.format("_runEntityScanInProcess: completed in %.2fs", os.clock() - t_start))
@@ -1033,7 +1065,6 @@ function M:_runEntityScanInProcess(resolved_dir, settings, manual)
 
     co = coroutine.create(function()
         return self:_computeEntityMatches(settings, {
-            max_regex_len = ENTITY_SCAN_INPROC_REGEX_LEN,
             yield_fn = yield_fn,
             on_progress = function(pct)
                 if self.active_entity_scan_dialog and self.active_entity_scan_dialog.reportProgress then
@@ -1043,7 +1074,8 @@ function M:_runEntityScanInProcess(resolved_dir, settings, manual)
         })
     end)
 
-    UIManager:scheduleIn(0, step)
+    self._entity_inproc_step_fn = step
+    UIManager:scheduleIn(ENTITY_SCAN_STEP_DELAY, step)
 end
 
 function M:scanBookForEntities(force)
@@ -1144,12 +1176,19 @@ function M:scanBookForEntities(force)
             if manual then
                 local progress_msg = ProgressBarDialog:new{
                     title = self.loc:t("entity_scanning_title") or "X-Ray: Entity Underlining",
-                    text = self.loc:t("entity_scanning_book") or "Scanning book for underlines...",
+                    subtitle = self.loc:t("entity_scanning_book") or "Scanning book for underlines...",
+                    progress_max = 100,
                     dismissable = true,
-                    onDismiss = function()
-                        self:_cancelEntityScanChild("user dismissed")
-                    end
+                    refresh_time_seconds = 0.05,
                 }
+                local plugin_self = self
+                progress_msg.dismiss_callback = function()
+                    progress_msg.dismiss_callback = nil
+                    if plugin_self.active_entity_scan_dialog == progress_msg then
+                        plugin_self.active_entity_scan_dialog = nil
+                    end
+                    plugin_self:_cancelEntityScanChild("user dismissed")
+                end
                 self.active_entity_scan_dialog = progress_msg
                 progress_msg:show()
                 UIManager:forceRePaint()
@@ -1273,17 +1312,25 @@ function M:_resolveEntityHighlightBoxes()
     local current_page = _getCurrentPage(self)
 
     -- Page window: resolve only matches near current page
-    local matches_to_resolve = self.entity_xp_matches
-    if self.entity_matches_by_page and next(self.entity_matches_by_page) then
-        matches_to_resolve = {}
+    local matches_to_resolve = {}
+    local by_page = self.entity_matches_by_page or {}
+    local has_buckets = next(by_page) ~= nil
+    local has_xp_page_api = type(doc.getPageFromXPointer) == "function"
+    if has_buckets or has_xp_page_api then
         for _, pg in ipairs({ current_page - 1, current_page, current_page + 1 }) do
-            local bucket = self.entity_matches_by_page[pg]
+            local bucket = by_page[pg]
             if bucket then
                 for _, m in ipairs(bucket) do
                     table.insert(matches_to_resolve, m)
                 end
             end
         end
+        if #matches_to_resolve == 0 then
+            self.entity_boxes = {}
+            return
+        end
+    else
+        matches_to_resolve = self.entity_xp_matches
     end
 
     local groups = {}
@@ -1503,7 +1550,7 @@ function M:addEntityToUnderlines(entity, category)
         table.insert(combined, m)
     end
     self.entity_xp_matches = _deduplicateEntityHits(combined)
-    self:_rebuildEntityPageBuckets()
+    self:_rebuildEntityPageBuckets(true)
 
     -- Invalidate bounding box cache so current page immediately recalculates
     self._entity_box_cache_sig = nil

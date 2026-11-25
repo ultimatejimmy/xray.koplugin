@@ -329,9 +329,35 @@ describe("xray_unitscanner async and background execution", function()
             assert.is_true(child_ran)
         end)
 
-        it("bypasses FFI subprocess on Kobo in xray_unitscanner._getFFIUtil", function()
+        it("retains FFI subprocess support on Kobo in xray_unitscanner._getFFIUtil", function()
             Device.isKobo = function() return true end
-            assert.is_nil(plugin._getFFIUtil())
+            assert.is_not_nil(plugin._getFFIUtil())
+
+            local callback_cleared = false
+            plugin.ui.document.setCallback = function(_, fn)
+                if fn == nil then callback_cleared = true end
+            end
+
+            plugin:scanBookForUnits(false)
+            assert.is_true(child_ran)
+            assert.is_true(callback_cleared)
+        end)
+
+        it("does not run in-process fallback when auto-scan unit subprocess fails", function()
+            local inproc_called = false
+            local orig_inproc = plugin._runUnitScanInProcess
+            plugin._runUnitScanInProcess = function()
+                inproc_called = true
+            end
+
+            plugin._unit_scan_fallback_used = false
+            plugin._unit_auto_retry_used = false
+            plugin:_onUnitScanFinished("/tmp/nonexistent_dir", false, false)
+
+            assert.is_false(inproc_called)
+            assert.is_true(plugin._unit_auto_retry_used)
+
+            plugin._runUnitScanInProcess = orig_inproc
         end)
 
         it("does not fire dismiss_callback or recurse when manual scan finishes and closes ProgressBarDialog", function()
